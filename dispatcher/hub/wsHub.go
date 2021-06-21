@@ -72,6 +72,33 @@ func (wh *wsHub) handleBroadcast(events []data.Event) {
 			filterableEvents = append(filterableEvents, event)
 		}
 	}
+
+	dispatchersMap := make(map[dispatcher.EventDispatcher][]data.Event)
+	mapEventToDispatcher := func(d dispatcher.EventDispatcher, e data.Event) {
+		dispatchersMap[d] = append(dispatchersMap[d], e)
+	}
+
+	for _, event := range filterableEvents {
+		subscriptionEntries := subscriptions[event.Address]
+		for _, subEntry := range subscriptionEntries {
+			switch subEntry.MatchLevel {
+			case dispatcher.MatchAddress:
+				mapEventToDispatcher(subEntry.Subscriber, event)
+				break
+			case dispatcher.MatchIdentifier:
+				if event.Identifier == subEntry.Identifier {
+					mapEventToDispatcher(subEntry.Subscriber, event)
+				}
+				break
+			case dispatcher.MatchTopics:
+				break
+			}
+		}
+	}
+
+	for dispatch, eventValues := range dispatchersMap {
+		dispatch.PushEvents(eventValues)
+	}
 }
 
 func (wh *wsHub) registerDispatcher(d dispatcher.EventDispatcher) {
