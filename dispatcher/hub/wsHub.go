@@ -8,27 +8,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type Subscription struct {
-	Address     string
-	Identifier  string
-	Subscribers []dispatcher.EventDispatcher
-}
-
 type wsHub struct {
-	rwMut       sync.RWMutex
-	dispatchers map[uuid.UUID]dispatcher.EventDispatcher
-	register    chan dispatcher.EventDispatcher
-	unregister  chan dispatcher.EventDispatcher
-	broadcast   chan []data.Event
+	rwMut           sync.RWMutex
+	subscriptionMap *dispatcher.SubscriptionMap
+	dispatchers     map[uuid.UUID]dispatcher.EventDispatcher
+	register        chan dispatcher.EventDispatcher
+	unregister      chan dispatcher.EventDispatcher
+	broadcast       chan []data.Event
 }
 
 func NewWsHub() *wsHub {
 	return &wsHub{
-		rwMut:       sync.RWMutex{},
-		dispatchers: make(map[uuid.UUID]dispatcher.EventDispatcher),
-		register:    make(chan dispatcher.EventDispatcher),
-		unregister:  make(chan dispatcher.EventDispatcher),
-		broadcast:   make(chan []data.Event),
+		rwMut:           sync.RWMutex{},
+		subscriptionMap: dispatcher.NewSubscriptionMap(),
+		dispatchers:     make(map[uuid.UUID]dispatcher.EventDispatcher),
+		register:        make(chan dispatcher.EventDispatcher),
+		unregister:      make(chan dispatcher.EventDispatcher),
+		broadcast:       make(chan []data.Event),
 	}
 }
 
@@ -47,6 +43,10 @@ func (wh *wsHub) Run() {
 	}
 }
 
+func (wh *wsHub) Subscribe(event dispatcher.SubscribeEvent) {
+	wh.subscriptionMap.MatchSubscribeEvent(event)
+}
+
 func (wh *wsHub) BroadcastChan() chan []data.Event {
 	return wh.broadcast
 }
@@ -59,13 +59,18 @@ func (wh *wsHub) UnregisterChan() chan dispatcher.EventDispatcher {
 	return wh.unregister
 }
 
-// TODO: events will be filtered before broadcasting
 func (wh *wsHub) handleBroadcast(events []data.Event) {
-	wh.rwMut.RLock()
-	defer wh.rwMut.RUnlock()
+	subscriptions := wh.subscriptionMap.Subscriptions()
 
-	for _, d := range wh.dispatchers {
-		d.PushEvents(events)
+	for _, subscription := range subscriptions[dispatcher.MatchAll] {
+		subscription.Subscriber.PushEvents(events)
+	}
+
+	var filterableEvents []data.Event
+	for _, event := range events {
+		if _, ok := subscriptions[event.Address]; ok {
+			filterableEvents = append(filterableEvents, event)
+		}
 	}
 }
 

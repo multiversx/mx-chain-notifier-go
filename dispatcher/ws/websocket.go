@@ -149,7 +149,18 @@ func (wd *websocketDispatcher) readPump() {
 			break
 		}
 
-		// TODO: get msg from stream -> reject for bad type, else push to hub
-		_ = bytes.TrimSpace(bytes.Replace(msg, newline, space, -1))
+		msg = bytes.TrimSpace(bytes.Replace(msg, newline, space, -1))
+		wd.trySendSubscribeEvent(msg)
 	}
+}
+
+func (wd *websocketDispatcher) trySendSubscribeEvent(data []byte) {
+	var subscribeEvent dispatcher.SubscribeEvent
+	err := json.Unmarshal(data, &subscribeEvent)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	subscribeEvent.Caller = wd
+	wd.hub.Subscribe(subscribeEvent)
 }
