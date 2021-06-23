@@ -1,0 +1,22 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Event {
+  address: String
+  identifier: String
+  topics: [String]
+  data: String
+}
+
+input SubscribeData {
+  placeholder: String
+}
+
+type Query {
+  empty: String
+}
+
+type Subscription {
+  subscribe(data: SubscribeData): [Event]
+}
