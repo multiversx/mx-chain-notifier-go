@@ -8,10 +8,12 @@ import (
 type EventDispatcher interface {
 	GetID() uuid.UUID
 	PushEvents(events []data.Event)
+	// IsConnectionClosed() bool
 }
 
 type Hub interface {
 	BroadcastChan() chan []data.Event
 	RegisterChan() chan EventDispatcher
 	UnregisterChan() chan EventDispatcher
+	Subscribe(event SubscribeEvent)
 }
