@@ -47,15 +47,15 @@ func (wh *wsHub) Subscribe(event dispatcher.SubscribeEvent) {
 	wh.subscriptionMap.MatchSubscribeEvent(event)
 }
 
-func (wh *wsHub) BroadcastChan() chan []data.Event {
+func (wh *wsHub) BroadcastChan() chan<- []data.Event {
 	return wh.broadcast
 }
 
-func (wh *wsHub) RegisterChan() chan dispatcher.EventDispatcher {
+func (wh *wsHub) RegisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.register
 }
 
-func (wh *wsHub) UnregisterChan() chan dispatcher.EventDispatcher {
+func (wh *wsHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.unregister
 }
 
