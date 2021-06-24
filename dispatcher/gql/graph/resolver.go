@@ -29,10 +29,9 @@ func (r *Resolver) MapDispatchChan(dispatchID uuid.UUID, dispatchChan chan<- []*
 }
 
 func (r *Resolver) RemoveDispatchChan(dispatchID uuid.UUID) {
-	if _, ok := r.chanMappings[dispatchID]; ok {
-		return
-	}
 	r.mut.Lock()
 	defer r.mut.Unlock()
-	delete(r.chanMappings, dispatchID)
+	if _, ok := r.chanMappings[dispatchID]; ok {
+		delete(r.chanMappings, dispatchID)
+	}
 }

@@ -111,6 +111,8 @@ func (wh *wsHub) registerDispatcher(d dispatcher.EventDispatcher) {
 }
 
 func (wh *wsHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
+	wh.rwMut.Lock()
+	defer wh.rwMut.Unlock()
 	if _, ok := wh.dispatchers[d.GetID()]; ok {
 		delete(wh.dispatchers, d.GetID())
 	}
