@@ -33,6 +33,7 @@ var availableHubDelegates = map[string]func() dispatcher.Hub{
 }
 
 type EventNotifierFactoryArgs struct {
+	Enabled      bool
 	TcpPort      string
 	Username     string
 	Password     string
