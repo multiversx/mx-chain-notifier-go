@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type wsHub struct {
+type commonHub struct {
 	rwMut           sync.RWMutex
 	subscriptionMap *dispatcher.SubscriptionMap
 	dispatchers     map[uuid.UUID]dispatcher.EventDispatcher
@@ -17,8 +17,8 @@ type wsHub struct {
 	broadcast       chan []data.Event
 }
 
-func NewWsHub() *wsHub {
-	return &wsHub{
+func NewCommonHub() *commonHub {
+	return &commonHub{
 		rwMut:           sync.RWMutex{},
 		subscriptionMap: dispatcher.NewSubscriptionMap(),
 		dispatchers:     make(map[uuid.UUID]dispatcher.EventDispatcher),
@@ -28,7 +28,7 @@ func NewWsHub() *wsHub {
 	}
 }
 
-func (wh *wsHub) Run() {
+func (wh *commonHub) Run() {
 	for {
 		select {
 		case events := <-wh.broadcast:
@@ -43,27 +43,27 @@ func (wh *wsHub) Run() {
 	}
 }
 
-func (wh *wsHub) Subscribe(event dispatcher.SubscribeEvent) {
+func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 	wh.subscriptionMap.MatchSubscribeEvent(event)
 }
 
-func (wh *wsHub) BroadcastChan() chan []data.Event {
+func (wh *commonHub) BroadcastChan() chan []data.Event {
 	return wh.broadcast
 }
 
-func (wh *wsHub) RegisterChan() chan dispatcher.EventDispatcher {
+func (wh *commonHub) RegisterChan() chan dispatcher.EventDispatcher {
 	return wh.register
 }
 
-func (wh *wsHub) UnregisterChan() chan dispatcher.EventDispatcher {
+func (wh *commonHub) UnregisterChan() chan dispatcher.EventDispatcher {
 	return wh.unregister
 }
 
-func (wh *wsHub) handleBroadcast(events []data.Event) {
+func (wh *commonHub) handleBroadcast(events []data.Event) {
 	subscriptions := wh.subscriptionMap.Subscriptions()
 
 	for _, subscription := range subscriptions[dispatcher.MatchAll] {
-		subscription.Subscriber.PushEvents(events)
+		wh.dispatchers[subscription.DispatcherID].PushEvents(events)
 	}
 
 	var filterableEvents []data.Event
@@ -73,9 +73,9 @@ func (wh *wsHub) handleBroadcast(events []data.Event) {
 		}
 	}
 
-	dispatchersMap := make(map[dispatcher.EventDispatcher][]data.Event)
-	mapEventToDispatcher := func(d dispatcher.EventDispatcher, e data.Event) {
-		dispatchersMap[d] = append(dispatchersMap[d], e)
+	dispatchersMap := make(map[uuid.UUID][]data.Event)
+	mapEventToDispatcher := func(id uuid.UUID, e data.Event) {
+		dispatchersMap[id] = append(dispatchersMap[id], e)
 	}
 
 	for _, event := range filterableEvents {
@@ -83,11 +83,11 @@ func (wh *wsHub) handleBroadcast(events []data.Event) {
 		for _, subEntry := range subscriptionEntries {
 			switch subEntry.MatchLevel {
 			case dispatcher.MatchAddress:
-				mapEventToDispatcher(subEntry.Subscriber, event)
+				mapEventToDispatcher(subEntry.DispatcherID, event)
 				break
 			case dispatcher.MatchIdentifier:
 				if event.Identifier == subEntry.Identifier {
-					mapEventToDispatcher(subEntry.Subscriber, event)
+					mapEventToDispatcher(subEntry.DispatcherID, event)
 				}
 				break
 			case dispatcher.MatchTopics:
@@ -96,12 +96,12 @@ func (wh *wsHub) handleBroadcast(events []data.Event) {
 		}
 	}
 
-	for dispatch, eventValues := range dispatchersMap {
-		dispatch.PushEvents(eventValues)
+	for id, eventValues := range dispatchersMap {
+		wh.dispatchers[id].PushEvents(eventValues)
 	}
 }
 
-func (wh *wsHub) registerDispatcher(d dispatcher.EventDispatcher) {
+func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
 	if _, ok := wh.dispatchers[d.GetID()]; ok {
 		return
 	}
@@ -110,7 +110,7 @@ func (wh *wsHub) registerDispatcher(d dispatcher.EventDispatcher) {
 	wh.dispatchers[d.GetID()] = d
 }
 
-func (wh *wsHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
+func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 	wh.rwMut.Lock()
 	defer wh.rwMut.Unlock()
 	if _, ok := wh.dispatchers[d.GetID()]; ok {

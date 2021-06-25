@@ -9,6 +9,8 @@ type Event struct {
 	Data       *string   `json:"data"`
 }
 
-type SubscribeData struct {
-	Placeholder *string `json:"placeholder"`
+type SubscriptionEntry struct {
+	Address    *string   `json:"address"`
+	Identifier *string   `json:"identifier"`
+	Topics     []*string `json:"topics"`
 }

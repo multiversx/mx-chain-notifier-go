@@ -8,7 +8,6 @@ import (
 type EventDispatcher interface {
 	GetID() uuid.UUID
 	PushEvents(events []data.Event)
-	// IsConnectionClosed() bool
 }
 
 type Hub interface {

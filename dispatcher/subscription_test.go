@@ -9,7 +9,7 @@ func TestSubscriptionMap_Subscriptions(t *testing.T) {
 	t.Parallel()
 
 	subMap := NewSubscriptionMap()
-	subMap.MatchSubscribeEvent(SubscribeEvent{SubscriptionValues: []SubscriptionValues{}})
+	subMap.MatchSubscribeEvent(SubscribeEvent{SubscriptionEntries: []SubscriptionEntry{}})
 
 	subs := subMap.Subscriptions()
 
@@ -22,7 +22,7 @@ func TestSubscriptionMap_MatchSubscribeEvent(t *testing.T) {
 	addr2 := "erd222"
 	addr3 := "erd333"
 	subEvent := SubscribeEvent{
-		SubscriptionValues: []SubscriptionValues{
+		SubscriptionEntries: []SubscriptionEntry{
 			{
 				Address: addr1,
 			},
