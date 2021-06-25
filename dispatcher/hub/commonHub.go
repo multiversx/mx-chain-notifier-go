@@ -5,11 +5,13 @@ import (
 
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/google/uuid"
 )
 
 type commonHub struct {
 	rwMut           sync.RWMutex
+	filter          filters.EventFilter
 	subscriptionMap *dispatcher.SubscriptionMap
 	dispatchers     map[uuid.UUID]dispatcher.EventDispatcher
 	register        chan dispatcher.EventDispatcher
@@ -20,6 +22,7 @@ type commonHub struct {
 func NewCommonHub() *commonHub {
 	return &commonHub{
 		rwMut:           sync.RWMutex{},
+		filter:          filters.NewDefaultFilter(),
 		subscriptionMap: dispatcher.NewSubscriptionMap(),
 		dispatchers:     make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:        make(chan dispatcher.EventDispatcher),
@@ -62,7 +65,7 @@ func (wh *commonHub) UnregisterChan() chan dispatcher.EventDispatcher {
 func (wh *commonHub) handleBroadcast(events []data.Event) {
 	subscriptions := wh.subscriptionMap.Subscriptions()
 
-	for _, subscription := range subscriptions[dispatcher.MatchAll] {
+	for _, subscription := range subscriptions[filters.MatchAll] {
 		wh.dispatchers[subscription.DispatcherID].PushEvents(events)
 	}
 
@@ -81,17 +84,8 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 	for _, event := range filterableEvents {
 		subscriptionEntries := subscriptions[event.Address]
 		for _, subEntry := range subscriptionEntries {
-			switch subEntry.MatchLevel {
-			case dispatcher.MatchAddress:
+			if wh.filter.MatchEvent(subEntry, event) {
 				mapEventToDispatcher(subEntry.DispatcherID, event)
-				break
-			case dispatcher.MatchIdentifier:
-				if event.Identifier == subEntry.Identifier {
-					mapEventToDispatcher(subEntry.DispatcherID, event)
-				}
-				break
-			case dispatcher.MatchTopics:
-				break
 			}
 		}
 	}

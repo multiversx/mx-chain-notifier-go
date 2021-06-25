@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/google/uuid"
 	"strings"
 	"sync"
@@ -8,20 +9,6 @@ import (
 
 const (
 	erdTag = "erd"
-)
-
-const (
-	// MatchAll signals that all events will be matched
-	MatchAll = "*"
-
-	// MatchAddress signals that events will be filtered by (address)
-	MatchAddress = "match:address"
-
-	// MatchIdentifier signals that events will be filtered by (address,identifier)
-	MatchIdentifier = "match:identifier"
-
-	// MatchTopics signals that events will be filtered by (address,identifier,[topics_pattern])
-	MatchTopics = "match:topics"
 )
 
 type SubscribeEvent struct {
@@ -57,9 +44,9 @@ func NewSubscriptionMap() *SubscriptionMap {
 
 func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
-		sm.appendSubscription(MatchAll, Subscription{
+		sm.appendSubscription(filters.MatchAll, Subscription{
 			DispatcherID: event.DispatcherID,
-			MatchLevel:   MatchAll,
+			MatchLevel:   filters.MatchAll,
 		})
 		return
 	}
@@ -89,16 +76,16 @@ func (sm *SubscriptionMap) matchLevelFromInput(subValues SubscriptionEntry) stri
 	hasTopics := len(subValues.Topics) > 0
 
 	if hasAddress && hasIdentifier && hasTopics {
-		return MatchTopics
+		return filters.MatchTopics
 	}
 	if hasAddress && hasIdentifier {
-		return MatchIdentifier
+		return filters.MatchIdentifier
 	}
 	if hasAddress {
-		return MatchAddress
+		return filters.MatchAddress
 	}
 
-	return MatchAll
+	return filters.MatchAll
 }
 
 func (sm *SubscriptionMap) appendSubscription(key string, sub Subscription) {
