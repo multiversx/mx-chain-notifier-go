@@ -82,7 +82,6 @@ func launchHubWithDispatchers(args *EventNotifierFactoryArgs) (dispatcher.Hub, e
 		http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 			ws.Serve(notifierHub, w, r)
 		})
-		fmt.Println("a")
 	}
 
 	switch args.DispatchType {
