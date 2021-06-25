@@ -17,17 +17,39 @@ import (
 	"github.com/ElrondNetwork/notifier-go"
 )
 
-type EventNotifierFactoryArgs struct {
-	TcpPort     string
-	Marshalizer marshal.Marshalizer
+const (
+	separator   = ":"
+	hubCommon   = "common"
+	dispatchAll = "dispatch:*"
+	dispatchWs  = "websocket"
+	dispatchGql = "graphql"
+	defaultPort = "5000"
+)
+
+var availableHubDelegates = map[string]func() dispatcher.Hub{
+	"default-custom": func() dispatcher.Hub {
+		return nil
+	},
 }
 
-func NewEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error) {
+type EventNotifierFactoryArgs struct {
+	TcpPort      string
+	Username     string
+	Password     string
+	HubType      string
+	DispatchType string
+	Marshalizer  marshal.Marshalizer
+}
+
+func CreateEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error) {
 	if err := checkInputArgs(args); err != nil {
 		return nil, err
 	}
 
-	notifierHub := launchHubWithDispatchers(args.TcpPort)
+	notifierHub, err := launchHubWithDispatchers(args)
+	if err != nil {
+		return nil, err
+	}
 
 	notifierArgs := notifier.EventNotifierArgs{
 		Hub:         notifierHub,
@@ -42,32 +64,75 @@ func NewEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error) {
 	return eventNotifier, nil
 }
 
-func launchHubWithDispatchers(port string) dispatcher.Hub {
-	if port == "" {
-		port = ":5000"
-	}
-	if !strings.Contains(port, ":") {
-		port = fmt.Sprintf(":%s", port)
+func launchHubWithDispatchers(args *EventNotifierFactoryArgs) (dispatcher.Hub, error) {
+	notifierHub, err := makeHub(args.HubType)
+	if err != nil {
+		return nil, err
 	}
 
-	commonHub := hub.NewWsHub()
-	go commonHub.Run()
+	go notifierHub.Run()
 
-	gqlSrv := gql.NewGraphQLServer(commonHub)
+	var registerGQLHandler = func() {
+		gqlHandler := gql.NewGraphQLServer(notifierHub)
+		http.Handle("/query", gqlHandler)
+		http.Handle("/subscription", gqlHandler)
+	}
 
-	http.Handle("/query", gqlSrv)
-	http.Handle("/subscription", gqlSrv)
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		ws.Serve(commonHub, w, r)
-	})
+	var registerWsHandler = func() {
+		http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+			ws.Serve(notifierHub, w, r)
+		})
+		fmt.Println("a")
+	}
+
+	switch args.DispatchType {
+	case dispatchAll:
+		registerGQLHandler()
+		registerWsHandler()
+		break
+	case dispatchWs:
+		registerWsHandler()
+		break
+	case dispatchGql:
+		registerGQLHandler()
+		break
+	default:
+		return nil, ErrInvalidDispatchType
+	}
+
+	if args.TcpPort == "" {
+		args.TcpPort = fmt.Sprintf(":%s", defaultPort)
+	}
+	if !strings.Contains(args.TcpPort, separator) {
+		args.TcpPort = fmt.Sprintf(":%s", args.TcpPort)
+	}
 
 	go func(_port string) {
-		if err := http.ListenAndServe(_port, nil); err != nil {
-			panic(err)
+		if httpErr := http.ListenAndServe(_port, nil); httpErr != nil {
+			panic(httpErr)
 		}
-	}(port)
+	}(args.TcpPort)
 
-	return commonHub
+	return notifierHub, nil
+}
+
+func makeHub(hubType string) (dispatcher.Hub, error) {
+	if hubType == hubCommon {
+		commonHub := hub.NewWsHub()
+		return commonHub, nil
+	}
+
+	hubConfig := strings.Split(hubType, separator)
+	return tryMakeCustomHubForID(hubConfig[1])
+}
+
+func tryMakeCustomHubForID(id string) (dispatcher.Hub, error) {
+	if makeHubFunc, ok := availableHubDelegates[id]; ok {
+		customHub := makeHubFunc()
+		return customHub, nil
+	}
+
+	return nil, ErrInvalidCustomHubInput
 }
 
 func checkInputArgs(args *EventNotifierFactoryArgs) error {

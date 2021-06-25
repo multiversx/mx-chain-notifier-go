@@ -12,6 +12,7 @@ type EventDispatcher interface {
 }
 
 type Hub interface {
+	Run()
 	BroadcastChan() chan<- []data.Event
 	RegisterChan() chan<- EventDispatcher
 	UnregisterChan() chan<- EventDispatcher
