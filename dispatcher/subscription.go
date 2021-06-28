@@ -1,10 +1,11 @@
 package dispatcher
 
 import (
-	"github.com/ElrondNetwork/notifier-go/filters"
-	"github.com/google/uuid"
 	"strings"
 	"sync"
+
+	"github.com/ElrondNetwork/notifier-go/filters"
+	"github.com/google/uuid"
 )
 
 const (
