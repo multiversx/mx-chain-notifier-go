@@ -55,7 +55,7 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		Subscribe func(childComplexity int, data *model.SubscribeData) int
+		Subscribe func(childComplexity int, subscriptionEntries []*model.SubscriptionEntry) int
 	}
 }
 
@@ -63,7 +63,7 @@ type QueryResolver interface {
 	Empty(ctx context.Context) (*string, error)
 }
 type SubscriptionResolver interface {
-	Subscribe(ctx context.Context, data *model.SubscribeData) (<-chan []*model.Event, error)
+	Subscribe(ctx context.Context, subscriptionEntries []*model.SubscriptionEntry) (<-chan []*model.Event, error)
 }
 
 type executableSchema struct {
@@ -126,7 +126,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Subscription.Subscribe(childComplexity, args["data"].(*model.SubscribeData)), true
+		return e.complexity.Subscription.Subscribe(childComplexity, args["SubscriptionEntries"].([]*model.SubscriptionEntry)), true
 
 	}
 	return 0, false
@@ -206,8 +206,10 @@ type Event {
   data: String
 }
 
-input SubscribeData {
-  placeholder: String
+input SubscriptionEntry {
+  address: String
+  identifier: String
+  topics: [String]
 }
 
 type Query {
@@ -215,7 +217,7 @@ type Query {
 }
 
 type Subscription {
-  subscribe(data: SubscribeData): [Event]
+  subscribe(SubscriptionEntries: [SubscriptionEntry]): [Event]
 }
 `, BuiltIn: false},
 }
@@ -243,15 +245,15 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 func (ec *executionContext) field_Subscription_subscribe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.SubscribeData
-	if tmp, ok := rawArgs["data"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
-		arg0, err = ec.unmarshalOSubscribeData2ᚖgithubᚗcomᚋElrondNetworkᚋnotifierᚑgoᚋdispatcherᚋgqlᚋgraphᚋmodelᚐSubscribeData(ctx, tmp)
+	var arg0 []*model.SubscriptionEntry
+	if tmp, ok := rawArgs["SubscriptionEntries"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("SubscriptionEntries"))
+		arg0, err = ec.unmarshalOSubscriptionEntry2ᚕᚖgithubᚗcomᚋElrondNetworkᚋnotifierᚑgoᚋdispatcherᚋgqlᚋgraphᚋmodelᚐSubscriptionEntry(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["data"] = arg0
+	args["SubscriptionEntries"] = arg0
 	return args, nil
 }
 
@@ -549,7 +551,7 @@ func (ec *executionContext) _Subscription_subscribe(ctx context.Context, field g
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().Subscribe(rctx, args["data"].(*model.SubscribeData))
+		return ec.resolvers.Subscription().Subscribe(rctx, args["SubscriptionEntries"].([]*model.SubscriptionEntry))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1660,17 +1662,33 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputSubscribeData(ctx context.Context, obj interface{}) (model.SubscribeData, error) {
-	var it model.SubscribeData
+func (ec *executionContext) unmarshalInputSubscriptionEntry(ctx context.Context, obj interface{}) (model.SubscriptionEntry, error) {
+	var it model.SubscriptionEntry
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
 		switch k {
-		case "placeholder":
+		case "address":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("placeholder"))
-			it.Placeholder, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("address"))
+			it.Address, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "identifier":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("identifier"))
+			it.Identifier, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "topics":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("topics"))
+			it.Topics, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2414,11 +2432,35 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return graphql.MarshalString(*v)
 }
 
-func (ec *executionContext) unmarshalOSubscribeData2ᚖgithubᚗcomᚋElrondNetworkᚋnotifierᚑgoᚋdispatcherᚋgqlᚋgraphᚋmodelᚐSubscribeData(ctx context.Context, v interface{}) (*model.SubscribeData, error) {
+func (ec *executionContext) unmarshalOSubscriptionEntry2ᚕᚖgithubᚗcomᚋElrondNetworkᚋnotifierᚑgoᚋdispatcherᚋgqlᚋgraphᚋmodelᚐSubscriptionEntry(ctx context.Context, v interface{}) ([]*model.SubscriptionEntry, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputSubscribeData(ctx, v)
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*model.SubscriptionEntry, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOSubscriptionEntry2ᚖgithubᚗcomᚋElrondNetworkᚋnotifierᚑgoᚋdispatcherᚋgqlᚋgraphᚋmodelᚐSubscriptionEntry(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalOSubscriptionEntry2ᚖgithubᚗcomᚋElrondNetworkᚋnotifierᚑgoᚋdispatcherᚋgqlᚋgraphᚋmodelᚐSubscriptionEntry(ctx context.Context, v interface{}) (*model.SubscriptionEntry, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSubscriptionEntry(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

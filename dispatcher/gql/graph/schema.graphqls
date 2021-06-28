@@ -9,8 +9,10 @@ type Event {
   data: String
 }
 
-input SubscribeData {
-  placeholder: String
+input SubscriptionEntry {
+  address: String
+  identifier: String
+  topics: [String]
 }
 
 type Query {
@@ -18,5 +20,5 @@ type Query {
 }
 
 type Subscription {
-  subscribe(data: SubscribeData): [Event]
+  subscribe(SubscriptionEntries: [SubscriptionEntry]): [Event]
 }

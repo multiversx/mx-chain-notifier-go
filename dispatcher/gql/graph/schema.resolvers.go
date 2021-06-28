@@ -3,6 +3,8 @@ package graph
 import (
 	"context"
 
+	"github.com/ElrondNetwork/notifier-go/dispatcher"
+
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql/graph/generated"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql/graph/model"
 )
@@ -11,10 +13,18 @@ func (r *queryResolver) Empty(ctx context.Context) (*string, error) {
 	return new(string), nil
 }
 
-func (r *subscriptionResolver) Subscribe(ctx context.Context, data *model.SubscribeData) (<-chan []*model.Event, error) {
+func (r *subscriptionResolver) Subscribe(
+	ctx context.Context,
+	subscriptionEntries []*model.SubscriptionEntry,
+) (<-chan []*model.Event, error) {
 	gqlDispatcher, _ := NewGraphqlDispatcher()
 	r.hub.RegisterChan() <- gqlDispatcher
-	//r.hub.Subscribe(event {data ...})
+
+	subscribeEvent := dispatcher.SubscribeEvent{
+		DispatcherID:        gqlDispatcher.GetID(),
+		SubscriptionEntries: subscriptionEntriesNoPtr(subscriptionEntries),
+	}
+	r.hub.Subscribe(subscribeEvent)
 
 	dispatchChan := make(chan []*model.Event, 1)
 
@@ -28,6 +38,24 @@ func (r *subscriptionResolver) Subscribe(ctx context.Context, data *model.Subscr
 	}()
 
 	return dispatchChan, nil
+}
+
+func subscriptionEntriesNoPtr(
+	subscriptionEntries []*model.SubscriptionEntry,
+) []dispatcher.SubscriptionEntry {
+	var subEntriesNoPtr []dispatcher.SubscriptionEntry
+	for _, entry := range subscriptionEntries {
+		var topicsNoPtr []string
+		for _, topic := range entry.Topics {
+			topicsNoPtr = append(topicsNoPtr, *topic)
+		}
+		subEntriesNoPtr = append(subEntriesNoPtr, dispatcher.SubscriptionEntry{
+			Address:    *entry.Address,
+			Identifier: *entry.Identifier,
+			Topics:     topicsNoPtr,
+		})
+	}
+	return subEntriesNoPtr
 }
 
 // Query returns generated.QueryResolver implementation.

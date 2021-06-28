@@ -3,43 +3,32 @@ package dispatcher
 import (
 	"strings"
 	"sync"
+
+	"github.com/ElrondNetwork/notifier-go/filters"
+	"github.com/google/uuid"
 )
 
 const (
 	erdTag = "erd"
 )
 
-const (
-	// MatchAll signals that all events will be matched
-	MatchAll = "*"
-
-	// MatchAddress signals that events will be filtered by (address)
-	MatchAddress = "match:address"
-
-	// MatchIdentifier signals that events will be filtered by (address,identifier)
-	MatchIdentifier = "match:identifier"
-
-	// MatchTopics signals that events will be filtered by (address,identifier,[topics_pattern])
-	MatchTopics = "match:topics"
-)
-
 type SubscribeEvent struct {
-	Caller             EventDispatcher
-	SubscriptionValues []SubscriptionValues `json:"subscriptionValues"`
+	DispatcherID        uuid.UUID
+	SubscriptionEntries []SubscriptionEntry `json:"subscriptionEntries"`
 }
 
-type SubscriptionValues struct {
+type SubscriptionEntry struct {
 	Address    string   `json:"address"`
 	Identifier string   `json:"identifier"`
 	Topics     []string `json:"topics"`
 }
 
 type Subscription struct {
-	Address    string
-	Identifier string
-	Topics     []string
-	MatchLevel string
-	Subscriber EventDispatcher
+	Address      string
+	Identifier   string
+	Topics       []string
+	MatchLevel   string
+	DispatcherID uuid.UUID
 }
 
 type SubscriptionMap struct {
@@ -55,22 +44,22 @@ func NewSubscriptionMap() *SubscriptionMap {
 }
 
 func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
-	if event.SubscriptionValues == nil || len(event.SubscriptionValues) == 0 {
-		sm.appendSubscription(MatchAll, Subscription{
-			Subscriber: event.Caller,
-			MatchLevel: MatchAll,
+	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
+		sm.appendSubscription(filters.MatchAll, Subscription{
+			DispatcherID: event.DispatcherID,
+			MatchLevel:   filters.MatchAll,
 		})
 		return
 	}
 
-	for _, subValues := range event.SubscriptionValues {
+	for _, subValues := range event.SubscriptionEntries {
 		matchLevel := sm.matchLevelFromInput(subValues)
 		subscription := Subscription{
-			Address:    subValues.Address,
-			Identifier: subValues.Identifier,
-			Topics:     subValues.Topics,
-			Subscriber: event.Caller,
-			MatchLevel: matchLevel,
+			Address:      subValues.Address,
+			Identifier:   subValues.Identifier,
+			Topics:       subValues.Topics,
+			DispatcherID: event.DispatcherID,
+			MatchLevel:   matchLevel,
 		}
 		sm.appendSubscription(subscription.Address, subscription)
 	}
@@ -82,22 +71,22 @@ func (sm *SubscriptionMap) Subscriptions() map[string][]Subscription {
 	return sm.subscriptions
 }
 
-func (sm *SubscriptionMap) matchLevelFromInput(subValues SubscriptionValues) string {
+func (sm *SubscriptionMap) matchLevelFromInput(subValues SubscriptionEntry) string {
 	hasAddress := subValues.Address != "" && strings.Contains(subValues.Address, erdTag)
 	hasIdentifier := subValues.Identifier != ""
 	hasTopics := len(subValues.Topics) > 0
 
 	if hasAddress && hasIdentifier && hasTopics {
-		return MatchTopics
+		return filters.MatchTopics
 	}
 	if hasAddress && hasIdentifier {
-		return MatchIdentifier
+		return filters.MatchIdentifier
 	}
 	if hasAddress {
-		return MatchAddress
+		return filters.MatchAddress
 	}
 
-	return MatchAll
+	return filters.MatchAll
 }
 
 func (sm *SubscriptionMap) appendSubscription(key string, sub Subscription) {

@@ -175,7 +175,7 @@ func (wd *websocketDispatcher) trySendSubscribeEvent(data []byte) {
 		log.Println(err)
 		return
 	}
-	subscribeEvent.Caller = wd
+	subscribeEvent.DispatcherID = wd.id
 	wd.hub.Subscribe(subscribeEvent)
 }
 
