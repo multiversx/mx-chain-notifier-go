@@ -33,6 +33,7 @@ func (r *subscriptionResolver) Subscribe(
 
 	go func() {
 		<-ctx.Done()
+		r.hub.UnregisterChan() <- gqlDispatcher
 		r.RemoveDispatchChan(gqlDispatcher.GetID())
 	}()
 
