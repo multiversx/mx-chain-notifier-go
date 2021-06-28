@@ -90,8 +90,12 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 		}
 	}
 
+	wh.rwMut.RLock()
+	defer wh.rwMut.RUnlock()
 	for id, eventValues := range dispatchersMap {
-		wh.dispatchers[id].PushEvents(eventValues)
+		if d, ok := wh.dispatchers[id]; ok {
+			d.PushEvents(eventValues)
+		}
 	}
 }
 
