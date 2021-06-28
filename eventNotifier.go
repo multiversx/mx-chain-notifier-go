@@ -26,7 +26,30 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 }
 
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
-	en.hub.BroadcastChan() <- []data.Event{}
+	var logEvents []nodeData.EventHandler
+	for _, handler := range args.TransactionsPool.Logs {
+		if !handler.IsInterfaceNil() {
+			logEvents = append(logEvents, handler.GetLogEvents()...)
+		}
+	}
+
+	var events []data.Event
+	for _, eventHandler := range logEvents {
+		if !eventHandler.IsInterfaceNil() {
+			var topics []string
+			for _, topic := range eventHandler.GetTopics() {
+				topics = append(topics, string(topic))
+			}
+			events = append(events, data.Event{
+				Address:    string(eventHandler.GetAddress()),
+				Identifier: string(eventHandler.GetIdentifier()),
+				Data:       string(eventHandler.GetData()),
+				Topics:     topics,
+			})
+		}
+	}
+
+	en.hub.BroadcastChan() <- events
 }
 
 func (en *eventNotifier) Close() error {
