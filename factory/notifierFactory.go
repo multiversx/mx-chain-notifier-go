@@ -118,7 +118,7 @@ func launchHubWithDispatchers(args *EventNotifierFactoryArgs) (dispatcher.Hub, e
 
 func makeHub(hubType string) (dispatcher.Hub, error) {
 	if hubType == hubCommon {
-		commonHub := hub.NewWsHub()
+		commonHub := hub.NewCommonHub()
 		return commonHub, nil
 	}
 
