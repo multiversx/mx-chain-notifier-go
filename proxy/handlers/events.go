@@ -9,6 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	baseEventsEndpoint = "/events"
+	pushEventsEndpoint = "/push"
+)
+
 type eventsHandler struct {
 	notifierHub dispatcher.Hub
 	endpoints   []EndpointHandler
@@ -21,9 +26,9 @@ func NewEventsHandler(
 	h := &eventsHandler{notifierHub: notifierHub}
 
 	h.endpoints = []EndpointHandler{
-		{Method: http.MethodPost, Path: "/push", HandlerFunc: h.pushEvents},
+		{Method: http.MethodPost, Path: pushEventsEndpoint, HandlerFunc: h.pushEvents},
 	}
-	groupHandler.AddEndpointHandlers("/events", h.endpoints)
+	groupHandler.AddEndpointHandlers(baseEventsEndpoint, h.endpoints)
 	return nil
 }
 

@@ -27,6 +27,8 @@ type httpClient struct {
 
 type HttpClientArgs struct {
 	UseAuthorization bool
+	Username         string
+	Password         string
 	BaseUrl          string
 	Marshalizer      marshal.Marshalizer
 }

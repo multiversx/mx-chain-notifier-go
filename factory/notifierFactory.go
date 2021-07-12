@@ -25,6 +25,8 @@ func CreateEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error
 
 	httpClient := client.NewHttpClient(client.HttpClientArgs{
 		UseAuthorization: args.UseAuthorization,
+		Username:         args.Username,
+		Password:         args.Password,
 		BaseUrl:          args.ProxyUrl,
 		Marshalizer:      args.Marshalizer,
 	})

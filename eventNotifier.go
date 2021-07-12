@@ -16,6 +16,11 @@ type eventNotifier struct {
 	marshalizer   marshal.Marshalizer
 }
 
+type EventNotifierArgs struct {
+	HttpClient  client.HttpClient
+	Marshalizer marshal.Marshalizer
+}
+
 func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 	return &eventNotifier{
 		isNilNotifier: false,
