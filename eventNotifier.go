@@ -60,6 +60,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 			})
 		}
 	}
+
 	err := en.httpClient.Post(pushEventEndpoint, events, nil)
 	if err != nil {
 		log.Println(err)
