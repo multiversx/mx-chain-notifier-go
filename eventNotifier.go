@@ -1,13 +1,21 @@
 package notifier
 
 import (
+	"log"
+
+	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/proxy/client"
+
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	nodeData "github.com/ElrondNetwork/elrond-go/data"
 	"github.com/ElrondNetwork/elrond-go/data/indexer"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
-	"github.com/ElrondNetwork/notifier-go/proxy/client"
+)
+
+const (
+	pushEventEndpoint = "/events/push"
 )
 
 type eventNotifier struct {
@@ -30,6 +38,33 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 }
 
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
+	var logEvents []nodeData.EventHandler
+	for _, handler := range args.TransactionsPool.Logs {
+		if !handler.IsInterfaceNil() {
+			logEvents = append(logEvents, handler.GetLogEvents()...)
+		}
+	}
+
+	var events []data.Event
+	for _, eventHandler := range logEvents {
+		if !eventHandler.IsInterfaceNil() {
+			var topics []string
+			for _, topic := range eventHandler.GetTopics() {
+				topics = append(topics, string(topic))
+			}
+			events = append(events, data.Event{
+				Address:    string(eventHandler.GetAddress()),
+				Identifier: string(eventHandler.GetIdentifier()),
+				Data:       string(eventHandler.GetData()),
+				Topics:     topics,
+			})
+		}
+	}
+
+	err := en.httpClient.Post(pushEventEndpoint, events, nil)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (en *eventNotifier) Close() error {
