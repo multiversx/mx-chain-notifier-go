@@ -1,15 +1,17 @@
 package notifier
 
 import (
+	"log"
+
+	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/proxy/client"
+
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	nodeData "github.com/ElrondNetwork/elrond-go/data"
 	"github.com/ElrondNetwork/elrond-go/data/indexer"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/proxy/client"
-	"log"
 )
 
 const (
