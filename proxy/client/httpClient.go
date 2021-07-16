@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -37,7 +38,6 @@ func NewHttpClient(args HttpClientArgs) *httpClient {
 	return &httpClient{
 		useAuthorization: args.UseAuthorization,
 		baseUrl:          args.BaseUrl,
-		marshalizer:      args.Marshalizer,
 	}
 }
 
@@ -46,13 +46,13 @@ func (h *httpClient) Post(
 	payload interface{},
 	response interface{},
 ) error {
-	jsonData, err := h.marshalizer.Marshal(payload)
+	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		return err
 	}
 
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/%s", h.baseUrl, route)
+	url := fmt.Sprintf("%s%s", h.baseUrl, route)
 	req, err := http.NewRequest(httpPost, url, bytes.NewReader(jsonData))
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (h *httpClient) Post(
 		return nil
 	}
 
-	return h.marshalizer.Unmarshal(response, resBody)
+	return json.Unmarshal(resBody, &response)
 }
 
 func (h *httpClient) setAuthorization(req *http.Request) {

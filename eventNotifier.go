@@ -2,15 +2,14 @@ package notifier
 
 import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/proxy/client"
-
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	nodeData "github.com/ElrondNetwork/elrond-go/data"
 	"github.com/ElrondNetwork/elrond-go/data/indexer"
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
+	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/proxy/client"
 )
 
 var log = logger.GetOrCreate("outport/eventNotifier")
@@ -52,6 +51,10 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 		}
 	}
 
+	if len(logEvents) == 0 {
+		return
+	}
+
 	var events []data.Event
 	for _, eventHandler := range logEvents {
 		if !eventHandler.IsInterfaceNil() {
@@ -67,7 +70,9 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 			})
 		}
 	}
+
 	log.Debug("extracted events from block logs", "num events", len(events))
+
 	err := en.httpClient.Post(pushEventEndpoint, events, nil)
 	if err != nil {
 		log.Error("error while posting event data", "err", err.Error())
