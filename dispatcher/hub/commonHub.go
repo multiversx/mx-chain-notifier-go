@@ -65,7 +65,7 @@ func (wh *commonHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 func (wh *commonHub) handleBroadcast(events []data.Event) {
 	subscriptions := wh.subscriptionMap.Subscriptions()
 
-	for _, subscription := range subscriptions[filters.MatchAll] {
+	for _, subscription := range subscriptions[dispatcher.MatchAll] {
 		wh.dispatchers[subscription.DispatcherID].PushEvents(events)
 	}
 
@@ -90,8 +90,12 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 		}
 	}
 
+	wh.rwMut.RLock()
+	defer wh.rwMut.RUnlock()
 	for id, eventValues := range dispatchersMap {
-		wh.dispatchers[id].PushEvents(eventValues)
+		if d, ok := wh.dispatchers[id]; ok {
+			d.PushEvents(eventValues)
+		}
 	}
 }
 
