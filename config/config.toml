@@ -1,0 +1,13 @@
+[ConnectorApi]
+    # The port on which the Hub listens for subscriptions
+    Port = "5000"
+
+    # The type of the hub. Options: | common | custom:<your_hub_id> |
+    # Useed for custom implemenations for subscriptions/events filtering
+    # Defaults to: common
+    HubType = "common"
+
+    # The dispathing type. Options: | websocket | graphql | dispatch:* |
+    # The driver can receive subscribe events and broadcast on one or more channels
+    # Defaults to: websocket.
+    DispatchType = "websocket"

@@ -7,26 +7,29 @@ import (
 	"github.com/ElrondNetwork/elrond-go/data/state"
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/ElrondNetwork/notifier-go/proxy/client"
 )
 
 type eventNotifier struct {
 	isNilNotifier bool
-	hub           dispatcher.Hub
+	httpClient    client.HttpClient
 	marshalizer   marshal.Marshalizer
+}
+
+type EventNotifierArgs struct {
+	HttpClient  client.HttpClient
+	Marshalizer marshal.Marshalizer
 }
 
 func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 	return &eventNotifier{
 		isNilNotifier: false,
-		hub:           args.Hub,
+		httpClient:    args.HttpClient,
 		marshalizer:   args.Marshalizer,
 	}, nil
 }
 
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
-	en.hub.BroadcastChan() <- []data.Event{}
 }
 
 func (en *eventNotifier) Close() error {
