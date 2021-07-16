@@ -38,6 +38,10 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 }
 
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
+	if args.TransactionsPool == nil {
+		return
+	}
+
 	var logEvents []nodeData.EventHandler
 	for _, handler := range args.TransactionsPool.Logs {
 		if !handler.IsInterfaceNil() {
