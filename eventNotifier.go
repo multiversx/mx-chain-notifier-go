@@ -9,6 +9,11 @@ import (
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
+	"log"
+)
+
+const (
+	pushEventEndpoint = "/events/push"
 )
 
 type eventNotifier struct {
@@ -52,6 +57,10 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 				Topics:     topics,
 			})
 		}
+	}
+	err := en.httpClient.Post(pushEventEndpoint, events, nil)
+	if err != nil {
+		log.Println(err)
 	}
 }
 
