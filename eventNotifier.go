@@ -1,8 +1,7 @@
 package notifier
 
 import (
-	"log"
-
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
 
@@ -13,6 +12,8 @@ import (
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 )
+
+var log = logger.GetOrCreate("outport/eventNotifier")
 
 const (
 	pushEventEndpoint = "/events/push"
@@ -38,10 +39,12 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 }
 
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
+	log.Debug("SaveBlock called")
 	if args.TransactionsPool == nil {
 		return
 	}
 
+	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
 	var logEvents []nodeData.EventHandler
 	for _, handler := range args.TransactionsPool.Logs {
 		if !handler.IsInterfaceNil() {
@@ -64,10 +67,10 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 			})
 		}
 	}
-
+	log.Debug("extracted events from block logs", "num events", len(events))
 	err := en.httpClient.Post(pushEventEndpoint, events, nil)
 	if err != nil {
-		log.Println(err)
+		log.Error("error while posting event data", "err", err.Error())
 	}
 }
 
