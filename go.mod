@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/99designs/gqlgen v0.13.0
-	github.com/ElrondNetwork/elrond-go v1.2.5-0.20210716101146-d54a8831e764
+	github.com/ElrondNetwork/elrond-go v1.2.5-0.20210716103052-679f8862a346
 	github.com/gin-gonic/gin v1.7.2
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
