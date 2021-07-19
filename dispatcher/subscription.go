@@ -49,6 +49,7 @@ type SubscriptionMap struct {
 	subscriptions map[string][]Subscription
 }
 
+// NewSubscriptionMap initializes an empty map for subscriptions
 func NewSubscriptionMap() *SubscriptionMap {
 	return &SubscriptionMap{
 		rwMut:         sync.RWMutex{},
@@ -56,6 +57,8 @@ func NewSubscriptionMap() *SubscriptionMap {
 	}
 }
 
+// MatchSubscribeEvent creates a subscription entry in the subscriptions map
+// It assigns each SubscribeEvent a match level from the input provided
 func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
 		sm.appendSubscription(MatchAll, Subscription{
@@ -78,6 +81,7 @@ func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 	}
 }
 
+// Subscriptions returns the subscriptions map
 func (sm *SubscriptionMap) Subscriptions() map[string][]Subscription {
 	sm.rwMut.RLock()
 	defer sm.rwMut.RUnlock()

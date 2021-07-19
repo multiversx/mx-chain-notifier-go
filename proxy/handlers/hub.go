@@ -38,6 +38,8 @@ type hubHandler struct {
 	endpoints   []EndpointHandler
 }
 
+// NewHubHandler registers handlers for the /hub group
+// It only registers the specified hub implementation and its corresponding dispatchers
 func NewHubHandler(
 	config *config.GeneralConfig,
 	groupHandler *groupHandler,

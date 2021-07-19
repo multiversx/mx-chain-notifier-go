@@ -29,6 +29,8 @@ type EventNotifierArgs struct {
 	Marshalizer marshal.Marshalizer
 }
 
+// NewEventNotifier creates a new instance of the eventNotifier
+// It implements all methods of process.Indexer
 func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 	return &eventNotifier{
 		isNilNotifier: false,

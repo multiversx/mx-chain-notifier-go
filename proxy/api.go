@@ -18,6 +18,7 @@ type webServer struct {
 	generalConfig *config.GeneralConfig
 }
 
+// NewWebServer creates and configures an instance of webServer
 func NewWebServer(generalConfig *config.GeneralConfig) (*webServer, error) {
 	router := gin.Default()
 	groupHandler := handlers.NewGroupHandler()
@@ -43,6 +44,8 @@ func NewWebServer(generalConfig *config.GeneralConfig) (*webServer, error) {
 	}, nil
 }
 
+// Run starts the server and the Hub as goroutines
+// It returns an instance of http.Server
 func (w *webServer) Run() *http.Server {
 	go w.notifierHub.Run()
 

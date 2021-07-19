@@ -34,6 +34,7 @@ type HttpClientArgs struct {
 	Marshalizer      marshal.Marshalizer
 }
 
+// NewHttpClient creates an instance of httpClient which is a wrapper for http.Client
 func NewHttpClient(args HttpClientArgs) *httpClient {
 	return &httpClient{
 		useAuthorization: args.UseAuthorization,
@@ -41,6 +42,7 @@ func NewHttpClient(args HttpClientArgs) *httpClient {
 	}
 }
 
+// Post can be used to send POST requests. It handles marshalling to/from json
 func (h *httpClient) Post(
 	route string,
 	payload interface{},

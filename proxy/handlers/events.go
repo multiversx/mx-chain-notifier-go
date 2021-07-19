@@ -19,6 +19,7 @@ type eventsHandler struct {
 	endpoints   []EndpointHandler
 }
 
+// NewEventsHandler registers handlers for the /events group
 func NewEventsHandler(
 	notifierHub dispatcher.Hub,
 	groupHandler *groupHandler,

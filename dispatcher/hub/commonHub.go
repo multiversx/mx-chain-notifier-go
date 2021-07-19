@@ -31,6 +31,7 @@ func NewCommonHub() *commonHub {
 	}
 }
 
+// Run is launched as a goroutine and listens for events on the exposed channels
 func (wh *commonHub) Run() {
 	for {
 		select {
@@ -46,18 +47,23 @@ func (wh *commonHub) Run() {
 	}
 }
 
+// Subscribe is used by a dispatcher to send a dispatcher.SubscribeEvent
 func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 	wh.subscriptionMap.MatchSubscribeEvent(event)
 }
 
+// BroadcastChan returns a receive only channel on which events are pushed by producers
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (wh *commonHub) BroadcastChan() chan<- []data.Event {
 	return wh.broadcast
 }
 
+// RegisterChan returns a receive only channel used to register dispatchers
 func (wh *commonHub) RegisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.register
 }
 
+// UnregisterChan return a receive only channel used by a dispatcher to signal it has disconnected
 func (wh *commonHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.unregister
 }

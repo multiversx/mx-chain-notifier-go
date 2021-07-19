@@ -4,15 +4,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
-	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql/graph"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql/graph/generated"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/gorilla/websocket"
 )
 
+// NewGraphQLServer creates and instance of handler.Server
+// and creates an executable schema from the resolvers
 func NewGraphQLServer(hub dispatcher.Hub) *handler.Server {
 	resolver := graph.NewResolver(hub)
 
