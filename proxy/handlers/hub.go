@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/ElrondNetwork/notifier-go/filters"
 	"net/http"
 	"strings"
 
@@ -108,7 +109,8 @@ func (h *hubHandler) appendEndpointHandler(method, path string, handler gin.Hand
 
 func makeHub(hubType string) (dispatcher.Hub, error) {
 	if hubType == hubCommon {
-		commonHub := hub.NewCommonHub()
+		eventFilter := filters.NewDefaultFilter()
+		commonHub := hub.NewCommonHub(eventFilter)
 		return commonHub, nil
 	}
 

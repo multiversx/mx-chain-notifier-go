@@ -19,10 +19,10 @@ type commonHub struct {
 	broadcast       chan []data.Event
 }
 
-func NewCommonHub() *commonHub {
+func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 	return &commonHub{
 		rwMut:           sync.RWMutex{},
-		filter:          filters.NewDefaultFilter(),
+		filter:          eventFilter,
 		subscriptionMap: dispatcher.NewSubscriptionMap(),
 		dispatchers:     make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:        make(chan dispatcher.EventDispatcher),
