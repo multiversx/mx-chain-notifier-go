@@ -14,6 +14,7 @@ type ConnectorApiConfig struct {
 	DispatchType string
 }
 
+// LoadConfig return a GeneralConfig instance by reading the provided toml file
 func LoadConfig() (*GeneralConfig, error) {
 	cfg := &GeneralConfig{}
 	err := core.LoadTomlFile(cfg, configPath)

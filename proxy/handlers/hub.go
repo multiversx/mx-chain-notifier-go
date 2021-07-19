@@ -1,17 +1,16 @@
 package handlers
 
 import (
-	"github.com/ElrondNetwork/notifier-go/filters"
 	"net/http"
 	"strings"
 
+	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/hub"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
-
-	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/gin-gonic/gin"
 )
 

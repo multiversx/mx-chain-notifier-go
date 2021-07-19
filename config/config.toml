@@ -3,7 +3,7 @@
     Port = "5000"
 
     # The type of the hub. Options: | common | custom:<your_hub_id> |
-    # Used for custom implemenations for subscriptions/events filtering
+    # Used for custom implementations for subscriptions/events filtering
     # Defaults to: common
     HubType = "common"
 

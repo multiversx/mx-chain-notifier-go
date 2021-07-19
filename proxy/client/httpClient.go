@@ -13,7 +13,6 @@ import (
 const (
 	contentTypeKey   = "Content-Type"
 	contentTypeValue = "application/json"
-	httpPost         = "POST"
 )
 
 type HttpClient interface {
@@ -55,7 +54,7 @@ func (h *httpClient) Post(
 
 	client := &http.Client{}
 	url := fmt.Sprintf("%s%s", h.baseUrl, route)
-	req, err := http.NewRequest(httpPost, url, bytes.NewReader(jsonData))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(jsonData))
 	if err != nil {
 		return err
 	}

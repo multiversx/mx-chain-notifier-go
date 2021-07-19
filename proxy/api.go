@@ -9,6 +9,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/proxy/handlers"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +22,8 @@ type webServer struct {
 // NewWebServer creates and configures an instance of webServer
 func NewWebServer(generalConfig *config.GeneralConfig) (*webServer, error) {
 	router := gin.Default()
+	router.Use(cors.Default())
+
 	groupHandler := handlers.NewGroupHandler()
 
 	hubHandler, err := handlers.NewHubHandler(generalConfig, groupHandler)

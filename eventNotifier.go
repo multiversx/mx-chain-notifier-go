@@ -40,7 +40,7 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 }
 
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
-	log.Debug("SaveBlock called")
+	log.Debug("SaveBlock called at block", "block hash", args.HeaderHash)
 	if args.TransactionsPool == nil {
 		return
 	}

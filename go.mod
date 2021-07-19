@@ -6,6 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.13.0
 	github.com/ElrondNetwork/elrond-go v1.2.5-0.20210716103052-679f8862a346
 	github.com/ElrondNetwork/elrond-go-logger v1.0.4
+	github.com/gin-contrib/cors v0.0.0-20190301062745-f9e10995c85a
 	github.com/gin-gonic/gin v1.7.2
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
