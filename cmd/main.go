@@ -19,7 +19,7 @@ import (
 
 const (
 	defaultLogsPath    = "logs"
-	logFilePrefix      = "elrond-adapter"
+	logFilePrefix      = "event-notifier"
 	logFileLifeSpanSec = 86400
 )
 
@@ -76,6 +76,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		logLevel,
 		logSaveFile,
+		generalConfigFile,
 		workingDirectory,
 	}
 	app.Authors = []cli.Author{
