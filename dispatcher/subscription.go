@@ -68,12 +68,12 @@ func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 		return
 	}
 
-	for _, subValues := range event.SubscriptionEntries {
-		matchLevel := sm.matchLevelFromInput(subValues)
+	for _, subEntry := range event.SubscriptionEntries {
+		matchLevel := sm.matchLevelFromInput(subEntry)
 		subscription := Subscription{
-			Address:      subValues.Address,
-			Identifier:   subValues.Identifier,
-			Topics:       subValues.Topics,
+			Address:      subEntry.Address,
+			Identifier:   subEntry.Identifier,
+			Topics:       subEntry.Topics,
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   matchLevel,
 		}
@@ -88,10 +88,10 @@ func (sm *SubscriptionMap) Subscriptions() map[string][]Subscription {
 	return sm.subscriptions
 }
 
-func (sm *SubscriptionMap) matchLevelFromInput(subValues SubscriptionEntry) string {
-	hasAddress := subValues.Address != "" && strings.Contains(subValues.Address, erdTag)
-	hasIdentifier := subValues.Identifier != ""
-	hasTopics := len(subValues.Topics) > 0
+func (sm *SubscriptionMap) matchLevelFromInput(subEntry SubscriptionEntry) string {
+	hasAddress := subEntry.Address != "" && strings.Contains(subEntry.Address, erdTag)
+	hasIdentifier := subEntry.Identifier != ""
+	hasTopics := len(subEntry.Topics) > 0
 
 	if hasAddress && hasIdentifier && hasTopics {
 		return MatchTopics

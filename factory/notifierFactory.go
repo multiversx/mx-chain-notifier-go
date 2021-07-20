@@ -1,12 +1,17 @@
 package factory
 
 import (
+	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
 	"github.com/ElrondNetwork/elrond-go/core"
 	"github.com/ElrondNetwork/elrond-go/core/check"
 	"github.com/ElrondNetwork/elrond-go/marshal"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/notifier-go"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
+)
+
+const (
+	pubkeyLen = 32
 )
 
 type EventNotifierFactoryArgs struct {
@@ -31,9 +36,15 @@ func CreateEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error
 		Marshalizer:      args.Marshalizer,
 	})
 
+	pubkeyConv, err := pubkeyConverter.NewBech32PubkeyConverter(pubkeyLen)
+	if err != nil {
+		return nil, err
+	}
+
 	notifierArgs := notifier.EventNotifierArgs{
-		HttpClient:  httpClient,
-		Marshalizer: args.Marshalizer,
+		HttpClient:      httpClient,
+		Marshalizer:     args.Marshalizer,
+		PubKeyConverter: pubkeyConv,
 	}
 
 	eventNotifier, err := notifier.NewEventNotifier(notifierArgs)

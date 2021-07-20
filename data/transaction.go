@@ -56,6 +56,6 @@ type TxLog struct {
 type Event struct {
 	Address    string   `json:"address"`
 	Identifier string   `json:"identifier"`
-	Topics     []string `json:"topics"`
-	Data       string   `json:"data"`
+	Topics     [][]byte `json:"topics"`
+	Data       []byte   `json:"data"`
 }
