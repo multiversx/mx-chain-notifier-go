@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/stretchr/testify v1.7.0
+	github.com/urfave/cli v1.22.5
 	github.com/vektah/gqlparser/v2 v2.1.0
 )
 
