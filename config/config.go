@@ -2,8 +2,6 @@ package config
 
 import "github.com/ElrondNetwork/elrond-go/core"
 
-const configPath = "./config/config.toml"
-
 type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
 }
@@ -15,9 +13,9 @@ type ConnectorApiConfig struct {
 }
 
 // LoadConfig return a GeneralConfig instance by reading the provided toml file
-func LoadConfig() (*GeneralConfig, error) {
+func LoadConfig(filePath string) (*GeneralConfig, error) {
 	cfg := &GeneralConfig{}
-	err := core.LoadTomlFile(cfg, configPath)
+	err := core.LoadTomlFile(cfg, filePath)
 	if err != nil {
 		return nil, err
 	}
