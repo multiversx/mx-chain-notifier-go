@@ -4,8 +4,21 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/google/uuid"
+)
+
+const (
+	// MatchAll signals that all events will be matched
+	MatchAll = "*"
+
+	// MatchAddress signals that events will be filtered by (address)
+	MatchAddress = "match:address"
+
+	// MatchIdentifier signals that events will be filtered by (address,identifier)
+	MatchIdentifier = "match:identifier"
+
+	// MatchTopics signals that events will be filtered by (address,identifier,[topics_pattern])
+	MatchTopics = "match:topics"
 )
 
 const (
@@ -36,6 +49,7 @@ type SubscriptionMap struct {
 	subscriptions map[string][]Subscription
 }
 
+// NewSubscriptionMap initializes an empty map for subscriptions
 func NewSubscriptionMap() *SubscriptionMap {
 	return &SubscriptionMap{
 		rwMut:         sync.RWMutex{},
@@ -43,11 +57,13 @@ func NewSubscriptionMap() *SubscriptionMap {
 	}
 }
 
+// MatchSubscribeEvent creates a subscription entry in the subscriptions map
+// It assigns each SubscribeEvent a match level from the input provided
 func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
-		sm.appendSubscription(filters.MatchAll, Subscription{
+		sm.appendSubscription(MatchAll, Subscription{
 			DispatcherID: event.DispatcherID,
-			MatchLevel:   filters.MatchAll,
+			MatchLevel:   MatchAll,
 		})
 		return
 	}
@@ -65,6 +81,7 @@ func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 	}
 }
 
+// Subscriptions returns the subscriptions map
 func (sm *SubscriptionMap) Subscriptions() map[string][]Subscription {
 	sm.rwMut.RLock()
 	defer sm.rwMut.RUnlock()
@@ -77,16 +94,16 @@ func (sm *SubscriptionMap) matchLevelFromInput(subValues SubscriptionEntry) stri
 	hasTopics := len(subValues.Topics) > 0
 
 	if hasAddress && hasIdentifier && hasTopics {
-		return filters.MatchTopics
+		return MatchTopics
 	}
 	if hasAddress && hasIdentifier {
-		return filters.MatchIdentifier
+		return MatchIdentifier
 	}
 	if hasAddress {
-		return filters.MatchAddress
+		return MatchAddress
 	}
 
-	return filters.MatchAll
+	return MatchAll
 }
 
 func (sm *SubscriptionMap) appendSubscription(key string, sub Subscription) {

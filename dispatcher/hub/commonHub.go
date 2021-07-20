@@ -19,10 +19,10 @@ type commonHub struct {
 	broadcast       chan []data.Event
 }
 
-func NewCommonHub() *commonHub {
+func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 	return &commonHub{
 		rwMut:           sync.RWMutex{},
-		filter:          filters.NewDefaultFilter(),
+		filter:          eventFilter,
 		subscriptionMap: dispatcher.NewSubscriptionMap(),
 		dispatchers:     make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:        make(chan dispatcher.EventDispatcher),
@@ -31,6 +31,7 @@ func NewCommonHub() *commonHub {
 	}
 }
 
+// Run is launched as a goroutine and listens for events on the exposed channels
 func (wh *commonHub) Run() {
 	for {
 		select {
@@ -46,26 +47,31 @@ func (wh *commonHub) Run() {
 	}
 }
 
+// Subscribe is used by a dispatcher to send a dispatcher.SubscribeEvent
 func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 	wh.subscriptionMap.MatchSubscribeEvent(event)
 }
 
-func (wh *commonHub) BroadcastChan() chan []data.Event {
+// BroadcastChan returns a receive only channel on which events are pushed by producers
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (wh *commonHub) BroadcastChan() chan<- []data.Event {
 	return wh.broadcast
 }
 
-func (wh *commonHub) RegisterChan() chan dispatcher.EventDispatcher {
+// RegisterChan returns a receive only channel used to register dispatchers
+func (wh *commonHub) RegisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.register
 }
 
-func (wh *commonHub) UnregisterChan() chan dispatcher.EventDispatcher {
+// UnregisterChan return a receive only channel used by a dispatcher to signal it has disconnected
+func (wh *commonHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.unregister
 }
 
 func (wh *commonHub) handleBroadcast(events []data.Event) {
 	subscriptions := wh.subscriptionMap.Subscriptions()
 
-	for _, subscription := range subscriptions[filters.MatchAll] {
+	for _, subscription := range subscriptions[dispatcher.MatchAll] {
 		wh.dispatchers[subscription.DispatcherID].PushEvents(events)
 	}
 
@@ -90,8 +96,12 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 		}
 	}
 
+	wh.rwMut.RLock()
+	defer wh.rwMut.RUnlock()
 	for id, eventValues := range dispatchersMap {
-		wh.dispatchers[id].PushEvents(eventValues)
+		if d, ok := wh.dispatchers[id]; ok {
+			d.PushEvents(eventValues)
+		}
 	}
 }
 
