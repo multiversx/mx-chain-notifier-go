@@ -62,13 +62,14 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 
 	var events []data.Event
 	for _, eventHandler := range logEvents {
-		log.Debug("eventHandler", "is nil", eventHandler != nil)
+		log.Debug("eventHandler", "is nil", eventHandler.IsInterfaceNil())
+		log.Debug("no panic while checking interface nil")
 		if !eventHandler.IsInterfaceNil() {
 			log.Debug("pubkey converter", "is nil", en.pubKeyConverter.IsInterfaceNil())
 			address := en.pubKeyConverter.Encode(eventHandler.GetAddress())
 			log.Debug("encoded pubkey to bech32", "bech32 address", address)
 			events = append(events, data.Event{
-				Address:    address,
+				Address:    string(eventHandler.GetAddress()),
 				Identifier: string(eventHandler.GetIdentifier()),
 				Topics:     eventHandler.GetTopics(),
 				Data:       eventHandler.GetData(),
