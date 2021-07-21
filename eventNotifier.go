@@ -62,6 +62,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 
 	var events []data.Event
 	for _, eventHandler := range logEvents {
+		log.Debug("eventHandler", "is nil", eventHandler != nil)
 		if !eventHandler.IsInterfaceNil() {
 			log.Debug("pubkey converter", "is nil", en.pubKeyConverter.IsInterfaceNil())
 			address := en.pubKeyConverter.Encode(eventHandler.GetAddress())
