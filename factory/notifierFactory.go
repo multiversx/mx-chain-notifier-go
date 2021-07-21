@@ -33,7 +33,6 @@ func CreateEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error
 		Username:         args.Username,
 		Password:         args.Password,
 		BaseUrl:          args.ProxyUrl,
-		Marshalizer:      args.Marshalizer,
 	})
 
 	pubkeyConv, err := pubkeyConverter.NewBech32PubkeyConverter(pubkeyLen)
