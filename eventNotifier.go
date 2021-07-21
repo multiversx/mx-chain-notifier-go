@@ -36,9 +36,10 @@ type EventNotifierArgs struct {
 // It implements all methods of process.Indexer
 func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 	return &eventNotifier{
-		isNilNotifier: false,
-		httpClient:    args.HttpClient,
-		marshalizer:   args.Marshalizer,
+		isNilNotifier:   false,
+		httpClient:      args.HttpClient,
+		marshalizer:     args.Marshalizer,
+		pubKeyConverter: args.PubKeyConverter,
 	}, nil
 }
 
@@ -62,14 +63,12 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 
 	var events []data.Event
 	for _, eventHandler := range logEvents {
-		log.Debug("eventHandler", "is nil", eventHandler.IsInterfaceNil())
-		log.Debug("no panic while checking interface nil")
 		if !eventHandler.IsInterfaceNil() {
 			log.Debug("pubkey converter", "is nil", en.pubKeyConverter.IsInterfaceNil())
 			address := en.pubKeyConverter.Encode(eventHandler.GetAddress())
 			log.Debug("encoded pubkey to bech32", "bech32 address", address)
 			events = append(events, data.Event{
-				Address:    string(eventHandler.GetAddress()),
+				Address:    address,
 				Identifier: string(eventHandler.GetIdentifier()),
 				Topics:     eventHandler.GetTopics(),
 				Data:       eventHandler.GetData(),
