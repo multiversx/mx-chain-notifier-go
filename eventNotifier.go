@@ -1,6 +1,7 @@
 package notifier
 
 import (
+	"github.com/ElrondNetwork/elrond-go-core/core"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/core/statistics"
 	nodeData "github.com/ElrondNetwork/elrond-go/data"
@@ -19,23 +20,26 @@ const (
 )
 
 type eventNotifier struct {
-	isNilNotifier bool
-	httpClient    client.HttpClient
-	marshalizer   marshal.Marshalizer
+	isNilNotifier   bool
+	httpClient      client.HttpClient
+	marshalizer     marshal.Marshalizer
+	pubKeyConverter core.PubkeyConverter
 }
 
 type EventNotifierArgs struct {
-	HttpClient  client.HttpClient
-	Marshalizer marshal.Marshalizer
+	HttpClient      client.HttpClient
+	Marshalizer     marshal.Marshalizer
+	PubKeyConverter core.PubkeyConverter
 }
 
 // NewEventNotifier creates a new instance of the eventNotifier
 // It implements all methods of process.Indexer
 func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 	return &eventNotifier{
-		isNilNotifier: false,
-		httpClient:    args.HttpClient,
-		marshalizer:   args.Marshalizer,
+		isNilNotifier:   false,
+		httpClient:      args.HttpClient,
+		marshalizer:     args.Marshalizer,
+		pubKeyConverter: args.PubKeyConverter,
 	}, nil
 }
 
@@ -60,15 +64,19 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 	var events []data.Event
 	for _, eventHandler := range logEvents {
 		if !eventHandler.IsInterfaceNil() {
-			var topics []string
-			for _, topic := range eventHandler.GetTopics() {
-				topics = append(topics, string(topic))
-			}
+			bech32Address := en.pubKeyConverter.Encode(eventHandler.GetAddress())
+			eventIdentifier := string(eventHandler.GetIdentifier())
+
+			log.Debug("received event from address",
+				"address", bech32Address,
+				"identifier", eventIdentifier,
+			)
+
 			events = append(events, data.Event{
-				Address:    string(eventHandler.GetAddress()),
-				Identifier: string(eventHandler.GetIdentifier()),
-				Data:       string(eventHandler.GetData()),
-				Topics:     topics,
+				Address:    bech32Address,
+				Identifier: eventIdentifier,
+				Topics:     eventHandler.GetTopics(),
+				Data:       eventHandler.GetData(),
 			})
 		}
 	}

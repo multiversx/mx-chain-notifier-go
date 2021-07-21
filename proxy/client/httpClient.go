@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/ElrondNetwork/elrond-go/marshal"
 )
 
 const (
@@ -22,7 +20,6 @@ type HttpClient interface {
 type httpClient struct {
 	useAuthorization bool
 	baseUrl          string
-	marshalizer      marshal.Marshalizer
 }
 
 type HttpClientArgs struct {
@@ -30,7 +27,6 @@ type HttpClientArgs struct {
 	Username         string
 	Password         string
 	BaseUrl          string
-	Marshalizer      marshal.Marshalizer
 }
 
 // NewHttpClient creates an instance of httpClient which is a wrapper for http.Client

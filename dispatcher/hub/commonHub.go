@@ -75,19 +75,12 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 		wh.dispatchers[subscription.DispatcherID].PushEvents(events)
 	}
 
-	var filterableEvents []data.Event
-	for _, event := range events {
-		if _, ok := subscriptions[event.Address]; ok {
-			filterableEvents = append(filterableEvents, event)
-		}
-	}
-
 	dispatchersMap := make(map[uuid.UUID][]data.Event)
 	mapEventToDispatcher := func(id uuid.UUID, e data.Event) {
 		dispatchersMap[id] = append(dispatchersMap[id], e)
 	}
 
-	for _, event := range filterableEvents {
+	for _, event := range events {
 		subscriptionEntries := subscriptions[event.Address]
 		for _, subEntry := range subscriptionEntries {
 			if wh.filter.MatchEvent(subEntry, event) {

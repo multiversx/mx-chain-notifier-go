@@ -22,12 +22,15 @@ func (gd *graphqlDispatcher) PushEvents(events []data.Event) {
 	for _, event := range events {
 		var ptrTopics []*string
 		for _, topic := range event.Topics {
-			ptrTopics = append(ptrTopics, &topic)
+			strTopic := string(topic)
+			ptrTopics = append(ptrTopics, &strTopic)
 		}
+
+		strData := string(event.Data)
 		gqlEvents = append(gqlEvents, &model.Event{
 			Address:    &event.Address,
 			Identifier: &event.Identifier,
-			Data:       &event.Data,
+			Data:       &strData,
 			Topics:     ptrTopics,
 		})
 	}
