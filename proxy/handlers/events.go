@@ -29,7 +29,15 @@ func NewEventsHandler(
 	h.endpoints = []EndpointHandler{
 		{Method: http.MethodPost, Path: pushEventsEndpoint, HandlerFunc: h.pushEvents},
 	}
-	groupHandler.AddEndpointHandlers(baseEventsEndpoint, h.endpoints)
+
+	endpointGroupHandler := EndpointGroupHandler{
+		Root:             baseEventsEndpoint,
+		Middleware:       []gin.HandlerFunc{},
+		EndpointHandlers: h.endpoints,
+	}
+
+	groupHandler.AddGroupHandler(endpointGroupHandler)
+
 	return nil
 }
 

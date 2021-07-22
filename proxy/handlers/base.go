@@ -2,12 +2,15 @@ package handlers
 
 import "github.com/gin-gonic/gin"
 
+// EndpointGroupHandler defines the components of a gin.Engine Group
+// It allows for multiple middleware configuration
 type EndpointGroupHandler struct {
 	Root             string
 	Middleware       []gin.HandlerFunc
 	EndpointHandlers []EndpointHandler
 }
 
+// EndpointHandler defines the needed components for registering an endpoint
 type EndpointHandler struct {
 	Path        string
 	Method      string
@@ -29,7 +32,7 @@ func NewGroupHandler() *groupHandler {
 // It should be called after all the handlers have been defined
 func (g *groupHandler) RegisterEndpoints(r *gin.Engine) {
 	for groupRoot, handlersGroup := range g.endpointHandlersMap {
-		routerGroup := r.Group(groupRoot, handlersGroup.Middleware...)
+		routerGroup := r.Group(groupRoot).Use(handlersGroup.Middleware...)
 		{
 			for _, h := range handlersGroup.EndpointHandlers {
 				routerGroup.Handle(h.Method, h.Path, h.HandlerFunc)
@@ -38,10 +41,10 @@ func (g *groupHandler) RegisterEndpoints(r *gin.Engine) {
 	}
 }
 
-// AddEndpointHandlers inserts a list of endpoint handlers to the map
+// AddGroupHandler inserts an EndpointGroupHandler instance to the map
 // The key of the endpointHandlersMap is the base path of the group
 // The method is not thread-safe and does not validate inputs
-func (g *groupHandler) AddEndpointHandlers(route string, endpointHandler EndpointGroupHandler) {
+func (g *groupHandler) AddGroupHandler(endpointHandler EndpointGroupHandler) {
 	g.endpointHandlersMap[endpointHandler.Root] = endpointHandler
 }
 
