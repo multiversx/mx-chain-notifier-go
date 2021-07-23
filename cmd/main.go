@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go-logger/check"
 	nodeFactory "github.com/ElrondNetwork/elrond-go/cmd/node/factory"
-	"github.com/ElrondNetwork/elrond-go/core/logging"
+	"github.com/ElrondNetwork/elrond-go/common/logging"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/proxy"
 	"github.com/urfave/cli"

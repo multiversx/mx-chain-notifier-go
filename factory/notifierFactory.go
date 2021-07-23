@@ -1,14 +1,17 @@
 package factory
 
 import (
+	"github.com/ElrondNetwork/elrond-go-core/core"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
-	"github.com/ElrondNetwork/elrond-go/core"
-	"github.com/ElrondNetwork/elrond-go/core/check"
-	"github.com/ElrondNetwork/elrond-go/marshal"
+	"github.com/ElrondNetwork/elrond-go-core/marshal"
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/notifier-go"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
 )
+
+var log = logger.GetOrCreate("outport/eventNotifierFactory")
 
 const (
 	pubkeyLen = 32
@@ -35,7 +38,7 @@ func CreateEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error
 		BaseUrl:          args.ProxyUrl,
 	})
 
-	pubkeyConv, err := pubkeyConverter.NewBech32PubkeyConverter(pubkeyLen)
+	pubkeyConv, err := pubkeyConverter.NewBech32PubkeyConverter(pubkeyLen, log)
 	if err != nil {
 		return nil, err
 	}

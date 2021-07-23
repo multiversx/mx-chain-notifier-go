@@ -27,7 +27,10 @@ github.com/ElrondNetwork/arwen-wasm-vm v1.1.3-0.20210319111725-093234eb3f90/go.m
 github.com/ElrondNetwork/arwen-wasm-vm v1.2.0/go.mod h1:Io5YGUs48YNnXlyJYSBX6Evxcc0JUfLbjF+65qdl+10=
 github.com/ElrondNetwork/arwen-wasm-vm v1.2.7/go.mod h1:Q+ay1aQID+M4q/PWcE9Jmheojpu9nkmOuv1eSDmpBwE=
 github.com/ElrondNetwork/arwen-wasm-vm v1.2.26/go.mod h1:6TqZmq72m8T4SK7F2q8Bgvbz/FrzvXrGLfmMHt1Td+E=
+github.com/ElrondNetwork/arwen-wasm-vm v1.2.28/go.mod h1:hxRm6qyqJNSAscGCunsTEpSicB2aOQIc7C8GfCWqqwY=
 github.com/ElrondNetwork/arwen-wasm-vm v1.3.24/go.mod h1:2pHVIM+Fifssv04JXX6dqIorgVgerAIx8pElwd0WjvA=
+github.com/ElrondNetwork/arwen-wasm-vm v1.3.27/go.mod h1:ivT/TbQUiFwWeO6/Nt9liaOp/cxcw/b9qCEgeGTIuRI=
+github.com/ElrondNetwork/arwen-wasm-vm v1.4.3/go.mod h1:DVGKcK01K3v+gIAbsNgQvEAe3jlJ+T76zgI2fL1pq+A=
 github.com/ElrondNetwork/big-int-util v0.0.5/go.mod h1:96viBvoTXLjZOhEvE0D+QnAwg1IJLPAK6GVHMbC7Aw4=
 github.com/ElrondNetwork/big-int-util v0.1.0/go.mod h1:96viBvoTXLjZOhEvE0D+QnAwg1IJLPAK6GVHMbC7Aw4=
 github.com/ElrondNetwork/concurrent-map v0.1.3 h1:j2LtPrNJuerannC1cQDE79STvi/P04gd61sNYo04Zf0=
@@ -43,6 +46,7 @@ github.com/ElrondNetwork/elastic-indexer-go v1.0.2-0.20210308132434-93aea699e448
 github.com/ElrondNetwork/elastic-indexer-go v1.0.3/go.mod h1:Jj5loOE5jRz1E5jn1yeH+M/0kQmsWFDONRaXG3WADLw=
 github.com/ElrondNetwork/elastic-indexer-go v1.0.4/go.mod h1:ipmcRwU+D5yQu5/9NGzOWhHz+C54XunQa9XVxQJKONQ=
 github.com/ElrondNetwork/elastic-indexer-go v1.0.7/go.mod h1:LGytPmms9t0ERu+XlmjyIidQb3u1bXumQ89NzDC/i58=
+github.com/ElrondNetwork/elastic-indexer-go v1.0.8-0.20210722082841-849fea110521/go.mod h1:1C2uebha5tILUV/c344guR4DWsx7YMR7mbxhGfhmrdw=
 github.com/ElrondNetwork/elrond-go v1.1.0/go.mod h1:R5HRN9NnnJ0gRd4QogmbUbQNTEczLsFCtfIgd3+3cYY=
 github.com/ElrondNetwork/elrond-go v1.1.6-0.20201113091116-de0c9a4e63c6/go.mod h1:dUNMqGg/jqTgHbnNxAmW7WkApWXlCQ8brVPbwIEFghI=
 github.com/ElrondNetwork/elrond-go v1.1.6-0.20201113120119-5f3406f2d6b5/go.mod h1:JsrmzX05L/GHE/nOeQuJCKHasJnZN2WMFr+Y6jjvHGg=
@@ -68,11 +72,17 @@ github.com/ElrondNetwork/elrond-go v1.1.59-0.20210526130950-2a93e2e11c39/go.mod 
 github.com/ElrondNetwork/elrond-go v1.2.5-0.20210716101146-d54a8831e764/go.mod h1:41VxgVdZtxsolu8lc3NI2otTjw0IUoJH7WO+8gkRb4U=
 github.com/ElrondNetwork/elrond-go v1.2.5-0.20210716103052-679f8862a346 h1:kQEFARCGyMHo0O4A8PJRY54fMXZswiKgDc4brELdXUU=
 github.com/ElrondNetwork/elrond-go v1.2.5-0.20210716103052-679f8862a346/go.mod h1:LyYwvJUiD1anAxEsq3LZg4IHRZZXj9txX5DlRXfctCU=
+github.com/ElrondNetwork/elrond-go v1.2.5-0.20210722133055-8c8ab1de09f2 h1:b6+WmC47eQmwItYBbfjXfTCkPxZDAtATWFr8/XWAIPY=
+github.com/ElrondNetwork/elrond-go v1.2.5-0.20210722133055-8c8ab1de09f2/go.mod h1:eiEVL1xLHPDILXYzZFM/Xdb0+BDNa/ExSw+1BbqldlY=
 github.com/ElrondNetwork/elrond-go-core v0.0.0-20210709102744-21c4fc26d94c h1:N1iiA7VJpSh7ZFZ3PiX9QFq1K979eFAIE7+DobJMF/A=
 github.com/ElrondNetwork/elrond-go-core v0.0.0-20210709102744-21c4fc26d94c/go.mod h1:gR1SrJsU/SRkUvU1CH3EuWXKZcldqmBwvXDaPbKc7dI=
+github.com/ElrondNetwork/elrond-go-core v1.0.0/go.mod h1:FQMem7fFF4+8pQ6lVsBZq6yO+smD0nV23P4bJpmPjTo=
+github.com/ElrondNetwork/elrond-go-core v1.0.1-0.20210721105824-f1bfb549cfce/go.mod h1:O9FkkTT2H9kxCzfn40TbhoCDXzGmUrRVusMomhK/Y3g=
+github.com/ElrondNetwork/elrond-go-core v1.0.1-0.20210721121720-f02fb03b2e1a/go.mod h1:O9FkkTT2H9kxCzfn40TbhoCDXzGmUrRVusMomhK/Y3g=
 github.com/ElrondNetwork/elrond-go-logger v1.0.2/go.mod h1:e5D+c97lKUfFdAzFX7rrI2Igl/z4Y0RkKYKWyzprTGk=
 github.com/ElrondNetwork/elrond-go-logger v1.0.4 h1:i5Yu4qyjTZDwvBY/ykbNpp2SP9jxwk/QTivRwSZSTAQ=
 github.com/ElrondNetwork/elrond-go-logger v1.0.4/go.mod h1:e5D+c97lKUfFdAzFX7rrI2Igl/z4Y0RkKYKWyzprTGk=
+github.com/ElrondNetwork/elrond-go-logger v1.0.5/go.mod h1:cBfgx0ST/CJx8jrxJSC5aiSrvkGzcnF7sK06RD8mFxQ=
 github.com/ElrondNetwork/elrond-vm-common v0.1.23/go.mod h1:ZakxPST/Wt8umnRtA9gobcy3Dw2bywxwkC54P5VhO9g=
 github.com/ElrondNetwork/elrond-vm-common v0.3.3/go.mod h1:ZakxPST/Wt8umnRtA9gobcy3Dw2bywxwkC54P5VhO9g=
 github.com/ElrondNetwork/elrond-vm-common v0.3.4-0.20210625102705-01a81e6a1fa4/go.mod h1:Knh5+i+BvTcn/QMT+COzeb76ZqMHGeijS6gbac25RPc=
@@ -80,6 +90,8 @@ github.com/ElrondNetwork/elrond-vm-common v1.0.1-0.20210709121514-acfacaa06d62/g
 github.com/ElrondNetwork/elrond-vm-common v1.0.1-0.20210713105939-b6bc55e23cc0/go.mod h1:w3i6f8uiuRkE68Ie/gebRcLgTuHqvruJSYrFyZWuLrE=
 github.com/ElrondNetwork/elrond-vm-common v1.1.0 h1:zSIXrNbIb/SyKB2+JIOWenUSky5+NgEr0iQtFiWp17o=
 github.com/ElrondNetwork/elrond-vm-common v1.1.0/go.mod h1:w3i6f8uiuRkE68Ie/gebRcLgTuHqvruJSYrFyZWuLrE=
+github.com/ElrondNetwork/elrond-vm-common v1.1.1-0.20210721110111-51b198fb52f4/go.mod h1:OrXHYASp1YBoXPrESy7rTKU+GdoN6+s46oh5LqZgaE4=
+github.com/ElrondNetwork/elrond-vm-common v1.1.1-0.20210722060700-90d35cd5b077/go.mod h1:OrXHYASp1YBoXPrESy7rTKU+GdoN6+s46oh5LqZgaE4=
 github.com/ElrondNetwork/elrond-vm-util v0.3.5/go.mod h1:+ecDJZLTwN/yeRXXEqd+sa9WoalLsT4nFtQWCo0YKWA=
 github.com/ElrondNetwork/elrond-vm-util v0.4.5/go.mod h1:YqFO7HkKfBnVQesisZuJ/Qce0/oTOnqx562iZCb8El0=
 github.com/ElrondNetwork/notifier-go v0.0.0-20210716102841-a578e3b81b51/go.mod h1:gsw3fTFm51oK32fRSeR3no7f0CWt24xG0KPSbk0Dst8=
@@ -868,6 +880,7 @@ github.com/pelletier/go-toml v1.8.1/go.mod h1:T2/BmBdy8dvIRq1a/8aqjN41wvWlN4lrap
 github.com/pelletier/go-toml v1.8.1/go.mod h1:T2/BmBdy8dvIRq1a/8aqjN41wvWlN4lrapLU/GW4pbc=
 github.com/pelletier/go-toml v1.9.0 h1:NOd0BRdOKpPf0SxkL3HxSQOG7rNh+4kl6PHcBPFs7Q0=
 github.com/pelletier/go-toml v1.9.0/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
+github.com/pelletier/go-toml v1.9.3/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/performancecopilot/speed v3.0.0+incompatible/go.mod h1:/CLtqpZ5gBg1M9iaPbIdPPGyKcA8hKdoy6hAWba7Yac=
 github.com/pierrec/lz4 v1.0.2-0.20190131084431-473cd7ce01a1/go.mod h1:3/3N9NVKO0jef7pBehbT1qWhCMrIgbYNnFAZCqQ5LRc=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
@@ -929,6 +942,7 @@ github.com/shirou/gopsutil v0.0.0-20190731134726-d80c43f9c984/go.mod h1:WWnYX4lz
 github.com/shirou/gopsutil v0.0.0-20190731134726-d80c43f9c984/go.mod h1:WWnYX4lzhCH5h/3YBfyVA3VbLYjlMZZAQcW9ojMexNc=
 github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada h1:WokF3GuxBeL+n4Lk4Fa8v9mbdjlrl7bHuneF4N1bk2I=
 github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada/go.mod h1:WWnYX4lzhCH5h/3YBfyVA3VbLYjlMZZAQcW9ojMexNc=
+github.com/shirou/gopsutil v3.21.6+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=
 github.com/shirou/gopsutil/v3 v3.21.2/go.mod h1:ghfMypLDrFSWN2c9cDYFLHyynQ+QUht0cv/18ZqVczw=
 github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 h1:udFKJ0aHUL60LboW/A+DfgoHVedieIzIXE8uylPue0U=
 github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4/go.mod h1:qsXQc7+bwAM3Q1u/4XEfrquwF8Lw7D7y5cD8CuHnfIc=
@@ -1099,6 +1113,7 @@ golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a/go.mod h1:LzIPMQfyMNhhGPh
 golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83/go.mod h1:jdWPYTVW3xRLrWPugEBEK3UY2ZEsg3UU495nc5E+M+I=
 golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 h1:It14KIkyBFYkHkwZ7k45minvA9aorojkyjGk9KJ5B/w=
 golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
+golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/exp v0.0.0-20190121172915-509febef88a4/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/lint v0.0.0-20180702182130-06c8688daad7/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
@@ -1214,6 +1229,7 @@ golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20210423082822-04245dca01da/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210426080607-c94f62235c83 h1:kHSDPqCtsHZOg0nVylfTo20DDhE9gG4Y0jn7hKQ0QAM=
 golang.org/x/sys v0.0.0-20210426080607-c94f62235c83/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
