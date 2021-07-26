@@ -8,10 +8,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	nodeFactory "github.com/ElrondNetwork/elrond-go/cmd/node/factory"
-	"github.com/ElrondNetwork/elrond-go/common/logging"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/proxy"
 	"github.com/urfave/cli"
@@ -97,10 +94,10 @@ func main() {
 func startEventNotifierProxy(ctx *cli.Context) error {
 	log.Info("starting eventNotifier proxy...")
 
-	fileLogging, err := initLogger(ctx)
-	if err != nil {
-		return err
-	}
+	//fileLogging, err := initLogger(ctx)
+	//if err != nil {
+	//	return err
+	//}
 
 	generalConfigPath := ctx.GlobalString(generalConfigFile.Name)
 	cfg, err := config.LoadConfig(generalConfigPath)
@@ -117,46 +114,46 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 
 	waitForGracefulShutdown(server)
 	log.Debug("closing eventNotifier proxy...")
-	if !check.IfNil(fileLogging) {
-		err = fileLogging.Close()
-		if err != nil {
-			return err
-		}
-	}
+	//if !check.IfNil(fileLogging) {
+	//	err = fileLogging.Close()
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 
 	return nil
 }
 
-func initLogger(ctx *cli.Context) (nodeFactory.FileLoggingHandler, error) {
-	logLevelValue := ctx.GlobalString(logLevel.Name)
-
-	err := logger.SetLogLevel(logLevelValue)
-	if err != nil {
-		return nil, err
-	}
-
-	workingDir, err := getWorkingDir(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	var fileLogging nodeFactory.FileLoggingHandler
-	saveLogs := ctx.GlobalBool(logSaveFile.Name)
-	if saveLogs {
-		fileLogging, err = logging.NewFileLogging(workingDir, defaultLogsPath, logFilePrefix)
-		if err != nil {
-			return fileLogging, err
-		}
-	}
-	if !check.IfNil(fileLogging) {
-		err = fileLogging.ChangeFileLifeSpan(time.Second * time.Duration(logFileLifeSpanSec))
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return fileLogging, nil
-}
+//func initLogger(ctx *cli.Context) (nodeFactory.FileLoggingHandler, error) {
+//	logLevelValue := ctx.GlobalString(logLevel.Name)
+//
+//	err := logger.SetLogLevel(logLevelValue)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	workingDir, err := getWorkingDir(ctx)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	var fileLogging nodeFactory.FileLoggingHandler
+//	saveLogs := ctx.GlobalBool(logSaveFile.Name)
+//	if saveLogs {
+//		fileLogging, err = logging.NewFileLogging(workingDir, defaultLogsPath, logFilePrefix)
+//		if err != nil {
+//			return fileLogging, err
+//		}
+//	}
+//	if !check.IfNil(fileLogging) {
+//		err = fileLogging.ChangeFileLifeSpan(time.Second * time.Duration(logFileLifeSpanSec))
+//		if err != nil {
+//			return nil, err
+//		}
+//	}
+//
+//	return fileLogging, nil
+//}
 
 func waitForGracefulShutdown(server *http.Server) {
 	quit := make(chan os.Signal)

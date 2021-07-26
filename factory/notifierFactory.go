@@ -6,7 +6,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/notifier-go"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
 )
@@ -26,7 +25,7 @@ type EventNotifierFactoryArgs struct {
 	Marshalizer      marshal.Marshalizer
 }
 
-func CreateEventNotifier(args *EventNotifierFactoryArgs) (process.Indexer, error) {
+func CreateEventNotifier(args *EventNotifierFactoryArgs) (notifier.Indexer, error) {
 	if err := checkInputArgs(args); err != nil {
 		return nil, err
 	}
