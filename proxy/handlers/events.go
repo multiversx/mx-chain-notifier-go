@@ -37,7 +37,7 @@ func NewEventsHandler(
 
 	endpointGroupHandler := EndpointGroupHandler{
 		Root:             baseEventsEndpoint,
-		Middleware:       h.createMiddleware(),
+		Middlewares:      h.createMiddlewares(),
 		EndpointHandlers: endpoints,
 	}
 
@@ -61,7 +61,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 	JsonResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsHandler) createMiddleware() []gin.HandlerFunc {
+func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 	var middleware []gin.HandlerFunc
 
 	if h.config.Username != "" && h.config.Password != "" {

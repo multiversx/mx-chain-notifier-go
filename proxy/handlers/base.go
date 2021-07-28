@@ -6,7 +6,7 @@ import "github.com/gin-gonic/gin"
 // It allows for multiple middleware configuration
 type EndpointGroupHandler struct {
 	Root             string
-	Middleware       []gin.HandlerFunc
+	Middlewares      []gin.HandlerFunc
 	EndpointHandlers []EndpointHandler
 }
 
@@ -32,7 +32,7 @@ func NewGroupHandler() *groupHandler {
 // It should be called after all the handlers have been defined
 func (g *groupHandler) RegisterEndpoints(r *gin.Engine) {
 	for groupRoot, handlersGroup := range g.endpointHandlersMap {
-		routerGroup := r.Group(groupRoot).Use(handlersGroup.Middleware...)
+		routerGroup := r.Group(groupRoot).Use(handlersGroup.Middlewares...)
 		{
 			for _, h := range handlersGroup.EndpointHandlers {
 				routerGroup.Handle(h.Method, h.Path, h.HandlerFunc)
