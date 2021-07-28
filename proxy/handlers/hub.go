@@ -61,7 +61,7 @@ func NewHubHandler(
 		EndpointHandlers: handlers,
 	}
 
-	groupHandler.AddGroupHandler(endpointGroupHandler)
+	groupHandler.AddEndpointGroupHandler(endpointGroupHandler)
 
 	return h, nil
 }

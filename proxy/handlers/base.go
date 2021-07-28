@@ -41,10 +41,10 @@ func (g *groupHandler) RegisterEndpoints(r *gin.Engine) {
 	}
 }
 
-// AddGroupHandler inserts an EndpointGroupHandler instance to the map
+// AddEndpointGroupHandler inserts an EndpointGroupHandler instance to the map
 // The key of the endpointHandlersMap is the base path of the group
 // The method is not thread-safe and does not validate inputs
-func (g *groupHandler) AddGroupHandler(endpointHandler EndpointGroupHandler) {
+func (g *groupHandler) AddEndpointGroupHandler(endpointHandler EndpointGroupHandler) {
 	g.endpointHandlersMap[endpointHandler.Root] = endpointHandler
 }
 

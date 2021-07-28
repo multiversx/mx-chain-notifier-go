@@ -41,7 +41,7 @@ func NewEventsHandler(
 		EndpointHandlers: endpoints,
 	}
 
-	groupHandler.AddGroupHandler(endpointGroupHandler)
+	groupHandler.AddEndpointGroupHandler(endpointGroupHandler)
 
 	return nil
 }
