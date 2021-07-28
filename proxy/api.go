@@ -33,7 +33,7 @@ func NewWebServer(generalConfig *config.GeneralConfig) (*webServer, error) {
 
 	notifierHub := hubHandler.GetHub()
 
-	err = handlers.NewEventsHandler(notifierHub, groupHandler)
+	err = handlers.NewEventsHandler(notifierHub, groupHandler, generalConfig.ConnectorApi)
 	if err != nil {
 		return nil, err
 	}

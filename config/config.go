@@ -10,6 +10,8 @@ type ConnectorApiConfig struct {
 	Port         string
 	HubType      string
 	DispatchType string
+	Username     string
+	Password     string
 }
 
 // LoadConfig return a GeneralConfig instance by reading the provided toml file

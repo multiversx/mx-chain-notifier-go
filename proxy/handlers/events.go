@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/ElrondNetwork/notifier-go/config"
 	"net/http"
 
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -16,24 +17,28 @@ const (
 
 type eventsHandler struct {
 	notifierHub dispatcher.Hub
-	endpoints   []EndpointHandler
+	config      config.ConnectorApiConfig
 }
 
 // NewEventsHandler registers handlers for the /events group
 func NewEventsHandler(
 	notifierHub dispatcher.Hub,
 	groupHandler *groupHandler,
+	config config.ConnectorApiConfig,
 ) error {
-	h := &eventsHandler{notifierHub: notifierHub}
+	h := &eventsHandler{
+		notifierHub: notifierHub,
+		config:      config,
+	}
 
-	h.endpoints = []EndpointHandler{
+	endpoints := []EndpointHandler{
 		{Method: http.MethodPost, Path: pushEventsEndpoint, HandlerFunc: h.pushEvents},
 	}
 
 	endpointGroupHandler := EndpointGroupHandler{
 		Root:             baseEventsEndpoint,
-		Middleware:       []gin.HandlerFunc{},
-		EndpointHandlers: h.endpoints,
+		Middleware:       h.createMiddleware(),
+		EndpointHandlers: endpoints,
 	}
 
 	groupHandler.AddGroupHandler(endpointGroupHandler)
@@ -54,4 +59,17 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
+}
+
+func (h *eventsHandler) createMiddleware() []gin.HandlerFunc {
+	var middleware []gin.HandlerFunc
+
+	if h.config.Username != "" && h.config.Password != "" {
+		basicAuth := gin.BasicAuth(gin.Accounts{
+			h.config.Username: h.config.Password,
+		})
+		middleware = append(middleware, basicAuth)
+	}
+
+	return middleware
 }

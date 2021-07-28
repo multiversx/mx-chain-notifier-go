@@ -11,3 +11,9 @@
     # The driver can receive subscribe events and broadcast on one or more channels
     # Defaults to: websocket.
     DispatchType = "websocket"
+
+    # Username is the username needed to authorize an observer to push data
+    Username = ""
+
+    # Password is the password needed to authorize an observer to push event data
+    Password = ""
