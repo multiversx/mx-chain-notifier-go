@@ -19,6 +19,8 @@ type HttpClient interface {
 
 type httpClient struct {
 	useAuthorization bool
+	username         string
+	password         string
 	baseUrl          string
 }
 
@@ -33,6 +35,8 @@ type HttpClientArgs struct {
 func NewHttpClient(args HttpClientArgs) *httpClient {
 	return &httpClient{
 		useAuthorization: args.UseAuthorization,
+		username:         args.Username,
+		password:         args.Password,
 		baseUrl:          args.BaseUrl,
 	}
 }
@@ -66,6 +70,11 @@ func (h *httpClient) Post(
 		return err
 	}
 
+	httpError := h.getErrorFromStatusCode(resp.StatusCode)
+	if httpError != nil {
+		return httpError
+	}
+
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil
@@ -74,6 +83,23 @@ func (h *httpClient) Post(
 	return json.Unmarshal(resBody, &response)
 }
 
-func (h *httpClient) setAuthorization(req *http.Request) {
+func (h *httpClient) getErrorFromStatusCode(statusCode int) error {
+	if statusCode == http.StatusBadRequest {
+		return ErrHttpFailedRequest(badRequestMessage, statusCode)
+	}
+	if statusCode == http.StatusUnauthorized {
+		return ErrHttpFailedRequest(unauthorizedMessage, statusCode)
+	}
+	if statusCode == http.StatusInternalServerError {
+		return ErrHttpFailedRequest(internalErrMessage, statusCode)
+	}
+	if statusCode != http.StatusOK {
+		return ErrHttpFailedRequest(genericHttpErrMessage, statusCode)
+	}
 
+	return nil
+}
+
+func (h *httpClient) setAuthorization(req *http.Request) {
+	req.SetBasicAuth(h.username, h.password)
 }

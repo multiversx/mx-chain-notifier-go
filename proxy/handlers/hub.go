@@ -55,7 +55,14 @@ func NewHubHandler(
 	}
 
 	handlers := h.getDispatchHandlers(config.ConnectorApi.DispatchType)
-	groupHandler.AddEndpointHandlers(baseHubEndpoint, handlers)
+	endpointGroupHandler := EndpointGroupHandler{
+		Root:             baseHubEndpoint,
+		Middlewares:      []gin.HandlerFunc{},
+		EndpointHandlers: handlers,
+	}
+
+	groupHandler.AddEndpointGroupHandler(endpointGroupHandler)
+
 	return h, nil
 }
 

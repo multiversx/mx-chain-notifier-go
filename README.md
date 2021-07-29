@@ -7,8 +7,8 @@ after each round.
 
 The notifier has two main modules:
 - The factory module, which is used by an observer to initialize 
-  an `eventNotifier` instance, which implements the Driver interface
-- The proxy module, which exposes a REST API, which is used by the 
+  an `eventNotifier` instance, that implements the Driver interface
+- The proxy module, which exposes a REST API, is used by the 
 `eventNotifier` to push events to the Hub, which then broadcasts on 
   the opened channels. 
   
@@ -74,6 +74,8 @@ The supported config variables are:
 - `DispatchType`: default to `websocket`. This variable specifies the communication
 channels the hub supports and uses for events broadcasting. The current implementation 
   supports `websocket` and `graphql subscriptions` for broadcasting.
+- `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false`.
+- `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false`.
   
 The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/config/config.toml) file:
 
@@ -91,6 +93,12 @@ The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/config/confi
     # The driver can receive subscribe events and broadcast on one or more channels
     # Defaults to: websocket.
     DispatchType = "websocket"
+
+    # Username is the username needed to authorize an observer to push data
+    Username = ""
+    
+    # Password is the password needed to authorize an observer to push event data
+    Password = ""
 ```
 
 ## Subscribing
@@ -126,7 +134,7 @@ Note:
 - The address field is `bech32` encoded with the tag `erd`.
 - Topics are base64 encoded and require custom filters for decoding/filtering.
 
-The subscribe message should be sent `json` format and has the following form:
+The subscribe message should be sent in `json` format and has the following form:
 
 ```json
 {
