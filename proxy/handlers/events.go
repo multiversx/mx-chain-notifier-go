@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"github.com/ElrondNetwork/notifier-go/config"
 	"net/http"
 
+	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 
