@@ -72,7 +72,9 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 	subscriptions := wh.subscriptionMap.Subscriptions()
 
 	for _, subscription := range subscriptions[dispatcher.MatchAll] {
-		wh.dispatchers[subscription.DispatcherID].PushEvents(events)
+		if _, ok := wh.dispatchers[subscription.DispatcherID]; ok {
+			wh.dispatchers[subscription.DispatcherID].PushEvents(events)
+		}
 	}
 
 	dispatchersMap := make(map[uuid.UUID][]data.Event)
