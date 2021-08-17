@@ -110,10 +110,11 @@ func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
 
 func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 	wh.rwMut.Lock()
+	defer wh.rwMut.Unlock()
+
 	if _, ok := wh.dispatchers[d.GetID()]; ok {
 		delete(wh.dispatchers, d.GetID())
 	}
-	wh.rwMut.Unlock()
 
 	wh.subscriptionMapper.RemoveSubscriptions(d.GetID())
 }

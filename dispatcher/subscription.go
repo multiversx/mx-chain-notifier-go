@@ -14,7 +14,10 @@ const (
 	// MatchAddress signals that events will be filtered by (address)
 	MatchAddress = "match:address"
 
-	// MatchIdentifier signals that events will be filtered by (address,identifier)
+	// MatchAddressIdentifier signals that events will be filtered by (address,identifier)
+	MatchAddressIdentifier = "match:addressIdentifier"
+
+	// MatchIdentifier signals that events will be filtered by (identifier)
 	MatchIdentifier = "match:identifier"
 
 	// MatchTopics signals that events will be filtered by (address,identifier,[topics_pattern])
@@ -112,7 +115,10 @@ func (sm *SubscriptionMapper) matchLevelFromInput(subEntry SubscriptionEntry) st
 	if hasAddress && hasIdentifier && hasTopics {
 		return MatchTopics
 	}
-	if hasAddress && hasIdentifier || hasIdentifier{
+	if hasAddress && hasIdentifier {
+		return MatchAddressIdentifier
+	}
+	if hasIdentifier {
 		return MatchIdentifier
 	}
 	if hasAddress {

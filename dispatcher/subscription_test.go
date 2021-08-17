@@ -122,7 +122,7 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 	require.True(t, subs[0].MatchLevel == MatchAddress)
 
 	require.NotEmpty(t, subs[1])
-	require.True(t, subs[1].MatchLevel == MatchIdentifier)
+	require.True(t, subs[1].MatchLevel == MatchAddressIdentifier)
 
 	require.NotEmpty(t, subs[2])
 	require.True(t, subs[2].MatchLevel == MatchIdentifier)
