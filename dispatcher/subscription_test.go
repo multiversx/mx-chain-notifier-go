@@ -2,13 +2,14 @@ package dispatcher
 
 import (
 	"fmt"
-	"github.com/ElrondNetwork/notifier-go/test"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"math/rand"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/ElrondNetwork/notifier-go/test"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))

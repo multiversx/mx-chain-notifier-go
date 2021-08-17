@@ -1,10 +1,10 @@
 package hub
 
 import (
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"testing"
 
+	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/ElrondNetwork/notifier-go/test/mocks"
 	"github.com/stretchr/testify/require"
