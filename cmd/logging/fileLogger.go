@@ -104,7 +104,7 @@ func (fl *fileLogger) createFile() (*os.File, error) {
 		core.ArgCreateFileArgument{
 			Prefix:        fl.logFilePrefix,
 			Directory:     logDirectory,
-			FileExtension: "logging",
+			FileExtension: "log",
 		},
 	)
 }
@@ -112,7 +112,7 @@ func (fl *fileLogger) createFile() (*os.File, error) {
 func (fl *fileLogger) recreateLogFile() {
 	newFile, err := fl.createFile()
 	if err != nil {
-		log.Error("error creating new logging file", "error", err)
+		log.Error("error creating new log file", "error", err)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (fl *fileLogger) recreateLogFile() {
 	oldFile := fl.currentFile
 	err = logger.AddLogObserver(newFile, &logger.PlainFormatter{})
 	if err != nil {
-		log.Error("error adding logging observer", "error", err)
+		log.Error("error adding log observer", "error", err)
 		return
 	}
 
@@ -136,10 +136,10 @@ func (fl *fileLogger) recreateLogFile() {
 	}
 
 	errNotCritical = oldFile.Close()
-	log.LogIfError(errNotCritical, "step", "closing old logging file")
+	log.LogIfError(errNotCritical, "step", "closing old log file")
 
 	errNotCritical = logger.RemoveLogObserver(oldFile)
-	log.LogIfError(errNotCritical, "step", "removing old logging observer")
+	log.LogIfError(errNotCritical, "step", "removing old log observer")
 }
 
 func (fl *fileLogger) autoRecreateFile(ctx context.Context) {
@@ -152,7 +152,7 @@ func (fl *fileLogger) autoRecreateFile(ctx context.Context) {
 		case <-time.After(fileLifeSpan):
 			fl.recreateLogFile()
 		case fileLifeSpan = <-fl.chLifeSpanChanged:
-			log.Debug("changed logging file span", "new value", fileLifeSpan)
+			log.Debug("changed log file span", "new value", fileLifeSpan)
 		}
 	}
 }

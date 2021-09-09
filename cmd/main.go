@@ -45,14 +45,14 @@ VERSION:
 	log = logger.GetOrCreate("eventNotifier")
 
 	logLevel = cli.StringFlag{
-		Name:  "logging-level",
-		Usage: "This flag specifies the logging level. Options: *:NONE | ERROR | WARN | INFO | DEBUG | TRACE",
+		Name:  "log-level",
+		Usage: "This flag specifies the log level. Options: *:NONE | ERROR | WARN | INFO | DEBUG | TRACE",
 		Value: fmt.Sprintf("*:%s", logger.LogInfo.String()),
 	}
 
 	logSaveFile = cli.BoolFlag{
-		Name:  "logging-save",
-		Usage: "Boolean option for enabling logging saving",
+		Name:  "log-save",
+		Usage: "Boolean option for enabling log saving",
 	}
 
 	generalConfigFile = cli.StringFlag{
