@@ -4,7 +4,7 @@ import "github.com/ElrondNetwork/elrond-go-core/core"
 
 type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
-	Redis        RedisConfig
+	PubSub       PubSubConfig
 }
 
 type ConnectorApiConfig struct {
@@ -15,7 +15,7 @@ type ConnectorApiConfig struct {
 	Password     string
 }
 
-type RedisConfig struct {
+type PubSubConfig struct {
 	Url     string
 	Channel string
 }

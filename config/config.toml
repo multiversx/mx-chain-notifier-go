@@ -18,8 +18,8 @@
     # Password is the password needed to authorize an observer to push event data
     Password = ""
 
-[Redis]
-    # The url used to connect to redis server
+[PubSub]
+    # The url used to connect to a pubsub server
     Url = "redis://localhost:6379/0"
 
     # The pubsub channel used for publishing/subscribing
