@@ -14,7 +14,10 @@ const (
 	// MatchAddress signals that events will be filtered by (address)
 	MatchAddress = "match:address"
 
-	// MatchIdentifier signals that events will be filtered by (address,identifier)
+	// MatchAddressIdentifier signals that events will be filtered by (address,identifier)
+	MatchAddressIdentifier = "match:addressIdentifier"
+
+	// MatchIdentifier signals that events will be filtered by (identifier)
 	MatchIdentifier = "match:identifier"
 
 	// MatchTopics signals that events will be filtered by (address,identifier,[topics_pattern])
@@ -44,24 +47,24 @@ type Subscription struct {
 	DispatcherID uuid.UUID
 }
 
-type SubscriptionMap struct {
+type SubscriptionMapper struct {
 	rwMut         sync.RWMutex
-	subscriptions map[string][]Subscription
+	subscriptions map[uuid.UUID][]Subscription
 }
 
-// NewSubscriptionMap initializes an empty map for subscriptions
-func NewSubscriptionMap() *SubscriptionMap {
-	return &SubscriptionMap{
+// NewSubscriptionMapper initializes an empty map for subscriptions
+func NewSubscriptionMapper() *SubscriptionMapper {
+	return &SubscriptionMapper{
 		rwMut:         sync.RWMutex{},
-		subscriptions: make(map[string][]Subscription),
+		subscriptions: make(map[uuid.UUID][]Subscription),
 	}
 }
 
 // MatchSubscribeEvent creates a subscription entry in the subscriptions map
 // It assigns each SubscribeEvent a match level from the input provided
-func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
+func (sm *SubscriptionMapper) MatchSubscribeEvent(event SubscribeEvent) {
 	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
-		sm.appendSubscription(MatchAll, Subscription{
+		sm.appendSubscription(Subscription{
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   MatchAll,
 		})
@@ -77,18 +80,34 @@ func (sm *SubscriptionMap) MatchSubscribeEvent(event SubscribeEvent) {
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   matchLevel,
 		}
-		sm.appendSubscription(subscription.Address, subscription)
+		sm.appendSubscription(subscription)
 	}
 }
 
-// Subscriptions returns the subscriptions map
-func (sm *SubscriptionMap) Subscriptions() map[string][]Subscription {
-	sm.rwMut.RLock()
-	defer sm.rwMut.RUnlock()
-	return sm.subscriptions
+// RemoveSubscriptions removes all subscriptions registered by a dispatcher
+func (sm *SubscriptionMapper) RemoveSubscriptions(dispatcherID uuid.UUID) {
+	sm.rwMut.Lock()
+	defer sm.rwMut.Unlock()
+
+	if _, ok := sm.subscriptions[dispatcherID]; ok {
+		delete(sm.subscriptions, dispatcherID)
+	}
 }
 
-func (sm *SubscriptionMap) matchLevelFromInput(subEntry SubscriptionEntry) string {
+// Subscriptions returns a slice reflecting the subscriptions present in the map
+func (sm *SubscriptionMapper) Subscriptions() []Subscription {
+	sm.rwMut.RLock()
+	defer sm.rwMut.RUnlock()
+
+	var subscriptions []Subscription
+	for _, sub := range sm.subscriptions {
+		subscriptions = append(subscriptions, sub...)
+	}
+
+	return subscriptions
+}
+
+func (sm *SubscriptionMapper) matchLevelFromInput(subEntry SubscriptionEntry) string {
 	hasAddress := subEntry.Address != "" && strings.Contains(subEntry.Address, erdTag)
 	hasIdentifier := subEntry.Identifier != ""
 	hasTopics := len(subEntry.Topics) > 0
@@ -97,6 +116,9 @@ func (sm *SubscriptionMap) matchLevelFromInput(subEntry SubscriptionEntry) strin
 		return MatchTopics
 	}
 	if hasAddress && hasIdentifier {
+		return MatchAddressIdentifier
+	}
+	if hasIdentifier {
 		return MatchIdentifier
 	}
 	if hasAddress {
@@ -106,8 +128,9 @@ func (sm *SubscriptionMap) matchLevelFromInput(subEntry SubscriptionEntry) strin
 	return MatchAll
 }
 
-func (sm *SubscriptionMap) appendSubscription(key string, sub Subscription) {
+func (sm *SubscriptionMapper) appendSubscription(sub Subscription) {
 	sm.rwMut.Lock()
 	defer sm.rwMut.Unlock()
-	sm.subscriptions[key] = append(sm.subscriptions[key], sub)
+
+	sm.subscriptions[sub.DispatcherID] = append(sm.subscriptions[sub.DispatcherID], sub)
 }

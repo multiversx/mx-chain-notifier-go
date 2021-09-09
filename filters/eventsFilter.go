@@ -13,6 +13,8 @@ func NewDefaultFilter() *defaultFilter {
 
 func (f *defaultFilter) MatchEvent(subscription dispatcher.Subscription, event data.Event) bool {
 	switch subscription.MatchLevel {
+	case dispatcher.MatchAll:
+		return true
 	case dispatcher.MatchAddress:
 		return event.Address == subscription.Address
 	case dispatcher.MatchIdentifier:
