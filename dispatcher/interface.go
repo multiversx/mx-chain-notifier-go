@@ -17,3 +17,15 @@ type Hub interface {
 	UnregisterChan() chan<- EventDispatcher
 	Subscribe(event SubscribeEvent)
 }
+
+type H struct {
+	Hub
+
+}
+
+func (h *H) BroadcastChan() chan<-[]data.Event {
+	h := &H{}
+
+	return nil
+}
+
