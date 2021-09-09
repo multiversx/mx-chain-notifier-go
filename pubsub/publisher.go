@@ -4,14 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
-	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/go-redis/redis/v8"
 )
-
-var log = logger.GetOrCreate("notifier/publisherHub")
 
 type hubPublisher struct {
 	dispatcher.Hub
