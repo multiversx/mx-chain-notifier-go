@@ -37,18 +37,15 @@ func (s *hubSubscriber) subscribeToChannel() {
 	sub := s.pubsubClient.Subscribe(s.ctx, s.rendezvous)
 	channel := sub.Channel()
 
-	var events []data.Event
 	for msg := range channel {
-		event := data.Event{}
+		var events []data.Event
 
-		err := json.Unmarshal([]byte(msg.Payload), &event)
+		err := json.Unmarshal([]byte(msg.Payload), &events)
 		if err != nil {
 			log.Debug("could not unmarshal message", "err", err.Error())
 			continue
 		}
 
-		events = append(events, event)
+		s.notifierHub.BroadcastChan() <- events
 	}
-
-	s.notifierHub.BroadcastChan() <- events
 }

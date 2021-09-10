@@ -3,7 +3,7 @@
     # e.g in the |client-api| mode password and username are not needed
     # Options: | observer-api | client-api | notifier
     # Defaults to: notifier
-    ApiType = "notifier"
+    ApiType = "observer-api"
 
     # The port on which the Hub listens for subscriptions
     Port = "5000"
