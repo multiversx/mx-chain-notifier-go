@@ -28,7 +28,12 @@ func NewHubSubscriber(ctx context.Context, config config.PubSubConfig, notifierH
 	}
 }
 
+// Subscribe launches a goroutine which listens on the pubsub message channel
 func (s *hubSubscriber) Subscribe() {
+	go s.subscribeToChannel()
+}
+
+func (s *hubSubscriber) subscribeToChannel() {
 	sub := s.pubsubClient.Subscribe(s.ctx, s.rendezvous)
 	channel := sub.Channel()
 
