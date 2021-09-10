@@ -8,6 +8,7 @@ type GeneralConfig struct {
 }
 
 type ConnectorApiConfig struct {
+	ApiType      string
 	Port         string
 	HubType      string
 	DispatchType string
