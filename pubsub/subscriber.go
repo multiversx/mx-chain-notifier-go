@@ -38,7 +38,7 @@ func (s *hubSubscriber) Subscribe() {
 
 		err := json.Unmarshal([]byte(msg.Payload), &event)
 		if err != nil {
-			log.Debug("could not unmarshall message", "err", err.Error())
+			log.Debug("could not unmarshal message", "err", err.Error())
 			continue
 		}
 

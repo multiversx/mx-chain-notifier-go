@@ -30,6 +30,7 @@ func NewHubPublisher(ctx context.Context, config config.PubSubConfig) *hubPublis
 	}
 }
 
+// Run is launched as a goroutine and listens for events on the exposed channels
 func (h *hubPublisher) Run() {
 	for {
 		select {
@@ -46,13 +47,13 @@ func (h *hubPublisher) BroadcastChan() chan<- []data.Event {
 }
 
 func (h *hubPublisher) publishToChannel(events []data.Event) {
-	marshalledEvents, err := json.Marshal(events)
+	marshaledEvents, err := json.Marshal(events)
 	if err != nil {
 		log.Debug("could not marshal events", "err", err.Error())
 		return
 	}
 
-	err = h.pubsubClient.Publish(h.ctx, h.rendezvous, marshalledEvents).Err()
+	err = h.pubsubClient.Publish(h.ctx, h.rendezvous, marshaledEvents).Err()
 	if err != nil {
 		log.Debug("could not publish to channel", "err", err.Error())
 	}
