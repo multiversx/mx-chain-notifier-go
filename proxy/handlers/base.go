@@ -17,20 +17,21 @@ type EndpointHandler struct {
 	HandlerFunc gin.HandlerFunc
 }
 
-type groupHandler struct {
+// GroupHandler holds a map of endpoint handlers
+type GroupHandler struct {
 	endpointHandlersMap map[string]EndpointGroupHandler
 }
 
-// NewGroupHandler creates an instance of a groupHandler
-func NewGroupHandler() *groupHandler {
-	return &groupHandler{
+// NewGroupHandler creates an instance of a GroupHandler
+func NewGroupHandler() *GroupHandler {
+	return &GroupHandler{
 		endpointHandlersMap: make(map[string]EndpointGroupHandler),
 	}
 }
 
 // RegisterEndpoints registers the endpoints groups and the corresponding handlers
 // It should be called after all the handlers have been defined
-func (g *groupHandler) RegisterEndpoints(r *gin.Engine) {
+func (g *GroupHandler) RegisterEndpoints(r *gin.Engine) {
 	for groupRoot, handlersGroup := range g.endpointHandlersMap {
 		routerGroup := r.Group(groupRoot).Use(handlersGroup.Middlewares...)
 		{
@@ -44,7 +45,7 @@ func (g *groupHandler) RegisterEndpoints(r *gin.Engine) {
 // AddEndpointGroupHandler inserts an EndpointGroupHandler instance to the map
 // The key of the endpointHandlersMap is the base path of the group
 // The method is not thread-safe and does not validate inputs
-func (g *groupHandler) AddEndpointGroupHandler(endpointHandler EndpointGroupHandler) {
+func (g *GroupHandler) AddEndpointGroupHandler(endpointHandler EndpointGroupHandler) {
 	g.endpointHandlersMap[endpointHandler.Root] = endpointHandler
 }
 

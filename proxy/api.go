@@ -14,41 +14,89 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	observerApiType = "observer-api"
-	clientApiType   = "client-api"
-	notifierType    = "notifier"
-)
-
 var ctx = context.Background()
 
-type webServer struct {
+type WebServer struct {
 	router        *gin.Engine
 	notifierHub   dispatcher.Hub
+	groupHandler  *handlers.GroupHandler
 	generalConfig *config.GeneralConfig
 }
 
-// NewWebServer creates and configures an instance of webServer
-func NewWebServer(generalConfig *config.GeneralConfig) (*webServer, error) {
+// NewWebServer creates and configures an instance of WebServer
+func newWebServer(generalConfig *config.GeneralConfig) *WebServer {
 	router := gin.Default()
 	router.Use(cors.Default())
 
-	server := &webServer{
+	return &WebServer{
 		router:        router,
 		generalConfig: generalConfig,
+		groupHandler:  handlers.NewGroupHandler(),
 	}
+}
 
-	err := server.registerHandlers()
+// NewNotifierApi -
+func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
+	server := newWebServer(config)
+
+	hubHandler, err := handlers.NewHubHandler(config, server.groupHandler)
 	if err != nil {
 		return nil, err
 	}
+
+	notifierHub := hubHandler.GetHub()
+	server.notifierHub = notifierHub
+
+	err = handlers.NewEventsHandler(notifierHub, server.groupHandler, config.ConnectorApi)
+	if err != nil {
+		return nil, err
+	}
+
+	server.groupHandler.RegisterEndpoints(server.router)
+
+	return server, nil
+}
+
+// NewObserverApi -
+func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
+	server := newWebServer(config)
+
+	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub)
+	server.notifierHub = pubsubHub
+
+	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi)
+	if err != nil {
+		return nil, err
+	}
+
+	server.groupHandler.RegisterEndpoints(server.router)
+
+	return server, nil
+}
+
+// NewClientApi -
+func NewClientApi(config *config.GeneralConfig) (*WebServer, error) {
+	server := newWebServer(config)
+
+	hubHandler, err := handlers.NewHubHandler(config, server.groupHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	notifierHub := hubHandler.GetHub()
+	server.notifierHub = notifierHub
+
+	pubsubListener := pubsub.NewHubSubscriber(ctx, config.PubSub, notifierHub)
+	pubsubListener.Subscribe()
+
+	server.groupHandler.RegisterEndpoints(server.router)
 
 	return server, nil
 }
 
 // Run starts the server and the Hub as goroutines
 // It returns an instance of http.Server
-func (w *webServer) Run() *http.Server {
+func (w *WebServer) Run() *http.Server {
 	go w.notifierHub.Run()
 
 	port := w.generalConfig.ConnectorApi.Port
@@ -67,52 +115,4 @@ func (w *webServer) Run() *http.Server {
 	}()
 
 	return server
-}
-
-func (w *webServer) registerHandlers() error {
-	apiType := w.generalConfig.ConnectorApi.ApiType
-
-	groupHandler := handlers.NewGroupHandler()
-
-	if apiType == observerApiType {
-		pubsubHub := pubsub.NewHubPublisher(ctx, w.generalConfig.PubSub)
-		w.notifierHub = pubsubHub
-
-		err := handlers.NewEventsHandler(pubsubHub, groupHandler, w.generalConfig.ConnectorApi)
-		if err != nil {
-			return err
-		}
-	}
-
-	if apiType == clientApiType {
-		hubHandler, err := handlers.NewHubHandler(w.generalConfig, groupHandler)
-		if err != nil {
-			return err
-		}
-
-		notifierHub := hubHandler.GetHub()
-		w.notifierHub = notifierHub
-
-		pubsubListener := pubsub.NewHubSubscriber(ctx, w.generalConfig.PubSub, notifierHub)
-		pubsubListener.Subscribe()
-	}
-
-	if apiType == notifierType {
-		hubHandler, err := handlers.NewHubHandler(w.generalConfig, groupHandler)
-		if err != nil {
-			return err
-		}
-
-		notifierHub := hubHandler.GetHub()
-		w.notifierHub = notifierHub
-
-		err = handlers.NewEventsHandler(notifierHub, groupHandler, w.generalConfig.ConnectorApi)
-		if err != nil {
-			return err
-		}
-	}
-
-	groupHandler.RegisterEndpoints(w.router)
-
-	return nil
 }
