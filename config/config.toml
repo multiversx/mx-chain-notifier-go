@@ -20,7 +20,9 @@
 
 [PubSub]
     # The url used to connect to a pubsub server
+    # Note: not required for running in the notifier mode
     Url = "redis://localhost:6379/0"
 
     # The pubsub channel used for publishing/subscribing
+    # Note: not required for running in the notifier mode
     Channel = "pub-sub"
