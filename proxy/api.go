@@ -16,6 +16,7 @@ import (
 
 var ctx = context.Background()
 
+// WebServer is a wrapper for gin.Engine, holding additional components
 type WebServer struct {
 	router        *gin.Engine
 	notifierHub   dispatcher.Hub
@@ -23,7 +24,7 @@ type WebServer struct {
 	generalConfig *config.GeneralConfig
 }
 
-// NewWebServer creates and configures an instance of WebServer
+// newWebServer creates and configures an instance of WebServer
 func newWebServer(generalConfig *config.GeneralConfig) *WebServer {
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -35,7 +36,7 @@ func newWebServer(generalConfig *config.GeneralConfig) *WebServer {
 	}
 }
 
-// NewNotifierApi -
+// NewNotifierApi launches a notifier api - exposing a clients hub
 func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
@@ -57,7 +58,7 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	return server, nil
 }
 
-// NewObserverApi -
+// NewObserverApi launches an observer api - exposing a pubsub publisher hub
 func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
@@ -74,7 +75,7 @@ func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 	return server, nil
 }
 
-// NewClientApi -
+// NewClientApi launches a client api - exposing a pubsub subscriber hub
 func NewClientApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
