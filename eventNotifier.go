@@ -2,13 +2,10 @@ package notifier
 
 import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
+	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/data/indexer"
+	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go/core/statistics"
-	nodeData "github.com/ElrondNetwork/elrond-go/data"
-	"github.com/ElrondNetwork/elrond-go/data/indexer"
-	"github.com/ElrondNetwork/elrond-go/data/state"
-	"github.com/ElrondNetwork/elrond-go/marshal"
-	"github.com/ElrondNetwork/elrond-go/process"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
 )
@@ -89,10 +86,6 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 	}
 }
 
-func (en *eventNotifier) Close() error {
-	return nil
-}
-
 func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body nodeData.BodyHandler) {
 }
 
@@ -105,13 +98,7 @@ func (en *eventNotifier) SaveValidatorsRating(indexID string, validatorsRatingIn
 func (en *eventNotifier) SaveValidatorsPubKeys(validatorsPubKeys map[uint32][][]byte, epoch uint32) {
 }
 
-func (en *eventNotifier) UpdateTPS(tpsBenchmark statistics.TPSBenchmark) {
-}
-
-func (en *eventNotifier) SaveAccounts(timestamp uint64, accounts []state.UserAccountHandler) {
-}
-
-func (en *eventNotifier) SetTxLogsProcessor(txLogsProc process.TransactionLogProcessorDatabase) {
+func (en *eventNotifier) SaveAccounts(timestamp uint64, accounts []nodeData.UserAccountHandler) {
 }
 
 func (en *eventNotifier) IsNilIndexer() bool {
@@ -120,4 +107,8 @@ func (en *eventNotifier) IsNilIndexer() bool {
 
 func (en *eventNotifier) IsInterfaceNil() bool {
 	return en == nil
+}
+
+func (en *eventNotifier) Close() error {
+	return nil
 }

@@ -10,8 +10,7 @@ import (
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go-logger/check"
-	nodeFactory "github.com/ElrondNetwork/elrond-go/cmd/node/factory"
-	"github.com/ElrondNetwork/elrond-go/core/logging"
+	"github.com/ElrondNetwork/notifier-go/cmd/logging"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/proxy"
 	"github.com/urfave/cli"
@@ -127,7 +126,7 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	return nil
 }
 
-func initLogger(ctx *cli.Context) (nodeFactory.FileLoggingHandler, error) {
+func initLogger(ctx *cli.Context) (logging.FileLogger, error) {
 	logLevelValue := ctx.GlobalString(logLevel.Name)
 
 	err := logger.SetLogLevel(logLevelValue)
@@ -140,7 +139,7 @@ func initLogger(ctx *cli.Context) (nodeFactory.FileLoggingHandler, error) {
 		return nil, err
 	}
 
-	var fileLogging nodeFactory.FileLoggingHandler
+	var fileLogging logging.FileLogger
 	saveLogs := ctx.GlobalBool(logSaveFile.Name)
 	if saveLogs {
 		fileLogging, err = logging.NewFileLogging(workingDir, defaultLogsPath, logFilePrefix)

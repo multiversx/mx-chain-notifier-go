@@ -20,7 +20,7 @@ these [docs](https://docs.elrond.com/integrators/observing-squad/)
 cover the whole process. 
 
 The required configs for launching an observer/s with a driver attached,
-can be found [here](https://github.com/ElrondNetwork/elrond-go/blob/feat/outport-driver/cmd/node/config/external.toml).
+can be found [here](https://github.com/ElrondNetwork/elrond-go/blob/master/cmd/node/config/external.toml).
 
 The supported config variables are as follows:
 

@@ -1,6 +1,6 @@
 package config
 
-import "github.com/ElrondNetwork/elrond-go/core"
+import "github.com/ElrondNetwork/elrond-go-core/core"
 
 type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
