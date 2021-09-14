@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -20,6 +21,10 @@ const (
 	defaultLogsPath    = "logs"
 	logFilePrefix      = "event-notifier"
 	logFileLifeSpanSec = 86400
+
+	observerApiType = "observer-api"
+	clientApiType   = "client-api"
+	notifierType    = "notifier"
 )
 
 var (
@@ -66,6 +71,12 @@ VERSION:
 		Usage: "This flag specifies the directory where the eventNotifier proxy will store logs.",
 		Value: "",
 	}
+
+	apiType = cli.StringFlag{
+		Name:  "api-type",
+		Usage: "This flag specifies the api type. Options: observer-api | client-api | notifier",
+		Value: "notifier",
+	}
 )
 
 func main() {
@@ -77,6 +88,7 @@ func main() {
 		logSaveFile,
 		generalConfigFile,
 		workingDirectory,
+		apiType,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -107,7 +119,8 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 		return err
 	}
 
-	api, err := proxy.NewWebServer(cfg)
+	typeValue := ctx.GlobalString(apiType.Name)
+	api, err := initWebserver(typeValue, cfg)
 	if err != nil {
 		return err
 	}
@@ -124,6 +137,19 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	}
 
 	return nil
+}
+
+func initWebserver(typeValue string, cfg *config.GeneralConfig) (*proxy.WebServer, error) {
+	switch typeValue {
+	case observerApiType:
+		return proxy.NewObserverApi(cfg)
+	case clientApiType:
+		return proxy.NewClientApi(cfg)
+	case notifierType:
+		return proxy.NewNotifierApi(cfg)
+	default:
+		return nil, errors.New("invalid apiType provided")
+	}
 }
 
 func initLogger(ctx *cli.Context) (logging.FileLogger, error) {

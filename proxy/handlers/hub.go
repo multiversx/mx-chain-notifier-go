@@ -42,7 +42,7 @@ type hubHandler struct {
 // It only registers the specified hub implementation and its corresponding dispatchers
 func NewHubHandler(
 	config *config.GeneralConfig,
-	groupHandler *groupHandler,
+	groupHandler *GroupHandler,
 ) (*hubHandler, error) {
 	notifierHub, err := makeHub(config.ConnectorApi.HubType)
 	if err != nil {

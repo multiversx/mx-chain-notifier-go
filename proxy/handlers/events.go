@@ -23,7 +23,7 @@ type eventsHandler struct {
 // NewEventsHandler registers handlers for the /events group
 func NewEventsHandler(
 	notifierHub dispatcher.Hub,
-	groupHandler *groupHandler,
+	groupHandler *GroupHandler,
 	config config.ConnectorApiConfig,
 ) error {
 	h := &eventsHandler{

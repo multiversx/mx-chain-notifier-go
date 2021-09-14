@@ -4,6 +4,7 @@ import "github.com/ElrondNetwork/elrond-go-core/core"
 
 type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
+	PubSub       PubSubConfig
 }
 
 type ConnectorApiConfig struct {
@@ -12,6 +13,11 @@ type ConnectorApiConfig struct {
 	DispatchType string
 	Username     string
 	Password     string
+}
+
+type PubSubConfig struct {
+	Url     string
+	Channel string
 }
 
 // LoadConfig return a GeneralConfig instance by reading the provided toml file
