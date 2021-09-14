@@ -88,6 +88,7 @@ func main() {
 		logSaveFile,
 		generalConfigFile,
 		workingDirectory,
+		apiType,
 	}
 	app.Authors = []cli.Author{
 		{
