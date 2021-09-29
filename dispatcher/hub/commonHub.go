@@ -106,6 +106,8 @@ func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
 	}
 
 	wh.dispatchers[d.GetID()] = d
+
+	log.Info("registered new dispatcher", "dispatcherID", d.GetID())
 }
 
 func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
@@ -115,6 +117,8 @@ func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 	if _, ok := wh.dispatchers[d.GetID()]; ok {
 		delete(wh.dispatchers, d.GetID())
 	}
+
+	log.Info("unregistered dispatcher", "dispatcherID", d.GetID(), "unsubscribing", true)
 
 	wh.subscriptionMapper.RemoveSubscriptions(d.GetID())
 }

@@ -3,16 +3,19 @@ package ws
 import (
 	"bytes"
 	"encoding/json"
-	"log"
+	"net"
 	"net/http"
 	"sync"
 	"time"
 
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
+
+var log = logger.GetOrCreate("websocket")
 
 const (
 	writeWait  = 10 * time.Second
@@ -56,7 +59,7 @@ func newWebsocketDispatcher(
 func Serve(hub dispatcher.Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		log.Error("failed upgrading connection", "err", err.Error())
 		return
 	}
 	wsDispatcher := newWebsocketDispatcher(conn, hub)
@@ -75,19 +78,24 @@ func (wd *websocketDispatcher) GetID() uuid.UUID {
 func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	eventBytes, err := json.Marshal(events)
 	if err != nil {
-		log.Println(err)
+		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
 	wd.send <- eventBytes
 }
 
-// writePump listens on the send channel and pushes data on the socket stream
+// writePump listens on the send-channel and pushes data on the socket stream
 func (wd *websocketDispatcher) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
 		if err := wd.conn.Close(); err != nil {
-			log.Println(err)
+			if _, ok := err.(*net.OpError); ok {
+				log.Debug("close attempt on closed connection", "err", err.Error())
+				return
+			}
+
+			log.Error("failed to close socket", "err", err.Error())
 		}
 	}()
 
@@ -107,27 +115,27 @@ func (wd *websocketDispatcher) writePump() {
 		select {
 		case message, ok := <-wd.send:
 			if err := wd.setSocketWriteLimits(); err != nil {
-				log.Println("channel: failed to set socket write limits", err.Error())
+				log.Error("channel: failed to set socket write limits", "err", err.Error())
 				return
 			}
 
 			if !ok {
 				if err := wd.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
-					log.Println("failed to write close message", err.Error())
+					log.Debug("failed to write close message", "err", err.Error())
 					return
 				}
 			}
 
 			if err := nextWriterWrap(websocket.TextMessage, message); err != nil {
-				log.Println("failed to write text message", err.Error())
+				log.Error("failed to write text message", "err", err.Error())
 				return
 			}
 		case <-ticker.C:
 			if err := wd.setSocketWriteLimits(); err != nil {
-				log.Println("ticker: failed to set socket write limits")
+				log.Error("ticker: failed to set socket write limits", "err", err.Error())
 			}
 			if err := wd.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Println("ticker: failed to write ping message", err.Error())
+				log.Error("ticker: failed to write ping message", "err", err.Error())
 				return
 			}
 		}
@@ -139,26 +147,26 @@ func (wd *websocketDispatcher) readPump() {
 	defer func() {
 		wd.hub.UnregisterChan() <- wd
 		if err := wd.conn.Close(); err != nil {
-			log.Println(err)
+			log.Error("failed to close socket on defer", "err", err.Error())
 		}
 		close(wd.send)
 	}()
 
 	if err := wd.setSocketReadLimits(); err != nil {
-		log.Println("failed to set socket read limits", err.Error())
-
+		log.Error("failed to set socket read limits", "err", err.Error())
 	}
 
 	for {
 		_, msg, innerErr := wd.conn.ReadMessage()
 		if innerErr != nil {
-			log.Println("failure reading socket", innerErr.Error())
+			log.Debug("failed reading socket", "err", innerErr.Error())
+
 			if websocket.IsUnexpectedCloseError(
 				innerErr,
 				websocket.CloseGoingAway,
 				websocket.CloseAbnormalClosure,
 			) {
-				log.Println("unexpected socket close error", innerErr.Error())
+				log.Debug("received unexpected socket close", "err", innerErr.Error())
 			}
 			break
 		}
@@ -172,7 +180,7 @@ func (wd *websocketDispatcher) trySendSubscribeEvent(data []byte) {
 	var subscribeEvent dispatcher.SubscribeEvent
 	err := json.Unmarshal(data, &subscribeEvent)
 	if err != nil {
-		log.Println(err)
+		log.Error("failure unmarshalling subscribe event", "err", err.Error())
 		return
 	}
 	subscribeEvent.DispatcherID = wd.id
