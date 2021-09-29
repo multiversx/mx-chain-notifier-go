@@ -4,8 +4,11 @@ import (
 	"strings"
 	"sync"
 
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/google/uuid"
 )
+
+var log = logger.GetOrCreate("subscription")
 
 const (
 	// MatchAll signals that all events will be matched
@@ -68,6 +71,10 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event SubscribeEvent) {
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   MatchAll,
 		})
+		log.Info("subscribed dispatcher",
+			"dispatcherID", event.DispatcherID,
+			"match level", MatchAll,
+		)
 		return
 	}
 
@@ -81,7 +88,14 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event SubscribeEvent) {
 			MatchLevel:   matchLevel,
 		}
 		sm.appendSubscription(subscription)
+
+		log.Info("added new subscription for dispatcher",
+			"dispatcherID", event.DispatcherID,
+			"match level", matchLevel,
+		)
 	}
+
+	log.Info("subscribed dispatcher", "dispatcherID", event.DispatcherID)
 }
 
 // RemoveSubscriptions removes all subscriptions registered by a dispatcher
@@ -92,6 +106,8 @@ func (sm *SubscriptionMapper) RemoveSubscriptions(dispatcherID uuid.UUID) {
 	if _, ok := sm.subscriptions[dispatcherID]; ok {
 		delete(sm.subscriptions, dispatcherID)
 	}
+
+	log.Info("unsubscribed dispatcher", "dispatcherID", dispatcherID)
 }
 
 // Subscriptions returns a slice reflecting the subscriptions present in the map
