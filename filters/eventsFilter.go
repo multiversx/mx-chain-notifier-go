@@ -17,6 +17,8 @@ func (f *defaultFilter) MatchEvent(subscription dispatcher.Subscription, event d
 		return true
 	case dispatcher.MatchAddress:
 		return event.Address == subscription.Address
+	case dispatcher.MatchAddressIdentifier:
+		return event.Address == subscription.Address && event.Identifier == subscription.Identifier
 	case dispatcher.MatchIdentifier:
 		return event.Identifier == subscription.Identifier
 	case dispatcher.MatchTopics:
