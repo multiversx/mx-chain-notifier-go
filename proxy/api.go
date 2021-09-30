@@ -67,7 +67,7 @@ func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub, pubsubClient)
 	server.notifierHub = pubsubHub
 
-	redlock := pubsub.NewRedlockWrapper(pubsubClient)
+	redlock := pubsub.NewRedlockWrapper(ctx, pubsubClient)
 
 	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi, redlock)
 	if err != nil {

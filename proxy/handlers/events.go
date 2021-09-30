@@ -58,13 +58,16 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 		return
 	}
 
-	eventsAlreadyProcessed := false
+	shouldProcessEvents := true
 	if h.config.CheckDuplicates {
-		eventsAlreadyProcessed = h.redlock.IsBlockProcessed(blockEvents.Hash)
+		shouldProcessEvents = h.redlock.IsBlockProcessed(blockEvents.Hash)
 	}
 
-	if blockEvents.Events != nil && !eventsAlreadyProcessed {
-
+	if blockEvents.Events != nil && shouldProcessEvents {
+		log.Info("received events for block",
+			"block hash", string(blockEvents.Hash),
+			"shouldProcess", shouldProcessEvents,
+		)
 		h.notifierHub.BroadcastChan() <- blockEvents.Events
 	}
 

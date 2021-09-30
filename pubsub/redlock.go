@@ -9,7 +9,7 @@ import (
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
 )
 
-const expiry = time.Minute * 5
+var expiry = time.Minute * 5
 
 type RedlockWrapper struct {
 	client *goredislib.Client
@@ -17,7 +17,7 @@ type RedlockWrapper struct {
 	ctx    context.Context
 }
 
-func NewRedlockWrapper(client *goredislib.Client) *RedlockWrapper {
+func NewRedlockWrapper(ctx context.Context, client *goredislib.Client) *RedlockWrapper {
 	pool := goredis.NewPool(client)
 
 	rs := redsync.New(pool)
@@ -25,6 +25,7 @@ func NewRedlockWrapper(client *goredislib.Client) *RedlockWrapper {
 	return &RedlockWrapper{
 		client: client,
 		rsync:  rs,
+		ctx:    ctx,
 	}
 }
 

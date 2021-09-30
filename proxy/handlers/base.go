@@ -1,6 +1,11 @@
 package handlers
 
-import "github.com/gin-gonic/gin"
+import (
+	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/gin-gonic/gin"
+)
+
+var log = logger.GetOrCreate("handlers")
 
 // EndpointGroupHandler defines the components of a gin.Engine Group
 // It allows for multiple middleware configuration
