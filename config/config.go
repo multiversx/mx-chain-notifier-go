@@ -8,11 +8,12 @@ type GeneralConfig struct {
 }
 
 type ConnectorApiConfig struct {
-	Port         string
-	HubType      string
-	DispatchType string
-	Username     string
-	Password     string
+	Port            string
+	HubType         string
+	DispatchType    string
+	Username        string
+	Password        string
+	CheckDuplicates bool
 }
 
 type PubSubConfig struct {
