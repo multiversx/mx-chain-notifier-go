@@ -47,15 +47,16 @@ func NewEventsHandler(
 }
 
 func (h *eventsHandler) pushEvents(c *gin.Context) {
-	var events []data.Event
+	var blockEvents data.BlockEvents
 
-	err := c.Bind(&events)
+	err := c.Bind(&blockEvents)
 	if err != nil {
 		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-	if events != nil {
-		h.notifierHub.BroadcastChan() <- events
+
+	if blockEvents.Events != nil {
+		h.notifierHub.BroadcastChan() <- blockEvents.Events
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
