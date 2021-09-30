@@ -62,7 +62,9 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
-	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub)
+	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
+
+	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub, pubsubClient)
 	server.notifierHub = pubsubHub
 
 	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi)
@@ -87,7 +89,9 @@ func NewClientApi(config *config.GeneralConfig) (*WebServer, error) {
 	notifierHub := hubHandler.GetHub()
 	server.notifierHub = notifierHub
 
-	pubsubListener := pubsub.NewHubSubscriber(ctx, config.PubSub, notifierHub)
+	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
+
+	pubsubListener := pubsub.NewHubSubscriber(ctx, config.PubSub, notifierHub, pubsubClient)
 	pubsubListener.Subscribe()
 
 	server.groupHandler.RegisterEndpoints(server.router)

@@ -21,10 +21,14 @@ type hubPublisher struct {
 }
 
 // NewHubPublisher creates a new hubPublisher instance
-func NewHubPublisher(ctx context.Context, config config.PubSubConfig) *hubPublisher {
+func NewHubPublisher(
+	ctx context.Context,
+	config config.PubSubConfig,
+	pubsubClient *redis.Client,
+) *hubPublisher {
 	return &hubPublisher{
 		broadcast:    make(chan []data.Event),
-		pubsubClient: CreatePubsubClient(config),
+		pubsubClient: pubsubClient,
 		rendezvous:   config.Channel,
 		ctx:          ctx,
 	}
