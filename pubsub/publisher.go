@@ -3,7 +3,6 @@ package pubsub
 import (
 	"context"
 	"encoding/json"
-
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"

@@ -6,7 +6,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
-
+	"github.com/ElrondNetwork/notifier-go/pubsub"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,6 +18,7 @@ const (
 type eventsHandler struct {
 	notifierHub dispatcher.Hub
 	config      config.ConnectorApiConfig
+	redlock     *pubsub.RedlockWrapper
 }
 
 // NewEventsHandler registers handlers for the /events group
@@ -25,10 +26,12 @@ func NewEventsHandler(
 	notifierHub dispatcher.Hub,
 	groupHandler *GroupHandler,
 	config config.ConnectorApiConfig,
+	redlock *pubsub.RedlockWrapper,
 ) error {
 	h := &eventsHandler{
 		notifierHub: notifierHub,
 		config:      config,
+		redlock:     redlock,
 	}
 
 	endpoints := []EndpointHandler{
@@ -55,7 +58,13 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 		return
 	}
 
-	if blockEvents.Events != nil {
+	eventsAlreadyProcessed := false
+	if h.config.CheckDuplicates {
+		eventsAlreadyProcessed = h.redlock.IsBlockProcessed(blockEvents.Hash)
+	}
+
+	if blockEvents.Events != nil && !eventsAlreadyProcessed {
+
 		h.notifierHub.BroadcastChan() <- blockEvents.Events
 	}
 

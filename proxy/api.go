@@ -48,7 +48,7 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	notifierHub := hubHandler.GetHub()
 	server.notifierHub = notifierHub
 
-	err = handlers.NewEventsHandler(notifierHub, server.groupHandler, config.ConnectorApi)
+	err = handlers.NewEventsHandler(notifierHub, server.groupHandler, config.ConnectorApi, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,9 @@ func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub, pubsubClient)
 	server.notifierHub = pubsubHub
 
-	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi)
+	redlock := pubsub.NewRedlockWrapper(pubsubClient)
+
+	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi, redlock)
 	if err != nil {
 		return nil, err
 	}
