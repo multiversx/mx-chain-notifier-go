@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"net"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/pubsub"
 	"github.com/gin-gonic/gin"
-	"net"
-	"net/http"
-	"strings"
-	"time"
 )
 
 const (

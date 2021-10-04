@@ -7,7 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-var expiry = time.Minute * 5
+var expiry = time.Minute * 30
 
 type RedlockWrapper struct {
 	client *redis.Client

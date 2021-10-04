@@ -2,9 +2,10 @@ package pubsub
 
 import (
 	"context"
+	"testing"
+
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestCreatePubsubClient_PingShouldConnectToDefault(t *testing.T) {
