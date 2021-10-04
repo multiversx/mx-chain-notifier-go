@@ -29,7 +29,7 @@ func NewRedlockWrapper(ctx context.Context, client *goredislib.Client) *RedlockW
 	}
 }
 
-func (r *RedlockWrapper) IsBlockProcessed(blockHash []byte) bool {
+func (r *RedlockWrapper) IsBlockProcessed(blockHash []byte) (bool, error) {
 	ok, err := r.client.SetNX(r.ctx, string(blockHash), true, expiry).Result()
-	return err == nil && ok
+	return ok, err
 }

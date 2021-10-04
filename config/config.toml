@@ -21,7 +21,7 @@
     # CheckDuplicates signals if the events received from observers have been already pushed to clients
     # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
     # Defaults to: false
-    CheckDuplicates = false
+    CheckDuplicates = true
 
 [PubSub]
     # The url used to connect to a pubsub server

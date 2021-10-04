@@ -60,7 +60,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 
 	shouldProcessEvents := true
 	if h.config.CheckDuplicates {
-		shouldProcessEvents = h.redlock.IsBlockProcessed(blockEvents.Hash)
+		shouldProcessEvents, err = h.redlock.IsBlockProcessed(blockEvents.Hash)
 	}
 
 	if blockEvents.Events != nil && shouldProcessEvents {

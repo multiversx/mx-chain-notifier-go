@@ -54,14 +54,14 @@ func (g *GroupHandler) AddEndpointGroupHandler(endpointHandler EndpointGroupHand
 	g.endpointHandlersMap[endpointHandler.Root] = endpointHandler
 }
 
-type apiResponse struct {
+type ApiResponse struct {
 	Data  interface{} `json:"data"`
 	Error string      `json:"error"`
 }
 
 // JsonResponse is a wrapper for gin.Context JSON payload
 func JsonResponse(c *gin.Context, status int, data interface{}, error string) {
-	c.JSON(status, apiResponse{
+	c.JSON(status, ApiResponse{
 		Data:  data,
 		Error: error,
 	})

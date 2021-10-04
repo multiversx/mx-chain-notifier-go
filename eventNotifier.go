@@ -8,6 +8,7 @@ import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
+	"github.com/ElrondNetwork/notifier-go/proxy/handlers"
 )
 
 var log = logger.GetOrCreate("outport/eventNotifier")
@@ -84,9 +85,11 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 		Hash:   args.HeaderHash,
 		Events: events,
 	}
-	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
+	var response handlers.ApiResponse
+	err := en.httpClient.Post(pushEventEndpoint, blockEvents, response)
 	if err != nil {
 		log.Error("error while posting event data", "err", err.Error())
+		return
 	}
 }
 
