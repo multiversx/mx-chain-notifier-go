@@ -72,7 +72,7 @@ func (h *httpClient) Post(
 
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return json.Unmarshal(resBody, &response)

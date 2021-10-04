@@ -1,18 +1,22 @@
 package handlers
 
 import (
-	"net/http"
-
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/pubsub"
 	"github.com/gin-gonic/gin"
+	"net"
+	"net/http"
+	"strings"
+	"time"
 )
 
 const (
 	baseEventsEndpoint = "/events"
 	pushEventsEndpoint = "/push"
+
+	setnxRetryMs = 500
 )
 
 type eventsHandler struct {
@@ -60,7 +64,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 
 	shouldProcessEvents := true
 	if h.config.CheckDuplicates {
-		shouldProcessEvents, err = h.redlock.IsBlockProcessed(blockEvents.Hash)
+		shouldProcessEvents = h.tryCheckProcessedOrRetry(blockEvents.Hash)
 	}
 
 	if blockEvents.Events != nil && shouldProcessEvents {
@@ -85,4 +89,26 @@ func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 	}
 
 	return middleware
+}
+
+func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash []byte) bool {
+	var err error
+	var processed bool
+
+	for {
+		processed, err = h.redlock.IsBlockProcessed(blockHash)
+
+		if err != nil {
+			if netErr, ok := err.(*net.OpError); ok {
+				if strings.Contains(netErr.Err.Error(), "connection refused") {
+					time.Sleep(time.Millisecond * setnxRetryMs)
+					continue
+				}
+			}
+		}
+
+		break
+	}
+
+	return err == nil && processed
 }
