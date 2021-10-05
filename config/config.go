@@ -5,6 +5,7 @@ import "github.com/ElrondNetwork/elrond-go-core/core"
 type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
 	PubSub       PubSubConfig
+	RabbitMQ     RabbitMQConfig
 }
 
 type ConnectorApiConfig struct {
@@ -19,6 +20,11 @@ type ConnectorApiConfig struct {
 type PubSubConfig struct {
 	Url     string
 	Channel string
+}
+
+type RabbitMQConfig struct {
+	Url            string
+	EventsExchange string
 }
 
 // LoadConfig return a GeneralConfig instance by reading the provided toml file

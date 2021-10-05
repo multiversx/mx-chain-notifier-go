@@ -2,9 +2,11 @@ package rabbitmq
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"time"
 
+	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/streadway/amqp"
@@ -12,7 +14,11 @@ import (
 
 const (
 	reconnectRetryMs = 500
+
+	emptyStr = ""
 )
+
+var log = logger.GetOrCreate("rabbitMQPublisher")
 
 type rabbitMqPublisher struct {
 	dispatcher.Hub
@@ -20,26 +26,29 @@ type rabbitMqPublisher struct {
 	broadcast chan []data.Event
 	connErrCh chan *amqp.Error
 
-	conn   *amqp.Connection
-	ch     *amqp.Channel
-	amqurl string
+	conn *amqp.Connection
+	ch   *amqp.Channel
+	cfg  config.RabbitMQConfig
 
 	ctx context.Context
 }
 
-func NewRabbitMqPublisher(ctx context.Context) *rabbitMqPublisher {
+func NewRabbitMqPublisher(
+	ctx context.Context,
+	cfg config.RabbitMQConfig,
+) (*rabbitMqPublisher, error) {
 	rp := &rabbitMqPublisher{
 		broadcast: make(chan []data.Event),
-		amqurl:    "amqp://guest:guest@localhost:5672",
+		cfg:       cfg,
 		ctx:       ctx,
 	}
 
 	err := rp.connect()
 	if err != nil {
-		fmt.Println("connect err", err.Error())
+		return nil, err
 	}
 
-	return rp
+	return rp, nil
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
@@ -50,14 +59,17 @@ func (rp *rabbitMqPublisher) Run() {
 			rp.publishToExchanges(events)
 		case err := <-rp.connErrCh:
 			if err != nil {
-				fmt.Println("conn err", err.Error())
+				log.Error("rabbitMQ connection failure", "err", err.Error())
 				rp.reconnect()
 			}
 		case <-rp.ctx.Done():
-			fmt.Println("ctx done. closing")
-			err := rp.conn.Close()
+			err := rp.ch.Close()
 			if err != nil {
-				fmt.Println("failed to close conn", err.Error())
+				log.Error("failed to close rabbitMQ channel", "err", err.Error())
+			}
+			err = rp.conn.Close()
+			if err != nil {
+				log.Error("failed to close rabbitMQ channel", "err", err.Error())
 			}
 		}
 	}
@@ -70,11 +82,35 @@ func (rp *rabbitMqPublisher) BroadcastChan() chan<- []data.Event {
 }
 
 func (rp *rabbitMqPublisher) publishToExchanges(events []data.Event) {
+	if rp.cfg.EventsExchange != "" {
+		eventsBytes, err := json.Marshal(events)
+		if err != nil {
+			log.Error("could not marshal events", "err", err.Error())
+		}
 
+		err = rp.publishFanout(rp.cfg.EventsExchange, eventsBytes)
+		if err != nil {
+			log.Error("failed to publish to rabbitMQ", "err", err.Error())
+		}
+	}
+}
+
+func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) error {
+	err := rp.ch.Publish(
+		exchangeName,
+		emptyStr,
+		true,  // mandatory
+		false, // immediate
+		amqp.Publishing{
+			Body: payload,
+		},
+	)
+
+	return err
 }
 
 func (rp *rabbitMqPublisher) connect() error {
-	conn, err := amqp.Dial(rp.amqurl)
+	conn, err := amqp.Dial(rp.cfg.Url)
 	if err != nil {
 		return err
 	}
@@ -98,11 +134,11 @@ func (rp *rabbitMqPublisher) reconnect() {
 
 		err := rp.connect()
 		if err != nil {
-			fmt.Println("err while trying to reconnect", err.Error())
+			log.Debug("could not reconnect", "err", err.Error())
 			continue
 		}
 
-		fmt.Println("connection established after reconnect")
+		log.Debug("connection established after reconnect attempts")
 		break
 	}
 }
