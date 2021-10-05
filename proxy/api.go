@@ -3,7 +3,6 @@ package proxy
 import (
 	"context"
 	"fmt"
-	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 	"net/http"
 	"strings"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/proxy/handlers"
 	"github.com/ElrondNetwork/notifier-go/pubsub"
+	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
