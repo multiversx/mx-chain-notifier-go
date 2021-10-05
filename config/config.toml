@@ -31,3 +31,8 @@
     # The pubsub channel used for publishing/subscribing
     # Note: not required for running in the notifier mode
     Channel = "pub-sub"
+
+[RabbitMQ]
+    Url = "amqp://guest:guest@localhost:5672"
+
+    EventsExchange = "all_events"
