@@ -92,10 +92,10 @@ func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 
 func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash []byte) bool {
 	var err error
-	var processed bool
+	var setSuccessful bool
 
 	for {
-		processed, err = h.redlock.IsBlockProcessed(blockHash)
+		setSuccessful, err = h.redlock.IsBlockProcessed(blockHash)
 
 		if err != nil {
 			if !h.redlock.HasConnection() {
@@ -107,5 +107,5 @@ func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash []byte) bool {
 		break
 	}
 
-	return err == nil && processed
+	return err == nil && setSuccessful
 }
