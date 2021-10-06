@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"net"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/ElrondNetwork/notifier-go/config"
@@ -100,11 +98,9 @@ func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash []byte) bool {
 		processed, err = h.redlock.IsBlockProcessed(blockHash)
 
 		if err != nil {
-			if netErr, ok := err.(*net.OpError); ok {
-				if strings.Contains(netErr.Err.Error(), "connection refused") {
-					time.Sleep(time.Millisecond * setnxRetryMs)
-					continue
-				}
+			if !h.redlock.HasConnection() {
+				time.Sleep(time.Millisecond * setnxRetryMs)
+				continue
 			}
 		}
 

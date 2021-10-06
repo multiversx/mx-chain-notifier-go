@@ -25,3 +25,9 @@ func (r *RedlockWrapper) IsBlockProcessed(blockHash []byte) (bool, error) {
 	ok, err := r.client.SetNX(r.ctx, string(blockHash), true, expiry).Result()
 	return ok, err
 }
+
+func (r *RedlockWrapper) HasConnection() bool {
+	pong, err := r.client.Ping(r.ctx).Result()
+
+	return err == nil && pong == pongValue
+}
