@@ -90,7 +90,7 @@ func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 	return middleware
 }
 
-func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash []byte) bool {
+func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
 	var err error
 	var setSuccessful bool
 
