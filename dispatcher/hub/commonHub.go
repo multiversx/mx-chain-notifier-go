@@ -20,6 +20,7 @@ type commonHub struct {
 	register           chan dispatcher.EventDispatcher
 	unregister         chan dispatcher.EventDispatcher
 	broadcast          chan data.BlockEvents
+	broadcastRevert    chan data.RevertBlock
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -32,6 +33,7 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 		register:           make(chan dispatcher.EventDispatcher),
 		unregister:         make(chan dispatcher.EventDispatcher),
 		broadcast:          make(chan data.BlockEvents),
+		broadcastRevert:    make(chan data.RevertBlock),
 	}
 }
 
@@ -60,6 +62,12 @@ func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (wh *commonHub) BroadcastChan() chan<- data.BlockEvents {
 	return wh.broadcast
+}
+
+// BroadcastRevertChan returns a receive-only channel on which revert events are pushed
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (wh *commonHub) BroadcastRevertChan() chan<- data.RevertBlock {
+	return wh.broadcastRevert
 }
 
 // RegisterChan returns a receive-only channel used to register dispatchers

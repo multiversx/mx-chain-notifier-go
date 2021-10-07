@@ -23,8 +23,9 @@ var log = logger.GetOrCreate("rabbitMQPublisher")
 type rabbitMqPublisher struct {
 	dispatcher.Hub
 
-	broadcast chan data.BlockEvents
-	connErrCh chan *amqp.Error
+	broadcast       chan data.BlockEvents
+	broadcastRevert chan data.RevertBlock
+	connErrCh       chan *amqp.Error
 
 	conn *amqp.Connection
 	ch   *amqp.Channel
@@ -38,9 +39,10 @@ func NewRabbitMqPublisher(
 	cfg config.RabbitMQConfig,
 ) (*rabbitMqPublisher, error) {
 	rp := &rabbitMqPublisher{
-		broadcast: make(chan data.BlockEvents),
-		cfg:       cfg,
-		ctx:       ctx,
+		broadcast:       make(chan data.BlockEvents),
+		broadcastRevert: make(chan data.RevertBlock),
+		cfg:             cfg,
+		ctx:             ctx,
 	}
 
 	err := rp.connect()
@@ -79,6 +81,12 @@ func (rp *rabbitMqPublisher) Run() {
 // Upon reading the channel, the hub publishes on the configured rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastChan() chan<- data.BlockEvents {
 	return rp.broadcast
+}
+
+// BroadcastRevertChan returns a receive-only channel on which revert events are pushed by producers
+// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastRevertChan() chan<- data.RevertBlock {
+	return rp.broadcastRevert
 }
 
 func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {

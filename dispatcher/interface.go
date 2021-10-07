@@ -13,6 +13,7 @@ type EventDispatcher interface {
 type Hub interface {
 	Run()
 	BroadcastChan() chan<- data.BlockEvents
+	BroadcastRevertChan() chan<- data.RevertBlock
 	RegisterChan() chan<- EventDispatcher
 	UnregisterChan() chan<- EventDispatcher
 	Subscribe(event SubscribeEvent)
