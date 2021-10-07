@@ -5,6 +5,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/indexer"
+	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -21,12 +22,14 @@ type eventNotifier struct {
 	isNilNotifier   bool
 	httpClient      client.HttpClient
 	marshalizer     marshal.Marshalizer
+	hasher          hashing.Hasher
 	pubKeyConverter core.PubkeyConverter
 }
 
 type EventNotifierArgs struct {
 	HttpClient      client.HttpClient
 	Marshalizer     marshal.Marshalizer
+	Hasher          hashing.Hasher
 	PubKeyConverter core.PubkeyConverter
 }
 
@@ -37,6 +40,7 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 		isNilNotifier:   false,
 		httpClient:      args.HttpClient,
 		marshalizer:     args.Marshalizer,
+		hasher:          args.Hasher,
 		pubKeyConverter: args.PubKeyConverter,
 	}, nil
 }
