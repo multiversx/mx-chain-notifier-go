@@ -68,10 +68,10 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 
 	if blockEvents.Events != nil && shouldProcessEvents {
 		log.Info("received events for block",
-			"block hash", string(blockEvents.Hash),
+			"block hash", blockEvents.Hash,
 			"shouldProcess", shouldProcessEvents,
 		)
-		h.notifierHub.BroadcastChan() <- blockEvents.Events
+		h.notifierHub.BroadcastChan() <- blockEvents
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
