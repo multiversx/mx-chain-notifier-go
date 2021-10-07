@@ -56,12 +56,12 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 		SubscriptionEntries: []dispatcher.SubscriptionEntry{},
 	})
 
-	events := getEvents()
+	blockEvents := getEvents()
 
-	hub.handleBroadcast(events)
+	hub.handleBroadcast(blockEvents)
 
-	require.True(t, consumer.HasEvents(events))
-	require.True(t, len(consumer.CollectedEvents()) == len(events))
+	require.True(t, consumer.HasEvents(blockEvents.Events))
+	require.True(t, len(consumer.CollectedEvents()) == len(blockEvents.Events))
 }
 
 func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
@@ -96,33 +96,36 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 		},
 	})
 
-	events := getEvents()
+	blockEvents := getEvents()
 
-	hub.handleBroadcast(events)
+	hub.handleBroadcast(blockEvents)
 
-	require.True(t, consumer1.HasEvent(events[0]))
-	require.True(t, consumer2.HasEvent(events[1]))
+	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
+	require.True(t, consumer2.HasEvent(blockEvents.Events[1]))
 }
 
-func getEvents() []data.Event {
-	return []data.Event{
-		{
-			Address:    "erd1",
-			Identifier: "swap",
-			Topics:     [][]byte{},
-			Data:       []byte{},
-		},
-		{
-			Address:    "erd2",
-			Identifier: "lock",
-			Topics:     [][]byte{},
-			Data:       []byte{},
-		},
-		{
-			Address:    "erd3",
-			Identifier: "random",
-			Topics:     [][]byte{},
-			Data:       []byte{},
+func getEvents() data.BlockEvents {
+	return data.BlockEvents{
+		Hash: "374d75573060d840257045add9cd104b70180065f2406808ebabe02a1a3cb5f8",
+		Events: []data.Event{
+			{
+				Address:    "erd1",
+				Identifier: "swap",
+				Topics:     [][]byte{},
+				Data:       []byte{},
+			},
+			{
+				Address:    "erd2",
+				Identifier: "lock",
+				Topics:     [][]byte{},
+				Data:       []byte{},
+			},
+			{
+				Address:    "erd3",
+				Identifier: "random",
+				Topics:     [][]byte{},
+				Data:       []byte{},
+			},
 		},
 	}
 }
