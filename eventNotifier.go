@@ -15,7 +15,8 @@ import (
 var log = logger.GetOrCreate("outport/eventNotifier")
 
 const (
-	pushEventEndpoint = "/events/push"
+	pushEventEndpoint    = "/events/push"
+	revertEventsEndpoint = "/events/revert"
 )
 
 type eventNotifier struct {
@@ -110,7 +111,10 @@ func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body 
 		Epoch: header.GetEpoch(),
 	}
 
-	_ = revertBlock
+	err = en.httpClient.Post(revertEventsEndpoint, revertBlock, nil)
+	if err != nil {
+		log.Error("error while posting revert event data", "err", err.Error())
+	}
 }
 
 func (en *eventNotifier) SaveRoundsInfo(rf []*indexer.RoundInfo) {
