@@ -12,7 +12,7 @@ import (
 type hubPublisher struct {
 	dispatcher.Hub
 
-	broadcast    chan []data.Event
+	broadcast    chan data.BlockEvents
 	pubsubClient *redis.Client
 	rendezvous   string
 
@@ -26,7 +26,7 @@ func NewHubPublisher(
 	pubsubClient *redis.Client,
 ) *hubPublisher {
 	return &hubPublisher{
-		broadcast:    make(chan []data.Event),
+		broadcast:    make(chan data.BlockEvents),
 		pubsubClient: pubsubClient,
 		rendezvous:   config.Channel,
 		ctx:          ctx,
@@ -45,11 +45,11 @@ func (h *hubPublisher) Run() {
 
 // BroadcastChan returns a receive-only channel on which events are pushed by producers
 // Upon reading the channel, the hub publishes on the pubSub channel
-func (h *hubPublisher) BroadcastChan() chan<- []data.Event {
+func (h *hubPublisher) BroadcastChan() chan<- data.BlockEvents {
 	return h.broadcast
 }
 
-func (h *hubPublisher) publishToChannel(events []data.Event) {
+func (h *hubPublisher) publishToChannel(events data.BlockEvents) {
 	marshaledEvents, err := json.Marshal(events)
 	if err != nil {
 		log.Debug("could not marshal events", "err", err.Error())

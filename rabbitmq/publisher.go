@@ -23,7 +23,7 @@ var log = logger.GetOrCreate("rabbitMQPublisher")
 type rabbitMqPublisher struct {
 	dispatcher.Hub
 
-	broadcast chan []data.Event
+	broadcast chan data.BlockEvents
 	connErrCh chan *amqp.Error
 
 	conn *amqp.Connection
@@ -38,7 +38,7 @@ func NewRabbitMqPublisher(
 	cfg config.RabbitMQConfig,
 ) (*rabbitMqPublisher, error) {
 	rp := &rabbitMqPublisher{
-		broadcast: make(chan []data.Event),
+		broadcast: make(chan data.BlockEvents),
 		cfg:       cfg,
 		ctx:       ctx,
 	}
@@ -77,11 +77,11 @@ func (rp *rabbitMqPublisher) Run() {
 
 // BroadcastChan returns a receive-only channel on which events are pushed by producers
 // Upon reading the channel, the hub publishes on the configured rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastChan() chan<- []data.Event {
+func (rp *rabbitMqPublisher) BroadcastChan() chan<- data.BlockEvents {
 	return rp.broadcast
 }
 
-func (rp *rabbitMqPublisher) publishToExchanges(events []data.Event) {
+func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
 	if rp.cfg.EventsExchange != "" {
 		eventsBytes, err := json.Marshal(events)
 		if err != nil {
