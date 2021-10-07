@@ -22,6 +22,7 @@ const (
 	logFilePrefix      = "event-notifier"
 	logFileLifeSpanSec = 86400
 
+	rabbitApiType   = "rabbit-api"
 	observerApiType = "observer-api"
 	clientApiType   = "client-api"
 	notifierType    = "notifier"
@@ -74,7 +75,7 @@ VERSION:
 
 	apiType = cli.StringFlag{
 		Name:  "api-type",
-		Usage: "This flag specifies the api type. Options: observer-api | client-api | notifier",
+		Usage: "This flag specifies the api type. Options: rabbit-api | observer-api | client-api | notifier",
 		Value: "notifier",
 	}
 )
@@ -143,6 +144,8 @@ func initWebserver(typeValue string, cfg *config.GeneralConfig) (*proxy.WebServe
 	switch typeValue {
 	case observerApiType:
 		return proxy.NewObserverApi(cfg)
+	case rabbitApiType:
+		return proxy.NewObserverToRabbitApi(cfg)
 	case clientApiType:
 		return proxy.NewClientApi(cfg)
 	case notifierType:

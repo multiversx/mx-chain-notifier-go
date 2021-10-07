@@ -10,6 +10,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/proxy/handlers"
 	"github.com/ElrondNetwork/notifier-go/pubsub"
+	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -49,6 +50,31 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	server.notifierHub = notifierHub
 
 	err = handlers.NewEventsHandler(notifierHub, server.groupHandler, config.ConnectorApi, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	server.groupHandler.RegisterEndpoints(server.router)
+
+	return server, nil
+}
+
+// NewObserverToRabbitApi launches an observer api - pushing data to rabbitMQ exchanges
+func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
+	server := newWebServer(config)
+
+	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
+
+	rabbitPublisher, err := rabbitmq.NewRabbitMqPublisher(ctx, config.RabbitMQ)
+	if err != nil {
+		return nil, err
+	}
+
+	server.notifierHub = rabbitPublisher
+
+	redlock := pubsub.NewRedlockWrapper(ctx, pubsubClient)
+
+	err = handlers.NewEventsHandler(rabbitPublisher, server.groupHandler, config.ConnectorApi, redlock)
 	if err != nil {
 		return nil, err
 	}
