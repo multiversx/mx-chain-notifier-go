@@ -86,6 +86,7 @@ func (rp *rabbitMqPublisher) publishToExchanges(events []data.Event) {
 		eventsBytes, err := json.Marshal(events)
 		if err != nil {
 			log.Error("could not marshal events", "err", err.Error())
+			return
 		}
 
 		err = rp.publishFanout(rp.cfg.EventsExchange, eventsBytes)
@@ -135,10 +136,9 @@ func (rp *rabbitMqPublisher) reconnect() {
 		err := rp.connect()
 		if err != nil {
 			log.Debug("could not reconnect", "err", err.Error())
-			continue
+		} else {
+			log.Debug("connection established after reconnect attempts")
+			break
 		}
-
-		log.Debug("connection established after reconnect attempts")
-		break
 	}
 }
