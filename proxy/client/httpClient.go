@@ -70,14 +70,9 @@ func (h *httpClient) Post(
 		return err
 	}
 
-	httpError := h.getErrorFromStatusCode(resp.StatusCode)
-	if httpError != nil {
-		return httpError
-	}
-
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return json.Unmarshal(resBody, &response)

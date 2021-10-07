@@ -80,7 +80,12 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 
 	log.Debug("extracted events from block logs", "num events", len(events))
 
-	err := en.httpClient.Post(pushEventEndpoint, events, nil)
+	blockEvents := data.BlockEvents{
+		Hash:   args.HeaderHash,
+		Events: events,
+	}
+
+	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
 	if err != nil {
 		log.Error("error while posting event data", "err", err.Error())
 	}

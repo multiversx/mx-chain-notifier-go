@@ -59,3 +59,8 @@ type Event struct {
 	Topics     [][]byte `json:"topics"`
 	Data       []byte   `json:"data"`
 }
+
+type BlockEvents struct {
+	Hash   []byte  `json:"hash"`
+	Events []Event `json:"events"`
+}

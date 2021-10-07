@@ -6,6 +6,10 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+const (
+	pongValue = "PONG"
+)
+
 var log = logger.GetOrCreate("notifier/pubsub")
 
 func CreatePubsubClient(cfg config.PubSubConfig) *redis.Client {

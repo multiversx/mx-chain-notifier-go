@@ -2,22 +2,26 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
-
+	"github.com/ElrondNetwork/notifier-go/pubsub"
 	"github.com/gin-gonic/gin"
 )
 
 const (
 	baseEventsEndpoint = "/events"
 	pushEventsEndpoint = "/push"
+
+	setnxRetryMs = 500
 )
 
 type eventsHandler struct {
 	notifierHub dispatcher.Hub
 	config      config.ConnectorApiConfig
+	redlock     *pubsub.RedlockWrapper
 }
 
 // NewEventsHandler registers handlers for the /events group
@@ -25,10 +29,12 @@ func NewEventsHandler(
 	notifierHub dispatcher.Hub,
 	groupHandler *GroupHandler,
 	config config.ConnectorApiConfig,
+	redlock *pubsub.RedlockWrapper,
 ) error {
 	h := &eventsHandler{
 		notifierHub: notifierHub,
 		config:      config,
+		redlock:     redlock,
 	}
 
 	endpoints := []EndpointHandler{
@@ -47,15 +53,25 @@ func NewEventsHandler(
 }
 
 func (h *eventsHandler) pushEvents(c *gin.Context) {
-	var events []data.Event
+	var blockEvents data.BlockEvents
 
-	err := c.Bind(&events)
+	err := c.Bind(&blockEvents)
 	if err != nil {
 		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-	if events != nil {
-		h.notifierHub.BroadcastChan() <- events
+
+	shouldProcessEvents := true
+	if h.config.CheckDuplicates {
+		shouldProcessEvents = h.tryCheckProcessedOrRetry(blockEvents.Hash)
+	}
+
+	if blockEvents.Events != nil && shouldProcessEvents {
+		log.Info("received events for block",
+			"block hash", string(blockEvents.Hash),
+			"shouldProcess", shouldProcessEvents,
+		)
+		h.notifierHub.BroadcastChan() <- blockEvents.Events
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
@@ -72,4 +88,24 @@ func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 	}
 
 	return middleware
+}
+
+func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash []byte) bool {
+	var err error
+	var setSuccessful bool
+
+	for {
+		setSuccessful, err = h.redlock.IsBlockProcessed(blockHash)
+
+		if err != nil {
+			if !h.redlock.HasConnection() {
+				time.Sleep(time.Millisecond * setnxRetryMs)
+				continue
+			}
+		}
+
+		break
+	}
+
+	return err == nil && setSuccessful
 }

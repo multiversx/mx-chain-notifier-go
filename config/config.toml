@@ -18,6 +18,11 @@
     # Password is the password needed to authorize an observer to push event data
     Password = ""
 
+    # CheckDuplicates signals if the events received from observers have been already pushed to clients
+    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
+    # Defaults to: false
+    CheckDuplicates = false
+
 [PubSub]
     # The url used to connect to a pubsub server
     # Note: not required for running in the notifier mode
@@ -26,3 +31,12 @@
     # The pubsub channel used for publishing/subscribing
     # Note: not required for running in the notifier mode
     Channel = "pub-sub"
+
+[RabbitMQ]
+    # The url used to connect to a rabbitMQ server
+    # Note: not required for running in the notifier mode
+    Url = "amqp://guest:guest@localhost:5672"
+
+    # The exchange name which holds all events
+    # Expected type: fanout
+    EventsExchange = "all_events"

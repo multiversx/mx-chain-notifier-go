@@ -19,10 +19,15 @@ type hubSubscriber struct {
 }
 
 // NewHubSubscriber creates a new hubSubscriber instance
-func NewHubSubscriber(ctx context.Context, config config.PubSubConfig, notifierHub dispatcher.Hub) *hubSubscriber {
+func NewHubSubscriber(
+	ctx context.Context,
+	config config.PubSubConfig,
+	notifierHub dispatcher.Hub,
+	pubsubClient *redis.Client,
+) *hubSubscriber {
 	return &hubSubscriber{
 		notifierHub:  notifierHub,
-		pubsubClient: CreatePubsubClient(config),
+		pubsubClient: pubsubClient,
 		rendezvous:   config.Channel,
 		ctx:          ctx,
 	}
@@ -36,7 +41,7 @@ func (s *hubSubscriber) Subscribe() {
 func (s *hubSubscriber) subscribeToChannel() {
 	sub := s.pubsubClient.Subscribe(s.ctx, s.rendezvous)
 	channel := sub.Channel()
-
+	
 	for msg := range channel {
 		var events []data.Event
 
