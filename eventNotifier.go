@@ -97,6 +97,20 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 }
 
 func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body nodeData.BodyHandler) {
+	blockHash, err := core.CalculateHash(en.marshalizer, en.hasher, header)
+	if err != nil {
+		log.Error("could not compute block hash", "err", err.Error())
+		return
+	}
+
+	revertBlock := data.RevertBlock{
+		Hash:  hex.EncodeToString(blockHash),
+		Nonce: header.GetNonce(),
+		Round: header.GetRound(),
+		Epoch: header.GetEpoch(),
+	}
+
+	_ = revertBlock
 }
 
 func (en *eventNotifier) SaveRoundsInfo(rf []*indexer.RoundInfo) {
