@@ -12,10 +12,13 @@ import (
 )
 
 const (
-	baseEventsEndpoint = "/events"
-	pushEventsEndpoint = "/push"
+	baseEventsEndpoint   = "/events"
+	pushEventsEndpoint   = "/push"
+	revertEventsEndpoint = "/revert"
 
 	setnxRetryMs = 500
+
+	revertKeyPrefix = "revert_"
 )
 
 type eventsHandler struct {
@@ -39,6 +42,7 @@ func NewEventsHandler(
 
 	endpoints := []EndpointHandler{
 		{Method: http.MethodPost, Path: pushEventsEndpoint, HandlerFunc: h.pushEvents},
+		{Method: http.MethodPost, Path: revertEventsEndpoint, HandlerFunc: h.revertEvents},
 	}
 
 	endpointGroupHandler := EndpointGroupHandler{
@@ -72,6 +76,31 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 			"shouldProcess", shouldProcessEvents,
 		)
 		h.notifierHub.BroadcastChan() <- blockEvents
+	}
+
+	JsonResponse(c, http.StatusOK, nil, "")
+}
+
+func (h *eventsHandler) revertEvents(c *gin.Context) {
+	var revertBlock data.RevertBlock
+
+	err := c.Bind(&revertBlock)
+	if err != nil {
+		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	shouldProcessRevert := true
+	if h.config.CheckDuplicates {
+		revertKey := revertKeyPrefix + revertBlock.Hash
+		shouldProcessRevert = h.tryCheckProcessedOrRetry(revertKey)
+	}
+
+	if shouldProcessRevert {
+		log.Info("received revert event for block",
+			"block hash", revertBlock.Hash,
+			"shouldProcess", shouldProcessRevert,
+		)
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
