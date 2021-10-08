@@ -138,7 +138,7 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 	err := rp.ch.Publish(
 		exchangeName,
 		emptyStr,
-		false, // mandatory
+		true, // mandatory
 		false, // immediate
 		amqp.Publishing{
 			Body: payload,
