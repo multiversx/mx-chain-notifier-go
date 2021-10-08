@@ -44,6 +44,9 @@ func (wh *commonHub) Run() {
 		case events := <-wh.broadcast:
 			wh.handleBroadcast(events)
 
+		case revertEvent := <-wh.broadcastRevert:
+			wh.handleRevertBroadcast(revertEvent)
+
 		case dispatcherClient := <-wh.register:
 			wh.registerDispatcher(dispatcherClient)
 
@@ -103,6 +106,9 @@ func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 			d.PushEvents(eventValues)
 		}
 	}
+}
+
+func (wh *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
 }
 
 func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {

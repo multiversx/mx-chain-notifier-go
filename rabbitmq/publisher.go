@@ -59,6 +59,8 @@ func (rp *rabbitMqPublisher) Run() {
 		select {
 		case events := <-rp.broadcast:
 			rp.publishToExchanges(events)
+		case revertBlock := <-rp.broadcastRevert:
+			rp.publishRevertToExchange(revertBlock)
 		case err := <-rp.connErrCh:
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -102,6 +104,9 @@ func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
 			log.Error("failed to publish to rabbitMQ", "err", err.Error())
 		}
 	}
+}
+
+func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBlock) {
 }
 
 func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) error {
