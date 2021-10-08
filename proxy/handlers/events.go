@@ -101,6 +101,7 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 			"block hash", revertBlock.Hash,
 			"shouldProcess", shouldProcessRevert,
 		)
+		h.notifierHub.BroadcastRevertChan() <- revertBlock
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
