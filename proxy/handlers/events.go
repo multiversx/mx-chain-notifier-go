@@ -76,6 +76,11 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 			"shouldProcess", shouldProcessEvents,
 		)
 		h.notifierHub.BroadcastChan() <- blockEvents
+	} else {
+		log.Info("received duplicated events for block",
+			"block hash", blockEvents.Hash,
+			"ignoring", true,
+		)
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
@@ -102,6 +107,11 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 			"shouldProcess", shouldProcessRevert,
 		)
 		h.notifierHub.BroadcastRevertChan() <- revertBlock
+	} else {
+		log.Info("received duplicated revert event for block",
+			"block hash", revertBlock.Hash,
+			"ignoring", true,
+		)
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
