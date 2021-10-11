@@ -139,6 +139,7 @@ func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
 
 		if err != nil {
 			if !h.redlock.HasConnection() {
+				log.Error("failure connecting to redis")
 				time.Sleep(time.Millisecond * setnxRetryMs)
 				continue
 			}
