@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -23,12 +24,16 @@ var log = logger.GetOrCreate("rabbitMQPublisher")
 type rabbitMqPublisher struct {
 	dispatcher.Hub
 
-	broadcast chan []data.Event
-	connErrCh chan *amqp.Error
+	broadcast       chan data.BlockEvents
+	broadcastRevert chan data.RevertBlock
+	connErrCh       chan *amqp.Error
+	chanErr         chan *amqp.Error
 
 	conn *amqp.Connection
 	ch   *amqp.Channel
 	cfg  config.RabbitMQConfig
+
+	pubMut sync.Mutex
 
 	ctx context.Context
 }
@@ -38,9 +43,11 @@ func NewRabbitMqPublisher(
 	cfg config.RabbitMQConfig,
 ) (*rabbitMqPublisher, error) {
 	rp := &rabbitMqPublisher{
-		broadcast: make(chan []data.Event),
-		cfg:       cfg,
-		ctx:       ctx,
+		broadcast:       make(chan data.BlockEvents),
+		broadcastRevert: make(chan data.RevertBlock),
+		cfg:             cfg,
+		ctx:             ctx,
+		pubMut:          sync.Mutex{},
 	}
 
 	err := rp.connect()
@@ -57,10 +64,17 @@ func (rp *rabbitMqPublisher) Run() {
 		select {
 		case events := <-rp.broadcast:
 			rp.publishToExchanges(events)
+		case revertBlock := <-rp.broadcastRevert:
+			rp.publishRevertToExchange(revertBlock)
 		case err := <-rp.connErrCh:
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
 				rp.reconnect()
+			}
+		case err := <-rp.chanErr:
+			if err != nil {
+				log.Error("rabbitMQ channel failure", "err", err.Error())
+				rp.reopenChannel()
 			}
 		case <-rp.ctx.Done():
 			err := rp.ch.Close()
@@ -77,11 +91,17 @@ func (rp *rabbitMqPublisher) Run() {
 
 // BroadcastChan returns a receive-only channel on which events are pushed by producers
 // Upon reading the channel, the hub publishes on the configured rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastChan() chan<- []data.Event {
+func (rp *rabbitMqPublisher) BroadcastChan() chan<- data.BlockEvents {
 	return rp.broadcast
 }
 
-func (rp *rabbitMqPublisher) publishToExchanges(events []data.Event) {
+// BroadcastRevertChan returns a receive-only channel on which revert events are pushed by producers
+// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastRevertChan() chan<- data.RevertBlock {
+	return rp.broadcastRevert
+}
+
+func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
 	if rp.cfg.EventsExchange != "" {
 		eventsBytes, err := json.Marshal(events)
 		if err != nil {
@@ -91,16 +111,34 @@ func (rp *rabbitMqPublisher) publishToExchanges(events []data.Event) {
 
 		err = rp.publishFanout(rp.cfg.EventsExchange, eventsBytes)
 		if err != nil {
-			log.Error("failed to publish to rabbitMQ", "err", err.Error())
+			log.Error("failed to publish events to rabbitMQ", "err", err.Error())
+		}
+	}
+}
+
+func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBlock) {
+	if rp.cfg.RevertEventsExchange != "" {
+		revertBlockBytes, err := json.Marshal(revertBlock)
+		if err != nil {
+			log.Error("could not marshal revert event", "err", err.Error())
+			return
+		}
+
+		err = rp.publishFanout(rp.cfg.RevertEventsExchange, revertBlockBytes)
+		if err != nil {
+			log.Error("failed to publish revert event to rabbitMQ", "err", err.Error())
 		}
 	}
 }
 
 func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) error {
+	rp.pubMut.Lock()
+	defer rp.pubMut.Unlock()
+
 	err := rp.ch.Publish(
 		exchangeName,
 		emptyStr,
-		true,  // mandatory
+		true, // mandatory
 		false, // immediate
 		amqp.Publishing{
 			Body: payload,
@@ -120,11 +158,23 @@ func (rp *rabbitMqPublisher) connect() error {
 	rp.connErrCh = make(chan *amqp.Error)
 	rp.conn.NotifyClose(rp.connErrCh)
 
-	ch, err := conn.Channel()
+	err = rp.openChannel()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rp *rabbitMqPublisher) openChannel() error {
+	ch, err := rp.conn.Channel()
 	if err != nil {
 		return err
 	}
 	rp.ch = ch
+
+	rp.chanErr = make(chan *amqp.Error)
+	rp.ch.NotifyClose(rp.chanErr)
 
 	return nil
 }
@@ -138,6 +188,20 @@ func (rp *rabbitMqPublisher) reconnect() {
 			log.Debug("could not reconnect", "err", err.Error())
 		} else {
 			log.Debug("connection established after reconnect attempts")
+			break
+		}
+	}
+}
+
+func (rp *rabbitMqPublisher) reopenChannel() {
+	for {
+		time.Sleep(time.Millisecond * reconnectRetryMs)
+
+		err := rp.openChannel()
+		if err != nil {
+			log.Debug("could not re-open channel", "err", err.Error())
+		} else {
+			log.Debug("channel opened after reconnect attempts")
 			break
 		}
 	}

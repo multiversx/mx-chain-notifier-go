@@ -43,7 +43,7 @@ func (s *hubSubscriber) subscribeToChannel() {
 	channel := sub.Channel()
 	
 	for msg := range channel {
-		var events []data.Event
+		var events data.BlockEvents
 
 		err := json.Unmarshal([]byte(msg.Payload), &events)
 		if err != nil {

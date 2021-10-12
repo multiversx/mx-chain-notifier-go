@@ -21,8 +21,8 @@ func NewRedlockWrapper(ctx context.Context, client *redis.Client) *RedlockWrappe
 	}
 }
 
-func (r *RedlockWrapper) IsBlockProcessed(blockHash []byte) (bool, error) {
-	ok, err := r.client.SetNX(r.ctx, string(blockHash), true, expiry).Result()
+func (r *RedlockWrapper) IsBlockProcessed(blockHash string) (bool, error) {
+	ok, err := r.client.SetNX(r.ctx, blockHash, true, expiry).Result()
 	return ok, err
 }
 

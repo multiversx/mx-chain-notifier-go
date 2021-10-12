@@ -4,6 +4,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/elrond-go-core/core/pubkeyConverter"
+	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go"
@@ -23,6 +24,7 @@ type EventNotifierFactoryArgs struct {
 	Username         string
 	Password         string
 	Marshalizer      marshal.Marshalizer
+	Hasher           hashing.Hasher
 }
 
 func CreateEventNotifier(args *EventNotifierFactoryArgs) (notifier.Indexer, error) {
@@ -45,6 +47,7 @@ func CreateEventNotifier(args *EventNotifierFactoryArgs) (notifier.Indexer, erro
 	notifierArgs := notifier.EventNotifierArgs{
 		HttpClient:      httpClient,
 		Marshalizer:     args.Marshalizer,
+		Hasher:          args.Hasher,
 		PubKeyConverter: pubkeyConv,
 	}
 
@@ -59,6 +62,9 @@ func CreateEventNotifier(args *EventNotifierFactoryArgs) (notifier.Indexer, erro
 func checkInputArgs(args *EventNotifierFactoryArgs) error {
 	if check.IfNil(args.Marshalizer) {
 		return core.ErrNilMarshalizer
+	}
+	if check.IfNil(args.Hasher) {
+		return core.ErrNilHasher
 	}
 
 	return nil

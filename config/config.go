@@ -23,8 +23,9 @@ type PubSubConfig struct {
 }
 
 type RabbitMQConfig struct {
-	Url            string
-	EventsExchange string
+	Url                  string
+	EventsExchange       string
+	RevertEventsExchange string
 }
 
 // LoadConfig return a GeneralConfig instance by reading the provided toml file

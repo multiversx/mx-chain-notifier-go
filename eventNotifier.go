@@ -1,9 +1,12 @@
 package notifier
 
 import (
+	"encoding/hex"
+
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
 	"github.com/ElrondNetwork/elrond-go-core/data/indexer"
+	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -13,19 +16,22 @@ import (
 var log = logger.GetOrCreate("outport/eventNotifier")
 
 const (
-	pushEventEndpoint = "/events/push"
+	pushEventEndpoint    = "/events/push"
+	revertEventsEndpoint = "/events/revert"
 )
 
 type eventNotifier struct {
 	isNilNotifier   bool
 	httpClient      client.HttpClient
 	marshalizer     marshal.Marshalizer
+	hasher          hashing.Hasher
 	pubKeyConverter core.PubkeyConverter
 }
 
 type EventNotifierArgs struct {
 	HttpClient      client.HttpClient
 	Marshalizer     marshal.Marshalizer
+	Hasher          hashing.Hasher
 	PubKeyConverter core.PubkeyConverter
 }
 
@@ -36,6 +42,7 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 		isNilNotifier:   false,
 		httpClient:      args.HttpClient,
 		marshalizer:     args.Marshalizer,
+		hasher:          args.Hasher,
 		pubKeyConverter: args.PubKeyConverter,
 	}, nil
 }
@@ -81,7 +88,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 	log.Debug("extracted events from block logs", "num events", len(events))
 
 	blockEvents := data.BlockEvents{
-		Hash:   args.HeaderHash,
+		Hash:   hex.EncodeToString(args.HeaderHash),
 		Events: events,
 	}
 
@@ -92,6 +99,23 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 }
 
 func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body nodeData.BodyHandler) {
+	blockHash, err := core.CalculateHash(en.marshalizer, en.hasher, header)
+	if err != nil {
+		log.Error("could not compute block hash", "err", err.Error())
+		return
+	}
+
+	revertBlock := data.RevertBlock{
+		Hash:  hex.EncodeToString(blockHash),
+		Nonce: header.GetNonce(),
+		Round: header.GetRound(),
+		Epoch: header.GetEpoch(),
+	}
+
+	err = en.httpClient.Post(revertEventsEndpoint, revertBlock, nil)
+	if err != nil {
+		log.Error("error while posting revert event data", "err", err.Error())
+	}
 }
 
 func (en *eventNotifier) SaveRoundsInfo(rf []*indexer.RoundInfo) {

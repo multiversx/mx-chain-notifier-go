@@ -19,7 +19,8 @@ type commonHub struct {
 	dispatchers        map[uuid.UUID]dispatcher.EventDispatcher
 	register           chan dispatcher.EventDispatcher
 	unregister         chan dispatcher.EventDispatcher
-	broadcast          chan []data.Event
+	broadcast          chan data.BlockEvents
+	broadcastRevert    chan data.RevertBlock
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -31,7 +32,8 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:           make(chan dispatcher.EventDispatcher),
 		unregister:         make(chan dispatcher.EventDispatcher),
-		broadcast:          make(chan []data.Event),
+		broadcast:          make(chan data.BlockEvents),
+		broadcastRevert:    make(chan data.RevertBlock),
 	}
 }
 
@@ -41,6 +43,9 @@ func (wh *commonHub) Run() {
 		select {
 		case events := <-wh.broadcast:
 			wh.handleBroadcast(events)
+
+		case revertEvent := <-wh.broadcastRevert:
+			wh.handleRevertBroadcast(revertEvent)
 
 		case dispatcherClient := <-wh.register:
 			wh.registerDispatcher(dispatcherClient)
@@ -58,8 +63,14 @@ func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 
 // BroadcastChan returns a receive-only channel on which events are pushed by producers
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastChan() chan<- []data.Event {
+func (wh *commonHub) BroadcastChan() chan<- data.BlockEvents {
 	return wh.broadcast
+}
+
+// BroadcastRevertChan returns a receive-only channel on which revert events are pushed
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (wh *commonHub) BroadcastRevertChan() chan<- data.RevertBlock {
+	return wh.broadcastRevert
 }
 
 // RegisterChan returns a receive-only channel used to register dispatchers
@@ -72,7 +83,7 @@ func (wh *commonHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 	return wh.unregister
 }
 
-func (wh *commonHub) handleBroadcast(events []data.Event) {
+func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 	subscriptions := wh.subscriptionMapper.Subscriptions()
 
 	dispatchersMap := make(map[uuid.UUID][]data.Event)
@@ -80,7 +91,7 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 		dispatchersMap[id] = append(dispatchersMap[id], e)
 	}
 
-	for _, event := range events {
+	for _, event := range blockEvents.Events {
 		for _, subscription := range subscriptions {
 			if wh.filter.MatchEvent(subscription, event) {
 				mapEventToDispatcher(subscription.DispatcherID, event)
@@ -95,6 +106,9 @@ func (wh *commonHub) handleBroadcast(events []data.Event) {
 			d.PushEvents(eventValues)
 		}
 	}
+}
+
+func (wh *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
 }
 
 func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {

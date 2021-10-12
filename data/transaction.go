@@ -61,6 +61,13 @@ type Event struct {
 }
 
 type BlockEvents struct {
-	Hash   []byte  `json:"hash"`
+	Hash   string  `json:"hash"`
 	Events []Event `json:"events"`
+}
+
+type RevertBlock struct {
+	Hash  string `json:"hash"`
+	Nonce uint64 `json:"nonce"`
+	Round uint64 `json:"round"`
+	Epoch uint32 `json:"epoch"`
 }

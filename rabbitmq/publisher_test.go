@@ -37,11 +37,14 @@ func TestRabbitMqPublisher_BroadcastChan(t *testing.T) {
 	r, err := NewRabbitMqPublisher(ctx, cfg)
 	require.Nil(t, err)
 
-	events := []data.Event{
-		{
-			Address:    "erd1",
-			Identifier: "id1",
-			Topics:     [][]byte{[]byte("topic1"), []byte("topic2")},
+	events := data.BlockEvents{
+		Hash: "hash",
+		Events: []data.Event{
+			{
+				Address:    "erd1",
+				Identifier: "id1",
+				Topics:     [][]byte{[]byte("topic1"), []byte("topic2")},
+			},
 		},
 	}
 
