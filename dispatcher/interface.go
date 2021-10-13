@@ -14,6 +14,7 @@ type Hub interface {
 	Run()
 	BroadcastChan() chan<- data.BlockEvents
 	BroadcastRevertChan() chan<- data.RevertBlock
+	BroadcastFinalizedChan() chan<- data.FinalizedBlock
 	RegisterChan() chan<- EventDispatcher
 	UnregisterChan() chan<- EventDispatcher
 	Subscribe(event SubscribeEvent)

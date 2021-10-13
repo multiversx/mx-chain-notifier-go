@@ -24,10 +24,11 @@ var log = logger.GetOrCreate("rabbitMQPublisher")
 type rabbitMqPublisher struct {
 	dispatcher.Hub
 
-	broadcast       chan data.BlockEvents
-	broadcastRevert chan data.RevertBlock
-	connErrCh       chan *amqp.Error
-	chanErr         chan *amqp.Error
+	broadcast          chan data.BlockEvents
+	broadcastRevert    chan data.RevertBlock
+	broadcastFinalized chan data.FinalizedBlock
+	connErrCh          chan *amqp.Error
+	chanErr            chan *amqp.Error
 
 	conn *amqp.Connection
 	ch   *amqp.Channel
@@ -43,11 +44,12 @@ func NewRabbitMqPublisher(
 	cfg config.RabbitMQConfig,
 ) (*rabbitMqPublisher, error) {
 	rp := &rabbitMqPublisher{
-		broadcast:       make(chan data.BlockEvents),
-		broadcastRevert: make(chan data.RevertBlock),
-		cfg:             cfg,
-		ctx:             ctx,
-		pubMut:          sync.Mutex{},
+		broadcast:          make(chan data.BlockEvents),
+		broadcastRevert:    make(chan data.RevertBlock),
+		broadcastFinalized: make(chan data.FinalizedBlock),
+		cfg:                cfg,
+		ctx:                ctx,
+		pubMut:             sync.Mutex{},
 	}
 
 	err := rp.connect()
@@ -101,6 +103,12 @@ func (rp *rabbitMqPublisher) BroadcastRevertChan() chan<- data.RevertBlock {
 	return rp.broadcastRevert
 }
 
+// BroadcastFinalizedChan returns a receive-only channel on which finalized events are pushed
+// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
+	return rp.broadcastFinalized
+}
+
 func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
 	if rp.cfg.EventsExchange != "" {
 		eventsBytes, err := json.Marshal(events)
@@ -138,7 +146,7 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 	err := rp.ch.Publish(
 		exchangeName,
 		emptyStr,
-		true, // mandatory
+		true,  // mandatory
 		false, // immediate
 		amqp.Publishing{
 			Body: payload,
