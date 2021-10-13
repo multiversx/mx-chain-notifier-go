@@ -12,7 +12,10 @@ import (
 type hubPublisher struct {
 	dispatcher.Hub
 
-	broadcast    chan data.BlockEvents
+	broadcast          chan data.BlockEvents
+	broadcastRevert    chan data.RevertBlock
+	broadcastFinalized chan data.FinalizedBlock
+
 	pubsubClient *redis.Client
 	rendezvous   string
 
@@ -26,10 +29,12 @@ func NewHubPublisher(
 	pubsubClient *redis.Client,
 ) *hubPublisher {
 	return &hubPublisher{
-		broadcast:    make(chan data.BlockEvents),
-		pubsubClient: pubsubClient,
-		rendezvous:   config.Channel,
-		ctx:          ctx,
+		broadcast:          make(chan data.BlockEvents),
+		broadcastRevert:    make(chan data.RevertBlock),
+		broadcastFinalized: make(chan data.FinalizedBlock),
+		pubsubClient:       pubsubClient,
+		rendezvous:         config.Channel,
+		ctx:                ctx,
 	}
 }
 
@@ -39,6 +44,10 @@ func (h *hubPublisher) Run() {
 		select {
 		case events := <-h.broadcast:
 			h.publishToChannel(events)
+		case revertEvent := <-h.broadcastRevert:
+			_ = revertEvent
+		case finalizedEvent := <-h.broadcastFinalized:
+			_ = finalizedEvent
 		}
 	}
 }
@@ -47,6 +56,18 @@ func (h *hubPublisher) Run() {
 // Upon reading the channel, the hub publishes on the pubSub channel
 func (h *hubPublisher) BroadcastChan() chan<- data.BlockEvents {
 	return h.broadcast
+}
+
+// BroadcastRevertChan returns a receive-only channel on which revert events are pushed by producers
+// Upon reading the channel, the hub does nothing
+func (h *hubPublisher) BroadcastRevertChan() chan<- data.RevertBlock {
+	return h.broadcastRevert
+}
+
+// BroadcastFinalizedChan returns a receive-only channel on which finalized events are pushed
+// Upon reading the channel, the hub does nothing
+func (h *hubPublisher) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
+	return h.broadcastFinalized
 }
 
 func (h *hubPublisher) publishToChannel(events data.BlockEvents) {

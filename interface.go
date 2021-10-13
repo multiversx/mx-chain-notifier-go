@@ -14,6 +14,5 @@ type Indexer interface {
 	SaveAccounts(blockTimestamp uint64, acc []coreData.UserAccountHandler)
 	FinalizedBlock(headerHash []byte)
 	IsInterfaceNil() bool
-	IsNilIndexer() bool
 	Close() error
 }
