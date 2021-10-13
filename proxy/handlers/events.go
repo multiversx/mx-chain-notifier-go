@@ -12,13 +12,15 @@ import (
 )
 
 const (
-	baseEventsEndpoint   = "/events"
-	pushEventsEndpoint   = "/push"
-	revertEventsEndpoint = "/revert"
+	baseEventsEndpoint      = "/events"
+	pushEventsEndpoint      = "/push"
+	revertEventsEndpoint    = "/revert"
+	finalizedEventsEndpoint = "/finalized"
 
 	setnxRetryMs = 500
 
-	revertKeyPrefix = "revert_"
+	revertKeyPrefix    = "revert_"
+	finalizedKeyPrefix = "finalized_"
 )
 
 type eventsHandler struct {
@@ -43,6 +45,7 @@ func NewEventsHandler(
 	endpoints := []EndpointHandler{
 		{Method: http.MethodPost, Path: pushEventsEndpoint, HandlerFunc: h.pushEvents},
 		{Method: http.MethodPost, Path: revertEventsEndpoint, HandlerFunc: h.revertEvents},
+		{Method: http.MethodPost, Path: finalizedEventsEndpoint, HandlerFunc: h.finalizedEvents},
 	}
 
 	endpointGroupHandler := EndpointGroupHandler{
@@ -110,6 +113,37 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 	} else {
 		log.Info("received duplicated revert event for block",
 			"block hash", revertBlock.Hash,
+			"ignoring", true,
+		)
+	}
+
+	JsonResponse(c, http.StatusOK, nil, "")
+}
+
+func (h *eventsHandler) finalizedEvents(c *gin.Context) {
+	var finalizedBlock data.FinalizedBlock
+
+	err := c.Bind(&finalizedBlock)
+	if err != nil {
+		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	shouldProcessFinalized := true
+	if h.config.CheckDuplicates {
+		finalizedKey := finalizedKeyPrefix + finalizedBlock.Hash
+		shouldProcessFinalized = h.tryCheckProcessedOrRetry(finalizedKey)
+	}
+
+	if shouldProcessFinalized {
+		log.Info("received finalized events for block",
+			"block hash", finalizedBlock.Hash,
+			"shouldProcess", shouldProcessFinalized,
+		)
+		h.notifierHub.BroadcastFinalizedChan() <- finalizedBlock
+	} else {
+		log.Info("received duplicated finalized event for block",
+			"block hash", finalizedBlock.Hash,
 			"ignoring", true,
 		)
 	}

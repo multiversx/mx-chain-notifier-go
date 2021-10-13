@@ -21,6 +21,7 @@ type commonHub struct {
 	unregister         chan dispatcher.EventDispatcher
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
+	broadcastFinalized chan data.FinalizedBlock
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -34,6 +35,7 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 		unregister:         make(chan dispatcher.EventDispatcher),
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
+		broadcastFinalized: make(chan data.FinalizedBlock),
 	}
 }
 
@@ -46,6 +48,9 @@ func (wh *commonHub) Run() {
 
 		case revertEvent := <-wh.broadcastRevert:
 			wh.handleRevertBroadcast(revertEvent)
+
+		case finalizedEvent := <-wh.broadcastFinalized:
+			wh.handleFinalizedBroadcast(finalizedEvent)
 
 		case dispatcherClient := <-wh.register:
 			wh.registerDispatcher(dispatcherClient)
@@ -71,6 +76,12 @@ func (wh *commonHub) BroadcastChan() chan<- data.BlockEvents {
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (wh *commonHub) BroadcastRevertChan() chan<- data.RevertBlock {
 	return wh.broadcastRevert
+}
+
+// BroadcastFinalizedChan returns a receive-only channel on which finalized events are pushed
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (wh *commonHub) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
+	return wh.broadcastFinalized
 }
 
 // RegisterChan returns a receive-only channel used to register dispatchers
@@ -109,6 +120,9 @@ func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 }
 
 func (wh *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
+}
+
+func (wh *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock) {
 }
 
 func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {

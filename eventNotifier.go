@@ -16,8 +16,9 @@ import (
 var log = logger.GetOrCreate("outport/eventNotifier")
 
 const (
-	pushEventEndpoint    = "/events/push"
-	revertEventsEndpoint = "/events/revert"
+	pushEventEndpoint       = "/events/push"
+	revertEventsEndpoint    = "/events/revert"
+	finalizedEventsEndpoint = "/events/finalized"
 )
 
 type eventNotifier struct {
@@ -47,6 +48,7 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 	}, nil
 }
 
+// SaveBlock converts block data in order to be pushed to subscribers
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 	log.Debug("SaveBlock called at block", "block hash", args.HeaderHash)
 	if args.TransactionsPool == nil {
@@ -98,6 +100,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 	}
 }
 
+// RevertIndexedBlock converts revert data in order to be pushed to subscribers
 func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body nodeData.BodyHandler) {
 	blockHash, err := core.CalculateHash(en.marshalizer, en.hasher, header)
 	if err != nil {
@@ -118,22 +121,35 @@ func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body 
 	}
 }
 
+// FinalizedBlock converts finalized block data in order to push it to subscribers
+func (en *eventNotifier) FinalizedBlock(headerHash []byte) {
+	finalizedBlock := data.FinalizedBlock{
+		Hash: hex.EncodeToString(headerHash),
+	}
+
+	err := en.httpClient.Post(finalizedEventsEndpoint, finalizedBlock, nil)
+	if err != nil {
+		log.Error("error while posting finalized event data", "err", err.Error())
+	}
+}
+
+// SaveRoundsInfo does nothing
 func (en *eventNotifier) SaveRoundsInfo(rf []*indexer.RoundInfo) {
 }
 
+// SaveValidatorsRating does nothing
 func (en *eventNotifier) SaveValidatorsRating(indexID string, validatorsRatingInfo []*indexer.ValidatorRatingInfo) {
 }
 
+// SaveValidatorsPubKeys does nothing
 func (en *eventNotifier) SaveValidatorsPubKeys(validatorsPubKeys map[uint32][][]byte, epoch uint32) {
 }
 
+// SaveAccounts does nothing
 func (en *eventNotifier) SaveAccounts(timestamp uint64, accounts []nodeData.UserAccountHandler) {
 }
 
-func (en *eventNotifier) IsNilIndexer() bool {
-	return en.isNilNotifier
-}
-
+// IsInterfaceNil returns whether the interface is nil
 func (en *eventNotifier) IsInterfaceNil() bool {
 	return en == nil
 }
