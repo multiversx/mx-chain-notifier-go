@@ -136,7 +136,16 @@ func (h *eventsHandler) finalizedEvents(c *gin.Context) {
 	}
 
 	if shouldProcessFinalized {
-
+		log.Info("received finalized events for block",
+			"block hash", finalizedBlock.Hash,
+			"shouldProcess", shouldProcessFinalized,
+		)
+		h.notifierHub.BroadcastFinalizedChan() <- finalizedBlock
+	} else {
+		log.Info("received duplicated finalized event for block",
+			"block hash", finalizedBlock.Hash,
+			"ignoring", true,
+		)
 	}
 
 	JsonResponse(c, http.StatusOK, nil, "")
