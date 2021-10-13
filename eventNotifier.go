@@ -16,8 +16,9 @@ import (
 var log = logger.GetOrCreate("outport/eventNotifier")
 
 const (
-	pushEventEndpoint    = "/events/push"
-	revertEventsEndpoint = "/events/revert"
+	pushEventEndpoint       = "/events/push"
+	revertEventsEndpoint    = "/events/revert"
+	finalizedEventsEndpoint = "/events/finalized"
 )
 
 type eventNotifier struct {
@@ -115,6 +116,17 @@ func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body 
 	err = en.httpClient.Post(revertEventsEndpoint, revertBlock, nil)
 	if err != nil {
 		log.Error("error while posting revert event data", "err", err.Error())
+	}
+}
+
+func (en *eventNotifier) FinalizedBlock(headerHash []byte) {
+	finalizedBlock := data.FinalizedBlock{
+		Hash: hex.EncodeToString(headerHash),
+	}
+
+	err := en.httpClient.Post(finalizedEventsEndpoint, finalizedBlock, nil)
+	if err != nil {
+		log.Error("error while posting finalized event data", "err", err.Error())
 	}
 }
 

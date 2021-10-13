@@ -71,3 +71,7 @@ type RevertBlock struct {
 	Round uint64 `json:"round"`
 	Epoch uint32 `json:"epoch"`
 }
+
+type FinalizedBlock struct {
+	Hash string `json:"hash"`
+}
