@@ -68,6 +68,8 @@ func (rp *rabbitMqPublisher) Run() {
 			rp.publishToExchanges(events)
 		case revertBlock := <-rp.broadcastRevert:
 			rp.publishRevertToExchange(revertBlock)
+		case finalizedBlock := <-rp.broadcastFinalized:
+			rp.publishFinalizedToExchange(finalizedBlock)
 		case err := <-rp.connErrCh:
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -135,6 +137,21 @@ func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBloc
 		err = rp.publishFanout(rp.cfg.RevertEventsExchange, revertBlockBytes)
 		if err != nil {
 			log.Error("failed to publish revert event to rabbitMQ", "err", err.Error())
+		}
+	}
+}
+
+func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.FinalizedBlock) {
+	if rp.cfg.FinalizedEventsExchange != "" {
+		finalizedBlockBytes, err := json.Marshal(finalizedBlock)
+		if err != nil {
+			log.Error("could not marshal finalized event", "err", err.Error())
+			return
+		}
+
+		err = rp.publishFanout(rp.cfg.FinalizedEventsExchange, finalizedBlockBytes)
+		if err != nil {
+			log.Error("failed to publish finalized event to rabbitMQ", "err", err.Error())
 		}
 	}
 }

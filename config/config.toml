@@ -39,8 +39,12 @@
 
     # The exchange name which holds all events
     # Expected type: fanout
-    EventsExchange = "all_events"
+    EventsExchange = ""
 
     # The exchange name which holds revert events
     # Expected type: fanout
-    RevertEventsExchange = "revert_events"
+    RevertEventsExchange = ""
+
+    # The exchange name which holds finalized block events
+    # Expected type: fanout
+    FinalizedEventsExchange = ""
