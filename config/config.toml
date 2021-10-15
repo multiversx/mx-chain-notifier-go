@@ -32,9 +32,11 @@
     # Note: not required for running in the notifier mode
     Channel = "pub-sub"
 
-    MasterName = ""
+    # The master name for failover client
+    MasterName = "mymaster"
 
-    SentinelUrl = ""
+    # The sentinel url for failover client
+    SentinelUrl = "sentinel:26379"
 
 [RabbitMQ]
     # The url used to connect to a rabbitMQ server
