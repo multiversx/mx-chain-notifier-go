@@ -18,8 +18,10 @@ type ConnectorApiConfig struct {
 }
 
 type PubSubConfig struct {
-	Url     string
-	Channel string
+	Url         string
+	Channel     string
+	MasterName  string
+	SentinelUrl string
 }
 
 type RabbitMQConfig struct {

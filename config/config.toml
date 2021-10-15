@@ -32,6 +32,10 @@
     # Note: not required for running in the notifier mode
     Channel = "pub-sub"
 
+    MasterName = ""
+
+    SentinelUrl = ""
+
 [RabbitMQ]
     # The url used to connect to a rabbitMQ server
     # Note: not required for running in the notifier mode

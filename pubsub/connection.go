@@ -20,3 +20,10 @@ func CreatePubsubClient(cfg config.PubSubConfig) *redis.Client {
 
 	return redis.NewClient(opt)
 }
+
+func CreateFailoverClient(cfg config.PubSubConfig) *redis.Client {
+	return redis.NewFailoverClient(&redis.FailoverOptions{
+		MasterName:    cfg.MasterName,
+		SentinelAddrs: []string{cfg.SentinelUrl},
+	})
+}
