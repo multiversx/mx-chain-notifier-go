@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/go-redis/redis/v8"
