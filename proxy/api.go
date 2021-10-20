@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"fmt"
+	"github.com/ElrondNetwork/notifier-go/pubsub/disabled"
 	"net/http"
 	"strings"
 
@@ -49,7 +50,13 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	notifierHub := hubHandler.GetHub()
 	server.notifierHub = notifierHub
 
-	err = handlers.NewEventsHandler(notifierHub, server.groupHandler, config.ConnectorApi, nil)
+	disabledLockService := disabled.NewDisabledRedlockWrapper()
+	err = handlers.NewEventsHandler(
+		notifierHub,
+		server.groupHandler,
+		config.ConnectorApi,
+		disabledLockService,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +79,19 @@ func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 
 	server.notifierHub = rabbitPublisher
 
-	redlock := pubsub.NewRedlockWrapper(ctx, pubsubClient)
+	var lockService pubsub.LockService
+	if config.ConnectorApi.CheckDuplicates {
+		lockService = pubsub.NewRedlockWrapper(ctx, pubsubClient)
+	} else {
+		lockService = disabled.NewDisabledRedlockWrapper()
+	}
 
-	err = handlers.NewEventsHandler(rabbitPublisher, server.groupHandler, config.ConnectorApi, redlock)
+	err = handlers.NewEventsHandler(
+		rabbitPublisher,
+		server.groupHandler,
+		config.ConnectorApi,
+		lockService,
+	)
 	if err != nil {
 		return nil, err
 	}
