@@ -70,7 +70,10 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
-	pubsubClient := pubsub.CreateFailoverClient(config.PubSub)
+	pubsubClient, err := pubsub.CreateFailoverClient(config.PubSub)
+	if err != nil {
+		return nil, err
+	}
 
 	rabbitPublisher, err := rabbitmq.NewRabbitMqPublisher(ctx, config.RabbitMQ)
 	if err != nil {
