@@ -26,7 +26,7 @@ const (
 type eventsHandler struct {
 	notifierHub dispatcher.Hub
 	config      config.ConnectorApiConfig
-	redlock     *pubsub.RedlockWrapper
+	lockService pubsub.LockService
 }
 
 // NewEventsHandler registers handlers for the /events group
@@ -34,12 +34,12 @@ func NewEventsHandler(
 	notifierHub dispatcher.Hub,
 	groupHandler *GroupHandler,
 	config config.ConnectorApiConfig,
-	redlock *pubsub.RedlockWrapper,
+	lockService pubsub.LockService,
 ) error {
 	h := &eventsHandler{
 		notifierHub: notifierHub,
 		config:      config,
-		redlock:     redlock,
+		lockService: lockService,
 	}
 
 	endpoints := []EndpointHandler{
@@ -169,10 +169,10 @@ func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
 	var setSuccessful bool
 
 	for {
-		setSuccessful, err = h.redlock.IsBlockProcessed(blockHash)
+		setSuccessful, err = h.lockService.IsBlockProcessed(blockHash)
 
 		if err != nil {
-			if !h.redlock.HasConnection() {
+			if !h.lockService.HasConnection() {
 				log.Error("failure connecting to redis")
 				time.Sleep(time.Millisecond * setnxRetryMs)
 				continue
