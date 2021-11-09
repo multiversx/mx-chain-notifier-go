@@ -126,15 +126,17 @@ func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, _ nod
 }
 
 // FinalizedBlock converts finalized block data in order to push it to subscribers
-func (en *eventNotifier) FinalizedBlock(headerHash []byte) {
+func (en *eventNotifier) FinalizedBlock(headerHash []byte) error {
 	finalizedBlock := data.FinalizedBlock{
 		Hash: hex.EncodeToString(headerHash),
 	}
 
 	err := en.httpClient.Post(finalizedEventsEndpoint, finalizedBlock, nil)
 	if err != nil {
-		log.Error("error while posting finalized event data", "err", err.Error())
+		return fmt.Errorf("%w in eventNotifier.FinalizedBlock while posting event data", err)
 	}
+
+	return err
 }
 
 // SaveRoundsInfo does nothing

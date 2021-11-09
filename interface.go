@@ -12,7 +12,7 @@ type Indexer interface {
 	RevertIndexedBlock(header coreData.HeaderHandler, body coreData.BodyHandler) error
 	SaveValidatorsRating(indexID string, infoRating []*indexer.ValidatorRatingInfo)
 	SaveAccounts(blockTimestamp uint64, acc []coreData.UserAccountHandler)
-	FinalizedBlock(headerHash []byte)
+	FinalizedBlock(headerHash []byte) error
 	IsInterfaceNil() bool
 	Close() error
 }
