@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 )
+
+var log = logger.GetOrCreate("notifier/httpClient")
 
 const (
 	contentTypeKey   = "Content-Type"
@@ -69,6 +73,12 @@ func (h *httpClient) Post(
 	if err != nil {
 		return err
 	}
+	defer func() {
+		bodyCloseErr := resp.Body.Close()
+		if bodyCloseErr != nil {
+			log.Warn("error while trying to close response body", "err", err.Error())
+		}
+	}()
 
 	resBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
