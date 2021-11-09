@@ -6,13 +6,13 @@ import (
 )
 
 type Indexer interface {
-	SaveBlock(args *indexer.ArgsSaveBlockData)
-	SaveRoundsInfo(roundsInfos []*indexer.RoundInfo)
-	SaveValidatorsPubKeys(validatorsPubKeys map[uint32][][]byte, epoch uint32)
-	RevertIndexedBlock(header coreData.HeaderHandler, body coreData.BodyHandler)
-	SaveValidatorsRating(indexID string, infoRating []*indexer.ValidatorRatingInfo)
-	SaveAccounts(blockTimestamp uint64, acc []coreData.UserAccountHandler)
-	FinalizedBlock(headerHash []byte)
-	IsInterfaceNil() bool
+	SaveBlock(args *indexer.ArgsSaveBlockData) error
+	SaveRoundsInfo(roundsInfos []*indexer.RoundInfo) error
+	SaveValidatorsPubKeys(validatorsPubKeys map[uint32][][]byte, epoch uint32) error
+	RevertIndexedBlock(header coreData.HeaderHandler, body coreData.BodyHandler) error
+	SaveValidatorsRating(indexID string, infoRating []*indexer.ValidatorRatingInfo) error
+	SaveAccounts(blockTimestamp uint64, acc []coreData.UserAccountHandler) error
+	FinalizedBlock(headerHash []byte) error
 	Close() error
+	IsInterfaceNil() bool
 }
