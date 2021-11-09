@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"io/ioutil"
 	"net/http"
+
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 )
 
 var log = logger.GetOrCreate("notifier/httpClient")
