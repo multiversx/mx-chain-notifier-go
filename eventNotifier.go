@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
@@ -49,10 +50,10 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 }
 
 // SaveBlock converts block data in order to be pushed to subscribers
-func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
+func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 	log.Debug("SaveBlock called at block", "block hash", args.HeaderHash)
 	if args.TransactionsPool == nil {
-		return
+		return ErrNilTransactionPool
 	}
 
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
@@ -64,7 +65,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 	}
 
 	if len(logEvents) == 0 {
-		return
+		return nil
 	}
 
 	var events []data.Event
@@ -96,16 +97,17 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) {
 
 	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
 	if err != nil {
-		log.Error("error while posting event data", "err", err.Error())
+		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting event data", err)
 	}
+
+	return nil
 }
 
 // RevertIndexedBlock converts revert data in order to be pushed to subscribers
-func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body nodeData.BodyHandler) {
+func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, _ nodeData.BodyHandler) error {
 	blockHash, err := core.CalculateHash(en.marshalizer, en.hasher, header)
 	if err != nil {
-		log.Error("could not compute block hash", "err", err.Error())
-		return
+		return fmt.Errorf("%w in eventNotifier.RevertIndexedBlock while computing the block hash", err)
 	}
 
 	revertBlock := data.RevertBlock{
@@ -117,8 +119,10 @@ func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, body 
 
 	err = en.httpClient.Post(revertEventsEndpoint, revertBlock, nil)
 	if err != nil {
-		log.Error("error while posting revert event data", "err", err.Error())
+		return fmt.Errorf("%w in eventNotifier.RevertIndexedBlock while posting event data", err)
 	}
+
+	return nil
 }
 
 // FinalizedBlock converts finalized block data in order to push it to subscribers
@@ -134,19 +138,19 @@ func (en *eventNotifier) FinalizedBlock(headerHash []byte) {
 }
 
 // SaveRoundsInfo does nothing
-func (en *eventNotifier) SaveRoundsInfo(rf []*indexer.RoundInfo) {
+func (en *eventNotifier) SaveRoundsInfo(_ []*indexer.RoundInfo) {
 }
 
 // SaveValidatorsRating does nothing
-func (en *eventNotifier) SaveValidatorsRating(indexID string, validatorsRatingInfo []*indexer.ValidatorRatingInfo) {
+func (en *eventNotifier) SaveValidatorsRating(_ string, _ []*indexer.ValidatorRatingInfo) {
 }
 
 // SaveValidatorsPubKeys does nothing
-func (en *eventNotifier) SaveValidatorsPubKeys(validatorsPubKeys map[uint32][][]byte, epoch uint32) {
+func (en *eventNotifier) SaveValidatorsPubKeys(_ map[uint32][][]byte, _ uint32) {
 }
 
 // SaveAccounts does nothing
-func (en *eventNotifier) SaveAccounts(timestamp uint64, accounts []nodeData.UserAccountHandler) {
+func (en *eventNotifier) SaveAccounts(_ uint64, _ []nodeData.UserAccountHandler) {
 }
 
 // IsInterfaceNil returns whether the interface is nil

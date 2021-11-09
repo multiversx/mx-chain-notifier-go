@@ -6,10 +6,10 @@ import (
 )
 
 type Indexer interface {
-	SaveBlock(args *indexer.ArgsSaveBlockData)
+	SaveBlock(args *indexer.ArgsSaveBlockData) error
 	SaveRoundsInfo(roundsInfos []*indexer.RoundInfo)
 	SaveValidatorsPubKeys(validatorsPubKeys map[uint32][][]byte, epoch uint32)
-	RevertIndexedBlock(header coreData.HeaderHandler, body coreData.BodyHandler)
+	RevertIndexedBlock(header coreData.HeaderHandler, body coreData.BodyHandler) error
 	SaveValidatorsRating(indexID string, infoRating []*indexer.ValidatorRatingInfo)
 	SaveAccounts(blockTimestamp uint64, acc []coreData.UserAccountHandler)
 	FinalizedBlock(headerHash []byte)
