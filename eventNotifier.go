@@ -53,7 +53,7 @@ func NewEventNotifier(args EventNotifierArgs) (*eventNotifier, error) {
 func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 	log.Debug("SaveBlock called at block", "block hash", args.HeaderHash)
 	if args.TransactionsPool == nil {
-		return ErrNilTransactionPool
+		return ErrNilTransactionsPool
 	}
 
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
@@ -136,23 +136,27 @@ func (en *eventNotifier) FinalizedBlock(headerHash []byte) error {
 		return fmt.Errorf("%w in eventNotifier.FinalizedBlock while posting event data", err)
 	}
 
-	return err
+	return nil
 }
 
-// SaveRoundsInfo does nothing
-func (en *eventNotifier) SaveRoundsInfo(_ []*indexer.RoundInfo) {
+// SaveRoundsInfo returns nil
+func (en *eventNotifier) SaveRoundsInfo(_ []*indexer.RoundInfo) error {
+	return nil
 }
 
-// SaveValidatorsRating does nothing
-func (en *eventNotifier) SaveValidatorsRating(_ string, _ []*indexer.ValidatorRatingInfo) {
+// SaveValidatorsRating returns nil
+func (en *eventNotifier) SaveValidatorsRating(_ string, _ []*indexer.ValidatorRatingInfo) error {
+	return nil
 }
 
-// SaveValidatorsPubKeys does nothing
-func (en *eventNotifier) SaveValidatorsPubKeys(_ map[uint32][][]byte, _ uint32) {
+// SaveValidatorsPubKeys returns nil
+func (en *eventNotifier) SaveValidatorsPubKeys(_ map[uint32][][]byte, _ uint32) error {
+	return nil
 }
 
 // SaveAccounts does nothing
-func (en *eventNotifier) SaveAccounts(_ uint64, _ []nodeData.UserAccountHandler) {
+func (en *eventNotifier) SaveAccounts(_ uint64, _ []nodeData.UserAccountHandler) error {
+	return nil
 }
 
 // IsInterfaceNil returns whether the interface is nil
