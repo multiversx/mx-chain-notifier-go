@@ -42,16 +42,13 @@ func newWebServer(generalConfig *config.GeneralConfig) *WebServer {
 func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
-	hubHandler, err := handlers.NewHubHandler(config, server.groupHandler)
-	if err != nil {
-		return nil, err
-	}
+	hubHandler := handlers.NewHubHandler(server.groupHandler)
 
 	notifierHub := hubHandler.GetHub()
 	server.notifierHub = notifierHub
 
 	disabledLockService := disabled.NewDisabledRedlockWrapper()
-	err = handlers.NewEventsHandler(
+	err := handlers.NewEventsHandler(
 		notifierHub,
 		server.groupHandler,
 		config.ConnectorApi,
@@ -129,10 +126,7 @@ func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 func NewClientApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
-	hubHandler, err := handlers.NewHubHandler(config, server.groupHandler)
-	if err != nil {
-		return nil, err
-	}
+	hubHandler := handlers.NewHubHandler(server.groupHandler)
 
 	notifierHub := hubHandler.GetHub()
 	server.notifierHub = notifierHub
