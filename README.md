@@ -71,7 +71,6 @@ The supported config variables are:
 - `HubType`: defaults to `common`. If one wants to use a custom hub implementation, 
   it can be added to the hub [factory](https://github.com/ElrondNetwork/notifier-go/blob/main/proxy/handlers/hub.go#L30-L34). 
   This can be registered with the custom name in the `config.toml` file.
-- `DispatchType`: default to `websocket`. This variable specifies the communication
 channels the hub supports and uses for events broadcasting. The current implementation 
   supports `websocket` and `graphql subscriptions` for broadcasting.
 - `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false`.
@@ -88,11 +87,6 @@ The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/config/confi
     # Used for custom implementations for subscriptions/events filtering
     # Defaults to: common
     HubType = "common"
-
-    # The dispathing type. Options: | websocket | graphql | dispatch:* |
-    # The driver can receive subscribe events and broadcast on one or more channels
-    # Defaults to: websocket.
-    DispatchType = "websocket"
 
     # Username is the username needed to authorize an observer to push data
     Username = ""

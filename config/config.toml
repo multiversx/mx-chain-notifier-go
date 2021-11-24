@@ -7,11 +7,6 @@
     # Defaults to: common
     HubType = "common"
 
-    # The dispathing type. Options: | websocket | graphql | dispatch:* |
-    # The driver can receive subscribe events and broadcast on one or more channels
-    # Defaults to: websocket.
-    DispatchType = "websocket"
-
     # Username is the username needed to authorize an observer to push data
     Username = ""
 
