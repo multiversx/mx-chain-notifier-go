@@ -2,11 +2,10 @@ package rabbitmq
 
 import (
 	"context"
-	"testing"
-
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 var ctx = context.Background()
