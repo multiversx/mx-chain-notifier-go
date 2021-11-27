@@ -7,8 +7,13 @@ import (
 	"github.com/streadway/amqp"
 )
 
+const (
+	reconnectRetryMs = 500
+)
+
 type RabbitClient interface {
 	Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
+	Dial(url string) (*amqp.Connection, error)
 }
 
 type rabbitClientWrapper struct {
@@ -49,6 +54,10 @@ func (rc *rabbitClientWrapper) Publish(exchange, key string, mandatory, immediat
 	)
 }
 
+func (rc *rabbitClientWrapper) Dial(url string) (*amqp.Connection, error) {
+	return amqp.Dial(url)
+}
+
 func (rc *rabbitClientWrapper) connListener() {
 	for {
 		select {
@@ -76,7 +85,7 @@ func (rc *rabbitClientWrapper) connListener() {
 }
 
 func (rc *rabbitClientWrapper) connect() error {
-	conn, err := amqp.Dial(rc.url)
+	conn, err := rc.Dial(rc.url)
 	if err != nil {
 		return err
 	}

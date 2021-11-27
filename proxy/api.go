@@ -72,10 +72,11 @@ func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 		return nil, err
 	}
 
-	rabbitPublisher, err := rabbitmq.NewRabbitMqPublisher(ctx, config.RabbitMQ)
+	rabbitClient, err := rabbitmq.NewRabbitClientWrapper(ctx, config.RabbitMQ.Url)
 	if err != nil {
 		return nil, err
 	}
+	rabbitPublisher := rabbitmq.NewRabbitMqPublisher(rabbitClient, config.RabbitMQ)
 
 	server.notifierHub = rabbitPublisher
 

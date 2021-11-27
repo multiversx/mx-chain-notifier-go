@@ -1,57 +1,152 @@
 package rabbitmq
 
 import (
-	"context"
+	"encoding/json"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/test/mocks"
+	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-var ctx = context.Background()
-var cfg = config.RabbitMQConfig{
-	Url:            "amqp://guest:guest@localhost:5672",
-	EventsExchange: "events",
-}
+var (
+	cfg = config.RabbitMQConfig{
+		Url:                     "amqp://guest:guest@localhost:5672",
+		EventsExchange:          "events",
+		RevertEventsExchange:    "revert",
+		FinalizedEventsExchange: "finalized",
+	}
 
-func wait() {
-	c := make(chan int)
-	<-c
-}
-
-func TestNewRabbitMqPublisher(t *testing.T) {
-	t.Parallel()
-
-	// TODO remove this skip
-	t.Skip("fix this test by adding an abstraction layer between the rabbitMqPublisher and the actual 3-rd party lib")
-
-	r, err := NewRabbitMqPublisher(ctx, cfg)
-	require.Nil(t, err)
-
-	go r.Run()
-
-	wait()
-}
-
-func TestRabbitMqPublisher_BroadcastChan(t *testing.T) {
-	t.Parallel()
-
-	// TODO remove this skip
-	t.Skip("fix this test by adding an abstraction layer between the rabbitMqPublisher and the actual 3-rd party lib")
-
-	r, err := NewRabbitMqPublisher(ctx, cfg)
-	require.Nil(t, err)
-
-	events := data.BlockEvents{
-		Hash: "hash",
+	event = data.BlockEvents{
+		Hash: "abcdef",
 		Events: []data.Event{
 			{
 				Address:    "erd1",
-				Identifier: "id1",
-				Topics:     [][]byte{[]byte("topic1"), []byte("topic2")},
+				Identifier: "test",
 			},
 		},
 	}
 
-	r.publishToExchanges(events)
+	revertEvent = data.RevertBlock{
+		Hash:  "abcdef",
+		Nonce: 1,
+		Round: 100,
+		Epoch: 2,
+	}
+
+	finalizedEvent = data.FinalizedBlock{
+		Hash: "abcdef",
+	}
+)
+
+func TestRabbitMqPublisher_PublishEventsShouldWork(t *testing.T) {
+	t.Parallel()
+
+	var received data.BlockEvents
+	rc := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			_ = json.Unmarshal(msg.Body, &received)
+			require.Equal(t, event, received)
+
+			return nil
+		},
+	}
+
+	rp := NewRabbitMqPublisher(rc, cfg)
+
+	rp.publishToExchanges(event)
+}
+
+func TestRabbitMqPublisher_PublishEventsNoEventsExchangeSpecified(t *testing.T) {
+	t.Parallel()
+
+	calledCnt := 0
+
+	rc := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			calledCnt++
+			return nil
+		},
+	}
+
+	cfg.EventsExchange = ""
+	rp := NewRabbitMqPublisher(rc, cfg)
+
+	rp.publishToExchanges(event)
+	require.True(t, calledCnt == 0)
+}
+
+func TestRabbitMqPublisher_PublishRevertEventsShouldWork(t *testing.T) {
+	t.Parallel()
+
+	var received data.RevertBlock
+	rc := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			_ = json.Unmarshal(msg.Body, &received)
+			require.Equal(t, revertEvent, received)
+
+			return nil
+		},
+	}
+
+	rp := NewRabbitMqPublisher(rc, cfg)
+
+	rp.publishRevertToExchange(revertEvent)
+}
+
+func TestRabbitMqPublisher_PublishRevertEventsNoRevertEventsExchangeSpecified(t *testing.T) {
+	t.Parallel()
+
+	calledCnt := 0
+
+	rc := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			calledCnt++
+			return nil
+		},
+	}
+
+	cfg.RevertEventsExchange = ""
+	rp := NewRabbitMqPublisher(rc, cfg)
+
+	rp.publishRevertToExchange(revertEvent)
+	require.True(t, calledCnt == 0)
+}
+
+func TestRabbitMqPublisher_PublishFinalizedEventsShouldWork(t *testing.T) {
+	t.Parallel()
+
+	var received data.FinalizedBlock
+	rc := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			_ = json.Unmarshal(msg.Body, &received)
+			require.Equal(t, finalizedEvent, received)
+
+			return nil
+		},
+	}
+
+	rp := NewRabbitMqPublisher(rc, cfg)
+
+	rp.publishFinalizedToExchange(finalizedEvent)
+}
+
+func TestRabbitMqPublisher_PublishFinalizedEventsNoEventsExchangeSpecified(t *testing.T) {
+	t.Parallel()
+
+	calledCnt := 0
+
+	rc := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			calledCnt++
+			return nil
+		},
+	}
+
+	cfg.FinalizedEventsExchange = ""
+	rp := NewRabbitMqPublisher(rc, cfg)
+
+	rp.publishFinalizedToExchange(finalizedEvent)
+	require.True(t, calledCnt == 0)
 }
