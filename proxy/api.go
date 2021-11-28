@@ -106,14 +106,16 @@ func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
-	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
-
+	pubsubClient, err := pubsub.CreatePubsubClient(config.PubSub)
+	if err != nil {
+		return nil, err
+	}
 	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub, pubsubClient)
 	server.notifierHub = pubsubHub
 
 	redlock := pubsub.NewRedlockWrapper(ctx, pubsubClient)
 
-	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi, redlock)
+	err = handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi, redlock)
 	if err != nil {
 		return nil, err
 	}
@@ -132,8 +134,10 @@ func NewClientApi(config *config.GeneralConfig) (*WebServer, error) {
 	notifierHub := hubHandler.GetHub()
 	server.notifierHub = notifierHub
 
-	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
-
+	pubsubClient, err := pubsub.CreatePubsubClient(config.PubSub)
+	if err != nil {
+		return nil, err
+	}
 	pubsubListener := pubsub.NewHubSubscriber(ctx, config.PubSub, notifierHub, pubsubClient)
 	pubsubListener.Subscribe()
 

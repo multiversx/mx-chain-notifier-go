@@ -6,7 +6,6 @@ import (
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/go-redis/redis/v8"
 )
 
 type hubPublisher struct {
@@ -16,7 +15,7 @@ type hubPublisher struct {
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
 
-	pubsubClient *redis.Client
+	pubsubClient RedisClient
 	rendezvous   string
 
 	ctx context.Context
@@ -26,7 +25,7 @@ type hubPublisher struct {
 func NewHubPublisher(
 	ctx context.Context,
 	config config.PubSubConfig,
-	pubsubClient *redis.Client,
+	pubsubClient RedisClient,
 ) *hubPublisher {
 	return &hubPublisher{
 		broadcast:          make(chan data.BlockEvents),
@@ -77,7 +76,7 @@ func (h *hubPublisher) publishToChannel(events data.BlockEvents) {
 		return
 	}
 
-	err = h.pubsubClient.Publish(h.ctx, h.rendezvous, marshaledEvents).Err()
+	err = h.pubsubClient.Publish(h.ctx, h.rendezvous, marshaledEvents)
 	if err != nil {
 		log.Debug("could not publish to channel", "err", err.Error())
 	}

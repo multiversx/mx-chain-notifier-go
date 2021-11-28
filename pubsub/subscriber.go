@@ -7,12 +7,11 @@ import (
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/go-redis/redis/v8"
 )
 
 type hubSubscriber struct {
 	notifierHub  dispatcher.Hub
-	pubsubClient *redis.Client
+	pubsubClient RedisClient
 	rendezvous   string
 
 	ctx context.Context
@@ -23,7 +22,7 @@ func NewHubSubscriber(
 	ctx context.Context,
 	config config.PubSubConfig,
 	notifierHub dispatcher.Hub,
-	pubsubClient *redis.Client,
+	pubsubClient RedisClient,
 ) *hubSubscriber {
 	return &hubSubscriber{
 		notifierHub:  notifierHub,
@@ -39,10 +38,9 @@ func (s *hubSubscriber) Subscribe() {
 }
 
 func (s *hubSubscriber) subscribeToChannel() {
-	sub := s.pubsubClient.Subscribe(s.ctx, s.rendezvous)
-	channel := sub.Channel()
+	subChannel := s.pubsubClient.SubscribeGetChan(s.ctx, s.rendezvous)
 	
-	for msg := range channel {
+	for msg := range subChannel {
 		var events data.BlockEvents
 
 		err := json.Unmarshal([]byte(msg.Payload), &events)

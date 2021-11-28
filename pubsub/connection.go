@@ -2,6 +2,7 @@ package pubsub
 
 import (
 	"context"
+	"errors"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/config"
@@ -12,31 +13,39 @@ const (
 	pongValue = "PONG"
 )
 
-var log = logger.GetOrCreate("notifier/pubsub")
+var (
+	log = logger.GetOrCreate("notifier/pubsub")
 
-func CreatePubsubClient(cfg config.PubSubConfig) *redis.Client {
+	ErrRedisConnectionFailed = errors.New("error connecting to redis")
+)
+
+func CreatePubsubClient(cfg config.PubSubConfig) (*redisClientWrapper, error) {
 	opt, err := redis.ParseURL(cfg.Url)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return redis.NewClient(opt)
+	client := redis.NewClient(opt)
+	return NewRedisClientWrapper(client), nil
 }
 
-func CreateFailoverClient(cfg config.PubSubConfig) (*redis.Client, error) {
+func CreateFailoverClient(cfg config.PubSubConfig) (*redisClientWrapper, error) {
 	client := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    cfg.MasterName,
 		SentinelAddrs: []string{cfg.SentinelUrl},
 	})
 
-	pong, err := pingRedis(context.Background(), client)
-	if err != nil || pong != pongValue {
-		return nil, err
+	rc := NewRedisClientWrapper(client)
+
+	ok := isConnected(rc)
+	if !ok {
+		return nil, ErrRedisConnectionFailed
 	}
 
-	return client, nil
+	return rc, nil
 }
 
-func pingRedis(ctx context.Context, redis *redis.Client) (string, error) {
-	return redis.Ping(ctx).Result()
+func isConnected(client *redisClientWrapper) bool {
+	pong, err := client.Ping(context.Background())
+	return err == nil && pong == pongValue
 }
