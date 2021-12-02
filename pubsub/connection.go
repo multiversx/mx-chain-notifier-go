@@ -19,7 +19,7 @@ var (
 	ErrRedisConnectionFailed = errors.New("error connecting to redis")
 )
 
-func CreatePubsubClient(cfg config.PubSubConfig) (*redisClientWrapper, error) {
+func CreatePubsubClient(cfg config.PubSubConfig) (RedisClient, error) {
 	opt, err := redis.ParseURL(cfg.Url)
 	if err != nil {
 		return nil, err
@@ -29,7 +29,7 @@ func CreatePubsubClient(cfg config.PubSubConfig) (*redisClientWrapper, error) {
 	return NewRedisClientWrapper(client), nil
 }
 
-func CreateFailoverClient(cfg config.PubSubConfig) (*redisClientWrapper, error) {
+func CreateFailoverClient(cfg config.PubSubConfig) (RedisClient, error) {
 	client := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    cfg.MasterName,
 		SentinelAddrs: []string{cfg.SentinelUrl},
@@ -45,7 +45,7 @@ func CreateFailoverClient(cfg config.PubSubConfig) (*redisClientWrapper, error) 
 	return rc, nil
 }
 
-func isConnected(client *redisClientWrapper) bool {
+func isConnected(client RedisClient) bool {
 	pong, err := client.Ping(context.Background())
 	return err == nil && pong == pongValue
 }
