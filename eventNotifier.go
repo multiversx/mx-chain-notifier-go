@@ -3,6 +3,7 @@ package notifier
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
@@ -74,15 +75,23 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 			bech32Address := en.pubKeyConverter.Encode(eventHandler.GetAddress())
 			eventIdentifier := string(eventHandler.GetIdentifier())
 
+			topics := eventHandler.GetTopics()
+			topicsAsHex := make([]string, 0, len(topics))
+			for _, topic := range topics {
+				topicsAsHex = append(topicsAsHex, hex.EncodeToString(topic))
+			}
+
 			log.Debug("received event from address",
 				"address", bech32Address,
 				"identifier", eventIdentifier,
+				"topics", strings.Join(topicsAsHex, ", "),
+				"data", eventHandler.GetData(),
 			)
 
 			events = append(events, data.Event{
 				Address:    bech32Address,
 				Identifier: eventIdentifier,
-				Topics:     eventHandler.GetTopics(),
+				Topics:     topics,
 				Data:       eventHandler.GetData(),
 			})
 		}
