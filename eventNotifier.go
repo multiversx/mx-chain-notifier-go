@@ -10,6 +10,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/hashing"
 	"github.com/ElrondNetwork/elrond-go-core/marshal"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/proxy/client"
 )
@@ -58,10 +59,12 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
 	var logEvents []nodeData.EventHandler
-	for _, handler := range args.TransactionsPool.Logs {
-		if !handler.IsInterfaceNil() {
-			logEvents = append(logEvents, handler.GetLogEvents()...)
+	for _, logData := range args.TransactionsPool.Logs {
+		if check.IfNil(logData.LogHandler) {
+			continue
 		}
+
+		logEvents = append(logEvents, logData.LogHandler.GetLogEvents()...)
 	}
 
 	if len(logEvents) == 0 {
