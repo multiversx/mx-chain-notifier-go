@@ -9,8 +9,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/cmd/logging"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/proxy"
