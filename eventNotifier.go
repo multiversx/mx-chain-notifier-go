@@ -60,6 +60,9 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
 	var logEvents []nodeData.EventHandler
 	for _, logData := range args.TransactionsPool.Logs {
+		if logData == nil {
+			continue
+		}
 		if check.IfNil(logData.LogHandler) {
 			continue
 		}
