@@ -9,7 +9,7 @@ WORKDIR /elrond/cmd
 RUN go build -o notifier
 
 # ===== SECOND STAGE ======
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 COPY --from=builder /elrond/cmd /elrond
 
 EXPOSE 8080
