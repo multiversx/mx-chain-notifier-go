@@ -12,7 +12,7 @@ binary = event-notifier
 help:
 	@echo -e ""
 	@echo -e "Make commands:"
-	@grep -E '^[a-zA-Z_-]+:.*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":"}; {printf "\t\033[36m%-30s\033[0m\n", $$1}'
+	@grep -E '^[a-zA-Z_-]+:.*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":"}; {printf "\t\033[36m%-30s\033[0m\n", $$1}'
 	@echo -e ""
 
 build:
@@ -37,3 +37,52 @@ debug: build
 
 debug-ath:
 	${debugger} attach $$(cat ${cmd_dir}/${binary}.pid)
+
+
+# #####################
+# Redis
+# #####################
+
+.PHONY: redis-new redis-start redis-stop
+
+redis_name = main-redis
+redis_port = 6379
+
+redis-new:
+	docker run \
+		--name ${redis_name} \
+		-d \
+		-p ${redis_port}:6379 \
+		redis:latest
+
+redis-start:
+	docker start ${redis_name}
+
+redis-stop:
+	docker stop ${redis_name}
+
+redis-rm: redis-stop
+	docker rm ${redis_name}
+
+# #####################
+# RabbitMQ
+# #####################
+
+rabbitmq_name = main-rabbit
+rabbitmq_port = 5672
+
+rabbitmq-new:
+	docker run \
+		-d \
+		--name ${rabbitmq_name} \
+		-p ${rabbitmq_port}:5672 \
+		rabbitmq:3
+
+rabbitmq-start:
+	docker start ${rabbitmq_name}
+
+rabbitmq-stop:
+	docker stop ${rabbitmq_name}
+
+rabbitmq-rm: rabbitmq-stop
+	docker rm ${rabbitmq_name}
