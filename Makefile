@@ -42,8 +42,7 @@ debug: build
 debug-ath:
 	${debugger} attach $$(cat ${cmd_dir}/${binary}.pid)
 
-# Docker
-
+# Run local instance with Docker
 image = "notifier"
 image_tag = "latest"
 container_name = notifier
@@ -75,50 +74,40 @@ docker-logs:
 docker-rm: docker-stop
 	docker rm ${container_name}
 
-# #########################
-# Redis
-# #########################
-
-.PHONY: redis-new redis-start redis-stop
-
-redis_name = main-redis
-redis_port = 6379
-
-redis-new:
-	docker run \
-		--name ${redis_name} \
-		-d \
-		-p ${redis_port}:6379 \
-		redis:latest
-
-redis-start:
-	docker start ${redis_name}
-
-redis-stop:
-	docker stop ${redis_name}
-
-redis-rm: redis-stop
-	docker rm ${redis_name}
 
 # #########################
-# RabbitMQ
+# System testing
 # #########################
 
-rabbitmq_name = main-rabbit
-rabbitmq_port = 5672
+.PHONY: light-new light-start light-stop
 
-rabbitmq-new:
-	docker run \
-		-d \
-		--name ${rabbitmq_name} \
-		-p ${rabbitmq_port}:5672 \
-		rabbitmq:3
+notifier_name = notifier
 
-rabbitmq-start:
-	docker start ${rabbitmq_name}
+compose-build:
+	docker-compose build
 
-rabbitmq-stop:
-	docker stop ${rabbitmq_name}
+# Use only notifier
+light-new: export API_TYPE = notifier
+light-new:
+	docker-compose up -d ${notifier_name}
 
-rabbitmq-rm: rabbitmq-stop
-	docker rm ${rabbitmq_name}
+light-start:
+	docker-compose start ${notifier_name}
+
+light-stop:
+	docker-compose stop ${notifier_name}
+
+# Notifier with Redis sentinel and RabbitMQ
+compose-new: export API_TYPE = rabbit-api
+compose-new:
+	docker-compose up -d
+
+compose-start:
+	docker-compose start
+
+compose-stop:
+	docker-compose stop
+
+compose-rm:
+	docker-compose down
+

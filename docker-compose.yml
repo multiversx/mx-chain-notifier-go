@@ -1,0 +1,61 @@
+version: "3"
+
+networks:
+  notifier-net:
+    driver: bridge
+
+services:
+  notifier:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    command: ["--api-type", "${API_TYPE}"]
+    ports:
+        - "8080:8080"
+    networks:
+      - notifier-net
+
+  redis-master:
+    image: "bitnami/redis"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - ALLOW_EMPTY_PASSWORD=yes
+        #- REDIS_PASSWORD=str0ng_passw0rd
+    ports:
+        - "6379"
+    networks:
+      - notifier-net
+  redis-replica:
+    image: "bitnami/redis"
+    environment:
+      - REDIS_REPLICATION_MODE=replica
+      - REDIS_MASTER_HOST=mymaster
+      - ALLOW_EMPTY_PASSWORD=yes
+    hostname: redis-failover
+    ports:
+        - "6379"
+    depends_on:
+      - redis-master
+    networks:
+      - notifier-net
+  redis-sentinel:
+    image: "bitnami/redis-sentinel"
+    environment:
+      - REDIS_MASTER_SET=mymaster
+      - REDIS_MASTER_HOST=redis-master
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+    depends_on:
+      - redis-master
+      - redis-replica
+    ports:
+        - "26379:26379"
+    networks:
+      - notifier-net
+
+  rabbitmq:
+    image: "rabbitmq:3"
+    ports:
+        - "5672:5672"
+    networks:
+      - notifier-net
