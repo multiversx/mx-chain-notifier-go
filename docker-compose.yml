@@ -20,7 +20,6 @@ services:
     environment:
       - REDIS_REPLICATION_MODE=master
       - ALLOW_EMPTY_PASSWORD=yes
-        #- REDIS_PASSWORD=str0ng_passw0rd
     ports:
         - "6379"
     networks:
