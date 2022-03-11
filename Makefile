@@ -2,12 +2,16 @@ SHELL := $(shell which bash)
 
 debugger := $(shell which dlv)
 
-cmd_dir = cmd
-binary = event-notifier
-
 .DEFAULT_GOAL := help
 
+# #########################
+# Manage Notifier locally
+# #########################
+
 .PHONY: help build run runb kill debug debug-ath
+
+cmd_dir = cmd
+binary = event-notifier
 
 help:
 	@echo -e ""
@@ -38,10 +42,42 @@ debug: build
 debug-ath:
 	${debugger} attach $$(cat ${cmd_dir}/${binary}.pid)
 
+# Docker
 
-# #####################
+image = "notifier"
+image_tag = "latest"
+container_name = notifier
+
+dockerfile = Dockerfile
+
+docker-build:
+	docker build \
+		-t ${image}:${image_tag} \
+		-f ${dockerfile} \
+		.
+
+docker-new:
+	docker run  \
+		--detach \
+		--network "host" \
+		--name ${container_name} \
+		${image}:${image_tag}
+
+docker-start:
+	docker start ${container_name}
+
+docker-stop:
+	docker stop ${container_name}
+
+docker-logs:
+	docker logs -f ${container_name}
+
+docker-rm: docker-stop
+	docker rm ${container_name}
+
+# #########################
 # Redis
-# #####################
+# #########################
 
 .PHONY: redis-new redis-start redis-stop
 
@@ -64,9 +100,9 @@ redis-stop:
 redis-rm: redis-stop
 	docker rm ${redis_name}
 
-# #####################
+# #########################
 # RabbitMQ
-# #####################
+# #########################
 
 rabbitmq_name = main-rabbit
 rabbitmq_port = 5672
