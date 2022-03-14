@@ -6,6 +6,8 @@ WORKDIR /elrond
 COPY . .
 
 WORKDIR /elrond/cmd
+
+RUN GO111MODULE=on go mod vendor
 RUN go build -o notifier
 
 # ===== SECOND STAGE ======
