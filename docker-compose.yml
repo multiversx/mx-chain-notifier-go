@@ -12,8 +12,6 @@ services:
     command: ["--api-type", "${API_TYPE}"]
     ports:
         - "8080:8080"
-    networks:
-      - notifier-net
 
   redis-master:
     image: "bitnami/redis"
@@ -21,7 +19,7 @@ services:
       - REDIS_REPLICATION_MODE=master
       - ALLOW_EMPTY_PASSWORD=yes
     ports:
-        - "6379"
+        - "6379:6379"
     networks:
       - notifier-net
   redis-replica:

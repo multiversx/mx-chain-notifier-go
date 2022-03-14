@@ -60,7 +60,8 @@ docker-new:
 		--detach \
 		--network "host" \
 		--name ${container_name} \
-		${image}:${image_tag}
+		${image}:${image_tag} \
+		--api-type ${api_type}
 
 docker-start:
 	docker start ${container_name}
@@ -79,35 +80,25 @@ docker-rm: docker-stop
 # System testing
 # #########################
 
-.PHONY: light-new light-start light-stop
+.PHONY: compose-new compose-start compose-stop
 
 notifier_name = notifier
 
 compose-build:
 	docker-compose build
 
-# Use only notifier
-light-new: export API_TYPE = notifier
-light-new:
-	docker-compose up -d ${notifier_name}
-
-light-start:
-	docker-compose start ${notifier_name}
-
-light-stop:
-	docker-compose stop ${notifier_name}
-
 # Notifier with Redis sentinel and RabbitMQ
-rabbit-new: export API_TYPE = rabbit-api
-rabbit-new:
+compose-new: export API_TYPE = rabbit-api
+compose-new:
 	docker-compose up -d
 
-rabbit-start:
+compose-start:
 	docker-compose start
 
-rabbit-stop:
+compose-stop:
 	docker-compose stop
 
-rabbit-rm:
+compose-rm: export API_TYPE = rabbit-api
+compose-rm:
 	docker-compose down
 

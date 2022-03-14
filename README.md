@@ -125,28 +125,34 @@ docker compose) that can be used for this.
 * `notifier` mode can be launched as following (check `Makefile` for details): 
 ```bash
 # Starts setup with one notifier instance
-make light-new
+make docker-new api_type=notifier
 
 # Stop notifier instance
-make light-stop
+make docker-stop
 
 # Start notifier instance
-make light-start
+make docker-start
 ```
 
 * `rabbit-api` mode can be launched as following (check `Makefile` for details): 
+Manage RabbitMQ and Redis
 ```bash
 # Starts setup with one notifier instance, redis sentinel setup and rabbitmq
-make rabbit-new
+make compose-new
 
 # Stop all containers
-make rabbit-stop
+make compose-stop
 
 # Start start all containers
-make rabbit-start
+make compose-start
 
 # Shutdown entire setup
-make rabbit-rm
+make compose-rm
+```
+
+Start Notifier instance
+```bash
+make docker-new api_type=rabbit-api
 ```
 
 ## Subscribing
