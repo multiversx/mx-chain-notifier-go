@@ -98,16 +98,16 @@ light-stop:
 	docker-compose stop ${notifier_name}
 
 # Notifier with Redis sentinel and RabbitMQ
-compose-new: export API_TYPE = rabbit-api
-compose-new:
+rabbit-new: export API_TYPE = rabbit-api
+rabbit-new:
 	docker-compose up -d
 
-compose-start:
+rabbit-start:
 	docker-compose start
 
-compose-stop:
+rabbit-stop:
 	docker-compose stop
 
-compose-rm:
+rabbit-rm:
 	docker-compose down
 

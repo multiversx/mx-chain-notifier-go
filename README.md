@@ -137,16 +137,16 @@ make light-start
 * `rabbit-api` mode can be launched as following (check `Makefile` for details): 
 ```bash
 # Starts setup with one notifier instance, redis sentinel setup and rabbitmq
-make compose-new
+make rabbit-new
 
 # Stop all containers
-make compose-stop
+make rabbit-stop
 
 # Start start all containers
-make compose-start
+make rabbit-start
 
 # Shutdown entire setup
-make compose-rm
+make rabbit-rm
 ```
 
 ## Subscribing
