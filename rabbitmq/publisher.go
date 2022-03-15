@@ -21,7 +21,7 @@ type rabbitMqPublisher struct {
 	//       instead of using Hub interface
 	dispatcher.Hub
 
-	client Client
+	client RabbitMqClient
 	cfg    config.RabbitMQConfig
 
 	broadcast          chan data.BlockEvents
@@ -31,7 +31,7 @@ type rabbitMqPublisher struct {
 
 // NewRabbitMqPublisher create a new rabbitMQ publisher instance
 func NewRabbitMqPublisher(
-	client Client,
+	client RabbitMqClient,
 	cfg config.RabbitMQConfig,
 ) *rabbitMqPublisher {
 	return &rabbitMqPublisher{
