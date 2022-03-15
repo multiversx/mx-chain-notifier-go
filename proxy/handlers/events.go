@@ -7,7 +7,6 @@ import (
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/ElrondNetwork/notifier-go/pubsub"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,7 +25,7 @@ const (
 type eventsHandler struct {
 	notifierHub dispatcher.Hub
 	config      config.ConnectorApiConfig
-	lockService pubsub.LockService
+	lockService LockService
 }
 
 // NewEventsHandler registers handlers for the /events group
@@ -34,7 +33,7 @@ func NewEventsHandler(
 	notifierHub dispatcher.Hub,
 	groupHandler *GroupHandler,
 	config config.ConnectorApiConfig,
-	lockService pubsub.LockService,
+	lockService LockService,
 ) error {
 	h := &eventsHandler{
 		notifierHub: notifierHub,
