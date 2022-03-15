@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+// TODO: update this after LockService interface change (if needed)
+
 const expiry = time.Minute * 30
 
 type redlockWrapper struct {
@@ -12,6 +14,7 @@ type redlockWrapper struct {
 	ctx    context.Context
 }
 
+// NewRedlockWrapper create a new redLock based on a chance instance
 func NewRedlockWrapper(ctx context.Context, client CacheHandler) *redlockWrapper {
 	return &redlockWrapper{
 		client: client,
@@ -19,6 +22,7 @@ func NewRedlockWrapper(ctx context.Context, client CacheHandler) *redlockWrapper
 	}
 }
 
+// IsBlockProcessed returns wether the item is already locked
 func (r *redlockWrapper) IsBlockProcessed(blockHash string) (bool, error) {
 	return r.client.SetEntry(r.ctx, blockHash, true, expiry)
 }

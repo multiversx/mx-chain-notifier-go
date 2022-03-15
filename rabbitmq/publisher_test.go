@@ -1,3 +1,3 @@
 package rabbitmq
 
-// TODO: added unit tests
+// TODO: add unit tests
