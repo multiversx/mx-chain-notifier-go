@@ -3,6 +3,8 @@ package redis
 import (
 	"context"
 	"time"
+
+	"github.com/ElrondNetwork/elrond-go-logger/check"
 )
 
 // TODO: update this after LockService interface change (if needed)
@@ -10,16 +12,20 @@ import (
 const expiry = time.Minute * 30
 
 type redlockWrapper struct {
-	client Client
+	client RedLockClient
 	ctx    context.Context
 }
 
-// NewRedlockWrapper create a new redLock based on a chance instance
-func NewRedlockWrapper(ctx context.Context, client Client) *redlockWrapper {
+// NewRedlockWrapper create a new redLock based on a cache instance
+func NewRedlockWrapper(ctx context.Context, client RedLockClient) (*redlockWrapper, error) {
+	if check.IfNil(client) {
+		return nil, ErrNilRedlockClient
+	}
+
 	return &redlockWrapper{
 		client: client,
 		ctx:    ctx,
-	}
+	}, nil
 }
 
 // IsBlockProcessed returns wether the item is already locked
@@ -27,10 +33,12 @@ func (r *redlockWrapper) IsBlockProcessed(blockHash string) (bool, error) {
 	return r.client.SetEntry(r.ctx, blockHash, true, expiry)
 }
 
+// HasConnection return true if the redis client is connected
 func (r *redlockWrapper) HasConnection() bool {
 	return r.client.IsConnected(r.ctx)
 }
 
+// IsInterfaceNil returns true if there is no value under the interface
 func (r *redlockWrapper) IsInterfaceNil() bool {
 	return r == nil
 }

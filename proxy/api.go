@@ -38,6 +38,10 @@ func newWebServer(generalConfig *config.GeneralConfig) *WebServer {
 	}
 }
 
+// TODO:
+// - handle components creation in a factory
+// - manage gin web server in a separate component
+
 // NewNotifierApi launches a notifier api - exposing a clients hub
 func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
@@ -85,7 +89,10 @@ func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 
 	var lockService handlers.LockService
 	if config.ConnectorApi.CheckDuplicates {
-		lockService = redis.NewRedlockWrapper(ctx, pubsubClient)
+		lockService, err = redis.NewRedlockWrapper(ctx, pubsubClient)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		lockService = disabled.NewDisabledRedlockWrapper()
 	}

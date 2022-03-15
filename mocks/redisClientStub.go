@@ -7,27 +7,36 @@ import (
 
 // RedisClientStub -
 type RedisClientStub struct {
-	SetEntryCalled    func(ctx context.Context, key string, value bool, ttl time.Duration) (bool, error)
-	PingCalled        func(ctx context.Context) (string, error)
-	IsConnectedCalled func(ctx context.Context) bool
+	SetEntryCalled    func(key string, value bool, ttl time.Duration) (bool, error)
+	PingCalled        func() (string, error)
+	IsConnectedCalled func() bool
 }
 
 // SetEntry -
-func (rc *RedisClientStub) SetEntry(ctx context.Context, key string, value bool, ttl time.Duration) (bool, error) {
+func (rc *RedisClientStub) SetEntry(_ context.Context, key string, value bool, ttl time.Duration) (bool, error) {
 	if rc.SetEntryCalled != nil {
-		return rc.SetEntryCalled(ctx, key, value, ttl)
+		return rc.SetEntryCalled(key, value, ttl)
 	}
 
 	return false, nil
 }
 
 // Ping -
-func (rc *RedisClientStub) Ping(ctx context.Context) (string, error) {
+func (rc *RedisClientStub) Ping(_ context.Context) (string, error) {
 	if rc.PingCalled != nil {
-		return rc.PingCalled(ctx)
+		return rc.PingCalled()
 	}
 
 	return "", nil
+}
+
+// IsConnected -
+func (rc *RedisClientStub) IsConnected(_ context.Context) bool {
+	if rc.IsConnectedCalled != nil {
+		return rc.IsConnectedCalled()
+	}
+
+	return false
 }
 
 // IsInterfaceNil -
