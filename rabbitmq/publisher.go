@@ -1,10 +1,7 @@
 package rabbitmq
 
 import (
-	"context"
 	"encoding/json"
-	"sync"
-	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/config"
@@ -14,50 +11,36 @@ import (
 )
 
 const (
-	reconnectRetryMs = 500
-
 	emptyStr = ""
 )
 
-var log = logger.GetOrCreate("rabbitMQPublisher")
+var log = logger.GetOrCreate("rabbitmq")
 
 type rabbitMqPublisher struct {
+	// TODO: remove this after proxy refactoring and create a separate Publisher interface,
+	//       instead of using Hub interface
 	dispatcher.Hub
+
+	client RabbitClient
+	cfg    config.RabbitMQConfig
 
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
-	connErrCh          chan *amqp.Error
-	chanErr            chan *amqp.Error
-
-	conn *amqp.Connection
-	ch   *amqp.Channel
-	cfg  config.RabbitMQConfig
-
-	pubMut sync.Mutex
-
-	ctx context.Context
 }
 
+// NewRabbitMqPublisher create a new rabbitMQ publisher instance
 func NewRabbitMqPublisher(
-	ctx context.Context,
+	client RabbitClient,
 	cfg config.RabbitMQConfig,
-) (*rabbitMqPublisher, error) {
-	rp := &rabbitMqPublisher{
+) *rabbitMqPublisher {
+	return &rabbitMqPublisher{
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
 		cfg:                cfg,
-		ctx:                ctx,
-		pubMut:             sync.Mutex{},
+		client:             client,
 	}
-
-	err := rp.connect()
-	if err != nil {
-		return nil, err
-	}
-
-	return rp, nil
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
@@ -70,25 +53,6 @@ func (rp *rabbitMqPublisher) Run() {
 			rp.publishRevertToExchange(revertBlock)
 		case finalizedBlock := <-rp.broadcastFinalized:
 			rp.publishFinalizedToExchange(finalizedBlock)
-		case err := <-rp.connErrCh:
-			if err != nil {
-				log.Error("rabbitMQ connection failure", "err", err.Error())
-				rp.reconnect()
-			}
-		case err := <-rp.chanErr:
-			if err != nil {
-				log.Error("rabbitMQ channel failure", "err", err.Error())
-				rp.reopenChannel()
-			}
-		case <-rp.ctx.Done():
-			err := rp.ch.Close()
-			if err != nil {
-				log.Error("failed to close rabbitMQ channel", "err", err.Error())
-			}
-			err = rp.conn.Close()
-			if err != nil {
-				log.Error("failed to close rabbitMQ channel", "err", err.Error())
-			}
 		}
 	}
 }
@@ -157,10 +121,7 @@ func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.Fina
 }
 
 func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) error {
-	rp.pubMut.Lock()
-	defer rp.pubMut.Unlock()
-
-	err := rp.ch.Publish(
+	return rp.client.Publish(
 		exchangeName,
 		emptyStr,
 		true,  // mandatory
@@ -169,65 +130,9 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 			Body: payload,
 		},
 	)
-
-	return err
 }
 
-func (rp *rabbitMqPublisher) connect() error {
-	conn, err := amqp.Dial(rp.cfg.Url)
-	if err != nil {
-		return err
-	}
-	rp.conn = conn
-
-	rp.connErrCh = make(chan *amqp.Error)
-	rp.conn.NotifyClose(rp.connErrCh)
-
-	err = rp.openChannel()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (rp *rabbitMqPublisher) openChannel() error {
-	ch, err := rp.conn.Channel()
-	if err != nil {
-		return err
-	}
-	rp.ch = ch
-
-	rp.chanErr = make(chan *amqp.Error)
-	rp.ch.NotifyClose(rp.chanErr)
-
-	return nil
-}
-
-func (rp *rabbitMqPublisher) reconnect() {
-	for {
-		time.Sleep(time.Millisecond * reconnectRetryMs)
-
-		err := rp.connect()
-		if err != nil {
-			log.Debug("could not reconnect", "err", err.Error())
-		} else {
-			log.Debug("connection established after reconnect attempts")
-			break
-		}
-	}
-}
-
-func (rp *rabbitMqPublisher) reopenChannel() {
-	for {
-		time.Sleep(time.Millisecond * reconnectRetryMs)
-
-		err := rp.openChannel()
-		if err != nil {
-			log.Debug("could not re-open channel", "err", err.Error())
-		} else {
-			log.Debug("channel opened after reconnect attempts")
-			break
-		}
-	}
+// IsInterfaceNil returns true if there is no value under the interface
+func (rp *rabbitMqPublisher) IsInterfaceNil() bool {
+	return rp == nil
 }
