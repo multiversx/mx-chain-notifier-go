@@ -1,11 +1,11 @@
-package test
+package dispatcher
 
 import (
 	"math/rand"
 	"time"
 )
 
-func RandStr(length int) string {
+func randStr(length int) string {
 	randSeed := rand.New(rand.NewSource(time.Now().UnixNano()))
 	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
