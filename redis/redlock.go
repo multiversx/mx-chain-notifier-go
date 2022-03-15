@@ -10,12 +10,12 @@ import (
 const expiry = time.Minute * 30
 
 type redlockWrapper struct {
-	client CacheHandler
+	client Client
 	ctx    context.Context
 }
 
 // NewRedlockWrapper create a new redLock based on a chance instance
-func NewRedlockWrapper(ctx context.Context, client CacheHandler) *redlockWrapper {
+func NewRedlockWrapper(ctx context.Context, client Client) *redlockWrapper {
 	return &redlockWrapper{
 		client: client,
 		ctx:    ctx,

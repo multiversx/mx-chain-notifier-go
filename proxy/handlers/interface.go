@@ -1,23 +1,13 @@
 package handlers
 
-import "github.com/ElrondNetwork/notifier-go/data"
-
-// TODO: move this after futher refactoring
+// TODO: move this after further refactoring
+// 		 add separate Publisher interface
 
 // LockService defines the behaviour of a lock service component.
-// It makes sure that a duplicated entry is not processed multiple times,
-// it lockes an item once it has been processed.
+// It makes sure that a duplicated entry is not processed multiple times.
 type LockService interface {
 	// TODO: update this function name after proxy refactoring
 	IsBlockProcessed(blockHash string) (bool, error)
 	HasConnection() bool
 	IsInterfaceNil() bool
-}
-
-// Publisher defines the behaviour of a publisher component
-type Publisher interface {
-	Run()
-	BroadcastChan() chan<- data.BlockEvents
-	BroadcastRevertChan() chan<- data.RevertBlock
-	BroadcastFinalizedChan() chan<- data.FinalizedBlock
 }

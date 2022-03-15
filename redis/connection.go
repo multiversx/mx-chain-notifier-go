@@ -14,7 +14,7 @@ var log = logger.GetOrCreate("redis")
 // 	     - create LockManager instance in main factory based on Redis
 
 // CreateSimpleClient will create a redis client for a redis setup with one instance
-func CreateSimpleClient(cfg config.PubSubConfig) (CacheHandler, error) {
+func CreateSimpleClient(cfg config.PubSubConfig) (Client, error) {
 	opt, err := redis.ParseURL(cfg.Url)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func CreateSimpleClient(cfg config.PubSubConfig) (CacheHandler, error) {
 }
 
 // CreateFailoverClient will create a redis client for a redis setup with sentinel
-func CreateFailoverClient(cfg config.PubSubConfig) (CacheHandler, error) {
+func CreateFailoverClient(cfg config.PubSubConfig) (Client, error) {
 	client := redis.NewFailoverClient(&redis.FailoverOptions{
 		MasterName:    cfg.MasterName,
 		SentinelAddrs: []string{cfg.SentinelUrl},
