@@ -5,14 +5,6 @@ networks:
     driver: bridge
 
 services:
-  notifier:
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    command: ["--api-type", "${API_TYPE}"]
-    ports:
-        - "8080:8080"
-
   redis-master:
     image: "bitnami/redis"
     environment:

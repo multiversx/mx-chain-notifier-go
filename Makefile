@@ -55,7 +55,7 @@ docker-build:
 		-f ${dockerfile} \
 		.
 
-docker-new:
+docker-new: docker-build
 	docker run  \
 		--detach \
 		--network "host" \
@@ -83,9 +83,6 @@ docker-rm: docker-stop
 .PHONY: compose-new compose-start compose-stop
 
 notifier_name = notifier
-
-compose-build:
-	docker-compose build
 
 # Notifier with Redis sentinel and RabbitMQ
 compose-new: export API_TYPE = rabbit-api
