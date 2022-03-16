@@ -51,8 +51,8 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 	)
 }
 
-// Dial will return an rabbitMq connection
-func (rc *rabbitMqClient) Dial(url string) (*amqp.Connection, error) {
+// dial will return a rabbitMq connection
+func (rc *rabbitMqClient) dial(url string) (*amqp.Connection, error) {
 	return amqp.Dial(url)
 }
 
@@ -83,7 +83,7 @@ func (rc *rabbitMqClient) connListener() {
 }
 
 func (rc *rabbitMqClient) connect() error {
-	conn, err := rc.Dial(rc.url)
+	conn, err := rc.dial(rc.url)
 	if err != nil {
 		return err
 	}

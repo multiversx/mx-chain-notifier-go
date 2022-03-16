@@ -14,6 +14,9 @@ const (
 	emptyStr = ""
 )
 
+// TODO: analyse creating a general Publisher component, after proxy and
+// dispatcher refactoring
+
 var log = logger.GetOrCreate("rabbitmq")
 
 type rabbitMqPublisher struct {
@@ -29,7 +32,7 @@ type rabbitMqPublisher struct {
 	broadcastFinalized chan data.FinalizedBlock
 }
 
-// NewRabbitMqPublisher create a new rabbitMQ publisher instance
+// NewRabbitMqPublisher creates a new rabbitMQ publisher instance
 func NewRabbitMqPublisher(
 	client RabbitMqClient,
 	cfg config.RabbitMQConfig,

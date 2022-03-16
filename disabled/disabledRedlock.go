@@ -3,7 +3,7 @@ package disabled
 type disabledRedlockWrapper struct {
 }
 
-// NewDisabledRedlockWrapper created a new disabled Redlock wrapper
+// NewDisabledRedlockWrapper creates a new disabled Redlock wrapper
 func NewDisabledRedlockWrapper() *disabledRedlockWrapper {
 	return &disabledRedlockWrapper{}
 }
