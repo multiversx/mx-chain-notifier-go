@@ -111,7 +111,7 @@ The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/config/confi
     Password = ""
 ```
 
-After the configuration file is setted up, the notifier instance can be
+After the configuration file is set up, the notifier instance can be
 launched.
 
 There are two ways in which notifier-go can be started: `notifier` mode and
