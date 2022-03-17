@@ -12,15 +12,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var ctx = context.Background()
-
 func TestNewRedlockWrapper(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil redlock client, should fail", func(t *testing.T) {
 		t.Parallel()
 
-		redlock, err := redis.NewRedlockWrapper(ctx, nil)
+		redlock, err := redis.NewRedlockWrapper(nil)
 		assert.True(t, check.IfNil(redlock))
 		assert.Equal(t, redis.ErrNilRedlockClient, err)
 	})
@@ -28,7 +26,7 @@ func TestNewRedlockWrapper(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		redlock, err := redis.NewRedlockWrapper(ctx, &mocks.RedisClientStub{})
+		redlock, err := redis.NewRedlockWrapper(&mocks.RedisClientStub{})
 		assert.Nil(t, err)
 		assert.False(t, check.IfNil(redlock))
 	})
@@ -44,10 +42,10 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 			},
 		}
 
-		redlock, err := redis.NewRedlockWrapper(ctx, client)
+		redlock, err := redis.NewRedlockWrapper(client)
 		require.Nil(t, err)
 
-		ok, err := redlock.IsBlockProcessed("randStr")
+		ok, err := redlock.IsBlockProcessed(context.Background(), "randStr")
 		require.Nil(t, err)
 		require.True(t, ok)
 	})
@@ -67,14 +65,14 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 			},
 		}
 
-		redlock, err := redis.NewRedlockWrapper(ctx, client)
+		redlock, err := redis.NewRedlockWrapper(client)
 		require.Nil(t, err)
 
-		ok, err := redlock.IsBlockProcessed("randStr")
+		ok, err := redlock.IsBlockProcessed(context.Background(), "randStr")
 		require.Nil(t, err)
 		require.True(t, ok)
 
-		ok, err = redlock.IsBlockProcessed(existingKey)
+		ok, err = redlock.IsBlockProcessed(context.Background(), existingKey)
 		require.Nil(t, err)
 		require.False(t, ok)
 	})
@@ -89,9 +87,9 @@ func TestRedlockWrapper_HasConnection(t *testing.T) {
 		},
 	}
 
-	redlock, err := redis.NewRedlockWrapper(ctx, client)
+	redlock, err := redis.NewRedlockWrapper(client)
 	require.Nil(t, err)
 
-	ok := redlock.HasConnection()
+	ok := redlock.HasConnection(context.Background())
 	require.True(t, ok)
 }

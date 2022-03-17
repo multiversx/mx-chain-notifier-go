@@ -14,8 +14,6 @@ const (
 type rabbitMqClient struct {
 	url string
 
-	ctx context.Context
-
 	conn *amqp.Connection
 	ch   *amqp.Channel
 
@@ -26,7 +24,6 @@ type rabbitMqClient struct {
 // NewRabbitMQClient creates a new rabbitMQ client instance
 func NewRabbitMQClient(ctx context.Context, url string) (*rabbitMqClient, error) {
 	rc := &rabbitMqClient{
-		ctx: ctx,
 		url: url,
 	}
 
@@ -35,7 +32,7 @@ func NewRabbitMQClient(ctx context.Context, url string) (*rabbitMqClient, error)
 		return nil, err
 	}
 
-	go rc.connListener()
+	go rc.connListener(ctx)
 
 	return rc, nil
 }
@@ -56,7 +53,7 @@ func (rc *rabbitMqClient) dial(url string) (*amqp.Connection, error) {
 	return amqp.Dial(url)
 }
 
-func (rc *rabbitMqClient) connListener() {
+func (rc *rabbitMqClient) connListener(ctx context.Context) {
 	for {
 		select {
 		case err := <-rc.connErrCh:
@@ -69,7 +66,7 @@ func (rc *rabbitMqClient) connListener() {
 				log.Error("rabbitMQ channel failure", "err", err.Error())
 				rc.reopenChannel()
 			}
-		case <-rc.ctx.Done():
+		case <-ctx.Done():
 			err := rc.ch.Close()
 			if err != nil {
 				log.Error("failed to close rabbitMQ channel", "err", err.Error())

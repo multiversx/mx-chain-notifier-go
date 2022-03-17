@@ -1,5 +1,7 @@
 package disabled
 
+import "context"
+
 type disabledRedlockWrapper struct {
 }
 
@@ -9,12 +11,12 @@ func NewDisabledRedlockWrapper() *disabledRedlockWrapper {
 }
 
 // IsBlockProcessed returns true and nil
-func (drw *disabledRedlockWrapper) IsBlockProcessed(blockHash string) (bool, error) {
+func (drw *disabledRedlockWrapper) IsBlockProcessed(ctx context.Context, blockHash string) (bool, error) {
 	return true, nil
 }
 
 // HasConnection returns true
-func (drw *disabledRedlockWrapper) HasConnection() bool {
+func (drw *disabledRedlockWrapper) HasConnection(ctx context.Context) bool {
 	return true
 }
 
