@@ -1,4 +1,6 @@
-package handlers
+package groups
+
+import "context"
 
 // TODO: move this after further refactoring
 // 		 add separate Publisher interface
@@ -7,7 +9,7 @@ package handlers
 // It makes sure that a duplicated entry is not processed multiple times.
 type LockService interface {
 	// TODO: update this function name after proxy refactoring
-	IsBlockProcessed(blockHash string) (bool, error)
-	HasConnection() bool
+	IsBlockProcessed(ctx context.Context, blockHash string) (bool, error)
+	HasConnection(ctx context.Context) bool
 	IsInterfaceNil() bool
 }

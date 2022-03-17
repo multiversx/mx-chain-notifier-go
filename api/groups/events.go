@@ -1,9 +1,11 @@
-package handlers
+package groups
 
 import (
+	"context"
 	"net/http"
 	"time"
 
+	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
@@ -23,6 +25,7 @@ const (
 )
 
 type eventsHandler struct {
+	*baseGroup
 	notifierHub dispatcher.Hub
 	config      config.ConnectorApiConfig
 	lockService LockService
@@ -31,31 +34,37 @@ type eventsHandler struct {
 // NewEventsHandler registers handlers for the /events group
 func NewEventsHandler(
 	notifierHub dispatcher.Hub,
-	groupHandler *GroupHandler,
 	config config.ConnectorApiConfig,
 	lockService LockService,
-) error {
+) (*eventsHandler, error) {
 	h := &eventsHandler{
+		baseGroup:   &baseGroup{},
 		notifierHub: notifierHub,
 		config:      config,
 		lockService: lockService,
 	}
 
-	endpoints := []EndpointHandler{
-		{Method: http.MethodPost, Path: pushEventsEndpoint, HandlerFunc: h.pushEvents},
-		{Method: http.MethodPost, Path: revertEventsEndpoint, HandlerFunc: h.revertEvents},
-		{Method: http.MethodPost, Path: finalizedEventsEndpoint, HandlerFunc: h.finalizedEvents},
+	endpoints := []*shared.EndpointHandlerData{
+		{
+			Method:  http.MethodPost,
+			Path:    pushEventsEndpoint,
+			Handler: h.pushEvents,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    revertEventsEndpoint,
+			Handler: h.revertEvents,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    finalizedEventsEndpoint,
+			Handler: h.finalizedEvents,
+		},
 	}
 
-	endpointGroupHandler := EndpointGroupHandler{
-		Root:             baseEventsEndpoint,
-		Middlewares:      h.createMiddlewares(),
-		EndpointHandlers: endpoints,
-	}
+	h.endpoints = endpoints
 
-	groupHandler.AddEndpointGroupHandler(endpointGroupHandler)
-
-	return nil
+	return h, nil
 }
 
 func (h *eventsHandler) pushEvents(c *gin.Context) {
@@ -63,7 +72,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 
 	err := c.Bind(&blockEvents)
 	if err != nil {
-		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
@@ -85,7 +94,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 		)
 	}
 
-	JsonResponse(c, http.StatusOK, nil, "")
+	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
 func (h *eventsHandler) revertEvents(c *gin.Context) {
@@ -93,7 +102,7 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 
 	err := c.Bind(&revertBlock)
 	if err != nil {
-		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
@@ -116,7 +125,7 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 		)
 	}
 
-	JsonResponse(c, http.StatusOK, nil, "")
+	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
 func (h *eventsHandler) finalizedEvents(c *gin.Context) {
@@ -124,7 +133,7 @@ func (h *eventsHandler) finalizedEvents(c *gin.Context) {
 
 	err := c.Bind(&finalizedBlock)
 	if err != nil {
-		JsonResponse(c, http.StatusBadRequest, nil, err.Error())
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
@@ -147,7 +156,7 @@ func (h *eventsHandler) finalizedEvents(c *gin.Context) {
 		)
 	}
 
-	JsonResponse(c, http.StatusOK, nil, "")
+	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
 func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
@@ -168,10 +177,10 @@ func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
 	var setSuccessful bool
 
 	for {
-		setSuccessful, err = h.lockService.IsBlockProcessed(blockHash)
+		setSuccessful, err = h.lockService.IsBlockProcessed(context.Background(), blockHash)
 
 		if err != nil {
-			if !h.lockService.HasConnection() {
+			if !h.lockService.HasConnection(context.Background()) {
 				log.Error("failure connecting to redis")
 				time.Sleep(time.Millisecond * setnxRetryMs)
 				continue
@@ -182,4 +191,9 @@ func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
 	}
 
 	return err == nil && setSuccessful
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (h *eventsHandler) IsInterfaceNil() bool {
+	return h == nil
 }

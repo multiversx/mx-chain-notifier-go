@@ -1,19 +1,15 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"os"
-	"os/signal"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/cmd/logging"
 	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/proxy"
+	"github.com/ElrondNetwork/notifier-go/notifier"
 	"github.com/urfave/cli"
 )
 
@@ -21,15 +17,6 @@ const (
 	defaultLogsPath    = "logs"
 	logFilePrefix      = "event-notifier"
 	logFileLifeSpanSec = 86400
-
-	rabbitApiType   = "rabbit-api"
-	observerApiType = "observer-api"
-	clientApiType   = "client-api"
-	notifierType    = "notifier"
-)
-
-var (
-	backgroundContextTimeout = 5 * time.Second
 )
 
 var (
@@ -121,15 +108,17 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	}
 
 	typeValue := ctx.GlobalString(apiType.Name)
-	api, err := initWebserver(typeValue, cfg)
+
+	notifierRunner, err := notifier.NewNotifierRunner(typeValue, cfg)
 	if err != nil {
 		return err
 	}
 
-	server := api.Run()
+	err = notifierRunner.Start()
+	if err != nil {
+		return err
+	}
 
-	waitForGracefulShutdown(server)
-	log.Debug("closing eventNotifier proxy...")
 	if !check.IfNil(fileLogging) {
 		err = fileLogging.Close()
 		if err != nil {
@@ -138,17 +127,6 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	}
 
 	return nil
-}
-
-func initWebserver(typeValue string, cfg *config.GeneralConfig) (*proxy.WebServer, error) {
-	switch typeValue {
-	case rabbitApiType:
-		return proxy.NewObserverToRabbitApi(cfg)
-	case notifierType:
-		return proxy.NewNotifierApi(cfg)
-	default:
-		return nil, errors.New("invalid apiType provided")
-	}
 }
 
 func initLogger(ctx *cli.Context) (logging.FileLogger, error) {
@@ -180,19 +158,6 @@ func initLogger(ctx *cli.Context) (logging.FileLogger, error) {
 	}
 
 	return fileLogging, nil
-}
-
-func waitForGracefulShutdown(server *http.Server) {
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt, os.Kill)
-	<-quit
-
-	ctx, cancel := context.WithTimeout(context.Background(), backgroundContextTimeout)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		panic(err)
-	}
-	_ = server.Close()
 }
 
 func getWorkingDir(ctx *cli.Context) (string, error) {

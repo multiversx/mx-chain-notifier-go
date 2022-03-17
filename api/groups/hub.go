@@ -1,16 +1,14 @@
-package handlers
+package groups
 
 import (
 	"net/http"
-	"strings"
 
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql"
-	"github.com/ElrondNetwork/notifier-go/dispatcher/hub"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
-	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,50 +25,30 @@ const (
 	gqlSubscriptionEndpoint = "/subscription"
 )
 
-var availableHubDelegates = map[string]func() dispatcher.Hub{
-	"default-custom": func() dispatcher.Hub {
-		return nil
-	},
-}
-
 type hubHandler struct {
+	*baseGroup
 	notifierHub dispatcher.Hub
-	endpoints   []EndpointHandler
 }
 
 // NewHubHandler registers handlers for the /hub group
 // It only registers the specified hub implementation and its corresponding dispatchers
 func NewHubHandler(
 	config *config.GeneralConfig,
-	groupHandler *GroupHandler,
+	notifierHub dispatcher.Hub,
 ) (*hubHandler, error) {
-	notifierHub, err := makeHub(config.ConnectorApi.HubType)
-	if err != nil {
-		return nil, err
-	}
-
 	h := &hubHandler{
+		baseGroup:   &baseGroup{},
 		notifierHub: notifierHub,
-		endpoints:   []EndpointHandler{},
 	}
 
-	handlers := h.getDispatchHandlers(config.ConnectorApi.DispatchType)
-	endpointGroupHandler := EndpointGroupHandler{
-		Root:             baseHubEndpoint,
-		Middlewares:      []gin.HandlerFunc{},
-		EndpointHandlers: handlers,
-	}
+	endpoints := h.getDispatchHandlers(config.ConnectorApi.DispatchType)
 
-	groupHandler.AddEndpointGroupHandler(endpointGroupHandler)
+	h.endpoints = endpoints
 
 	return h, nil
 }
 
-func (h *hubHandler) GetHub() dispatcher.Hub {
-	return h.notifierHub
-}
-
-func (h *hubHandler) getDispatchHandlers(dispatchType string) []EndpointHandler {
+func (h *hubHandler) getDispatchHandlers(dispatchType string) []*shared.EndpointHandlerData {
 	gqlServer := gql.NewGraphQLServer(h.notifierHub)
 
 	var registerGql = func() {
@@ -106,29 +84,14 @@ func (h *hubHandler) gqlHandler(gqlServer *gqlHandler.Server) func(c *gin.Contex
 }
 
 func (h *hubHandler) appendEndpointHandler(method, path string, handler gin.HandlerFunc) {
-	h.endpoints = append(h.endpoints, EndpointHandler{
-		Method:      method,
-		Path:        path,
-		HandlerFunc: handler,
+	h.endpoints = append(h.endpoints, &shared.EndpointHandlerData{
+		Method:  method,
+		Path:    path,
+		Handler: handler,
 	})
 }
 
-func makeHub(hubType string) (dispatcher.Hub, error) {
-	if hubType == hubCommon {
-		eventFilter := filters.NewDefaultFilter()
-		commonHub := hub.NewCommonHub(eventFilter)
-		return commonHub, nil
-	}
-
-	hubConfig := strings.Split(hubType, separator)
-	return tryMakeCustomHubForID(hubConfig[1])
-}
-
-func tryMakeCustomHubForID(id string) (dispatcher.Hub, error) {
-	if makeHubFunc, ok := availableHubDelegates[id]; ok {
-		customHub := makeHubFunc()
-		return customHub, nil
-	}
-
-	return nil, ErrMakeCustomHub
+// IsInterfaceNil returns true if there is no value under the interface
+func (h *hubHandler) IsInterfaceNil() bool {
+	return h == nil
 }
