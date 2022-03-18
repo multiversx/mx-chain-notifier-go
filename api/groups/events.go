@@ -26,9 +26,10 @@ const (
 
 type eventsHandler struct {
 	*baseGroup
-	notifierHub dispatcher.Hub
-	config      config.ConnectorApiConfig
-	lockService LockService
+	notifierHub           dispatcher.Hub
+	config                config.ConnectorApiConfig
+	additionalMiddlewares []gin.HandlerFunc
+	lockService           LockService
 }
 
 // NewEventsHandler registers handlers for the /events group
@@ -38,10 +39,11 @@ func NewEventsHandler(
 	lockService LockService,
 ) (*eventsHandler, error) {
 	h := &eventsHandler{
-		baseGroup:   &baseGroup{},
-		notifierHub: notifierHub,
-		config:      config,
-		lockService: lockService,
+		baseGroup:             &baseGroup{},
+		notifierHub:           notifierHub,
+		config:                config,
+		additionalMiddlewares: make([]gin.HandlerFunc, 0),
+		lockService:           lockService,
 	}
 
 	endpoints := []*shared.EndpointHandlerData{
@@ -65,6 +67,11 @@ func NewEventsHandler(
 	h.endpoints = endpoints
 
 	return h, nil
+}
+
+// GetAdditionalMiddlewares return additional middlewares for this group
+func (h *eventsHandler) GetAdditionalMiddlewares() []gin.HandlerFunc {
+	return h.additionalMiddlewares
 }
 
 func (h *eventsHandler) pushEvents(c *gin.Context) {

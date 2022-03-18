@@ -19,7 +19,7 @@ func (bg *baseGroup) GetEndpoints() []*shared.EndpointHandlerData {
 
 // RegisterRoutes will register all the endpoints to the given web server
 func (bg *baseGroup) RegisterRoutes(
-	ws *gin.RouterGroup,
+	ws gin.IRoutes,
 ) {
 	for _, handlerData := range bg.endpoints {
 		ws.Handle(handlerData.Method, handlerData.Path, handlerData.Handler)

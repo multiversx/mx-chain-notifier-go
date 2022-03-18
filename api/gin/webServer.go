@@ -109,8 +109,8 @@ func (w *webServer) createGroups() error {
 
 func (w *webServer) registerRoutes(ginEngine *gin.Engine) {
 	for groupName, groupHandler := range w.groups {
-		log.Debug("registering API group", "group name", groupName)
-		ginGroup := ginEngine.Group(fmt.Sprintf("/%s", groupName))
+		log.Info("registering API group", "group name", groupName)
+		ginGroup := ginEngine.Group(fmt.Sprintf("/%s", groupName)).Use(groupHandler.GetAdditionalMiddlewares()...)
 		groupHandler.RegisterRoutes(ginGroup)
 	}
 }

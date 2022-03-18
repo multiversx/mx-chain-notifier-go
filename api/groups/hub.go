@@ -27,7 +27,8 @@ const (
 
 type hubHandler struct {
 	*baseGroup
-	notifierHub dispatcher.Hub
+	notifierHub           dispatcher.Hub
+	additionalMiddlewares []gin.HandlerFunc
 }
 
 // NewHubHandler registers handlers for the /hub group
@@ -37,8 +38,9 @@ func NewHubHandler(
 	notifierHub dispatcher.Hub,
 ) (*hubHandler, error) {
 	h := &hubHandler{
-		baseGroup:   &baseGroup{},
-		notifierHub: notifierHub,
+		baseGroup:             &baseGroup{},
+		notifierHub:           notifierHub,
+		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
 	endpoints := h.getDispatchHandlers(config.ConnectorApi.DispatchType)
@@ -46,6 +48,11 @@ func NewHubHandler(
 	h.endpoints = endpoints
 
 	return h, nil
+}
+
+// GetAdditionalMiddlewares return additional middlewares for this group
+func (h *hubHandler) GetAdditionalMiddlewares() []gin.HandlerFunc {
+	return h.additionalMiddlewares
 }
 
 func (h *hubHandler) getDispatchHandlers(dispatchType string) []*shared.EndpointHandlerData {

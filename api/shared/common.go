@@ -4,9 +4,10 @@ import "github.com/gin-gonic/gin"
 
 // EndpointHandlerData holds the items needed for creating a new gin HTTP endpoint
 type EndpointHandlerData struct {
-	Path    string
-	Method  string
-	Handler gin.HandlerFunc
+	Path                  string
+	Method                string
+	Handler               gin.HandlerFunc
+	AdditionalMiddlewares []gin.HandlerFunc
 }
 
 type apiResponse struct {
