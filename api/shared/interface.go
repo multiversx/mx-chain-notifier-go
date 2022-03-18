@@ -1,6 +1,8 @@
 package shared
 
 import (
+	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,8 +20,14 @@ type GroupHandler interface {
 	IsInterfaceNil() bool
 }
 
-// FacadeHandler
+// FacadeHandler defines the behavior of a notifier base facade handler
 type FacadeHandler interface {
+	HandlePushEvents(events data.BlockEvents)
+	HandleRevertEvents(revertBlock data.RevertBlock)
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	GetConnectorUserAndPass() (string, string)
+	GetHub() dispatcher.Hub
+	GetDispatchType() string
 	IsInterfaceNil() bool
 }
 

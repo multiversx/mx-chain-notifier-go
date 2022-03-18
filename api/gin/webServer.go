@@ -9,7 +9,9 @@ import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go-logger/check"
 	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
+	"github.com/ElrondNetwork/notifier-go/api/groups"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -21,6 +23,7 @@ var log = logger.GetOrCreate("api/gin")
 type ArgsWebServerHandler struct {
 	Facade shared.FacadeHandler
 	Config *config.GeneralConfig
+	Type   common.APIType
 }
 
 // webServer is a wrapper for gin.Engine, holding additional components
@@ -30,6 +33,7 @@ type webServer struct {
 	httpServer shared.HTTPServerCloser
 	config     *config.GeneralConfig
 	groups     map[string]shared.GroupHandler
+	apiType    common.APIType
 	cancelFunc func()
 }
 
@@ -41,9 +45,10 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 	}
 
 	return &webServer{
-		facade: args.Facade,
-		config: args.Config,
-		groups: make(map[string]shared.GroupHandler),
+		facade:  args.Facade,
+		config:  args.Config,
+		apiType: args.Type,
+		groups:  make(map[string]shared.GroupHandler),
 	}, nil
 }
 
@@ -95,14 +100,34 @@ func (w *webServer) Run() error {
 }
 
 func (w *webServer) createGroups() error {
-	// groupsMap := make(map[string]shared.GroupHandler)
-	// vmValuesGroup, err := groups.NewEventsHandler()
-	// if err != nil {
-	// 	return err
-	// }
-	// groupsMap["vm-values"] = vmValuesGroup
+	groupsMap := make(map[string]shared.GroupHandler)
 
-	// w.groups = groupsMap
+	// TODO: refactor this after factory setup
+	switch w.apiType {
+	case common.MessageQueueAPIType:
+		eventsGroup, err := groups.NewEventsGroup(w.facade)
+		if err != nil {
+			return err
+		}
+		groupsMap["events"] = eventsGroup
+
+	case common.WSAPIType:
+		eventsGroup, err := groups.NewEventsGroup(w.facade)
+		if err != nil {
+			return err
+		}
+		groupsMap["events"] = eventsGroup
+
+		hubHandler, err := groups.NewHubGroup(w.facade)
+		if err != nil {
+			return err
+		}
+		groupsMap["hub"] = hubHandler
+	default:
+		return common.ErrInvalidAPIType
+	}
+
+	w.groups = groupsMap
 
 	return nil
 }

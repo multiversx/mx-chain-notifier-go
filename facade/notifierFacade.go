@@ -64,5 +64,11 @@ func (nf *notifierFacade) GetHub() dispatcher.Hub {
 }
 
 func (nf *notifierFacade) GetConnectorUserAndPass() (string, string) {
-	return nf.config.Username, nf.config.Password
+	//return nf.config.Username, nf.config.Password
+	return "", ""
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (nf *notifierFacade) IsInterfaceNil() bool {
+	return nf == nil
 }

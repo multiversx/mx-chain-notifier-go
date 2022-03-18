@@ -9,24 +9,26 @@ import (
 )
 
 const (
-	baseEventsEndpoint      = "/events"
 	pushEventsEndpoint      = "/push"
 	revertEventsEndpoint    = "/revert"
 	finalizedEventsEndpoint = "/finalized"
 )
 
-type eventsHandler struct {
+type eventsGroup struct {
 	*baseGroup
 	facade                EventsFacadeHandler
 	additionalMiddlewares []gin.HandlerFunc
 }
 
-// NewEventsHandler registers handlers for the /events group
-func NewEventsHandler(facade EventsFacadeHandler) (*eventsHandler, error) {
-	h := &eventsHandler{
+// NewEventsGroup registers handlers for the /events group
+func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
+	h := &eventsGroup{
 		baseGroup:             &baseGroup{},
+		facade:                facade,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
+
+	h.createMiddlewares()
 
 	endpoints := []*shared.EndpointHandlerData{
 		{
@@ -52,11 +54,11 @@ func NewEventsHandler(facade EventsFacadeHandler) (*eventsHandler, error) {
 }
 
 // GetAdditionalMiddlewares return additional middlewares for this group
-func (h *eventsHandler) GetAdditionalMiddlewares() []gin.HandlerFunc {
+func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 	return h.additionalMiddlewares
 }
 
-func (h *eventsHandler) pushEvents(c *gin.Context) {
+func (h *eventsGroup) pushEvents(c *gin.Context) {
 	var blockEvents data.BlockEvents
 
 	err := c.Bind(&blockEvents)
@@ -70,7 +72,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsHandler) revertEvents(c *gin.Context) {
+func (h *eventsGroup) revertEvents(c *gin.Context) {
 	var revertBlock data.RevertBlock
 
 	err := c.Bind(&revertBlock)
@@ -84,7 +86,7 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsHandler) finalizedEvents(c *gin.Context) {
+func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 	var finalizedBlock data.FinalizedBlock
 
 	err := c.Bind(&finalizedBlock)
@@ -98,7 +100,7 @@ func (h *eventsHandler) finalizedEvents(c *gin.Context) {
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
+func (h *eventsGroup) createMiddlewares() {
 	var middleware []gin.HandlerFunc
 
 	user, pass := h.facade.GetConnectorUserAndPass()
@@ -110,10 +112,10 @@ func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 		middleware = append(middleware, basicAuth)
 	}
 
-	return middleware
+	h.additionalMiddlewares = middleware
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (h *eventsHandler) IsInterfaceNil() bool {
+func (h *eventsGroup) IsInterfaceNil() bool {
 	return h == nil
 }

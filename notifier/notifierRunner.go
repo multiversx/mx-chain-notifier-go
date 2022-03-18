@@ -13,6 +13,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/api/gin"
 	"github.com/ElrondNetwork/notifier-go/api/groups"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
@@ -26,10 +27,8 @@ import (
 var log = logger.GetOrCreate("notifierRunner")
 
 const (
-	separator     = ":"
-	hubCommon     = "common"
-	rabbitAPIType = "rabbit-api"
-	notifierType  = "notifier"
+	separator = ":"
+	hubCommon = "common"
 )
 
 var availableHubDelegates = map[string]func() dispatcher.Hub{
@@ -47,11 +46,11 @@ var ErrMakeCustomHub = errors.New("failed to make custom hub")
 
 type notifierRunner struct {
 	configs *config.GeneralConfig
-	apiType string
+	apiType common.APIType
 }
 
 // NewNotifierRunner create a new notifierRunner instance
-func NewNotifierRunner(typeValue string, cfgs *config.GeneralConfig) (*notifierRunner, error) {
+func NewNotifierRunner(typeValue common.APIType, cfgs *config.GeneralConfig) (*notifierRunner, error) {
 	if cfgs == nil {
 		return nil, fmt.Errorf("nil configs provided")
 	}
@@ -107,12 +106,12 @@ func (nr *notifierRunner) initWebserver(cfg *config.GeneralConfig) (
 	error,
 ) {
 	switch nr.apiType {
-	case rabbitAPIType:
+	case common.MessageQueueAPIType:
 		return NewObserverToRabbitAPI(cfg)
-	case notifierType:
+	case common.WSAPIType:
 		return NewNotifierAPI(cfg)
 	default:
-		return nil, nil, ErrInvalidAPIType
+		return nil, nil, common.ErrInvalidAPIType
 	}
 }
 
@@ -143,29 +142,15 @@ func NewNotifierAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dis
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 
-	hubHandler, err := groups.NewHubHandler(facade)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	eventsGroup, err := groups.NewEventsHandler(
-		facade,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade: &disabledFacade{},
+		Facade: facade,
 		Config: config,
+		Type:   common.WSAPIType,
 	}
 	server, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	server.AddGroup("events", eventsGroup)
-	server.AddGroup("hub", hubHandler)
 
 	return server, notifierHub, nil
 }
@@ -207,23 +192,15 @@ func NewObserverToRabbitAPI(config *config.GeneralConfig) (shared.HTTPServerHand
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 
-	eventsGroup, err := groups.NewEventsHandler(
-		facade,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade: &disabledFacade{},
+		Facade: facade,
 		Config: config,
+		Type:   common.MessageQueueAPIType,
 	}
 	server, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	server.AddGroup("events", eventsGroup)
 
 	return server, rabbitPublisher, nil
 }

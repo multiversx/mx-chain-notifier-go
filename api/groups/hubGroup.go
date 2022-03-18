@@ -17,22 +17,21 @@ const (
 	dispatchWs  = "websocket"
 	dispatchGql = "graphql"
 
-	baseHubEndpoint         = "/hub"
 	websocketEndpoint       = "/ws"
 	gqlQueryEndpoint        = "/query"
 	gqlSubscriptionEndpoint = "/subscription"
 )
 
-type hubHandler struct {
+type hubGroup struct {
 	*baseGroup
 	facade                HubFacadeHandler
 	additionalMiddlewares []gin.HandlerFunc
 }
 
-// NewHubHandler registers handlers for the /hub group
+// NewHubGroup registers handlers for the /hub group
 // It only registers the specified hub implementation and its corresponding dispatchers
-func NewHubHandler(facade HubFacadeHandler) (*hubHandler, error) {
-	h := &hubHandler{
+func NewHubGroup(facade HubFacadeHandler) (*hubGroup, error) {
+	h := &hubGroup{
 		baseGroup:             &baseGroup{},
 		facade:                facade,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
@@ -46,11 +45,11 @@ func NewHubHandler(facade HubFacadeHandler) (*hubHandler, error) {
 }
 
 // GetAdditionalMiddlewares return additional middlewares for this group
-func (h *hubHandler) GetAdditionalMiddlewares() []gin.HandlerFunc {
+func (h *hubGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 	return h.additionalMiddlewares
 }
 
-func (h *hubHandler) getDispatchHandlers() []*shared.EndpointHandlerData {
+func (h *hubGroup) getDispatchHandlers() []*shared.EndpointHandlerData {
 	// TODO: handle graphql server in factory
 	gqlServer := gql.NewGraphQLServer(h.facade.GetHub())
 
@@ -76,17 +75,17 @@ func (h *hubHandler) getDispatchHandlers() []*shared.EndpointHandlerData {
 	return h.endpoints
 }
 
-func (h *hubHandler) wsHandler(c *gin.Context) {
+func (h *hubGroup) wsHandler(c *gin.Context) {
 	ws.Serve(h.facade.GetHub(), c.Writer, c.Request)
 }
 
-func (h *hubHandler) gqlHandler(gqlServer *gqlHandler.Server) func(c *gin.Context) {
+func (h *hubGroup) gqlHandler(gqlServer *gqlHandler.Server) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		gqlServer.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
-func (h *hubHandler) appendEndpointHandler(method, path string, handler gin.HandlerFunc) {
+func (h *hubGroup) appendEndpointHandler(method, path string, handler gin.HandlerFunc) {
 	h.endpoints = append(h.endpoints, &shared.EndpointHandlerData{
 		Method:  method,
 		Path:    path,
@@ -95,6 +94,6 @@ func (h *hubHandler) appendEndpointHandler(method, path string, handler gin.Hand
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (h *hubHandler) IsInterfaceNil() bool {
+func (h *hubGroup) IsInterfaceNil() bool {
 	return h == nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/cmd/logging"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/notifier"
 	"github.com/urfave/cli"
@@ -107,7 +108,7 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 		return err
 	}
 
-	typeValue := ctx.GlobalString(apiType.Name)
+	typeValue := common.APIType(ctx.GlobalString(apiType.Name))
 
 	notifierRunner, err := notifier.NewNotifierRunner(typeValue, cfg)
 	if err != nil {
