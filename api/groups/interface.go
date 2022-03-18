@@ -1,6 +1,10 @@
 package groups
 
-import "context"
+import (
+	"context"
+
+	"github.com/ElrondNetwork/notifier-go/data"
+)
 
 // TODO: move this after further refactoring
 // 		 add separate Publisher interface
@@ -12,4 +16,10 @@ type LockService interface {
 	IsBlockProcessed(ctx context.Context, blockHash string) (bool, error)
 	HasConnection(ctx context.Context) bool
 	IsInterfaceNil() bool
+}
+
+type EventsFacadeHandler interface {
+	HandlePushEvents(events data.BlockEvents)
+	HandleRevertEvents(revertBlock data.RevertBlock)
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 }

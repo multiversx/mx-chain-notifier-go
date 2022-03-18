@@ -1,14 +1,11 @@
 package groups
 
 import (
-	"context"
 	"net/http"
-	"time"
 
 	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,33 +14,24 @@ const (
 	pushEventsEndpoint      = "/push"
 	revertEventsEndpoint    = "/revert"
 	finalizedEventsEndpoint = "/finalized"
-
-	setnxRetryMs = 500
-
-	revertKeyPrefix    = "revert_"
-	finalizedKeyPrefix = "finalized_"
 )
 
 type eventsHandler struct {
 	*baseGroup
-	notifierHub           dispatcher.Hub
+	facade                EventsFacadeHandler
 	config                config.ConnectorApiConfig
 	additionalMiddlewares []gin.HandlerFunc
-	lockService           LockService
 }
 
 // NewEventsHandler registers handlers for the /events group
 func NewEventsHandler(
-	notifierHub dispatcher.Hub,
+	facade EventsFacadeHandler,
 	config config.ConnectorApiConfig,
-	lockService LockService,
 ) (*eventsHandler, error) {
 	h := &eventsHandler{
 		baseGroup:             &baseGroup{},
-		notifierHub:           notifierHub,
 		config:                config,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
-		lockService:           lockService,
 	}
 
 	endpoints := []*shared.EndpointHandlerData{
@@ -83,23 +71,7 @@ func (h *eventsHandler) pushEvents(c *gin.Context) {
 		return
 	}
 
-	shouldProcessEvents := true
-	if h.config.CheckDuplicates {
-		shouldProcessEvents = h.tryCheckProcessedOrRetry(blockEvents.Hash)
-	}
-
-	if blockEvents.Events != nil && shouldProcessEvents {
-		log.Info("received events for block",
-			"block hash", blockEvents.Hash,
-			"shouldProcess", shouldProcessEvents,
-		)
-		h.notifierHub.BroadcastChan() <- blockEvents
-	} else {
-		log.Info("received duplicated events for block",
-			"block hash", blockEvents.Hash,
-			"ignoring", true,
-		)
-	}
+	h.facade.HandlePushEvents(blockEvents)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
@@ -113,24 +85,7 @@ func (h *eventsHandler) revertEvents(c *gin.Context) {
 		return
 	}
 
-	shouldProcessRevert := true
-	if h.config.CheckDuplicates {
-		revertKey := revertKeyPrefix + revertBlock.Hash
-		shouldProcessRevert = h.tryCheckProcessedOrRetry(revertKey)
-	}
-
-	if shouldProcessRevert {
-		log.Info("received revert event for block",
-			"block hash", revertBlock.Hash,
-			"shouldProcess", shouldProcessRevert,
-		)
-		h.notifierHub.BroadcastRevertChan() <- revertBlock
-	} else {
-		log.Info("received duplicated revert event for block",
-			"block hash", revertBlock.Hash,
-			"ignoring", true,
-		)
-	}
+	h.facade.HandleRevertEvents(revertBlock)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
@@ -144,24 +99,7 @@ func (h *eventsHandler) finalizedEvents(c *gin.Context) {
 		return
 	}
 
-	shouldProcessFinalized := true
-	if h.config.CheckDuplicates {
-		finalizedKey := finalizedKeyPrefix + finalizedBlock.Hash
-		shouldProcessFinalized = h.tryCheckProcessedOrRetry(finalizedKey)
-	}
-
-	if shouldProcessFinalized {
-		log.Info("received finalized events for block",
-			"block hash", finalizedBlock.Hash,
-			"shouldProcess", shouldProcessFinalized,
-		)
-		h.notifierHub.BroadcastFinalizedChan() <- finalizedBlock
-	} else {
-		log.Info("received duplicated finalized event for block",
-			"block hash", finalizedBlock.Hash,
-			"ignoring", true,
-		)
-	}
+	h.facade.HandleFinalizedEvents(finalizedBlock)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
@@ -177,27 +115,6 @@ func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 	}
 
 	return middleware
-}
-
-func (h *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
-	var err error
-	var setSuccessful bool
-
-	for {
-		setSuccessful, err = h.lockService.IsBlockProcessed(context.Background(), blockHash)
-
-		if err != nil {
-			if !h.lockService.HasConnection(context.Background()) {
-				log.Error("failure connecting to redis")
-				time.Sleep(time.Millisecond * setnxRetryMs)
-				continue
-			}
-		}
-
-		break
-	}
-
-	return err == nil && setSuccessful
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

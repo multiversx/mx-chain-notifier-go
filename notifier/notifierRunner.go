@@ -17,6 +17,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/hub"
+	"github.com/ElrondNetwork/notifier-go/facade"
 	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 	"github.com/ElrondNetwork/notifier-go/redis"
@@ -121,15 +122,6 @@ func (df *disabledFacade) IsInterfaceNil() bool { return df == nil }
 
 // NewNotifierAPI launches a notifier api - exposing a clients hub
 func NewNotifierAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dispatcher.Hub, error) {
-	webServerArgs := gin.ArgsWebServerHandler{
-		Facade: &disabledFacade{},
-		Config: config,
-	}
-	server, err := gin.NewWebServerHandler(webServerArgs)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	notifierHub, err := makeHub(config.ConnectorApi.HubType)
 	if err != nil {
 		return nil, nil, err
@@ -141,23 +133,27 @@ func NewNotifierAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dis
 	}
 
 	disabledLockService := disabled.NewDisabledRedlockWrapper()
-	eventsHandler, err := groups.NewEventsHandler(
-		notifierHub,
+
+	argsEventsHandler := ArgsEventsHandler{
+		Config:    config.ConnectorApi,
+		Locker:    disabledLockService,
+		Publisher: notifierHub,
+	}
+	eventsHandler, err := NewEventsHandler(argsEventsHandler)
+
+	facadeArgs := facade.ArgsNotifierFacade{
+		EventsHandler: eventsHandler,
+	}
+	facade, err := facade.NewNotifierFacade(facadeArgs)
+
+	eventsGroup, err := groups.NewEventsHandler(
+		facade,
 		config.ConnectorApi,
-		disabledLockService,
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	server.AddGroup("events", eventsHandler)
-	server.AddGroup("hub", hubHandler)
-
-	return server, notifierHub, nil
-}
-
-// NewObserverToRabbitAPI launches an observer api - pushing data to rabbitMQ exchanges
-func NewObserverToRabbitAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dispatcher.Hub, error) {
 	webServerArgs := gin.ArgsWebServerHandler{
 		Facade: &disabledFacade{},
 		Config: config,
@@ -167,6 +163,14 @@ func NewObserverToRabbitAPI(config *config.GeneralConfig) (shared.HTTPServerHand
 		return nil, nil, err
 	}
 
+	server.AddGroup("events", eventsGroup)
+	server.AddGroup("hub", hubHandler)
+
+	return server, notifierHub, nil
+}
+
+// NewObserverToRabbitAPI launches an observer api - pushing data to rabbitMQ exchanges
+func NewObserverToRabbitAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dispatcher.Hub, error) {
 	pubsubClient, err := redis.CreateFailoverClient(config.PubSub)
 	if err != nil {
 		return nil, nil, err
@@ -188,16 +192,36 @@ func NewObserverToRabbitAPI(config *config.GeneralConfig) (shared.HTTPServerHand
 		lockService = disabled.NewDisabledRedlockWrapper()
 	}
 
-	eventsHandler, err := groups.NewEventsHandler(
-		rabbitPublisher,
+	argsEventsHandler := ArgsEventsHandler{
+		Config:    config.ConnectorApi,
+		Locker:    lockService,
+		Publisher: rabbitPublisher,
+	}
+	eventsHandler, err := NewEventsHandler(argsEventsHandler)
+
+	facadeArgs := facade.ArgsNotifierFacade{
+		EventsHandler: eventsHandler,
+	}
+	facade, err := facade.NewNotifierFacade(facadeArgs)
+
+	eventsGroup, err := groups.NewEventsHandler(
+		facade,
 		config.ConnectorApi,
-		lockService,
 	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	server.AddGroup("events", eventsHandler)
+	webServerArgs := gin.ArgsWebServerHandler{
+		Facade: &disabledFacade{},
+		Config: config,
+	}
+	server, err := gin.NewWebServerHandler(webServerArgs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	server.AddGroup("events", eventsGroup)
 
 	return server, rabbitPublisher, nil
 }
