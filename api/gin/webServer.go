@@ -22,7 +22,7 @@ var log = logger.GetOrCreate("api/gin")
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
 	Facade shared.FacadeHandler
-	Config *config.GeneralConfig
+	Config config.ConnectorApiConfig
 	Type   common.APIType
 }
 
@@ -31,7 +31,7 @@ type webServer struct {
 	sync.RWMutex
 	facade     shared.FacadeHandler
 	httpServer shared.HTTPServerCloser
-	config     *config.GeneralConfig
+	config     config.ConnectorApiConfig
 	groups     map[string]shared.GroupHandler
 	apiType    common.APIType
 	cancelFunc func()
@@ -69,7 +69,7 @@ func (w *webServer) Run() error {
 
 	var err error
 
-	port := w.config.ConnectorApi.Port
+	port := w.config.Port
 	if !strings.Contains(port, ":") {
 		port = fmt.Sprintf(":%s", port)
 	}

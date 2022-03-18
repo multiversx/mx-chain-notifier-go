@@ -7,6 +7,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/redis"
 )
 
 // TODO: comments update
@@ -19,13 +20,13 @@ const (
 
 type ArgsEventsHandler struct {
 	Config    config.ConnectorApiConfig
-	Locker    LockService
+	Locker    redis.LockService
 	Publisher PublisherService
 }
 
 type eventsHandler struct {
 	config    config.ConnectorApiConfig
-	locker    LockService
+	locker    redis.LockService
 	publisher PublisherService
 }
 

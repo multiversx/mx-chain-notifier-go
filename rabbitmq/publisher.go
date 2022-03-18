@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
@@ -19,6 +20,12 @@ const (
 
 var log = logger.GetOrCreate("rabbitmq")
 
+// ArgsRabbitMqPublisher defines the arguments needed for rabbitmq publisher creation
+type ArgsRabbitMqPublisher struct {
+	Client RabbitMqClient
+	Config config.RabbitMQConfig
+}
+
 type rabbitMqPublisher struct {
 	// TODO: remove this after proxy refactoring and create a separate Publisher interface,
 	//       instead of using Hub interface
@@ -33,17 +40,27 @@ type rabbitMqPublisher struct {
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance
-func NewRabbitMqPublisher(
-	client RabbitMqClient,
-	cfg config.RabbitMQConfig,
-) *rabbitMqPublisher {
+func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error) {
+	err := checkArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
 	return &rabbitMqPublisher{
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
-		cfg:                cfg,
-		client:             client,
+		cfg:                args.Config,
+		client:             args.Client,
+	}, nil
+}
+
+func checkArgs(args ArgsRabbitMqPublisher) error {
+	if check.IfNil(args.Client) {
+		return ErrNilRabbitMqClient
 	}
+
+	return nil
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
