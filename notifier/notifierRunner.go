@@ -127,11 +127,6 @@ func NewNotifierAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dis
 		return nil, nil, err
 	}
 
-	hubHandler, err := groups.NewHubHandler(config, notifierHub)
-	if err != nil {
-		return nil, nil, err
-	}
-
 	disabledLockService := disabled.NewDisabledRedlockWrapper()
 
 	argsEventsHandler := ArgsEventsHandler{
@@ -143,12 +138,18 @@ func NewNotifierAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dis
 
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler: eventsHandler,
+		APIConfig:     config.ConnectorApi,
+		Hub:           notifierHub,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 
+	hubHandler, err := groups.NewHubHandler(facade)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	eventsGroup, err := groups.NewEventsHandler(
 		facade,
-		config.ConnectorApi,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -201,12 +202,13 @@ func NewObserverToRabbitAPI(config *config.GeneralConfig) (shared.HTTPServerHand
 
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler: eventsHandler,
+		APIConfig:     config.ConnectorApi,
+		Hub:           rabbitPublisher,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 
 	eventsGroup, err := groups.NewEventsHandler(
 		facade,
-		config.ConnectorApi,
 	)
 	if err != nil {
 		return nil, nil, err

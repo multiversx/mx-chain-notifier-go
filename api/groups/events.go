@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/ElrondNetwork/notifier-go/api/shared"
-	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/gin-gonic/gin"
 )
@@ -19,18 +18,13 @@ const (
 type eventsHandler struct {
 	*baseGroup
 	facade                EventsFacadeHandler
-	config                config.ConnectorApiConfig
 	additionalMiddlewares []gin.HandlerFunc
 }
 
 // NewEventsHandler registers handlers for the /events group
-func NewEventsHandler(
-	facade EventsFacadeHandler,
-	config config.ConnectorApiConfig,
-) (*eventsHandler, error) {
+func NewEventsHandler(facade EventsFacadeHandler) (*eventsHandler, error) {
 	h := &eventsHandler{
 		baseGroup:             &baseGroup{},
-		config:                config,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
@@ -107,9 +101,11 @@ func (h *eventsHandler) finalizedEvents(c *gin.Context) {
 func (h *eventsHandler) createMiddlewares() []gin.HandlerFunc {
 	var middleware []gin.HandlerFunc
 
-	if h.config.Username != "" && h.config.Password != "" {
+	user, pass := h.facade.GetConnectorUserAndPass()
+
+	if user != "" && pass != "" {
 		basicAuth := gin.BasicAuth(gin.Accounts{
-			h.config.Username: h.config.Password,
+			user: pass,
 		})
 		middleware = append(middleware, basicAuth)
 	}

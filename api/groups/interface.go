@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 
 // TODO: move this after further refactoring
@@ -22,4 +23,11 @@ type EventsFacadeHandler interface {
 	HandlePushEvents(events data.BlockEvents)
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	GetConnectorUserAndPass() (string, string)
+}
+
+type HubFacadeHandler interface {
+	GetHub() dispatcher.Hub
+	GetDispatchType() string
+	//GetGraphQLHandler()
 }
