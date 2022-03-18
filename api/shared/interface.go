@@ -35,6 +35,5 @@ type FacadeHandler interface {
 type HTTPServerHandler interface {
 	Run() error
 	Close() error
-	AddGroup(groupName string, group GroupHandler)
 	IsInterfaceNil() bool
 }

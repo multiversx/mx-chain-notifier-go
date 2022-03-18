@@ -140,14 +140,6 @@ func (w *webServer) registerRoutes(ginEngine *gin.Engine) {
 	}
 }
 
-// TODO: remove this after further refactoring
-func (w *webServer) AddGroup(groupName string, group shared.GroupHandler) {
-	w.Lock()
-	defer w.Unlock()
-
-	w.groups[groupName] = group
-}
-
 // Close will handle the closing of inner components
 func (w *webServer) Close() error {
 	if w.cancelFunc != nil {

@@ -115,10 +115,6 @@ func (nr *notifierRunner) initWebserver(cfg *config.GeneralConfig) (
 	}
 }
 
-type disabledFacade struct{}
-
-func (df *disabledFacade) IsInterfaceNil() bool { return df == nil }
-
 // NewNotifierAPI launches a notifier api - exposing a clients hub
 func NewNotifierAPI(config *config.GeneralConfig) (shared.HTTPServerHandler, dispatcher.Hub, error) {
 	notifierHub, err := makeHub(config.ConnectorApi.HubType)

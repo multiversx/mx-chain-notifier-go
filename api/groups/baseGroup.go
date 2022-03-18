@@ -25,10 +25,3 @@ func (bg *baseGroup) RegisterRoutes(
 		ws.Handle(handlerData.Method, handlerData.Path, handlerData.Handler)
 	}
 }
-
-// AddEndpointGroupHandler inserts an EndpointGroupHandler instance to the map
-// The key of the endpointHandlersMap is the base path of the group
-// The method is not thread-safe and does not validate inputs
-func (bg *baseGroup) AddEndpointGroupHandler(endpointHandler *shared.EndpointHandlerData) {
-	bg.endpoints = append(bg.endpoints, endpointHandler)
-}
