@@ -150,3 +150,8 @@ func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 
 	wh.subscriptionMapper.RemoveSubscriptions(d.GetID())
 }
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (wh *commonHub) IsInterfaceNil() bool {
+	return wh == nil
+}
