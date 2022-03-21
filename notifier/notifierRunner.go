@@ -25,6 +25,7 @@ var (
 
 type notifierRunner struct {
 	configs *config.GeneralConfig
+	// TODO: refactor cmd/main to include apiType (cli args) in a separate config struct
 	apiType common.APIType
 }
 

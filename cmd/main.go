@@ -102,7 +102,7 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 		return err
 	}
 
-	// TODO: defines config which includes config files and CLI flags
+	// TODO: define config struct which includes config files and CLI flags
 
 	generalConfigPath := ctx.GlobalString(generalConfigFile.Name)
 	cfg, err := config.LoadConfig(generalConfigPath)

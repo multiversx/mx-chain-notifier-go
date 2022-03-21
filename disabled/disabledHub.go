@@ -5,7 +5,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 
-// Hub defines a disabeld hub component
+// Hub defines a disabled hub component
 type Hub struct{}
 
 // Run does nothing
