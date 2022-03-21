@@ -10,14 +10,13 @@ import (
 	"github.com/ElrondNetwork/notifier-go/redis"
 )
 
-// TODO: comments update
-
 const (
 	setnxRetryMs       = 500
 	revertKeyPrefix    = "revert_"
 	finalizedKeyPrefix = "finalized_"
 )
 
+// ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
 	Config    config.ConnectorApiConfig
 	Locker    redis.LockService
@@ -30,6 +29,7 @@ type eventsHandler struct {
 	publisher PublisherService
 }
 
+// NewEventsHandler creates a new events handler component
 func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	err := checkArgs(args)
 	if err != nil {
@@ -43,7 +43,6 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 }
 
 func checkArgs(args ArgsEventsHandler) error {
-	// TODO: check configs
 	if check.IfNil(args.Locker) {
 		return ErrNilLockService
 	}
@@ -54,6 +53,7 @@ func checkArgs(args ArgsEventsHandler) error {
 	return nil
 }
 
+// HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 	shouldProcessEvents := true
 	if eh.config.CheckDuplicates {
@@ -74,6 +74,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 	}
 }
 
+// HandleRevertEvents will handle revents events received from observer
 func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	shouldProcessRevert := true
 	if eh.config.CheckDuplicates {
@@ -95,6 +96,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	}
 }
 
+// HandleFinalizedEvents will handle finalized events received from observer
 func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
 	shouldProcessFinalized := true
 	if eh.config.CheckDuplicates {

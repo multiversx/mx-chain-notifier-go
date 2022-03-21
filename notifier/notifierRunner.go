@@ -39,6 +39,7 @@ func NewNotifierRunner(typeValue common.APIType, cfgs *config.GeneralConfig) (*n
 	}, nil
 }
 
+// Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
 	lockService, err := factory.CreateLockService(nr.apiType, nr.configs)
 	if err != nil {
