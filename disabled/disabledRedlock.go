@@ -10,8 +10,8 @@ func NewDisabledRedlockWrapper() *disabledRedlockWrapper {
 	return &disabledRedlockWrapper{}
 }
 
-// IsBlockProcessed returns true and nil
-func (drw *disabledRedlockWrapper) IsBlockProcessed(ctx context.Context, blockHash string) (bool, error) {
+// IsEventProcessed returns true and nil
+func (drw *disabledRedlockWrapper) IsEventProcessed(ctx context.Context, blockHash string) (bool, error) {
 	return true, nil
 }
 

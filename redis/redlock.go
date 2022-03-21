@@ -7,8 +7,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-logger/check"
 )
 
-// TODO: update this after LockService interface change (if needed)
-
 const expiry = time.Minute * 30
 
 type redlockWrapper struct {
@@ -26,8 +24,8 @@ func NewRedlockWrapper(client RedLockClient) (*redlockWrapper, error) {
 	}, nil
 }
 
-// IsBlockProcessed returns wether the item is already locked
-func (r *redlockWrapper) IsBlockProcessed(ctx context.Context, blockHash string) (bool, error) {
+// IsEventProcessed returns wether the item is already locked
+func (r *redlockWrapper) IsEventProcessed(ctx context.Context, blockHash string) (bool, error) {
 	return r.client.SetEntry(ctx, blockHash, true, expiry)
 }
 

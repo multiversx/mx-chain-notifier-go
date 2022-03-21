@@ -57,6 +57,9 @@ func (nr *notifierRunner) Start() error {
 		Publisher: pubsubHandler,
 	}
 	eventsHandler, err := NewEventsHandler(argsEventsHandler)
+	if err != nil {
+		return err
+	}
 
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler: eventsHandler,
@@ -64,6 +67,9 @@ func (nr *notifierRunner) Start() error {
 		Hub:           pubsubHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
+	if err != nil {
+		return err
+	}
 
 	webServerArgs := gin.ArgsWebServerHandler{
 		Facade: facade,

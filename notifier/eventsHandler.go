@@ -123,7 +123,7 @@ func (eh *eventsHandler) tryCheckProcessedOrRetry(blockHash string) bool {
 	var setSuccessful bool
 
 	for {
-		setSuccessful, err = eh.locker.IsBlockProcessed(context.Background(), blockHash)
+		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), blockHash)
 
 		if err != nil {
 			if !eh.locker.HasConnection(context.Background()) {
