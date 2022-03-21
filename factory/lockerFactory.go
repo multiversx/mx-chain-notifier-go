@@ -7,6 +7,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/redis"
 )
 
+// CreateLockService creates lock service component based on config
 func CreateLockService(apiType common.APIType, config *config.GeneralConfig) (redis.LockService, error) {
 	var lockService redis.LockService
 

@@ -9,8 +9,8 @@ import (
 	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 )
 
+// CreatePubSubHandler creates publisher/subscriber component
 func CreatePubSubHandler(apiType common.APIType, config *config.GeneralConfig) (dispatcher.Hub, error) {
-	// TODO: evaluate better ways for this scenarios
 	switch apiType {
 	case common.MessageQueueAPIType:
 		return createRabbitMqPublisher(config.RabbitMQ)

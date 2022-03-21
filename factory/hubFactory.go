@@ -23,6 +23,7 @@ var availableHubDelegates = map[string]func() dispatcher.Hub{
 	},
 }
 
+// CreateCommonHub creates a common hub component
 func CreateCommonHub(hubType common.HubType) (dispatcher.Hub, error) {
 	commonHub, err := makeHub(hubType)
 	if err != nil {
