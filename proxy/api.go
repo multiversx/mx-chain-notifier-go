@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/ElrondNetwork/notifier-go/config"
+	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/proxy/handlers"
-	"github.com/ElrondNetwork/notifier-go/pubsub"
-	"github.com/ElrondNetwork/notifier-go/pubsub/disabled"
 	"github.com/ElrondNetwork/notifier-go/rabbitmq"
+	"github.com/ElrondNetwork/notifier-go/redis"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -37,6 +37,10 @@ func newWebServer(generalConfig *config.GeneralConfig) *WebServer {
 		groupHandler:  handlers.NewGroupHandler(),
 	}
 }
+
+// TODO:
+// - handle components creation in a factory
+// - manage gin web server in a separate component
 
 // NewNotifierApi launches a notifier api - exposing a clients hub
 func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
@@ -70,21 +74,25 @@ func NewNotifierApi(config *config.GeneralConfig) (*WebServer, error) {
 func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 	server := newWebServer(config)
 
-	pubsubClient, err := pubsub.CreateFailoverClient(config.PubSub)
+	pubsubClient, err := redis.CreateFailoverClient(config.PubSub)
 	if err != nil {
 		return nil, err
 	}
 
-	rabbitPublisher, err := rabbitmq.NewRabbitMqPublisher(ctx, config.RabbitMQ)
+	rabbitClient, err := rabbitmq.NewRabbitMQClient(ctx, config.RabbitMQ.Url)
 	if err != nil {
 		return nil, err
 	}
+	rabbitPublisher := rabbitmq.NewRabbitMqPublisher(rabbitClient, config.RabbitMQ)
 
 	server.notifierHub = rabbitPublisher
 
-	var lockService pubsub.LockService
+	var lockService handlers.LockService
 	if config.ConnectorApi.CheckDuplicates {
-		lockService = pubsub.NewRedlockWrapper(ctx, pubsubClient)
+		lockService, err = redis.NewRedlockWrapper(ctx, pubsubClient)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		lockService = disabled.NewDisabledRedlockWrapper()
 	}
@@ -98,49 +106,6 @@ func NewObserverToRabbitApi(config *config.GeneralConfig) (*WebServer, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	server.groupHandler.RegisterEndpoints(server.router)
-
-	return server, nil
-}
-
-// NewObserverApi launches an observer api - exposing a pubsub publisher hub
-func NewObserverApi(config *config.GeneralConfig) (*WebServer, error) {
-	server := newWebServer(config)
-
-	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
-
-	pubsubHub := pubsub.NewHubPublisher(ctx, config.PubSub, pubsubClient)
-	server.notifierHub = pubsubHub
-
-	redlock := pubsub.NewRedlockWrapper(ctx, pubsubClient)
-
-	err := handlers.NewEventsHandler(pubsubHub, server.groupHandler, config.ConnectorApi, redlock)
-	if err != nil {
-		return nil, err
-	}
-
-	server.groupHandler.RegisterEndpoints(server.router)
-
-	return server, nil
-}
-
-// NewClientApi launches a client api - exposing a pubsub subscriber hub
-func NewClientApi(config *config.GeneralConfig) (*WebServer, error) {
-	server := newWebServer(config)
-
-	hubHandler, err := handlers.NewHubHandler(config, server.groupHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	notifierHub := hubHandler.GetHub()
-	server.notifierHub = notifierHub
-
-	pubsubClient := pubsub.CreatePubsubClient(config.PubSub)
-
-	pubsubListener := pubsub.NewHubSubscriber(ctx, config.PubSub, notifierHub, pubsubClient)
-	pubsubListener.Subscribe()
 
 	server.groupHandler.RegisterEndpoints(server.router)
 

@@ -8,12 +8,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// ConsumerMock -
 type ConsumerMock struct {
 	id              uuid.UUID
 	mut             sync.Mutex
 	collectedEvents []data.Event
 }
 
+// NewConsumerMock -
 func NewConsumerMock() *ConsumerMock {
 	return &ConsumerMock{
 		id:              uuid.New(),
@@ -22,6 +24,7 @@ func NewConsumerMock() *ConsumerMock {
 	}
 }
 
+// Receive -
 func (c *ConsumerMock) Receive(events []data.Event) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -30,6 +33,7 @@ func (c *ConsumerMock) Receive(events []data.Event) {
 	}
 }
 
+// CollectedEvents -
 func (c *ConsumerMock) CollectedEvents() []data.Event {
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -37,6 +41,7 @@ func (c *ConsumerMock) CollectedEvents() []data.Event {
 	return c.collectedEvents
 }
 
+// HasEvents -
 func (c *ConsumerMock) HasEvents(events []data.Event) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -57,6 +62,7 @@ func (c *ConsumerMock) HasEvents(events []data.Event) bool {
 	return true
 }
 
+// HasEvent -
 func (c *ConsumerMock) HasEvent(event data.Event) bool {
 	c.mut.Lock()
 	defer c.mut.Unlock()

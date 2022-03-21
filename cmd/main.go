@@ -142,12 +142,8 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 
 func initWebserver(typeValue string, cfg *config.GeneralConfig) (*proxy.WebServer, error) {
 	switch typeValue {
-	case observerApiType:
-		return proxy.NewObserverApi(cfg)
 	case rabbitApiType:
 		return proxy.NewObserverToRabbitApi(cfg)
-	case clientApiType:
-		return proxy.NewClientApi(cfg)
 	case notifierType:
 		return proxy.NewNotifierApi(cfg)
 	default:
