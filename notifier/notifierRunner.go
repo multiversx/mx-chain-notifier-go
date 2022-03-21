@@ -89,7 +89,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	startHubHandler(hub, publisher)
+	startHandlers(hub, publisher)
 
 	err = webServer.Run()
 	if err != nil {
@@ -105,7 +105,7 @@ func (nr *notifierRunner) Start() error {
 	return nil
 }
 
-func startHubHandler(hub dispatcher.Hub, publisher rabbitmq.PublisherService) {
+func startHandlers(hub dispatcher.Hub, publisher rabbitmq.PublisherService) {
 	go hub.Run()
 	go publisher.Run()
 }

@@ -7,16 +7,12 @@ import (
 	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/streadway/amqp"
 )
 
 const (
 	emptyStr = ""
 )
-
-// TODO: analyse creating a general Publisher component, after proxy and
-// dispatcher refactoring
 
 var log = logger.GetOrCreate("rabbitmq")
 
@@ -27,10 +23,6 @@ type ArgsRabbitMqPublisher struct {
 }
 
 type rabbitMqPublisher struct {
-	// TODO: remove this after proxy refactoring and create a separate Publisher interface,
-	//       instead of using Hub interface
-	dispatcher.Hub
-
 	client RabbitMqClient
 	cfg    config.RabbitMQConfig
 
