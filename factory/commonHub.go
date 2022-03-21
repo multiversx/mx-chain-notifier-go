@@ -14,7 +14,7 @@ import (
 
 const separator = ":"
 
-// ErrMakeCustomHub -
+// ErrMakeCustomHub signals that creation of a new custom hub failed
 var ErrMakeCustomHub = errors.New("failed to make custom hub")
 
 var availableHubDelegates = map[string]func() dispatcher.Hub{
