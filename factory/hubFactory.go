@@ -25,7 +25,7 @@ var availableHubDelegates = map[string]func() dispatcher.Hub{
 }
 
 // CreateHub creates a common hub component
-func CreateHub(apiType common.APIType, hubType common.HubType) (dispatcher.Hub, error) {
+func CreateHub(apiType string, hubType string) (dispatcher.Hub, error) {
 	switch apiType {
 	case common.MessageQueueAPIType:
 		return &disabled.Hub{}, nil
@@ -36,14 +36,14 @@ func CreateHub(apiType common.APIType, hubType common.HubType) (dispatcher.Hub, 
 	}
 }
 
-func makeHub(hubType common.HubType) (dispatcher.Hub, error) {
+func makeHub(hubType string) (dispatcher.Hub, error) {
 	if hubType == common.CommonHubType {
 		eventFilter := filters.NewDefaultFilter()
 		commonHub := hub.NewCommonHub(eventFilter)
 		return commonHub, nil
 	}
 
-	hubConfig := strings.Split(string(hubType), separator)
+	hubConfig := strings.Split(hubType, separator)
 	return tryMakeCustomHubForID(hubConfig[1])
 }
 

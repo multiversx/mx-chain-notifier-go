@@ -9,7 +9,6 @@ import (
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/api/gin"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
-	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/facade"
@@ -25,36 +24,32 @@ var (
 
 type notifierRunner struct {
 	configs *config.GeneralConfig
-	// TODO: refactor cmd/main to include apiType (cli args) in a separate config struct
-	apiType common.APIType
 }
 
 // NewNotifierRunner create a new notifierRunner instance
-func NewNotifierRunner(typeValue common.APIType, cfgs *config.GeneralConfig) (*notifierRunner, error) {
+func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
 	if cfgs == nil {
 		return nil, fmt.Errorf("nil configs provided")
 	}
 
 	return &notifierRunner{
 		configs: cfgs,
-		apiType: typeValue,
 	}, nil
 }
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
-	lockService, err := factory.CreateLockService(nr.apiType, nr.configs)
+	lockService, err := factory.CreateLockService(nr.configs.Flags.APIType, nr.configs)
 	if err != nil {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.apiType, nr.configs)
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs)
 	if err != nil {
 		return err
 	}
 
-	hubType := common.HubType(nr.configs.ConnectorApi.HubType)
-	hub, err := factory.CreateHub(nr.apiType, hubType)
+	hub, err := factory.CreateHub(nr.configs.Flags.APIType, nr.configs.ConnectorApi.HubType)
 	if err != nil {
 		return err
 	}
@@ -82,7 +77,7 @@ func (nr *notifierRunner) Start() error {
 	webServerArgs := gin.ArgsWebServerHandler{
 		Facade: facade,
 		Config: nr.configs.ConnectorApi,
-		Type:   nr.apiType,
+		Type:   nr.configs.Flags.APIType,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {

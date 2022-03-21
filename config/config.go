@@ -6,6 +6,7 @@ type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
 	PubSub       PubSubConfig
 	RabbitMQ     RabbitMQConfig
+	Flags        *FlagsConfig
 }
 
 type ConnectorApiConfig struct {
@@ -29,6 +30,15 @@ type RabbitMQConfig struct {
 	EventsExchange          string
 	RevertEventsExchange    string
 	FinalizedEventsExchange string
+}
+
+// FlagsConfig holds the values for CLI flags
+type FlagsConfig struct {
+	LogLevel          string
+	SaveLogFile       bool
+	GeneralConfigPath string
+	WorkingDir        string
+	APIType           string
 }
 
 // LoadConfig return a GeneralConfig instance by reading the provided toml file

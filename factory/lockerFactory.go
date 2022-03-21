@@ -8,7 +8,7 @@ import (
 )
 
 // CreateLockService creates lock service component based on config
-func CreateLockService(apiType common.APIType, config *config.GeneralConfig) (redis.LockService, error) {
+func CreateLockService(apiType string, config *config.GeneralConfig) (redis.LockService, error) {
 	var lockService redis.LockService
 
 	if !config.ConnectorApi.CheckDuplicates || apiType == common.WSAPIType {

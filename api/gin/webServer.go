@@ -23,7 +23,7 @@ var log = logger.GetOrCreate("api/gin")
 type ArgsWebServerHandler struct {
 	Facade shared.FacadeHandler
 	Config config.ConnectorApiConfig
-	Type   common.APIType
+	Type   string
 }
 
 // webServer is a wrapper for gin.Engine, holding additional components
@@ -33,7 +33,7 @@ type webServer struct {
 	httpServer shared.HTTPServerCloser
 	config     config.ConnectorApiConfig
 	groups     map[string]shared.GroupHandler
-	apiType    common.APIType
+	apiType    string
 	cancelFunc func()
 }
 

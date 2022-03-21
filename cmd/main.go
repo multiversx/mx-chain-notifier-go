@@ -8,7 +8,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/cmd/logging"
-	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/notifier"
 	"github.com/urfave/cli"
@@ -97,22 +96,23 @@ func main() {
 func startEventNotifierProxy(ctx *cli.Context) error {
 	log.Info("starting eventNotifier proxy...")
 
-	fileLogging, err := initLogger(ctx)
+	flagsConfig, err := getFlagsConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	// TODO: define config struct which includes config files and CLI flags
-
-	generalConfigPath := ctx.GlobalString(generalConfigFile.Name)
-	cfg, err := config.LoadConfig(generalConfigPath)
+	fileLogging, err := initLogger(flagsConfig)
 	if err != nil {
 		return err
 	}
 
-	typeValue := common.APIType(ctx.GlobalString(apiType.Name))
+	cfg, err := config.LoadConfig(flagsConfig.GeneralConfigPath)
+	if err != nil {
+		return err
+	}
+	cfg.Flags = flagsConfig
 
-	notifierRunner, err := notifier.NewNotifierRunner(typeValue, cfg)
+	notifierRunner, err := notifier.NewNotifierRunner(cfg)
 	if err != nil {
 		return err
 	}
@@ -132,23 +132,32 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	return nil
 }
 
-func initLogger(ctx *cli.Context) (logging.FileLogger, error) {
-	logLevelValue := ctx.GlobalString(logLevel.Name)
-
-	err := logger.SetLogLevel(logLevelValue)
-	if err != nil {
-		return nil, err
-	}
+func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
+	flagsConfig := &config.FlagsConfig{}
 
 	workingDir, err := getWorkingDir(ctx)
 	if err != nil {
 		return nil, err
 	}
+	flagsConfig.WorkingDir = workingDir
+
+	flagsConfig.LogLevel = ctx.GlobalString(logLevel.Name)
+	flagsConfig.SaveLogFile = ctx.GlobalBool(logSaveFile.Name)
+	flagsConfig.GeneralConfigPath = ctx.GlobalString(generalConfigFile.Name)
+	flagsConfig.APIType = ctx.GlobalString(apiType.Name)
+
+	return flagsConfig, nil
+}
+
+func initLogger(config *config.FlagsConfig) (logging.FileLogger, error) {
+	err := logger.SetLogLevel(config.LogLevel)
+	if err != nil {
+		return nil, err
+	}
 
 	var fileLogging logging.FileLogger
-	saveLogs := ctx.GlobalBool(logSaveFile.Name)
-	if saveLogs {
-		fileLogging, err = logging.NewFileLogging(workingDir, defaultLogsPath, logFilePrefix)
+	if config.SaveLogFile {
+		fileLogging, err = logging.NewFileLogging(config.WorkingDir, defaultLogsPath, logFilePrefix)
 		if err != nil {
 			return fileLogging, err
 		}
