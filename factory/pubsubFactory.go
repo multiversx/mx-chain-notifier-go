@@ -9,7 +9,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 )
 
-// CreatePublisher creates publisher/subscriber component
+// CreatePublisher creates publisher component
 func CreatePublisher(apiType common.APIType, config *config.GeneralConfig) (rabbitmq.PublisherService, error) {
 	switch apiType {
 	case common.MessageQueueAPIType:

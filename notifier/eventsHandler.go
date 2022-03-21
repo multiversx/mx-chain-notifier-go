@@ -20,13 +20,13 @@ const (
 type ArgsEventsHandler struct {
 	Config    config.ConnectorApiConfig
 	Locker    redis.LockService
-	Publisher PublisherService
+	Publisher Publisher
 }
 
 type eventsHandler struct {
 	config    config.ConnectorApiConfig
 	locker    redis.LockService
-	publisher PublisherService
+	publisher Publisher
 }
 
 // NewEventsHandler creates a new events handler component
