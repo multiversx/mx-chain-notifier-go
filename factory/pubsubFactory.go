@@ -5,24 +5,23 @@ import (
 
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/rabbitmq"
 )
 
-// CreatePubSubHandler creates publisher/subscriber component
-func CreatePubSubHandler(apiType common.APIType, config *config.GeneralConfig) (dispatcher.Hub, error) {
+// CreatePublisher creates publisher/subscriber component
+func CreatePublisher(apiType common.APIType, config *config.GeneralConfig) (rabbitmq.PublisherService, error) {
 	switch apiType {
 	case common.MessageQueueAPIType:
 		return createRabbitMqPublisher(config.RabbitMQ)
 	case common.WSAPIType:
-		hubType := common.HubType(config.ConnectorApi.HubType)
-		return CreateCommonHub(hubType)
+		return &disabled.Publisher{}, nil
 	default:
 		return nil, common.ErrInvalidAPIType
 	}
 }
 
-func createRabbitMqPublisher(config config.RabbitMQConfig) (dispatcher.Hub, error) {
+func createRabbitMqPublisher(config config.RabbitMQConfig) (rabbitmq.PublisherService, error) {
 	rabbitClient, err := rabbitmq.NewRabbitMQClient(context.Background(), config.Url)
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/ElrondNetwork/notifier-go/common"
+	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/hub"
 	"github.com/ElrondNetwork/notifier-go/filters"
@@ -23,14 +24,16 @@ var availableHubDelegates = map[string]func() dispatcher.Hub{
 	},
 }
 
-// CreateCommonHub creates a common hub component
-func CreateCommonHub(hubType common.HubType) (dispatcher.Hub, error) {
-	commonHub, err := makeHub(hubType)
-	if err != nil {
-		return nil, err
+// CreateHub creates a common hub component
+func CreateHub(apiType common.APIType, hubType common.HubType) (dispatcher.Hub, error) {
+	switch apiType {
+	case common.MessageQueueAPIType:
+		return &disabled.Hub{}, nil
+	case common.WSAPIType:
+		return makeHub(hubType)
+	default:
+		return nil, common.ErrInvalidAPIType
 	}
-
-	return commonHub, nil
 }
 
 func makeHub(hubType common.HubType) (dispatcher.Hub, error) {
