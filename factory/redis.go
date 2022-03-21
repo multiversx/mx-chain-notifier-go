@@ -1,7 +1,6 @@
 package factory
 
 import (
-	"github.com/ElrondNetwork/notifier-go/api/groups"
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/disabled"
@@ -9,7 +8,7 @@ import (
 )
 
 func CreateLockService(apiType common.APIType, config *config.GeneralConfig) (redis.LockService, error) {
-	var lockService groups.LockService
+	var lockService redis.LockService
 
 	if !config.ConnectorApi.CheckDuplicates || apiType == common.WSAPIType {
 		return disabled.NewDisabledRedlockWrapper(), nil

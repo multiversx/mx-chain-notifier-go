@@ -12,11 +12,6 @@ type baseGroup struct {
 	endpoints []*shared.EndpointHandlerData
 }
 
-// GetEndpoints returns all the endpoints specific to the group
-func (bg *baseGroup) GetEndpoints() []*shared.EndpointHandlerData {
-	return bg.endpoints
-}
-
 // RegisterRoutes will register all the endpoints to the given web server
 func (bg *baseGroup) RegisterRoutes(
 	ws gin.IRoutes,

@@ -56,7 +56,9 @@ func checkArgs(args ArgsWebServerHandler) error {
 	if check.IfNil(args.Facade) {
 		return apiErrors.ErrNilFacadeHandler
 	}
-	// TODO: check configs
+	if args.Type == "" {
+		return common.ErrInvalidAPIType
+	}
 
 	return nil
 }
@@ -102,29 +104,18 @@ func (w *webServer) Run() error {
 func (w *webServer) createGroups() error {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	// TODO: refactor this after factory setup
-	switch w.apiType {
-	case common.MessageQueueAPIType:
-		eventsGroup, err := groups.NewEventsGroup(w.facade)
-		if err != nil {
-			return err
-		}
-		groupsMap["events"] = eventsGroup
+	eventsGroup, err := groups.NewEventsGroup(w.facade)
+	if err != nil {
+		return err
+	}
+	groupsMap["events"] = eventsGroup
 
-	case common.WSAPIType:
-		eventsGroup, err := groups.NewEventsGroup(w.facade)
-		if err != nil {
-			return err
-		}
-		groupsMap["events"] = eventsGroup
-
+	if w.apiType == common.WSAPIType {
 		hubHandler, err := groups.NewHubGroup(w.facade)
 		if err != nil {
 			return err
 		}
 		groupsMap["hub"] = hubHandler
-	default:
-		return common.ErrInvalidAPIType
 	}
 
 	w.groups = groupsMap

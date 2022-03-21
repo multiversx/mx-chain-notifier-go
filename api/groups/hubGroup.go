@@ -11,8 +11,6 @@ import (
 )
 
 const (
-	separator   = ":"
-	hubCommon   = "common"
 	dispatchAll = "dispatch:*"
 	dispatchWs  = "websocket"
 	dispatchGql = "graphql"
