@@ -105,7 +105,7 @@ func startHandlers(hub dispatcher.Hub, publisher rabbitmq.PublisherService) {
 	go publisher.Run()
 }
 
-func waitForGracefulShutdown(server shared.HTTPServerHandler) error {
+func waitForGracefulShutdown(server shared.WebServerHandler) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Kill)
 	<-quit

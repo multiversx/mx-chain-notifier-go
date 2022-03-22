@@ -19,6 +19,9 @@ import (
 
 var log = logger.GetOrCreate("api/gin")
 
+// wasTriggered is being used in order to avoid triggering Run multiple times if the first call was successful
+var wasTriggered = false
+
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
 	Facade shared.FacadeHandler
@@ -71,6 +74,11 @@ func (w *webServer) Run() error {
 
 	var err error
 
+	if wasTriggered == true {
+		log.Error("Web server has been already triggered successfuly once")
+		return nil
+	}
+
 	port := w.config.Port
 	if !strings.Contains(port, ":") {
 		port = fmt.Sprintf(":%s", port)
@@ -97,6 +105,8 @@ func (w *webServer) Run() error {
 	}
 
 	go w.httpServer.Start()
+
+	wasTriggered = true
 
 	return nil
 }

@@ -31,8 +31,8 @@ type FacadeHandler interface {
 	IsInterfaceNil() bool
 }
 
-// HTTPServerHandler defines the behavior of a web server
-type HTTPServerHandler interface {
+// WebServerHandler defines the behavior of a web server
+type WebServerHandler interface {
 	Run() error
 	Close() error
 	IsInterfaceNil() bool
