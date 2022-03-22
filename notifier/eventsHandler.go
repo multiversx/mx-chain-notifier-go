@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-logger/check"
@@ -11,22 +12,25 @@ import (
 )
 
 const (
-	setnxRetryMs       = 500
+	retryDuration      = time.Millisecond * 500
+	minRetries         = 1
 	revertKeyPrefix    = "revert_"
 	finalizedKeyPrefix = "finalized_"
 )
 
 // ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
-	Config    config.ConnectorApiConfig
-	Locker    redis.LockService
-	Publisher Publisher
+	Config              config.ConnectorApiConfig
+	Locker              redis.LockService
+	MaxLockerConRetries int
+	Publisher           Publisher
 }
 
 type eventsHandler struct {
-	config    config.ConnectorApiConfig
-	locker    redis.LockService
-	publisher Publisher
+	config              config.ConnectorApiConfig
+	locker              redis.LockService
+	maxLockerConRetries int
+	publisher           Publisher
 }
 
 // NewEventsHandler creates a new events handler component
@@ -37,8 +41,10 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:    args.Locker,
-		publisher: args.Publisher,
+		locker:              args.Locker,
+		publisher:           args.Publisher,
+		config:              args.Config,
+		maxLockerConRetries: args.MaxLockerConRetries,
 	}, nil
 }
 
@@ -48,6 +54,10 @@ func checkArgs(args ArgsEventsHandler) error {
 	}
 	if check.IfNil(args.Publisher) {
 		return ErrNilPublisherService
+	}
+	if args.MaxLockerConRetries < minRetries {
+		return fmt.Errorf("%w for Max locker connection retries: got %d, minimum %d",
+			ErrInvalidValue, args.MaxLockerConRetries, minRetries)
 	}
 
 	return nil
@@ -63,7 +73,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 	if events.Events != nil && shouldProcessEvents {
 		log.Info("received events for block",
 			"block hash", events.Hash,
-			"shouldProcess", shouldProcessEvents,
+			"will process", shouldProcessEvents,
 		)
 		eh.publisher.Broadcast(events)
 		return
@@ -71,7 +81,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 
 	log.Info("received duplicated events for block",
 		"block hash", events.Hash,
-		"ignoring", true,
+		"processed", false,
 	)
 }
 
@@ -86,7 +96,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	if shouldProcessRevert {
 		log.Info("received revert event for block",
 			"block hash", revertBlock.Hash,
-			"shouldProcess", shouldProcessRevert,
+			"will process", shouldProcessRevert,
 		)
 		eh.publisher.BroadcastRevert(revertBlock)
 		return
@@ -94,7 +104,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 
 	log.Info("received duplicated revert event for block",
 		"block hash", revertBlock.Hash,
-		"ignoring", true,
+		"processed", false,
 	)
 }
 
@@ -109,7 +119,7 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 	if shouldProcessFinalized {
 		log.Info("received finalized events for block",
 			"block hash", finalizedBlock.Hash,
-			"shouldProcess", shouldProcessFinalized,
+			"will process", shouldProcessFinalized,
 		)
 		eh.publisher.BroadcastFinalized(finalizedBlock)
 		return
@@ -117,7 +127,7 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 
 	log.Info("received duplicated finalized event for block",
 		"block hash", finalizedBlock.Hash,
-		"ignoring", true,
+		"processed", false,
 	)
 }
 
@@ -125,13 +135,21 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 	var err error
 	var setSuccessful bool
 
+	numRetries := 0
 	for {
 		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), blockHash)
 
 		if err != nil {
 			if !eh.locker.HasConnection(context.Background()) {
 				log.Error("failure connecting to redis")
-				time.Sleep(time.Millisecond * setnxRetryMs)
+
+				if numRetries >= eh.maxLockerConRetries {
+					break
+				}
+
+				time.Sleep(retryDuration)
+				numRetries++
+
 				continue
 			}
 		}

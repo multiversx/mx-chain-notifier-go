@@ -12,6 +12,8 @@ type Hub struct{}
 func (dh *Hub) Run() {
 }
 
+// TODO: handle nil channel issue, this will be done after dispatcher refactoring
+
 // BroadcastChan returns a nil channel
 func (dh *Hub) BroadcastChan() chan<- data.BlockEvents {
 	return nil
@@ -37,7 +39,7 @@ func (dh *Hub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 	return nil
 }
 
-// Subscribe returns nothing
+// Subscribe does nothing
 func (dh *Hub) Subscribe(event dispatcher.SubscribeEvent) {
 }
 
