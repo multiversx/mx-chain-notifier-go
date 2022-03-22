@@ -8,7 +8,7 @@ import (
 	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
 )
 
-const timeout = time.Second
+const contextTimeout = 5 * time.Second
 
 type httpServer struct {
 	server HTTPServerHandler
@@ -41,7 +41,7 @@ func (h *httpServer) Start() {
 
 // Close will handle the stopping of the gin web server
 func (h *httpServer) Close() error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 
 	return h.server.Shutdown(ctx)

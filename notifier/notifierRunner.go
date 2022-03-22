@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/api/gin"
@@ -17,10 +16,6 @@ import (
 )
 
 var log = logger.GetOrCreate("notifierRunner")
-
-var (
-	backgroundContextTimeout = 5 * time.Second
-)
 
 type notifierRunner struct {
 	configs *config.GeneralConfig
