@@ -19,9 +19,6 @@ import (
 
 var log = logger.GetOrCreate("api/gin")
 
-// wasTriggered is being used in order to avoid triggering Run multiple times if the first call was successful
-var wasTriggered = false
-
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
 	Facade shared.FacadeHandler
@@ -32,12 +29,13 @@ type ArgsWebServerHandler struct {
 // webServer is a wrapper for gin.Engine, holding additional components
 type webServer struct {
 	sync.RWMutex
-	facade     shared.FacadeHandler
-	httpServer shared.HTTPServerCloser
-	config     config.ConnectorApiConfig
-	groups     map[string]shared.GroupHandler
-	apiType    string
-	cancelFunc func()
+	facade       shared.FacadeHandler
+	httpServer   shared.HTTPServerCloser
+	config       config.ConnectorApiConfig
+	groups       map[string]shared.GroupHandler
+	apiType      string
+	wasTriggered bool
+	cancelFunc   func()
 }
 
 // NewWebServerHandler creates and configures an instance of webServer
@@ -48,10 +46,11 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 	}
 
 	return &webServer{
-		facade:  args.Facade,
-		config:  args.Config,
-		apiType: args.Type,
-		groups:  make(map[string]shared.GroupHandler),
+		facade:       args.Facade,
+		config:       args.Config,
+		apiType:      args.Type,
+		groups:       make(map[string]shared.GroupHandler),
+		wasTriggered: false,
 	}, nil
 }
 
@@ -74,7 +73,7 @@ func (w *webServer) Run() error {
 
 	var err error
 
-	if wasTriggered == true {
+	if w.wasTriggered == true {
 		log.Error("Web server has been already triggered successfuly once")
 		return nil
 	}
@@ -99,14 +98,14 @@ func (w *webServer) Run() error {
 		Handler: engine,
 	}
 
-	w.httpServer, err = NewHTTPServer(server)
+	w.httpServer, err = NewHTTPServerWrapper(server)
 	if err != nil {
 		return err
 	}
 
 	go w.httpServer.Start()
 
-	wasTriggered = true
+	w.wasTriggered = true
 
 	return nil
 }

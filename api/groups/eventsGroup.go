@@ -1,8 +1,11 @@
 package groups
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/gin-gonic/gin"
@@ -22,6 +25,10 @@ type eventsGroup struct {
 
 // NewEventsGroup registers handlers for the /events group
 func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
+	if check.IfNil(facade) {
+		return nil, fmt.Errorf("%w for events group", errors.ErrNilFacadeHandler)
+	}
+
 	h := &eventsGroup{
 		baseGroup:             &baseGroup{},
 		facade:                facade,

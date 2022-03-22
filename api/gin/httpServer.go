@@ -10,23 +10,23 @@ import (
 
 const contextTimeout = 5 * time.Second
 
-type httpServer struct {
+type httpServerWrapper struct {
 	server HTTPServerHandler
 }
 
-// NewHTTPServer returns a new instance of httpServer
-func NewHTTPServer(server HTTPServerHandler) (*httpServer, error) {
+// NewHTTPServerWrapper returns a new instance of httpServer
+func NewHTTPServerWrapper(server HTTPServerHandler) (*httpServerWrapper, error) {
 	if server == nil {
 		return nil, apiErrors.ErrNilHTTPServer
 	}
 
-	return &httpServer{
+	return &httpServerWrapper{
 		server: server,
 	}, nil
 }
 
 // Start will handle the starting of the gin web server
-func (h *httpServer) Start() {
+func (h *httpServerWrapper) Start() {
 	err := h.server.ListenAndServe()
 	if err != nil {
 		if err != http.ErrServerClosed {
@@ -40,7 +40,7 @@ func (h *httpServer) Start() {
 }
 
 // Close will handle the stopping of the gin web server
-func (h *httpServer) Close() error {
+func (h *httpServerWrapper) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), contextTimeout)
 	defer cancel()
 
@@ -48,6 +48,6 @@ func (h *httpServer) Close() error {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (h *httpServer) IsInterfaceNil() bool {
+func (h *httpServerWrapper) IsInterfaceNil() bool {
 	return h == nil
 }

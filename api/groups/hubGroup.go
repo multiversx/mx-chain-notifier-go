@@ -1,9 +1,12 @@
 package groups
 
 import (
+	"fmt"
 	"net/http"
 
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
@@ -29,6 +32,10 @@ type hubGroup struct {
 // NewHubGroup registers handlers for the /hub group
 // It only registers the specified hub implementation and its corresponding dispatchers
 func NewHubGroup(facade HubFacadeHandler) (*hubGroup, error) {
+	if check.IfNil(facade) {
+		return nil, fmt.Errorf("%w for hub group", errors.ErrNilFacadeHandler)
+	}
+
 	h := &hubGroup{
 		baseGroup:             &baseGroup{},
 		facade:                facade,
