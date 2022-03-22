@@ -9,19 +9,16 @@ type Publisher struct{}
 func (dp *Publisher) Run() {
 }
 
-// BroadcastChan returns a nil channel
-func (dp *Publisher) BroadcastChan() chan<- data.BlockEvents {
-	return nil
+// Broadcast does nothing
+func (dp *Publisher) Broadcast(events data.BlockEvents) {
 }
 
-// BroadcastRevertChan returns a nil channel
-func (dp *Publisher) BroadcastRevertChan() chan<- data.RevertBlock {
-	return nil
+// BroadcastRevert does nothing
+func (dp *Publisher) BroadcastRevert(event data.RevertBlock) {
 }
 
-// BroadcastFinalizedChan returns a nil channel
-func (dp *Publisher) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	return nil
+// BroadcastFinalized does nothing
+func (dp *Publisher) BroadcastFinalized(event data.FinalizedBlock) {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
