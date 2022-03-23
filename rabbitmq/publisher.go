@@ -69,20 +69,17 @@ func (rp *rabbitMqPublisher) Run() {
 	}
 }
 
-// Broadcast returns a receive-only channel on which events are pushed by producers
-// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
+// Broadcast will handle the block events pushed by producers, and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) Broadcast(events data.BlockEvents) {
 	rp.broadcast <- events
 }
 
-// BroadcastRevert returns a receive-only channel on which revert events are pushed by producers
-// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
+// BroadcastRevert will handle the revert event pushed by producers, and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
 	rp.broadcastRevert <- events
 }
 
-// BroadcastFinalized returns a receive-only channel on which finalized events are pushed
-// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
+// BroadcastFinalized will handle the finalized event pushed by producers, and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
 	rp.broadcastFinalized <- events
 }
