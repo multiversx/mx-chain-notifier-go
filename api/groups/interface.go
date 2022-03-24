@@ -11,10 +11,12 @@ type EventsFacadeHandler interface {
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)
+	IsInterfaceNil() bool
 }
 
 // HubFacadeHandler defines the behavior of a facade handler needed for hub group
 type HubFacadeHandler interface {
 	GetHub() dispatcher.Hub
 	GetDispatchType() string
+	IsInterfaceNil() bool
 }

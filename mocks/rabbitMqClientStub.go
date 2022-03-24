@@ -17,5 +17,5 @@ func (rc *RabbitClientStub) Publish(exchange, key string, mandatory, immediate b
 
 // IsInterfaceNil -
 func (rc *RabbitClientStub) IsInterfaceNil() bool {
-	return false
+	return rc == nil
 }

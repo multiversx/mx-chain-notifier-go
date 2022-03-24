@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql"

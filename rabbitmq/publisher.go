@@ -1,10 +1,11 @@
 package rabbitmq
 
 import (
+	"context"
 	"encoding/json"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/streadway/amqp"
@@ -29,6 +30,8 @@ type rabbitMqPublisher struct {
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+
+	cancelFunc func()
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance
@@ -57,8 +60,18 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 
 // Run is launched as a goroutine and listens for events on the exposed channels
 func (rp *rabbitMqPublisher) Run() {
+	var ctx context.Context
+	ctx, rp.cancelFunc = context.WithCancel(context.Background())
+
+	go rp.run(ctx)
+}
+
+func (rp *rabbitMqPublisher) run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			log.Debug("RabbitMQ publisher is stopping...")
+			return
 		case events := <-rp.broadcast:
 			rp.publishToExchanges(events)
 		case revertBlock := <-rp.broadcastRevert:
@@ -139,6 +152,15 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 			Body: payload,
 		},
 	)
+}
+
+// Close will close the goroutine
+func (rp *rabbitMqPublisher) Close() error {
+	if rp.cancelFunc != nil {
+		rp.cancelFunc()
+	}
+
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

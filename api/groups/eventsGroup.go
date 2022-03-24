@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -68,6 +68,7 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 func (h *eventsGroup) pushEvents(c *gin.Context) {
 	var blockEvents data.BlockEvents
 
+	// TODO: handle when not binding
 	err := c.Bind(&blockEvents)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())

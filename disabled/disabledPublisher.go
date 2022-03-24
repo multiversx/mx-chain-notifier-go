@@ -1,6 +1,8 @@
 package disabled
 
-import "github.com/ElrondNetwork/notifier-go/data"
+import (
+	"github.com/ElrondNetwork/notifier-go/data"
+)
 
 // Publisher defines a disabled publisher component
 type Publisher struct{}
@@ -19,6 +21,11 @@ func (dp *Publisher) BroadcastRevert(event data.RevertBlock) {
 
 // BroadcastFinalized does nothing
 func (dp *Publisher) BroadcastFinalized(event data.FinalizedBlock) {
+}
+
+// Close returns nil
+func (dp *Publisher) Close() error {
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

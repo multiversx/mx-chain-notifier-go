@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/ElrondNetwork/notifier-go/redis"
 	"github.com/stretchr/testify/assert"

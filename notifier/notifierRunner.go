@@ -90,7 +90,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	err = waitForGracefulShutdown(webServer)
+	err = waitForGracefulShutdown(webServer, publisher)
 	if err != nil {
 		return err
 	}
@@ -100,16 +100,26 @@ func (nr *notifierRunner) Start() error {
 }
 
 func startHandlers(hub dispatcher.Hub, publisher rabbitmq.PublisherService) {
+	// TODO: handler goroutine inside with cancel context
 	go hub.Run()
-	go publisher.Run()
+
+	publisher.Run()
 }
 
-func waitForGracefulShutdown(server shared.WebServerHandler) error {
+func waitForGracefulShutdown(
+	server shared.WebServerHandler,
+	publisher rabbitmq.PublisherService,
+) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Kill)
 	<-quit
 
 	err := server.Close()
+	if err != nil {
+		return err
+	}
+
+	err = publisher.Close()
 	if err != nil {
 		return err
 	}

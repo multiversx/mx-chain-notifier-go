@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/redis"
@@ -70,6 +70,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
 	}
 
+	// TODO: different log message when nil events or empty hash
 	if events.Events != nil && shouldProcessEvents {
 		log.Info("received events for block",
 			"block hash", events.Hash,
