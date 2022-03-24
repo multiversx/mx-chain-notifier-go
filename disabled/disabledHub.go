@@ -6,49 +6,72 @@ import (
 )
 
 // Hub defines a disabled hub component
-type Hub struct{}
-
-// Run does nothing
-func (dh *Hub) Run() {
+type Hub struct {
+	RunCalled                func()
+	BroadcastCalled          func(events data.BlockEvents)
+	BroadcastRevertCalled    func(event data.RevertBlock)
+	BroadcastFinalizedCalled func(event data.FinalizedBlock)
+	RegisterEventCalled      func(event dispatcher.EventDispatcher)
+	UnregisterEventCalled    func(event dispatcher.EventDispatcher)
+	SubscribeCalled          func(event dispatcher.SubscribeEvent)
+	CloseCalled              func() error
 }
 
-// TODO: handle nil channel issue, this will be done after dispatcher refactoring
+// Run -
+func (h *Hub) Run() {
+	if h.RunCalled != nil {
+		h.RunCalled()
+	}
+}
 
-// BroadcastChan returns a nil channel
-func (dh *Hub) BroadcastChan() chan<- data.BlockEvents {
+// Broadcast -
+func (h *Hub) Broadcast(events data.BlockEvents) {
+	if h.BroadcastCalled != nil {
+		h.BroadcastCalled(events)
+	}
+}
+
+// BroadcastRevert -
+func (h *Hub) BroadcastRevert(event data.RevertBlock) {
+	if h.BroadcastRevertCalled != nil {
+		h.BroadcastRevertCalled(event)
+	}
+}
+
+// BroadcastFinalized -
+func (h *Hub) BroadcastFinalized(event data.FinalizedBlock) {
+	if h.BroadcastFinalizedCalled != nil {
+		h.BroadcastFinalizedCalled(event)
+	}
+}
+
+// RegisterEvent -
+func (h *Hub) RegisterEvent(event dispatcher.EventDispatcher) {
+	if h.RegisterEventCalled != nil {
+		h.RegisterEventCalled(event)
+	}
+}
+
+// UnregisterEvent -
+func (h *Hub) UnregisterEvent(event dispatcher.EventDispatcher) {
+	if h.UnregisterEventCalled != nil {
+		h.UnregisterEventCalled(event)
+	}
+}
+
+// Subscribe -
+func (h *Hub) Subscribe(event dispatcher.SubscribeEvent) {
+	if h.SubscribeCalled != nil {
+		h.SubscribeCalled(event)
+	}
+}
+
+// Close -
+func (h *Hub) Close() error {
 	return nil
 }
 
-// BroadcastRevertChan returns a nil channel
-func (dh *Hub) BroadcastRevertChan() chan<- data.RevertBlock {
-	return nil
-}
-
-// BroadcastFinalizedChan returns a nil channel
-func (dh *Hub) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	return nil
-}
-
-// RegisterChan returns a nil channel
-func (dh *Hub) RegisterChan() chan<- dispatcher.EventDispatcher {
-	return nil
-}
-
-// UnregisterChan returns a nil channel
-func (dh *Hub) UnregisterChan() chan<- dispatcher.EventDispatcher {
-	return nil
-}
-
-// Subscribe does nothing
-func (dh *Hub) Subscribe(event dispatcher.SubscribeEvent) {
-}
-
-// Close returns nil
-func (dh *Hub) Close() error {
-	return nil
-}
-
-// IsInterfaceNil returns true if there is no value under the interface
-func (dh *Hub) IsInterfaceNil() bool {
-	return false
+// IsInterfaceNil -
+func (h *Hub) IsInterfaceNil() bool {
+	return h == nil
 }

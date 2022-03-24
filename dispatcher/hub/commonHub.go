@@ -79,32 +79,32 @@ func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 	wh.subscriptionMapper.MatchSubscribeEvent(event)
 }
 
-// BroadcastChan returns a receive-only channel on which events are pushed by producers
+// Broadcast handles block events pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastChan() chan<- data.BlockEvents {
-	return wh.broadcast
+func (wh *commonHub) Broadcast(events data.BlockEvents) {
+	wh.broadcast <- events
 }
 
-// BroadcastRevertChan returns a receive-only channel on which revert events are pushed
+// BroadcastRevert handles revert event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastRevertChan() chan<- data.RevertBlock {
-	return wh.broadcastRevert
+func (wh *commonHub) BroadcastRevert(event data.RevertBlock) {
+	wh.broadcastRevert <- event
 }
 
-// BroadcastFinalizedChan returns a receive-only channel on which finalized events are pushed
+// BroadcastFinalized handles finalized event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	return wh.broadcastFinalized
+func (wh *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
+	wh.broadcastFinalized <- event
 }
 
-// RegisterChan returns a receive-only channel used to register dispatchers
-func (wh *commonHub) RegisterChan() chan<- dispatcher.EventDispatcher {
-	return wh.register
+// RegisterEvent will send event to a receive-only channel used to register dispatchers
+func (wh *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
+	wh.register <- event
 }
 
-// UnregisterChan return a receive-only channel used by a dispatcher to signal it has disconnected
-func (wh *commonHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
-	return wh.unregister
+// UnregisterEvent will send event to a receive-only channel used by a dispatcher to signal it has disconnected
+func (wh *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
+	wh.unregister <- event
 }
 
 func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
