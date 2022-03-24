@@ -154,7 +154,7 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 	)
 }
 
-// Close will close the goroutine
+// Close will close the channels
 func (rp *rabbitMqPublisher) Close() error {
 	if rp.cancelFunc != nil {
 		rp.cancelFunc()
