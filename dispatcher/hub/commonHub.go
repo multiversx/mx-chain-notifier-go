@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"sync"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -22,6 +23,7 @@ type commonHub struct {
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+	cancelFunc         func()
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -41,8 +43,19 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 
 // Run is launched as a goroutine and listens for events on the exposed channels
 func (wh *commonHub) Run() {
+	var ctx context.Context
+	ctx, wh.cancelFunc = context.WithCancel(context.Background())
+
+	go wh.run(ctx)
+}
+
+func (wh *commonHub) run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			log.Debug("commonHub is stopping...")
+			return
+
 		case events := <-wh.broadcast:
 			wh.handleBroadcast(events)
 
@@ -149,6 +162,15 @@ func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 	log.Info("unregistered dispatcher", "dispatcherID", d.GetID(), "unsubscribing", true)
 
 	wh.subscriptionMapper.RemoveSubscriptions(d.GetID())
+}
+
+// Close will close the goroutine and channels
+func (wh *commonHub) Close() error {
+	if wh.cancelFunc != nil {
+		wh.cancelFunc()
+	}
+
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

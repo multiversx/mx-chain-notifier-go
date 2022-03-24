@@ -10,8 +10,6 @@ type EventDispatcher interface {
 	PushEvents(events []data.Event)
 }
 
-// TODO: evaluate refactoring here
-
 type Hub interface {
 	Run()
 	BroadcastChan() chan<- data.BlockEvents
@@ -20,5 +18,6 @@ type Hub interface {
 	RegisterChan() chan<- EventDispatcher
 	UnregisterChan() chan<- EventDispatcher
 	Subscribe(event SubscribeEvent)
+	Close() error
 	IsInterfaceNil() bool
 }

@@ -43,6 +43,11 @@ func (dh *Hub) UnregisterChan() chan<- dispatcher.EventDispatcher {
 func (dh *Hub) Subscribe(event dispatcher.SubscribeEvent) {
 }
 
+// Close returns nil
+func (dh *Hub) Close() error {
+	return nil
+}
+
 // IsInterfaceNil returns true if there is no value under the interface
 func (dh *Hub) IsInterfaceNil() bool {
 	return false
