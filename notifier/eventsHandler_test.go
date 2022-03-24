@@ -74,7 +74,7 @@ func TestNewEventsHandler(t *testing.T) {
 func TestHandlePushEvents(t *testing.T) {
 	t.Parallel()
 
-	t.Run("broadcast event NOT was called", func(t *testing.T) {
+	t.Run("broadcast event was NOT called", func(t *testing.T) {
 		t.Parallel()
 
 		wasCalled := false
