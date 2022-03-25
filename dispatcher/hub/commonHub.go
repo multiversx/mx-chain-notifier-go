@@ -42,73 +42,73 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
-func (wh *commonHub) Run() {
+func (ch *commonHub) Run() {
 	var ctx context.Context
-	ctx, wh.cancelFunc = context.WithCancel(context.Background())
+	ctx, ch.cancelFunc = context.WithCancel(context.Background())
 
-	go wh.run(ctx)
+	go ch.run(ctx)
 }
 
-func (wh *commonHub) run(ctx context.Context) {
+func (ch *commonHub) run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			log.Debug("commonHub is stopping...")
 			return
 
-		case events := <-wh.broadcast:
-			wh.handleBroadcast(events)
+		case events := <-ch.broadcast:
+			ch.handleBroadcast(events)
 
-		case revertEvent := <-wh.broadcastRevert:
-			wh.handleRevertBroadcast(revertEvent)
+		case revertEvent := <-ch.broadcastRevert:
+			ch.handleRevertBroadcast(revertEvent)
 
-		case finalizedEvent := <-wh.broadcastFinalized:
-			wh.handleFinalizedBroadcast(finalizedEvent)
+		case finalizedEvent := <-ch.broadcastFinalized:
+			ch.handleFinalizedBroadcast(finalizedEvent)
 
-		case dispatcherClient := <-wh.register:
-			wh.registerDispatcher(dispatcherClient)
+		case dispatcherClient := <-ch.register:
+			ch.registerDispatcher(dispatcherClient)
 
-		case dispatcherClient := <-wh.unregister:
-			wh.unregisterDispatcher(dispatcherClient)
+		case dispatcherClient := <-ch.unregister:
+			ch.unregisterDispatcher(dispatcherClient)
 		}
 	}
 }
 
 // Subscribe is used by a dispatcher to send a dispatcher.SubscribeEvent
-func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
-	wh.subscriptionMapper.MatchSubscribeEvent(event)
+func (ch *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
+	ch.subscriptionMapper.MatchSubscribeEvent(event)
 }
 
 // Broadcast handles block events pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) Broadcast(events data.BlockEvents) {
-	wh.broadcast <- events
+func (ch *commonHub) Broadcast(events data.BlockEvents) {
+	ch.broadcast <- events
 }
 
 // BroadcastRevert handles revert event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastRevert(event data.RevertBlock) {
-	wh.broadcastRevert <- event
+func (ch *commonHub) BroadcastRevert(event data.RevertBlock) {
+	ch.broadcastRevert <- event
 }
 
 // BroadcastFinalized handles finalized event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
-	wh.broadcastFinalized <- event
+func (ch *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
+	ch.broadcastFinalized <- event
 }
 
 // RegisterEvent will send event to a receive-only channel used to register dispatchers
-func (wh *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
-	wh.register <- event
+func (ch *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
+	ch.register <- event
 }
 
 // UnregisterEvent will send event to a receive-only channel used by a dispatcher to signal it has disconnected
-func (wh *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
-	wh.unregister <- event
+func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
+	ch.unregister <- event
 }
 
-func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
-	subscriptions := wh.subscriptionMapper.Subscriptions()
+func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
 
 	dispatchersMap := make(map[uuid.UUID][]data.Event)
 	mapEventToDispatcher := func(id uuid.UUID, e data.Event) {
@@ -117,63 +117,64 @@ func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 
 	for _, event := range blockEvents.Events {
 		for _, subscription := range subscriptions {
-			if wh.filter.MatchEvent(subscription, event) {
+			if ch.filter.MatchEvent(subscription, event) {
 				mapEventToDispatcher(subscription.DispatcherID, event)
 			}
 		}
 	}
 
-	wh.rwMut.RLock()
-	defer wh.rwMut.RUnlock()
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
 	for id, eventValues := range dispatchersMap {
-		if d, ok := wh.dispatchers[id]; ok {
+		if d, ok := ch.dispatchers[id]; ok {
 			d.PushEvents(eventValues)
 		}
 	}
 }
 
-func (wh *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
+// TODO: evaluate these 2 scenarios
+func (ch *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
 }
 
-func (wh *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock) {
+func (ch *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock) {
 }
 
-func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
-	wh.rwMut.Lock()
-	defer wh.rwMut.Unlock()
+func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
+	ch.rwMut.Lock()
+	defer ch.rwMut.Unlock()
 
-	if _, ok := wh.dispatchers[d.GetID()]; ok {
+	if _, ok := ch.dispatchers[d.GetID()]; ok {
 		return
 	}
 
-	wh.dispatchers[d.GetID()] = d
+	ch.dispatchers[d.GetID()] = d
 
 	log.Info("registered new dispatcher", "dispatcherID", d.GetID())
 }
 
-func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
-	wh.rwMut.Lock()
-	defer wh.rwMut.Unlock()
+func (ch *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
+	ch.rwMut.Lock()
+	defer ch.rwMut.Unlock()
 
-	if _, ok := wh.dispatchers[d.GetID()]; ok {
-		delete(wh.dispatchers, d.GetID())
+	if _, ok := ch.dispatchers[d.GetID()]; ok {
+		delete(ch.dispatchers, d.GetID())
 	}
 
 	log.Info("unregistered dispatcher", "dispatcherID", d.GetID(), "unsubscribing", true)
 
-	wh.subscriptionMapper.RemoveSubscriptions(d.GetID())
+	ch.subscriptionMapper.RemoveSubscriptions(d.GetID())
 }
 
 // Close will close the goroutine and channels
-func (wh *commonHub) Close() error {
-	if wh.cancelFunc != nil {
-		wh.cancelFunc()
+func (ch *commonHub) Close() error {
+	if ch.cancelFunc != nil {
+		ch.cancelFunc()
 	}
 
 	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (wh *commonHub) IsInterfaceNil() bool {
-	return wh == nil
+func (ch *commonHub) IsInterfaceNil() bool {
+	return ch == nil
 }

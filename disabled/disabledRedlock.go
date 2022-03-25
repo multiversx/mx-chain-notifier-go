@@ -11,12 +11,12 @@ func NewDisabledRedlockWrapper() *disabledRedlockWrapper {
 }
 
 // IsEventProcessed returns true and nil
-func (drw *disabledRedlockWrapper) IsEventProcessed(ctx context.Context, blockHash string) (bool, error) {
+func (drw *disabledRedlockWrapper) IsEventProcessed(_ context.Context, _ string) (bool, error) {
 	return true, nil
 }
 
 // HasConnection returns true
-func (drw *disabledRedlockWrapper) HasConnection(ctx context.Context) bool {
+func (drw *disabledRedlockWrapper) HasConnection(_ context.Context) bool {
 	return true
 }
 

@@ -12,15 +12,15 @@ func (dp *Publisher) Run() {
 }
 
 // Broadcast does nothing
-func (dp *Publisher) Broadcast(events data.BlockEvents) {
+func (dp *Publisher) Broadcast(_ data.BlockEvents) {
 }
 
 // BroadcastRevert does nothing
-func (dp *Publisher) BroadcastRevert(event data.RevertBlock) {
+func (dp *Publisher) BroadcastRevert(_ data.RevertBlock) {
 }
 
 // BroadcastFinalized does nothing
-func (dp *Publisher) BroadcastFinalized(event data.FinalizedBlock) {
+func (dp *Publisher) BroadcastFinalized(_ data.FinalizedBlock) {
 }
 
 // Close returns nil

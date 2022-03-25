@@ -14,27 +14,27 @@ func (h *Hub) Run() {
 }
 
 // Broadcast does nothing
-func (h *Hub) Broadcast(events data.BlockEvents) {
+func (h *Hub) Broadcast(_ data.BlockEvents) {
 }
 
 // BroadcastRevert does nothing
-func (h *Hub) BroadcastRevert(event data.RevertBlock) {
+func (h *Hub) BroadcastRevert(_ data.RevertBlock) {
 }
 
 // BroadcastFinalized does nothing
-func (h *Hub) BroadcastFinalized(event data.FinalizedBlock) {
+func (h *Hub) BroadcastFinalized(_ data.FinalizedBlock) {
 }
 
 // RegisterEvent does nothing
-func (h *Hub) RegisterEvent(event dispatcher.EventDispatcher) {
+func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }
 
 // UnregisterEvent does nothing
-func (h *Hub) UnregisterEvent(event dispatcher.EventDispatcher) {
+func (h *Hub) UnregisterEvent(_ dispatcher.EventDispatcher) {
 }
 
 // Subscribe does nothing
-func (h *Hub) Subscribe(event dispatcher.SubscribeEvent) {
+func (h *Hub) Subscribe(_ dispatcher.SubscribeEvent) {
 }
 
 // Close returns nil
