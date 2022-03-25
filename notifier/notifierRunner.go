@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 
@@ -27,7 +26,7 @@ type notifierRunner struct {
 // NewNotifierRunner create a new notifierRunner instance
 func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
 	if cfgs == nil {
-		return nil, fmt.Errorf("nil configs provided")
+		return nil, ErrNilConfigs
 	}
 
 	return &notifierRunner{
