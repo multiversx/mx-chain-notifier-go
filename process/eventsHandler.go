@@ -144,9 +144,10 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 
 		if err != nil {
 			if !eh.locker.HasConnection(context.Background()) {
-				log.Error("failure connecting to redis")
+				log.Error("failure connecting to locker service")
 
 				if numRetries >= eh.maxLockerConRetries {
+					err = fmt.Errorf("reached max locker connection retries limit")
 					break
 				}
 
@@ -160,7 +161,17 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 		break
 	}
 
-	return err == nil && setSuccessful
+	if err != nil {
+		log.Error("failed to check event in locker", "error", err.Error())
+		return false
+	}
+
+	if !setSuccessful {
+		log.Debug("did not succeed to set event in locker")
+		return false
+	}
+
+	return true
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
