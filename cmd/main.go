@@ -89,7 +89,7 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Error(err.Error())
-		panic(err)
+		os.Exit(1)
 	}
 }
 
