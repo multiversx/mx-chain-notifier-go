@@ -22,5 +22,5 @@ func (drw *disabledRedlockWrapper) HasConnection(ctx context.Context) bool {
 
 // IsInterfaceNil returns true if there is no value under the interface
 func (drw *disabledRedlockWrapper) IsInterfaceNil() bool {
-	return false
+	return drw == nil
 }

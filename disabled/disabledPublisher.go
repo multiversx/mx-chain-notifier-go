@@ -30,5 +30,5 @@ func (dp *Publisher) Close() error {
 
 // IsInterfaceNil returns true if there is no value under the interface
 func (dp *Publisher) IsInterfaceNil() bool {
-	return false
+	return dp == nil
 }
