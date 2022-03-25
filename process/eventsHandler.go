@@ -1,4 +1,4 @@
-package notifier
+package process
 
 import (
 	"context"
@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/redis"
 )
+
+var log = logger.GetOrCreate("process")
 
 const (
 	retryDuration      = time.Millisecond * 500
@@ -21,14 +23,14 @@ const (
 // ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
 	Config              config.ConnectorApiConfig
-	Locker              redis.LockService
+	Locker              LockService
 	MaxLockerConRetries int
 	Publisher           Publisher
 }
 
 type eventsHandler struct {
 	config              config.ConnectorApiConfig
-	locker              redis.LockService
+	locker              LockService
 	maxLockerConRetries int
 	publisher           Publisher
 }
@@ -142,9 +144,10 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 
 		if err != nil {
 			if !eh.locker.HasConnection(context.Background()) {
-				log.Error("failure connecting to redis")
+				log.Error("failure connecting to locker service")
 
 				if numRetries >= eh.maxLockerConRetries {
+					err = fmt.Errorf("reached max locker connection retries limit")
 					break
 				}
 
@@ -158,7 +161,17 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 		break
 	}
 
-	return err == nil && setSuccessful
+	if err != nil {
+		log.Error("failed to check event in locker", "error", err.Error())
+		return false
+	}
+
+	if !setSuccessful {
+		log.Debug("did not succeed to set event in locker")
+		return false
+	}
+
+	return true
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

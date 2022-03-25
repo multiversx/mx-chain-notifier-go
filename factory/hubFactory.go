@@ -44,6 +44,11 @@ func makeHub(hubType string) (dispatcher.Hub, error) {
 	}
 
 	hubConfig := strings.Split(hubType, separator)
+
+	if len(hubConfig) < 2 {
+		return nil, ErrMakeCustomHub
+	}
+
 	return tryMakeCustomHubForID(hubConfig[1])
 }
 

@@ -63,7 +63,7 @@ func Serve(hub dispatcher.Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	wsDispatcher := newWebsocketDispatcher(conn, hub)
-	wsDispatcher.hub.RegisterChan() <- wsDispatcher
+	wsDispatcher.hub.RegisterEvent(wsDispatcher)
 
 	go wsDispatcher.writePump()
 	go wsDispatcher.readPump()
@@ -145,7 +145,7 @@ func (wd *websocketDispatcher) writePump() {
 // readPump listens for incoming events and reads the content from the socket stream
 func (wd *websocketDispatcher) readPump() {
 	defer func() {
-		wd.hub.UnregisterChan() <- wd
+		wd.hub.UnregisterEvent(wd)
 		if err := wd.conn.Close(); err != nil {
 			log.Error("failed to close socket on defer", "err", err.Error())
 		}

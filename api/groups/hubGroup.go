@@ -8,6 +8,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/gql"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,10 @@ func NewHubGroup(facade HubFacadeHandler) (*hubGroup, error) {
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
-	endpoints := h.getDispatchHandlers()
+	endpoints, err := h.getDispatchHandlers()
+	if err != nil {
+		return nil, err
+	}
 
 	h.endpoints = endpoints
 
@@ -54,7 +58,7 @@ func (h *hubGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 	return h.additionalMiddlewares
 }
 
-func (h *hubGroup) getDispatchHandlers() []*shared.EndpointHandlerData {
+func (h *hubGroup) getDispatchHandlers() ([]*shared.EndpointHandlerData, error) {
 	// TODO: handle graphql server in factory
 	gqlServer := gql.NewGraphQLServer(h.facade.GetHub())
 
@@ -75,9 +79,11 @@ func (h *hubGroup) getDispatchHandlers() []*shared.EndpointHandlerData {
 		registerGql()
 	case dispatchWs:
 		registerWs()
+	default:
+		return nil, common.ErrInvalidDispatchType
 	}
 
-	return h.endpoints
+	return h.endpoints, nil
 }
 
 func (h *hubGroup) wsHandler(c *gin.Context) {

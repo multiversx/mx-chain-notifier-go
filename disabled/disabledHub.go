@@ -6,44 +6,43 @@ import (
 )
 
 // Hub defines a disabled hub component
-type Hub struct{}
+type Hub struct {
+}
 
 // Run does nothing
-func (dh *Hub) Run() {
+func (h *Hub) Run() {
 }
 
-// TODO: handle nil channel issue, this will be done after dispatcher refactoring
-
-// BroadcastChan returns a nil channel
-func (dh *Hub) BroadcastChan() chan<- data.BlockEvents {
-	return nil
+// Broadcast does nothing
+func (h *Hub) Broadcast(_ data.BlockEvents) {
 }
 
-// BroadcastRevertChan returns a nil channel
-func (dh *Hub) BroadcastRevertChan() chan<- data.RevertBlock {
-	return nil
+// BroadcastRevert does nothing
+func (h *Hub) BroadcastRevert(_ data.RevertBlock) {
 }
 
-// BroadcastFinalizedChan returns a nil channel
-func (dh *Hub) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	return nil
+// BroadcastFinalized does nothing
+func (h *Hub) BroadcastFinalized(_ data.FinalizedBlock) {
 }
 
-// RegisterChan returns a nil channel
-func (dh *Hub) RegisterChan() chan<- dispatcher.EventDispatcher {
-	return nil
+// RegisterEvent does nothing
+func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }
 
-// UnregisterChan returns a nil channel
-func (dh *Hub) UnregisterChan() chan<- dispatcher.EventDispatcher {
-	return nil
+// UnregisterEvent does nothing
+func (h *Hub) UnregisterEvent(_ dispatcher.EventDispatcher) {
 }
 
 // Subscribe does nothing
-func (dh *Hub) Subscribe(event dispatcher.SubscribeEvent) {
+func (h *Hub) Subscribe(_ dispatcher.SubscribeEvent) {
+}
+
+// Close returns nil
+func (h *Hub) Close() error {
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (dh *Hub) IsInterfaceNil() bool {
-	return false
+func (h *Hub) IsInterfaceNil() bool {
+	return h == nil
 }

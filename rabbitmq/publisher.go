@@ -32,6 +32,7 @@ type rabbitMqPublisher struct {
 	broadcastFinalized chan data.FinalizedBlock
 
 	cancelFunc func()
+	closeChan  chan struct{}
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance
@@ -47,6 +48,7 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 		broadcastFinalized: make(chan data.FinalizedBlock),
 		cfg:                args.Config,
 		client:             args.Client,
+		closeChan:          make(chan struct{}),
 	}, nil
 }
 
@@ -84,17 +86,26 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 
 // Broadcast will handle the block events pushed by producers, and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) Broadcast(events data.BlockEvents) {
-	rp.broadcast <- events
+	select {
+	case rp.broadcast <- events:
+	case <-rp.closeChan:
+	}
 }
 
 // BroadcastRevert will handle the revert event pushed by producers, and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
-	rp.broadcastRevert <- events
+	select {
+	case rp.broadcastRevert <- events:
+	case <-rp.closeChan:
+	}
 }
 
 // BroadcastFinalized will handle the finalized event pushed by producers, and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
-	rp.broadcastFinalized <- events
+	select {
+	case rp.broadcastFinalized <- events:
+	case <-rp.closeChan:
+	}
 }
 
 func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
@@ -154,11 +165,13 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 	)
 }
 
-// Close will close the goroutine
+// Close will close the channels
 func (rp *rabbitMqPublisher) Close() error {
 	if rp.cancelFunc != nil {
 		rp.cancelFunc()
 	}
+
+	close(rp.closeChan)
 
 	return nil
 }

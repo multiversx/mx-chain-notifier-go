@@ -1,4 +1,4 @@
-package notifier_test
+package process_test
 
 import (
 	"context"

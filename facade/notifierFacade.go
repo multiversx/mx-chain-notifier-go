@@ -9,15 +9,15 @@ import (
 
 // ArgsNotifierFacade defines the arguments necessary for notifierFacade creation
 type ArgsNotifierFacade struct {
-	EventsHandler EventsHandler
 	APIConfig     config.ConnectorApiConfig
-	Hub           dispatcher.Hub
+	EventsHandler EventsHandler
+	Hub           HubHandler
 }
 
 type notifierFacade struct {
-	eventsHandler EventsHandler
 	config        config.ConnectorApiConfig
-	hub           dispatcher.Hub
+	eventsHandler EventsHandler
+	hub           HubHandler
 }
 
 // NewNotifierFacade creates a new notifier facade instance

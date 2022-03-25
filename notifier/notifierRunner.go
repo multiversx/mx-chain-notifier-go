@@ -1,7 +1,6 @@
 package notifier
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
 
@@ -27,7 +26,7 @@ type notifierRunner struct {
 // NewNotifierRunner create a new notifierRunner instance
 func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
 	if cfgs == nil {
-		return nil, fmt.Errorf("nil configs provided")
+		return nil, ErrNilConfigs
 	}
 
 	return &notifierRunner{
@@ -52,13 +51,15 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	argsEventsHandler := ArgsEventsHandler{
-		Config:              nr.configs.ConnectorApi,
+	argsEventsHandler := factory.ArgsEventsHandlerFactory{
+		APIConfig:           nr.configs.ConnectorApi,
 		Locker:              lockService,
-		Publisher:           publisher,
+		MqPublisher:         publisher,
+		HubPublisher:        hub,
+		APIType:             nr.configs.Flags.APIType,
 		MaxLockerConRetries: maxLockerConRetries,
 	}
-	eventsHandler, err := NewEventsHandler(argsEventsHandler)
+	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
 	if err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	err = waitForGracefulShutdown(webServer, publisher)
+	err = waitForGracefulShutdown(webServer, publisher, hub)
 	if err != nil {
 		return err
 	}
@@ -100,15 +101,14 @@ func (nr *notifierRunner) Start() error {
 }
 
 func startHandlers(hub dispatcher.Hub, publisher rabbitmq.PublisherService) {
-	// TODO: handler goroutine inside with cancel context
-	go hub.Run()
-
+	hub.Run()
 	publisher.Run()
 }
 
 func waitForGracefulShutdown(
 	server shared.WebServerHandler,
 	publisher rabbitmq.PublisherService,
+	hub dispatcher.Hub,
 ) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Kill)
@@ -120,6 +120,11 @@ func waitForGracefulShutdown(
 	}
 
 	err = publisher.Close()
+	if err != nil {
+		return err
+	}
+
+	err = hub.Close()
 	if err != nil {
 		return err
 	}
