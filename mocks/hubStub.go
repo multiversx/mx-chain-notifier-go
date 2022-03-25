@@ -5,45 +5,70 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 
-// TODO: change this after dispatcher refactoring
-
 // HubStub implements Hub interface
 type HubStub struct {
+	RunCalled                func()
+	BroadcastCalled          func(events data.BlockEvents)
+	BroadcastRevertCalled    func(event data.RevertBlock)
+	BroadcastFinalizedCalled func(event data.FinalizedBlock)
+	RegisterEventCalled      func(event dispatcher.EventDispatcher)
+	UnregisterEventCalled    func(event dispatcher.EventDispatcher)
+	SubscribeCalled          func(event dispatcher.SubscribeEvent)
+	CloseCalled              func() error
 }
 
 // Run -
 func (h *HubStub) Run() {
-	panic("not implemented") // TODO: Implement
+	if h.RunCalled != nil {
+		h.RunCalled()
+	}
 }
 
-// BroadcastChan -
-func (h *HubStub) BroadcastChan() chan<- data.BlockEvents {
-	panic("not implemented") // TODO: Implement
+// Broadcast -
+func (h *HubStub) Broadcast(events data.BlockEvents) {
+	if h.BroadcastCalled != nil {
+		h.BroadcastCalled(events)
+	}
 }
 
-// BroadcastRevertChan -
-func (h *HubStub) BroadcastRevertChan() chan<- data.RevertBlock {
-	panic("not implemented") // TODO: Implement
+// BroadcastRevert -
+func (h *HubStub) BroadcastRevert(event data.RevertBlock) {
+	if h.BroadcastRevertCalled != nil {
+		h.BroadcastRevertCalled(event)
+	}
 }
 
-// BroadcastFinalizedChan -
-func (h *HubStub) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	panic("not implemented") // TODO: Implement
+// BroadcastFinalized -
+func (h *HubStub) BroadcastFinalized(event data.FinalizedBlock) {
+	if h.BroadcastFinalizedCalled != nil {
+		h.BroadcastFinalizedCalled(event)
+	}
 }
 
-// RegisterChan -
-func (h *HubStub) RegisterChan() chan<- dispatcher.EventDispatcher {
-	panic("not implemented") // TODO: Implement
+// RegisterEvent -
+func (h *HubStub) RegisterEvent(event dispatcher.EventDispatcher) {
+	if h.RegisterEventCalled != nil {
+		h.RegisterEventCalled(event)
+	}
 }
 
-// UnregisterChan -
-func (h *HubStub) UnregisterChan() chan<- dispatcher.EventDispatcher {
-	panic("not implemented") // TODO: Implement
+// UnregisterEvent -
+func (h *HubStub) UnregisterEvent(event dispatcher.EventDispatcher) {
+	if h.UnregisterEventCalled != nil {
+		h.UnregisterEventCalled(event)
+	}
 }
 
 // Subscribe -
 func (h *HubStub) Subscribe(event dispatcher.SubscribeEvent) {
-	panic("not implemented") // TODO: Implement
+	if h.SubscribeCalled != nil {
+		h.SubscribeCalled(event)
+	}
+}
+
+// Close -
+func (h *HubStub) Close() error {
+	return nil
 }
 
 // IsInterfaceNil -
