@@ -23,6 +23,7 @@ type commonHub struct {
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+	closeChan          chan struct{}
 	cancelFunc         func()
 }
 
@@ -38,6 +39,7 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
+		closeChan:          make(chan struct{}),
 	}
 }
 
@@ -82,29 +84,44 @@ func (ch *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
 // Broadcast handles block events pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (ch *commonHub) Broadcast(events data.BlockEvents) {
-	ch.broadcast <- events
+	select {
+	case ch.broadcast <- events:
+	case <-ch.closeChan:
+	}
 }
 
 // BroadcastRevert handles revert event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (ch *commonHub) BroadcastRevert(event data.RevertBlock) {
-	ch.broadcastRevert <- event
+	select {
+	case ch.broadcastRevert <- event:
+	case <-ch.closeChan:
+	}
 }
 
 // BroadcastFinalized handles finalized event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (ch *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
-	ch.broadcastFinalized <- event
+	select {
+	case ch.broadcastFinalized <- event:
+	case <-ch.closeChan:
+	}
 }
 
 // RegisterEvent will send event to a receive-only channel used to register dispatchers
 func (ch *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
-	ch.register <- event
+	select {
+	case ch.register <- event:
+	case <-ch.closeChan:
+	}
 }
 
 // UnregisterEvent will send event to a receive-only channel used by a dispatcher to signal it has disconnected
 func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
-	ch.unregister <- event
+	select {
+	case ch.unregister <- event:
+	case <-ch.closeChan:
+	}
 }
 
 func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
@@ -170,6 +187,8 @@ func (ch *commonHub) Close() error {
 	if ch.cancelFunc != nil {
 		ch.cancelFunc()
 	}
+
+	close(ch.closeChan)
 
 	return nil
 }
