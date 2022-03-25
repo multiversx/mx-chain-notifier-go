@@ -1,4 +1,4 @@
-package notifier
+package process
 
 // TryCheckProcessedWithRetry exports internal method for testing
 func (eh *eventsHandler) TryCheckProcessedWithRetry(blockHash string) bool {

@@ -9,13 +9,13 @@ import (
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/mocks"
-	"github.com/ElrondNetwork/notifier-go/notifier"
+	"github.com/ElrondNetwork/notifier-go/process"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func createMockEventsHandlerArgs() notifier.ArgsEventsHandler {
-	return notifier.ArgsEventsHandler{
+func createMockEventsHandlerArgs() process.ArgsEventsHandler {
+	return process.ArgsEventsHandler{
 		Config: config.ConnectorApiConfig{
 			CheckDuplicates: false,
 		},
@@ -34,8 +34,8 @@ func TestNewEventsHandler(t *testing.T) {
 		args := createMockEventsHandlerArgs()
 		args.Locker = nil
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
-		require.Equal(t, notifier.ErrNilLockService, err)
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Equal(t, process.ErrNilLockService, err)
 		require.True(t, check.IfNil(eventsHandler))
 	})
 
@@ -45,8 +45,8 @@ func TestNewEventsHandler(t *testing.T) {
 		args := createMockEventsHandlerArgs()
 		args.Publisher = nil
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
-		require.Equal(t, notifier.ErrNilPublisherService, err)
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Equal(t, process.ErrNilPublisherService, err)
 		require.Nil(t, eventsHandler)
 	})
 
@@ -56,8 +56,8 @@ func TestNewEventsHandler(t *testing.T) {
 		args := createMockEventsHandlerArgs()
 		args.MaxLockerConRetries = 0
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
-		require.True(t, errors.Is(err, notifier.ErrInvalidValue))
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.True(t, errors.Is(err, process.ErrInvalidValue))
 		require.Nil(t, eventsHandler)
 	})
 
@@ -65,7 +65,7 @@ func TestNewEventsHandler(t *testing.T) {
 		t.Parallel()
 
 		args := createMockEventsHandlerArgs()
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 		require.NotNil(t, eventsHandler)
 	})
@@ -85,7 +85,7 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.BlockEvents{
@@ -108,7 +108,7 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.BlockEvents{
@@ -137,7 +137,7 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.BlockEvents{
@@ -164,7 +164,7 @@ func TestHandleRevertEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.RevertBlock{
@@ -193,7 +193,7 @@ func TestHandleRevertEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.RevertBlock{
@@ -220,7 +220,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.FinalizedBlock{
@@ -248,7 +248,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		events := data.FinalizedBlock{
@@ -276,7 +276,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
@@ -294,7 +294,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
@@ -314,7 +314,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
@@ -345,7 +345,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
@@ -365,7 +365,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 			},
 		}
 
-		eventsHandler, err := notifier.NewEventsHandler(args)
+		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
