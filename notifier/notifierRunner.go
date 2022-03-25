@@ -52,13 +52,15 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	argsEventsHandler := ArgsEventsHandler{
-		Config:              nr.configs.ConnectorApi,
+	argsEventsHandler := factory.ArgsEventsHandlerFactory{
+		APIConfig:           nr.configs.ConnectorApi,
 		Locker:              lockService,
-		Publisher:           publisher,
+		MqPublisher:         publisher,
+		HubPublisher:        hub,
+		APIType:             nr.configs.Flags.APIType,
 		MaxLockerConRetries: maxLockerConRetries,
 	}
-	eventsHandler, err := NewEventsHandler(argsEventsHandler)
+	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
 	if err != nil {
 		return err
 	}

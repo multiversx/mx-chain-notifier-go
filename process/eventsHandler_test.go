@@ -1,3 +1,3 @@
-package notifier_test
+package process_test
 
 // TODO: add unit tests
