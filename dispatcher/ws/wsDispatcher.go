@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"net"
-	"net/http"
 	"sync"
 	"time"
 
@@ -29,44 +28,24 @@ var (
 	space   = []byte{' '}
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
-}
-
 type websocketDispatcher struct {
 	id   uuid.UUID
 	wg   sync.WaitGroup
 	send chan []byte
-	conn *websocket.Conn
+	conn dispatcher.WSConnection
 	hub  dispatcher.Hub
 }
 
 func newWebsocketDispatcher(
-	conn *websocket.Conn,
+	conn dispatcher.WSConnection,
 	hub dispatcher.Hub,
-) *websocketDispatcher {
+) (*websocketDispatcher, error) {
 	return &websocketDispatcher{
 		id:   uuid.New(),
 		send: make(chan []byte, 256),
 		conn: conn,
 		hub:  hub,
-	}
-}
-
-// Serve is the entry point used by a http server to serve the websocket upgrader
-func Serve(hub dispatcher.Hub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Error("failed upgrading connection", "err", err.Error())
-		return
-	}
-	wsDispatcher := newWebsocketDispatcher(conn, hub)
-	wsDispatcher.hub.RegisterEvent(wsDispatcher)
-
-	go wsDispatcher.writePump()
-	go wsDispatcher.readPump()
+	}, nil
 }
 
 // GetID returns the id corresponding to this dispatcher instance
