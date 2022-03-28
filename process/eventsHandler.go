@@ -67,12 +67,17 @@ func checkArgs(args ArgsEventsHandler) error {
 
 // HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
+	if events.Hash == "" {
+		log.Info("received empty events block hash",
+			"will process", false,
+		)
+		return
+	}
 	shouldProcessEvents := true
 	if eh.config.CheckDuplicates {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
 	}
 
-	// TODO: different log message when nil events or empty hash
 	if events.Events != nil && shouldProcessEvents {
 		log.Info("received events for block",
 			"block hash", events.Hash,
@@ -90,6 +95,13 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 
 // HandleRevertEvents will handle revents events received from observer
 func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
+	if revertBlock.Hash == "" {
+		log.Info("received empty revert block hash",
+			"will process", false,
+		)
+		return
+	}
+
 	shouldProcessRevert := true
 	if eh.config.CheckDuplicates {
 		revertKey := revertKeyPrefix + revertBlock.Hash
@@ -113,6 +125,12 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 
 // HandleFinalizedEvents will handle finalized events received from observer
 func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
+	if finalizedBlock.Hash == "" {
+		log.Info("received empty finalized block hash",
+			"will process", false,
+		)
+		return
+	}
 	shouldProcessFinalized := true
 	if eh.config.CheckDuplicates {
 		finalizedKey := finalizedKeyPrefix + finalizedBlock.Hash
