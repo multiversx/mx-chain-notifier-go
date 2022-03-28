@@ -5,14 +5,7 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/gorilla/websocket"
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
-}
 
 // ArgsWebSocketHandler defines the argument needed to create a websocketHandler
 type ArgsWebSocketHandler struct {
@@ -42,7 +35,7 @@ func checkArgs(args ArgsWebSocketHandler) error {
 	if check.IfNil(args.Hub) {
 		return ErrNilHubHandler
 	}
-	if check.IfNil(args.Upgrader) {
+	if args.Upgrader == nil {
 		return ErrNilWSUpgrader
 	}
 
@@ -51,7 +44,7 @@ func checkArgs(args ArgsWebSocketHandler) error {
 
 // ServeHTTP is the entry point used by a http server to serve the websocket upgrader
 func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := wh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("failed upgrading connection", "err", err.Error())
 		return
@@ -67,20 +60,7 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	go wsDispatcher.readPump()
 }
 
-// // Serve is the entry point used by a http server to serve the websocket upgrader
-// func Serve(hub dispatcher.Hub, w http.ResponseWriter, r *http.Request) {
-// 	conn, err := upgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		log.Error("failed upgrading connection", "err", err.Error())
-// 		return
-// 	}
-// 	wsDispatcher, err := NewWebsocketDispatcher(conn, hub)
-// 	if err != nil {
-// 		log.Error("failed creating a new websocket dispatcher", "err", err.Error())
-// 		return
-// 	}
-// 	wsDispatcher.hub.RegisterEvent(wsDispatcher)
-
-// 	go wsDispatcher.writePump()
-// 	go wsDispatcher.readPump()
-// }
+// IsInterfaceNil returns true if there is no value under the interface
+func (wh *websocketHandler) IsInterfaceNil() bool {
+	return wh == nil
+}

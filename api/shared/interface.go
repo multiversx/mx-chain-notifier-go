@@ -1,8 +1,9 @@
 package shared
 
 import (
+	"net/http"
+
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,7 +27,7 @@ type FacadeHandler interface {
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)
-	GetHub() dispatcher.Hub
+	Serve(w http.ResponseWriter, r *http.Request)
 	GetDispatchType() string
 	IsInterfaceNil() bool
 }

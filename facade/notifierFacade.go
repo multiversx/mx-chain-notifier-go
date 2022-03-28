@@ -1,6 +1,8 @@
 package facade
 
 import (
+	"net/http"
+
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -11,13 +13,13 @@ import (
 type ArgsNotifierFacade struct {
 	APIConfig     config.ConnectorApiConfig
 	EventsHandler EventsHandler
-	Hub           HubHandler
+	WSHandler     dispatcher.WSHandler
 }
 
 type notifierFacade struct {
 	config        config.ConnectorApiConfig
 	eventsHandler EventsHandler
-	hub           HubHandler
+	wsHandler     dispatcher.WSHandler
 }
 
 // NewNotifierFacade creates a new notifier facade instance
@@ -30,7 +32,7 @@ func NewNotifierFacade(args ArgsNotifierFacade) (*notifierFacade, error) {
 	return &notifierFacade{
 		eventsHandler: args.EventsHandler,
 		config:        args.APIConfig,
-		hub:           args.Hub,
+		wsHandler:     args.WSHandler,
 	}, nil
 }
 
@@ -38,8 +40,8 @@ func checkArgs(args ArgsNotifierFacade) error {
 	if check.IfNil(args.EventsHandler) {
 		return ErrNilEventsHandler
 	}
-	if check.IfNil(args.Hub) {
-		return ErrNilHubHandler
+	if check.IfNil(args.WSHandler) {
+		return ErrNilWSHandler
 	}
 
 	return nil
@@ -65,9 +67,9 @@ func (nf *notifierFacade) GetDispatchType() string {
 	return nf.config.DispatchType
 }
 
-// GetHub will return the hub component
-func (nf *notifierFacade) GetHub() dispatcher.Hub {
-	return nf.hub
+// Server will handle a websocket request
+func (nf *notifierFacade) Serve(w http.ResponseWriter, r *http.Request) {
+	nf.wsHandler.ServeHTTP(w, r)
 }
 
 // GetConnectorUserAndPass will return username and password (for basic authentication)

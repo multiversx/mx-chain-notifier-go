@@ -29,6 +29,12 @@ type Hub interface {
 	IsInterfaceNil() bool
 }
 
+// WSHandler defines the behaviour of a websocket handler. It will serve http requests
+type WSHandler interface {
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	IsInterfaceNil() bool
+}
+
 // WSConnection defines the behaviour of a websocket connection
 type WSConnection interface {
 	NextWriter(messageType int) (io.WriteCloser, error)
@@ -44,5 +50,4 @@ type WSConnection interface {
 // WSUpgrader defines the behaviour of a websocket upgrader
 type WSUpgrader interface {
 	Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (WSConnection, error)
-	IsInterfaceNil() bool
 }

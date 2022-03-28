@@ -7,7 +7,6 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
-	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,7 +52,7 @@ func (h *hubGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *hubGroup) wsHandler(c *gin.Context) {
-	ws.Serve(h.facade.GetHub(), c.Writer, c.Request)
+	h.facade.Serve(c.Writer, c.Request)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
