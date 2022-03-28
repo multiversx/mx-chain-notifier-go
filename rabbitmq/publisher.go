@@ -1,12 +1,13 @@
 package rabbitmq
 
 import (
+	"context"
 	"encoding/json"
 
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/streadway/amqp"
 )
 
@@ -14,42 +15,65 @@ const (
 	emptyStr = ""
 )
 
-// TODO: analyse creating a general Publisher component, after proxy and
-// dispatcher refactoring
-
 var log = logger.GetOrCreate("rabbitmq")
 
-type rabbitMqPublisher struct {
-	// TODO: remove this after proxy refactoring and create a separate Publisher interface,
-	//       instead of using Hub interface
-	dispatcher.Hub
+// ArgsRabbitMqPublisher defines the arguments needed for rabbitmq publisher creation
+type ArgsRabbitMqPublisher struct {
+	Client RabbitMqClient
+	Config config.RabbitMQConfig
+}
 
+type rabbitMqPublisher struct {
 	client RabbitMqClient
 	cfg    config.RabbitMQConfig
 
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+
+	cancelFunc func()
+	closeChan  chan struct{}
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance
-func NewRabbitMqPublisher(
-	client RabbitMqClient,
-	cfg config.RabbitMQConfig,
-) *rabbitMqPublisher {
+func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error) {
+	err := checkArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
 	return &rabbitMqPublisher{
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
-		cfg:                cfg,
-		client:             client,
+		cfg:                args.Config,
+		client:             args.Client,
+		closeChan:          make(chan struct{}),
+	}, nil
+}
+
+func checkArgs(args ArgsRabbitMqPublisher) error {
+	if check.IfNil(args.Client) {
+		return ErrNilRabbitMqClient
 	}
+
+	return nil
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
 func (rp *rabbitMqPublisher) Run() {
+	var ctx context.Context
+	ctx, rp.cancelFunc = context.WithCancel(context.Background())
+
+	go rp.run(ctx)
+}
+
+func (rp *rabbitMqPublisher) run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			log.Debug("RabbitMQ publisher is stopping...")
+			return
 		case events := <-rp.broadcast:
 			rp.publishToExchanges(events)
 		case revertBlock := <-rp.broadcastRevert:
@@ -60,22 +84,28 @@ func (rp *rabbitMqPublisher) Run() {
 	}
 }
 
-// BroadcastChan returns a receive-only channel on which events are pushed by producers
-// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastChan() chan<- data.BlockEvents {
-	return rp.broadcast
+// Broadcast will handle the block events pushed by producers, and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) Broadcast(events data.BlockEvents) {
+	select {
+	case rp.broadcast <- events:
+	case <-rp.closeChan:
+	}
 }
 
-// BroadcastRevertChan returns a receive-only channel on which revert events are pushed by producers
-// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastRevertChan() chan<- data.RevertBlock {
-	return rp.broadcastRevert
+// BroadcastRevert will handle the revert event pushed by producers, and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
+	select {
+	case rp.broadcastRevert <- events:
+	case <-rp.closeChan:
+	}
 }
 
-// BroadcastFinalizedChan returns a receive-only channel on which finalized events are pushed
-// Upon reading the channel, the hub publishes on the configured rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	return rp.broadcastFinalized
+// BroadcastFinalized will handle the finalized event pushed by producers, and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
+	select {
+	case rp.broadcastFinalized <- events:
+	case <-rp.closeChan:
+	}
 }
 
 func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
@@ -133,6 +163,17 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 			Body: payload,
 		},
 	)
+}
+
+// Close will close the channels
+func (rp *rabbitMqPublisher) Close() error {
+	if rp.cancelFunc != nil {
+		rp.cancelFunc()
+	}
+
+	close(rp.closeChan)
+
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -10,9 +10,6 @@ import (
 
 var log = logger.GetOrCreate("redis")
 
-// TODO: - handle these using factory pattern
-// 	     - create LockManager instance in main factory based on Redis
-
 // CreateSimpleClient will create a redis client for a redis setup with one instance
 func CreateSimpleClient(cfg config.PubSubConfig) (RedLockClient, error) {
 	opt, err := redis.ParseURL(cfg.Url)

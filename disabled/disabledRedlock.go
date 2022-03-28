@@ -10,17 +10,17 @@ func NewDisabledRedlockWrapper() *disabledRedlockWrapper {
 	return &disabledRedlockWrapper{}
 }
 
-// IsBlockProcessed returns true and nil
-func (drw *disabledRedlockWrapper) IsBlockProcessed(ctx context.Context, blockHash string) (bool, error) {
+// IsEventProcessed returns true and nil
+func (drw *disabledRedlockWrapper) IsEventProcessed(_ context.Context, _ string) (bool, error) {
 	return true, nil
 }
 
 // HasConnection returns true
-func (drw *disabledRedlockWrapper) HasConnection(ctx context.Context) bool {
+func (drw *disabledRedlockWrapper) HasConnection(_ context.Context) bool {
 	return true
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
 func (drw *disabledRedlockWrapper) IsInterfaceNil() bool {
-	return false
+	return drw == nil
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/ElrondNetwork/notifier-go/redis"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 		redlock, err := redis.NewRedlockWrapper(client)
 		require.Nil(t, err)
 
-		ok, err := redlock.IsBlockProcessed(context.Background(), "randStr")
+		ok, err := redlock.IsEventProcessed(context.Background(), "randStr")
 		require.Nil(t, err)
 		require.True(t, ok)
 	})
@@ -68,11 +68,11 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 		redlock, err := redis.NewRedlockWrapper(client)
 		require.Nil(t, err)
 
-		ok, err := redlock.IsBlockProcessed(context.Background(), "randStr")
+		ok, err := redlock.IsEventProcessed(context.Background(), "randStr")
 		require.Nil(t, err)
 		require.True(t, ok)
 
-		ok, err = redlock.IsBlockProcessed(context.Background(), existingKey)
+		ok, err = redlock.IsEventProcessed(context.Background(), existingKey)
 		require.Nil(t, err)
 		require.False(t, ok)
 	})

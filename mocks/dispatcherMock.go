@@ -39,10 +39,10 @@ func (d *DispatcherMock) Subscribe(event dispatcher.SubscribeEvent) {
 
 // Register -
 func (d *DispatcherMock) Register() {
-	d.hub.RegisterChan() <- d
+	d.hub.RegisterEvent(d)
 }
 
 // Unregister -
 func (d *DispatcherMock) Unregister() {
-	d.hub.UnregisterChan() <- d
+	d.hub.UnregisterEvent(d)
 }

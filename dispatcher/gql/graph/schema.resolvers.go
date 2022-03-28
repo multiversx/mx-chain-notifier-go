@@ -18,7 +18,7 @@ func (r *subscriptionResolver) Subscribe(
 	subscriptionEntries []*model.SubscriptionEntry,
 ) (<-chan []*model.Event, error) {
 	gqlDispatcher, _ := NewGraphqlDispatcher()
-	r.hub.RegisterChan() <- gqlDispatcher
+	r.hub.RegisterEvent(gqlDispatcher)
 
 	subscribeEvent := dispatcher.SubscribeEvent{
 		DispatcherID:        gqlDispatcher.GetID(),
@@ -33,9 +33,9 @@ func (r *subscriptionResolver) Subscribe(
 
 	go func() {
 		<-ctx.Done()
-		r.hub.UnregisterChan() <- gqlDispatcher
+		r.hub.UnregisterEvent(gqlDispatcher)
 		r.RemoveDispatchChan(gqlDispatcher.GetID())
-		r.hub.UnregisterChan() <- gqlDispatcher
+		r.hub.UnregisterEvent(gqlDispatcher)
 	}()
 
 	return dispatchChan, nil
