@@ -51,6 +51,11 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.APIType, hub)
+	if err != nil {
+		return err
+	}
+
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
 		APIConfig:           nr.configs.ConnectorApi,
 		Locker:              lockService,
@@ -67,7 +72,7 @@ func (nr *notifierRunner) Start() error {
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler: eventsHandler,
 		APIConfig:     nr.configs.ConnectorApi,
-		Hub:           hub,
+		WSHandler:     wsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
