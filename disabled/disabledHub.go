@@ -34,7 +34,7 @@ func (h *Hub) UnregisterEvent(_ dispatcher.EventDispatcher) {
 }
 
 // Subscribe does nothing
-func (h *Hub) Subscribe(_ dispatcher.SubscribeEvent) {
+func (h *Hub) Subscribe(_ data.SubscribeEvent) {
 }
 
 // Close returns nil

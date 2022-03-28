@@ -1,9 +1,6 @@
 package factory
 
 import (
-	"errors"
-	"strings"
-
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
@@ -11,52 +8,27 @@ import (
 	"github.com/ElrondNetwork/notifier-go/filters"
 )
 
-// TODO: refactor this after dispacher refactoring analysis
-
-const separator = ":"
-
-// ErrMakeCustomHub signals that creation of a new custom hub failed
-var ErrMakeCustomHub = errors.New("failed to make custom hub")
-
-var availableHubDelegates = map[string]func() dispatcher.Hub{
-	"default-custom": func() dispatcher.Hub {
-		return nil
-	},
-}
-
 // CreateHub creates a common hub component
-func CreateHub(apiType string, hubType string) (dispatcher.Hub, error) {
+func CreateHub(apiType string) (dispatcher.Hub, error) {
 	switch apiType {
 	case common.MessageQueueAPIType:
 		return &disabled.Hub{}, nil
 	case common.WSAPIType:
-		return makeHub(hubType)
+		return createHub()
 	default:
 		return nil, common.ErrInvalidAPIType
 	}
 }
 
-func makeHub(hubType string) (dispatcher.Hub, error) {
-	if hubType == common.CommonHubType {
-		eventFilter := filters.NewDefaultFilter()
-		commonHub := hub.NewCommonHub(eventFilter)
-		return commonHub, nil
+func createHub() (dispatcher.Hub, error) {
+	args := hub.ArgsCommonHub{
+		Filter:             filters.NewDefaultFilter(),
+		SubscriptionMapper: dispatcher.NewSubscriptionMapper(),
+	}
+	commonHub, err := hub.NewCommonHub(args)
+	if err != nil {
+		return nil, err
 	}
 
-	hubConfig := strings.Split(hubType, separator)
-
-	if len(hubConfig) < 2 {
-		return nil, ErrMakeCustomHub
-	}
-
-	return tryMakeCustomHubForID(hubConfig[1])
-}
-
-func tryMakeCustomHubForID(id string) (dispatcher.Hub, error) {
-	if makeHubFunc, ok := availableHubDelegates[id]; ok {
-		customHub := makeHubFunc()
-		return customHub, nil
-	}
-
-	return nil, ErrMakeCustomHub
+	return commonHub, nil
 }

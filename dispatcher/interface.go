@@ -24,7 +24,7 @@ type Hub interface {
 	BroadcastFinalized(event data.FinalizedBlock)
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
-	Subscribe(event SubscribeEvent)
+	Subscribe(event data.SubscribeEvent)
 	Close() error
 	IsInterfaceNil() bool
 }
@@ -50,4 +50,12 @@ type WSConnection interface {
 // WSUpgrader defines the behaviour of a websocket upgrader
 type WSUpgrader interface {
 	Upgrade(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (WSConnection, error)
+}
+
+// SubscriptionMapperHandler defines the behaviour of a subscription mapper
+type SubscriptionMapperHandler interface {
+	MatchSubscribeEvent(event data.SubscribeEvent)
+	RemoveSubscriptions(dispatcherID uuid.UUID)
+	Subscriptions() []data.Subscription
+	IsInterfaceNil() bool
 }

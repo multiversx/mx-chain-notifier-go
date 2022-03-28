@@ -155,9 +155,9 @@ func (wd *websocketDispatcher) readPump() {
 	}
 }
 
-func (wd *websocketDispatcher) trySendSubscribeEvent(data []byte) {
-	var subscribeEvent dispatcher.SubscribeEvent
-	err := json.Unmarshal(data, &subscribeEvent)
+func (wd *websocketDispatcher) trySendSubscribeEvent(eventBytes []byte) {
+	var subscribeEvent data.SubscribeEvent
+	err := json.Unmarshal(eventBytes, &subscribeEvent)
 	if err != nil {
 		log.Error("failure unmarshalling subscribe event", "err", err.Error())
 		return

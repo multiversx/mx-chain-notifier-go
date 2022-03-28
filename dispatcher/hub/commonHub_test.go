@@ -6,9 +6,22 @@ import (
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
-	"github.com/ElrondNetwork/notifier-go/test/mocks"
+	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/require"
 )
+
+func createMockCommonHubArgs() ArgsCommonHub {
+	return ArgsCommonHub{
+		Filter:             filters.NewDefaultFilter(),
+		SubscriptionMapper: dispatcher.NewSubscriptionMapper(),
+	}
+}
+
+func makeHub() *commonHub {
+	args := createMockCommonHubArgs()
+	hub, _ := NewCommonHub(args)
+	return hub
+}
 
 func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	t.Parallel()
@@ -51,9 +64,9 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 	dispatcher1 := mocks.NewDispatcherMock(consumer, hub)
 
 	hub.registerDispatcher(dispatcher1)
-	hub.Subscribe(dispatcher.SubscribeEvent{
+	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID:        dispatcher1.GetID(),
-		SubscriptionEntries: []dispatcher.SubscriptionEntry{},
+		SubscriptionEntries: []data.SubscriptionEntry{},
 	})
 
 	blockEvents := getEvents()
@@ -77,18 +90,18 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	hub.registerDispatcher(dispatcher1)
 	hub.registerDispatcher(dispatcher2)
 
-	hub.Subscribe(dispatcher.SubscribeEvent{
+	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher1.GetID(),
-		SubscriptionEntries: []dispatcher.SubscriptionEntry{
+		SubscriptionEntries: []data.SubscriptionEntry{
 			{
 				Address:    "erd1",
 				Identifier: "swap",
 			},
 		},
 	})
-	hub.Subscribe(dispatcher.SubscribeEvent{
+	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher2.GetID(),
-		SubscriptionEntries: []dispatcher.SubscriptionEntry{
+		SubscriptionEntries: []data.SubscriptionEntry{
 			{
 				Address:    "erd2",
 				Identifier: "lock",
@@ -128,8 +141,4 @@ func getEvents() data.BlockEvents {
 			},
 		},
 	}
-}
-
-func makeHub() *commonHub {
-	return NewCommonHub(filters.NewDefaultFilter())
 }
