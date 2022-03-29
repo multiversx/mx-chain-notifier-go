@@ -29,10 +29,8 @@ func CreateLockService(checkDuplicates bool, config config.RedisConfig) (redis.L
 func createRedisClient(cfg config.RedisConfig) (redis.RedLockClient, error) {
 	switch cfg.ConnectionType {
 	case common.RedisInstanceConnType:
-		log.Info("creating redis conn instance")
 		return redis.CreateSimpleClient(cfg)
 	case common.RedisSentinelConnType:
-		log.Info("creating redis conn sentinel")
 		return redis.CreateFailoverClient(cfg)
 	default:
 		return nil, common.ErrInvalidRedisConnType
