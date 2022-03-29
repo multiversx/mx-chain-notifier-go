@@ -19,6 +19,7 @@ const defaultFileLifeSpan = time.Hour * 24
 
 var log = logger.GetOrCreate("fileLogger")
 
+// FileLogger defines the behaviour of a file logger
 type FileLogger interface {
 	ChangeFileLifeSpan(newDuration time.Duration) error
 	IsInterfaceNil() bool
@@ -37,6 +38,7 @@ type fileLogger struct {
 	isClosed          bool
 }
 
+// NewFileLogging created a new file logger instance
 func NewFileLogging(workingDir string, defaultLogsPath string, logFilePrefix string) (*fileLogger, error) {
 	fl := &fileLogger{
 		workingDir:        workingDir,
@@ -58,6 +60,7 @@ func NewFileLogging(workingDir string, defaultLogsPath string, logFilePrefix str
 	return fl, nil
 }
 
+// ChangeFileLifeSpan will set file life span
 func (fl *fileLogger) ChangeFileLifeSpan(newDuration time.Duration) error {
 	if newDuration < minFileLifeSpan {
 		return fmt.Errorf("%w, provided %v", core.ErrInvalidLogFileMinLifeSpan, newDuration)
@@ -74,6 +77,7 @@ func (fl *fileLogger) ChangeFileLifeSpan(newDuration time.Duration) error {
 	return nil
 }
 
+// Close will close the logging file
 func (fl *fileLogger) Close() error {
 	fl.mutIsClosed.Lock()
 	if fl.isClosed {
@@ -93,6 +97,7 @@ func (fl *fileLogger) Close() error {
 	return err
 }
 
+// IsInterfaceNil returns true if there is no value under the interface
 func (fl *fileLogger) IsInterfaceNil() bool {
 	return fl == nil
 }

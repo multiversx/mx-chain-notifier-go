@@ -28,7 +28,6 @@ type FacadeHandler interface {
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)
 	Serve(w http.ResponseWriter, r *http.Request)
-	GetDispatchType() string
 	IsInterfaceNil() bool
 }
 

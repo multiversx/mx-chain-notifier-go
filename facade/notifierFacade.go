@@ -62,11 +62,6 @@ func (nf *notifierFacade) HandleFinalizedEvents(events data.FinalizedBlock) {
 	nf.eventsHandler.HandleFinalizedEvents(events)
 }
 
-// GetDispatchType will provide dispatch type based on config
-func (nf *notifierFacade) GetDispatchType() string {
-	return nf.config.DispatchType
-}
-
 // Server will handle a websocket request
 func (nf *notifierFacade) Serve(w http.ResponseWriter, r *http.Request) {
 	nf.wsHandler.ServeHTTP(w, r)
