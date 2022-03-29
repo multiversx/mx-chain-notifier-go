@@ -36,7 +36,7 @@ func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
-	lockService, err := factory.CreateLockService(nr.configs.Flags.APIType, nr.configs)
+	lockService, err := factory.CreateLockService(nr.configs.ConnectorApi.CheckDuplicates, nr.configs.Redis)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	hub, err := factory.CreateHub(nr.configs.Flags.APIType, nr.configs.ConnectorApi.HubType)
+	hub, err := factory.CreateHub(nr.configs.Flags.APIType)
 	if err != nil {
 		return err
 	}

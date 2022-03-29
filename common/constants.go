@@ -10,3 +10,11 @@ const (
 	// CommonHubType defines the common hub type name
 	CommonHubType string = "common"
 )
+
+const (
+	// RedisInstanceConnType specifies a redis connection to a single instance
+	RedisInstanceConnType string = "instance"
+
+	// RedisSentinelConnType specifies a redis connection to a setup with sentinel
+	RedisSentinelConnType string = "sentinel"
+)
