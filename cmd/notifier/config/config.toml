@@ -10,7 +10,6 @@
 
     # CheckDuplicates signals if the events received from observers have been already pushed to clients
     # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
-    # Defaults to: false
     CheckDuplicates = true
 
 [Redis]
@@ -26,12 +25,11 @@
     MasterName = "mymaster"
 
     # The sentinel url for failover client
-    SentinelUrl = "sentinel:26379"
+    SentinelUrl = "localhost:26379"
 
     # The redis connection type. Options: | instance | sentinel |
     # instance - it will try to connect to a single redis instance
     # sentinel - it will try to connect to redis setup with master, slave and sentinel instances
-    # Defaults to: instance
     ConnectionType = "sentinel"
 
 [RabbitMQ]
