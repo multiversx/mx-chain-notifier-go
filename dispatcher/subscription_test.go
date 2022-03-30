@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
-
 func TestSubscriptionMap_Subscriptions(t *testing.T) {
 	t.Parallel()
 
@@ -155,6 +153,8 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 }
 
 func generateSubscribeEvents(num int) []SubscribeEvent {
+	var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	idsLen := num / 4
 	var dispatcherIDs []uuid.UUID
 	for i := 0; i < idsLen; i++ {
