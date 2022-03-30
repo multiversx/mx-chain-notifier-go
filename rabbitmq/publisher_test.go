@@ -1,6 +1,8 @@
 package rabbitmq_test
 
 import (
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
@@ -51,13 +53,13 @@ func TestRabbitMqPublisher(t *testing.T) {
 func TestBroadcast(t *testing.T) {
 	t.Parallel()
 
-	done := make(chan struct{})
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
 
-	wasCalled := false
 	client := &mocks.RabbitClientStub{
 		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
-			wasCalled = true
-			done <- struct{}{}
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
 			return nil
 		},
 	}
@@ -69,24 +71,26 @@ func TestBroadcast(t *testing.T) {
 	require.Nil(t, err)
 
 	rabbitmq.Run()
+	defer rabbitmq.Close()
+	wg.Add(1)
 
 	rabbitmq.Broadcast(data.BlockEvents{})
 
-	<-done
+	wg.Wait()
 
-	assert.True(t, wasCalled)
+	assert.Equal(t, uint32(1), numCalls)
 }
 
 func TestBroadcastRevert(t *testing.T) {
 	t.Parallel()
 
-	done := make(chan struct{})
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
 
-	wasCalled := false
 	client := &mocks.RabbitClientStub{
 		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
-			wasCalled = true
-			done <- struct{}{}
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
 			return nil
 		},
 	}
@@ -99,24 +103,25 @@ func TestBroadcastRevert(t *testing.T) {
 
 	rabbitmq.Run()
 	defer rabbitmq.Close()
+	wg.Add(1)
 
 	rabbitmq.BroadcastRevert(data.RevertBlock{})
 
-	<-done
+	wg.Wait()
 
-	assert.True(t, wasCalled)
+	assert.Equal(t, uint32(1), numCalls)
 }
 
 func TestBroadcastFinalized(t *testing.T) {
 	t.Parallel()
 
-	done := make(chan struct{})
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
 
-	wasCalled := false
 	client := &mocks.RabbitClientStub{
 		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
-			wasCalled = true
-			done <- struct{}{}
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
 			return nil
 		},
 	}
@@ -129,12 +134,13 @@ func TestBroadcastFinalized(t *testing.T) {
 
 	rabbitmq.Run()
 	defer rabbitmq.Close()
+	wg.Add(1)
 
 	rabbitmq.BroadcastFinalized(data.FinalizedBlock{})
 
-	<-done
+	wg.Wait()
 
-	assert.True(t, wasCalled)
+	assert.Equal(t, uint32(1), numCalls)
 }
 
 func TestClose(t *testing.T) {
