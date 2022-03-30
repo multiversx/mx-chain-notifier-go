@@ -8,6 +8,7 @@ import (
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/google/uuid"
@@ -28,6 +29,12 @@ var (
 	space   = []byte{' '}
 )
 
+// argsWebSocketDispatcher defines the arguments needed for ws dispatcher
+type argsWebSocketDispatcher struct {
+	Hub  dispatcher.Hub
+	Conn dispatcher.WSConnection
+}
+
 type websocketDispatcher struct {
 	id   uuid.UUID
 	wg   sync.WaitGroup
@@ -36,15 +43,20 @@ type websocketDispatcher struct {
 	hub  dispatcher.Hub
 }
 
-func newWebsocketDispatcher(
-	conn dispatcher.WSConnection,
-	hub dispatcher.Hub,
-) (*websocketDispatcher, error) {
+// newWebSocketDispatcher createa a new ws dispatcher instance
+func newWebSocketDispatcher(args argsWebSocketDispatcher) (*websocketDispatcher, error) {
+	if check.IfNil(args.Hub) {
+		return nil, ErrNilHubHandler
+	}
+	if args.Conn == nil {
+		return nil, ErrNilWSConn
+	}
+
 	return &websocketDispatcher{
 		id:   uuid.New(),
 		send: make(chan []byte, 256),
-		conn: conn,
-		hub:  hub,
+		conn: args.Conn,
+		hub:  args.Hub,
 	}, nil
 }
 

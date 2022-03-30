@@ -49,7 +49,12 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Error("failed upgrading connection", "err", err.Error())
 		return
 	}
-	wsDispatcher, err := newWebsocketDispatcher(conn, wh.hub)
+
+	args := argsWebSocketDispatcher{
+		Hub:  wh.hub,
+		Conn: conn,
+	}
+	wsDispatcher, err := newWebSocketDispatcher(args)
 	if err != nil {
 		log.Error("failed creating a new websocket dispatcher", "err", err.Error())
 		return
