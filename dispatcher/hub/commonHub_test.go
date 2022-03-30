@@ -7,6 +7,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
 	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,16 +18,47 @@ func createMockCommonHubArgs() ArgsCommonHub {
 	}
 }
 
-func makeHub() *commonHub {
-	args := createMockCommonHubArgs()
-	hub, _ := NewCommonHub(args)
-	return hub
+func TestNewCommonHub(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil event filter", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockCommonHubArgs()
+		args.Filter = nil
+
+		hub, err := NewCommonHub(args)
+		require.Nil(t, hub)
+		assert.Equal(t, ErrNilEventFilter, err)
+	})
+
+	t.Run("nil subscription mapper", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockCommonHubArgs()
+		args.SubscriptionMapper = nil
+
+		hub, err := NewCommonHub(args)
+		require.Nil(t, hub)
+		assert.Equal(t, ErrNilSubscriptionMapper, err)
+	})
+
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockCommonHubArgs()
+		hub, err := NewCommonHub(args)
+		require.Nil(t, err)
+		require.NotNil(t, hub)
+	})
 }
 
 func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
@@ -41,7 +73,9 @@ func TestCommonHub_RegisterDispatcher(t *testing.T) {
 func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
@@ -58,7 +92,9 @@ func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	consumer := mocks.NewConsumerMock()
 	dispatcher1 := mocks.NewDispatcherMock(consumer, hub)
@@ -80,7 +116,9 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	consumer1 := mocks.NewConsumerMock()
 	dispatcher1 := mocks.NewDispatcherMock(consumer1, hub)
@@ -115,6 +153,18 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 
 	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
 	require.True(t, consumer2.HasEvent(blockEvents.Events[1]))
+}
+
+func TestCommonHubRun(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	hub.Run()
+	err = hub.Close()
+	require.Nil(t, err)
 }
 
 func getEvents() data.BlockEvents {
