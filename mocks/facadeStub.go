@@ -42,7 +42,7 @@ func (fs *FacadeStub) GetDispatchType() string {
 		return fs.GetDispatchTypeCalled()
 	}
 
-	return ""
+	return "dispatch:*"
 }
 
 // GetHub -

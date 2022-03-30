@@ -78,7 +78,7 @@ func TestBroadcast(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, uint32(1), numCalls)
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
 func TestBroadcastRevert(t *testing.T) {
@@ -109,7 +109,7 @@ func TestBroadcastRevert(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, uint32(1), numCalls)
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
 func TestBroadcastFinalized(t *testing.T) {
@@ -140,7 +140,7 @@ func TestBroadcastFinalized(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, uint32(1), numCalls)
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
 func TestClose(t *testing.T) {
