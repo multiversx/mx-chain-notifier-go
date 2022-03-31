@@ -1,19 +1,15 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"os"
-	"os/signal"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/notifier-go/cmd/logging"
 	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/proxy"
+	"github.com/ElrondNetwork/notifier-go/notifier"
 	"github.com/urfave/cli"
 )
 
@@ -21,15 +17,6 @@ const (
 	defaultLogsPath    = "logs"
 	logFilePrefix      = "event-notifier"
 	logFileLifeSpanSec = 86400
-
-	rabbitApiType   = "rabbit-api"
-	observerApiType = "observer-api"
-	clientApiType   = "client-api"
-	notifierType    = "notifier"
-)
-
-var (
-	backgroundContextTimeout = 5 * time.Second
 )
 
 var (
@@ -102,34 +89,39 @@ func main() {
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Error(err.Error())
-		panic(err)
+		os.Exit(1)
 	}
 }
 
 func startEventNotifierProxy(ctx *cli.Context) error {
 	log.Info("starting eventNotifier proxy...")
 
-	fileLogging, err := initLogger(ctx)
+	flagsConfig, err := getFlagsConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	generalConfigPath := ctx.GlobalString(generalConfigFile.Name)
-	cfg, err := config.LoadConfig(generalConfigPath)
+	fileLogging, err := initLogger(flagsConfig)
 	if err != nil {
 		return err
 	}
 
-	typeValue := ctx.GlobalString(apiType.Name)
-	api, err := initWebserver(typeValue, cfg)
+	cfg, err := config.LoadConfig(flagsConfig.GeneralConfigPath)
+	if err != nil {
+		return err
+	}
+	cfg.Flags = flagsConfig
+
+	notifierRunner, err := notifier.NewNotifierRunner(cfg)
 	if err != nil {
 		return err
 	}
 
-	server := api.Run()
+	err = notifierRunner.Start()
+	if err != nil {
+		return err
+	}
 
-	waitForGracefulShutdown(server)
-	log.Debug("closing eventNotifier proxy...")
 	if !check.IfNil(fileLogging) {
 		err = fileLogging.Close()
 		if err != nil {
@@ -140,38 +132,32 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	return nil
 }
 
-func initWebserver(typeValue string, cfg *config.GeneralConfig) (*proxy.WebServer, error) {
-	switch typeValue {
-	case observerApiType:
-		return proxy.NewObserverApi(cfg)
-	case rabbitApiType:
-		return proxy.NewObserverToRabbitApi(cfg)
-	case clientApiType:
-		return proxy.NewClientApi(cfg)
-	case notifierType:
-		return proxy.NewNotifierApi(cfg)
-	default:
-		return nil, errors.New("invalid apiType provided")
-	}
-}
-
-func initLogger(ctx *cli.Context) (logging.FileLogger, error) {
-	logLevelValue := ctx.GlobalString(logLevel.Name)
-
-	err := logger.SetLogLevel(logLevelValue)
-	if err != nil {
-		return nil, err
-	}
+func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
+	flagsConfig := &config.FlagsConfig{}
 
 	workingDir, err := getWorkingDir(ctx)
 	if err != nil {
 		return nil, err
 	}
+	flagsConfig.WorkingDir = workingDir
+
+	flagsConfig.LogLevel = ctx.GlobalString(logLevel.Name)
+	flagsConfig.SaveLogFile = ctx.GlobalBool(logSaveFile.Name)
+	flagsConfig.GeneralConfigPath = ctx.GlobalString(generalConfigFile.Name)
+	flagsConfig.APIType = ctx.GlobalString(apiType.Name)
+
+	return flagsConfig, nil
+}
+
+func initLogger(config *config.FlagsConfig) (logging.FileLogger, error) {
+	err := logger.SetLogLevel(config.LogLevel)
+	if err != nil {
+		return nil, err
+	}
 
 	var fileLogging logging.FileLogger
-	saveLogs := ctx.GlobalBool(logSaveFile.Name)
-	if saveLogs {
-		fileLogging, err = logging.NewFileLogging(workingDir, defaultLogsPath, logFilePrefix)
+	if config.SaveLogFile {
+		fileLogging, err = logging.NewFileLogging(config.WorkingDir, defaultLogsPath, logFilePrefix)
 		if err != nil {
 			return fileLogging, err
 		}
@@ -184,19 +170,6 @@ func initLogger(ctx *cli.Context) (logging.FileLogger, error) {
 	}
 
 	return fileLogging, nil
-}
-
-func waitForGracefulShutdown(server *http.Server) {
-	quit := make(chan os.Signal)
-	signal.Notify(quit, os.Interrupt, os.Kill)
-	<-quit
-
-	ctx, cancel := context.WithTimeout(context.Background(), backgroundContextTimeout)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		panic(err)
-	}
-	_ = server.Close()
 }
 
 func getWorkingDir(ctx *cli.Context) (string, error) {

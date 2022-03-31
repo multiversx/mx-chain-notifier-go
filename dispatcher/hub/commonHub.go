@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"sync"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -22,6 +23,8 @@ type commonHub struct {
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+	closeChan          chan struct{}
+	cancelFunc         func()
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -36,66 +39,93 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
+		closeChan:          make(chan struct{}),
 	}
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
-func (wh *commonHub) Run() {
+func (ch *commonHub) Run() {
+	var ctx context.Context
+	ctx, ch.cancelFunc = context.WithCancel(context.Background())
+
+	go ch.run(ctx)
+}
+
+func (ch *commonHub) run(ctx context.Context) {
 	for {
 		select {
-		case events := <-wh.broadcast:
-			wh.handleBroadcast(events)
+		case <-ctx.Done():
+			log.Debug("commonHub is stopping...")
+			return
 
-		case revertEvent := <-wh.broadcastRevert:
-			wh.handleRevertBroadcast(revertEvent)
+		case events := <-ch.broadcast:
+			ch.handleBroadcast(events)
 
-		case finalizedEvent := <-wh.broadcastFinalized:
-			wh.handleFinalizedBroadcast(finalizedEvent)
+		case revertEvent := <-ch.broadcastRevert:
+			ch.handleRevertBroadcast(revertEvent)
 
-		case dispatcherClient := <-wh.register:
-			wh.registerDispatcher(dispatcherClient)
+		case finalizedEvent := <-ch.broadcastFinalized:
+			ch.handleFinalizedBroadcast(finalizedEvent)
 
-		case dispatcherClient := <-wh.unregister:
-			wh.unregisterDispatcher(dispatcherClient)
+		case dispatcherClient := <-ch.register:
+			ch.registerDispatcher(dispatcherClient)
+
+		case dispatcherClient := <-ch.unregister:
+			ch.unregisterDispatcher(dispatcherClient)
 		}
 	}
 }
 
 // Subscribe is used by a dispatcher to send a dispatcher.SubscribeEvent
-func (wh *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
-	wh.subscriptionMapper.MatchSubscribeEvent(event)
+func (ch *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
+	ch.subscriptionMapper.MatchSubscribeEvent(event)
 }
 
-// BroadcastChan returns a receive-only channel on which events are pushed by producers
+// Broadcast handles block events pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastChan() chan<- data.BlockEvents {
-	return wh.broadcast
+func (ch *commonHub) Broadcast(events data.BlockEvents) {
+	select {
+	case ch.broadcast <- events:
+	case <-ch.closeChan:
+	}
 }
 
-// BroadcastRevertChan returns a receive-only channel on which revert events are pushed
+// BroadcastRevert handles revert event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastRevertChan() chan<- data.RevertBlock {
-	return wh.broadcastRevert
+func (ch *commonHub) BroadcastRevert(event data.RevertBlock) {
+	select {
+	case ch.broadcastRevert <- event:
+	case <-ch.closeChan:
+	}
 }
 
-// BroadcastFinalizedChan returns a receive-only channel on which finalized events are pushed
+// BroadcastFinalized handles finalized event pushed by producers into the broadcast channel
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
-func (wh *commonHub) BroadcastFinalizedChan() chan<- data.FinalizedBlock {
-	return wh.broadcastFinalized
+func (ch *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
+	select {
+	case ch.broadcastFinalized <- event:
+	case <-ch.closeChan:
+	}
 }
 
-// RegisterChan returns a receive-only channel used to register dispatchers
-func (wh *commonHub) RegisterChan() chan<- dispatcher.EventDispatcher {
-	return wh.register
+// RegisterEvent will send event to a receive-only channel used to register dispatchers
+func (ch *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
+	select {
+	case ch.register <- event:
+	case <-ch.closeChan:
+	}
 }
 
-// UnregisterChan return a receive-only channel used by a dispatcher to signal it has disconnected
-func (wh *commonHub) UnregisterChan() chan<- dispatcher.EventDispatcher {
-	return wh.unregister
+// UnregisterEvent will send event to a receive-only channel used by a dispatcher to signal it has disconnected
+func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
+	select {
+	case ch.unregister <- event:
+	case <-ch.closeChan:
+	}
 }
 
-func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
-	subscriptions := wh.subscriptionMapper.Subscriptions()
+func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
 
 	dispatchersMap := make(map[uuid.UUID][]data.Event)
 	mapEventToDispatcher := func(id uuid.UUID, e data.Event) {
@@ -104,49 +134,66 @@ func (wh *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 
 	for _, event := range blockEvents.Events {
 		for _, subscription := range subscriptions {
-			if wh.filter.MatchEvent(subscription, event) {
+			if ch.filter.MatchEvent(subscription, event) {
 				mapEventToDispatcher(subscription.DispatcherID, event)
 			}
 		}
 	}
 
-	wh.rwMut.RLock()
-	defer wh.rwMut.RUnlock()
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
 	for id, eventValues := range dispatchersMap {
-		if d, ok := wh.dispatchers[id]; ok {
+		if d, ok := ch.dispatchers[id]; ok {
 			d.PushEvents(eventValues)
 		}
 	}
 }
 
-func (wh *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
+// TODO: evaluate these 2 scenarios
+func (ch *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
 }
 
-func (wh *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock) {
+func (ch *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock) {
 }
 
-func (wh *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
-	wh.rwMut.Lock()
-	defer wh.rwMut.Unlock()
+func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
+	ch.rwMut.Lock()
+	defer ch.rwMut.Unlock()
 
-	if _, ok := wh.dispatchers[d.GetID()]; ok {
+	if _, ok := ch.dispatchers[d.GetID()]; ok {
 		return
 	}
 
-	wh.dispatchers[d.GetID()] = d
+	ch.dispatchers[d.GetID()] = d
 
 	log.Info("registered new dispatcher", "dispatcherID", d.GetID())
 }
 
-func (wh *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
-	wh.rwMut.Lock()
-	defer wh.rwMut.Unlock()
+func (ch *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
+	ch.rwMut.Lock()
+	defer ch.rwMut.Unlock()
 
-	if _, ok := wh.dispatchers[d.GetID()]; ok {
-		delete(wh.dispatchers, d.GetID())
+	if _, ok := ch.dispatchers[d.GetID()]; ok {
+		delete(ch.dispatchers, d.GetID())
 	}
 
 	log.Info("unregistered dispatcher", "dispatcherID", d.GetID(), "unsubscribing", true)
 
-	wh.subscriptionMapper.RemoveSubscriptions(d.GetID())
+	ch.subscriptionMapper.RemoveSubscriptions(d.GetID())
+}
+
+// Close will close the goroutine and channels
+func (ch *commonHub) Close() error {
+	if ch.cancelFunc != nil {
+		ch.cancelFunc()
+	}
+
+	close(ch.closeChan)
+
+	return nil
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (ch *commonHub) IsInterfaceNil() bool {
+	return ch == nil
 }

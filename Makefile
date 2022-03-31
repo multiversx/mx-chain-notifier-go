@@ -5,6 +5,18 @@ debugger := $(shell which dlv)
 .DEFAULT_GOAL := help
 
 # #########################
+# Base commands
+# #########################
+
+test:
+	@echo "  >  Running unit tests"
+	go test -cover -race -coverprofile=coverage.txt -covermode=atomic -v ./...
+
+build:
+	(cd cmd && go build)
+
+
+# #########################
 # Manage Notifier locally
 # #########################
 
@@ -98,4 +110,3 @@ compose-stop:
 compose-rm: export API_TYPE = rabbit-api
 compose-rm:
 	docker-compose down
-
