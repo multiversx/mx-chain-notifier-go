@@ -1,8 +1,9 @@
 package mocks
 
 import (
+	"net/http"
+
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 
 // FacadeStub implements FacadeHandler interface
@@ -10,8 +11,7 @@ type FacadeStub struct {
 	HandlePushEventsCalled        func(events data.BlockEvents)
 	HandleRevertEventsCalled      func(events data.RevertBlock)
 	HandleFinalizedEventsCalled   func(events data.FinalizedBlock)
-	GetDispatchTypeCalled         func() string
-	GetHubCalled                  func() dispatcher.Hub
+	ServeCalled                   func(w http.ResponseWriter, r *http.Request)
 	GetConnectorUserAndPassCalled func() (string, string)
 }
 
@@ -36,22 +36,11 @@ func (fs *FacadeStub) HandleFinalizedEvents(events data.FinalizedBlock) {
 	}
 }
 
-// GetDispatchType -
-func (fs *FacadeStub) GetDispatchType() string {
-	if fs.GetDispatchTypeCalled != nil {
-		return fs.GetDispatchTypeCalled()
+// ServeHTTP -
+func (fs *FacadeStub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if fs.ServeCalled != nil {
+		fs.ServeCalled(w, r)
 	}
-
-	return "dispatch:*"
-}
-
-// GetHub -
-func (fs *FacadeStub) GetHub() dispatcher.Hub {
-	if fs.GetHubCalled != nil {
-		return fs.GetHubCalled()
-	}
-
-	return nil
 }
 
 // GetConnectorUserAndPass -

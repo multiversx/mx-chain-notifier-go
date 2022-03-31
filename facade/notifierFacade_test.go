@@ -15,7 +15,7 @@ func createMockFacadeArgs() facade.ArgsNotifierFacade {
 	return facade.ArgsNotifierFacade{
 		EventsHandler: &mocks.EventsHandlerStub{},
 		APIConfig:     config.ConnectorApiConfig{},
-		Hub:           &mocks.HubStub{},
+		WSHandler:     &mocks.WSHandlerStub{},
 	}
 }
 
@@ -33,15 +33,15 @@ func TestNewNotifierFacade(t *testing.T) {
 		require.Equal(t, facade.ErrNilEventsHandler, err)
 	})
 
-	t.Run("nil hub handler", func(t *testing.T) {
+	t.Run("nil ws handler", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockFacadeArgs()
-		args.Hub = nil
+		args.WSHandler = nil
 
 		f, err := facade.NewNotifierFacade(args)
 		require.True(t, check.IfNil(f))
-		require.Equal(t, facade.ErrNilHubHandler, err)
+		require.Equal(t, facade.ErrNilWSHandler, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {
@@ -57,22 +57,17 @@ func TestNewNotifierFacade(t *testing.T) {
 func TestGetters(t *testing.T) {
 	t.Parallel()
 
-	dispatchType := "dispatchTest"
 	expuser := "user1"
 	exppass := "pass1"
 
 	args := createMockFacadeArgs()
-	args.APIConfig.DispatchType = dispatchType
 	args.APIConfig.Username = expuser
 	args.APIConfig.Password = exppass
 
 	f, err := facade.NewNotifierFacade(args)
 	require.Nil(t, err)
 
-	assert.Equal(t, dispatchType, f.GetDispatchType())
-
 	user, pass := f.GetConnectorUserAndPass()
 	assert.Equal(t, expuser, user)
 	assert.Equal(t, exppass, pass)
-
 }

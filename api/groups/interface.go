@@ -17,6 +17,6 @@ type EventsFacadeHandler interface {
 
 // HubFacadeHandler defines the behavior of a facade handler needed for hub group
 type HubFacadeHandler interface {
-	Serve(w http.ResponseWriter, r *http.Request)
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	IsInterfaceNil() bool
 }

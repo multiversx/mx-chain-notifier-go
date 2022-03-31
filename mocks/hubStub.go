@@ -13,7 +13,7 @@ type HubStub struct {
 	BroadcastFinalizedCalled func(event data.FinalizedBlock)
 	RegisterEventCalled      func(event dispatcher.EventDispatcher)
 	UnregisterEventCalled    func(event dispatcher.EventDispatcher)
-	SubscribeCalled          func(event dispatcher.SubscribeEvent)
+	SubscribeCalled          func(event data.SubscribeEvent)
 	CloseCalled              func() error
 }
 
@@ -60,7 +60,7 @@ func (h *HubStub) UnregisterEvent(event dispatcher.EventDispatcher) {
 }
 
 // Subscribe -
-func (h *HubStub) Subscribe(event dispatcher.SubscribeEvent) {
+func (h *HubStub) Subscribe(event data.SubscribeEvent) {
 	if h.SubscribeCalled != nil {
 		h.SubscribeCalled(event)
 	}

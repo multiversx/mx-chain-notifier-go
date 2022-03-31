@@ -52,7 +52,7 @@ func (h *hubGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *hubGroup) wsHandler(c *gin.Context) {
-	h.facade.Serve(c.Writer, c.Request)
+	h.facade.ServeHTTP(c.Writer, c.Request)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
