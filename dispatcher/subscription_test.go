@@ -17,7 +17,7 @@ func TestSubscriptionMap_Subscriptions(t *testing.T) {
 
 	subMap := NewSubscriptionMapper()
 
-	subEvents := generateSubscribeEvents(1000)
+	subEvents := generateSubscribeEvents(10)
 
 	for _, subEvent := range subEvents {
 		subMap.MatchSubscribeEvent(subEvent)
@@ -41,7 +41,7 @@ func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) 
 func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T) {
 	t.Parallel()
 
-	subEvents := generateSubscribeEvents(1000)
+	subEvents := generateSubscribeEvents(10)
 
 	subMap := NewSubscriptionMapper()
 
@@ -132,7 +132,7 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 	t.Parallel()
 
-	subEvents := generateSubscribeEvents(10_000)
+	subEvents := generateSubscribeEvents(10)
 
 	subMap := NewSubscriptionMapper()
 
@@ -140,7 +140,7 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 		subMap.MatchSubscribeEvent(subEvent)
 	}
 
-	rmDispatcherID := subEvents[1200].DispatcherID
+	rmDispatcherID := subEvents[2].DispatcherID
 
 	subMap.RemoveSubscriptions(rmDispatcherID)
 
