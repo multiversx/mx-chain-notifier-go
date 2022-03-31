@@ -14,19 +14,6 @@ services:
         - "6379:6379"
     networks:
       - notifier-net
-  redis-replica:
-    image: "bitnami/redis"
-    environment:
-      - REDIS_REPLICATION_MODE=replica
-      - REDIS_MASTER_HOST=mymaster
-      - ALLOW_EMPTY_PASSWORD=yes
-    hostname: redis-failover
-    ports:
-        - "6379"
-    depends_on:
-      - redis-master
-    networks:
-      - notifier-net
   redis-sentinel:
     image: "bitnami/redis-sentinel"
     environment:
@@ -36,7 +23,6 @@ services:
       - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
     depends_on:
       - redis-master
-      - redis-replica
     ports:
         - "26379:26379"
     networks:
