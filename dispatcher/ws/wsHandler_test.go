@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-logger/check"
-	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/ElrondNetwork/notifier-go/mocks"
@@ -16,7 +15,7 @@ import (
 
 func createMockArgsWSHandler() ws.ArgsWebSocketHandler {
 	return ws.ArgsWebSocketHandler{
-		Hub:      &disabled.Hub{},
+		Hub:      &mocks.HubStub{},
 		Upgrader: &mocks.WSUpgraderStub{},
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/disabled"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +25,7 @@ func (tw *testWriter) Close() error {
 func createMockWSDispatcherArgs() ws.ArgsWSDispatcher {
 	args := ws.ArgsWSDispatcher{}
 
-	args.Hub = &disabled.Hub{}
+	args.Hub = &mocks.HubStub{}
 	args.Conn = &mocks.WSConnStub{}
 	return args
 }
