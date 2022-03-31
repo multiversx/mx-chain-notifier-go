@@ -7,19 +7,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/notifier-go/test"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
-
-var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func TestSubscriptionMap_Subscriptions(t *testing.T) {
 	t.Parallel()
 
 	subMap := NewSubscriptionMapper()
 
-	subEvents := generateSubscribeEvents(1000)
+	subEvents := generateSubscribeEvents(10)
 
 	for _, subEvent := range subEvents {
 		subMap.MatchSubscribeEvent(subEvent)
@@ -43,7 +40,7 @@ func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) 
 func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T) {
 	t.Parallel()
 
-	subEvents := generateSubscribeEvents(1000)
+	subEvents := generateSubscribeEvents(10)
 
 	subMap := NewSubscriptionMapper()
 
@@ -134,7 +131,7 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 	t.Parallel()
 
-	subEvents := generateSubscribeEvents(10_000)
+	subEvents := generateSubscribeEvents(10)
 
 	subMap := NewSubscriptionMapper()
 
@@ -142,7 +139,7 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 		subMap.MatchSubscribeEvent(subEvent)
 	}
 
-	rmDispatcherID := subEvents[1200].DispatcherID
+	rmDispatcherID := subEvents[2].DispatcherID
 
 	subMap.RemoveSubscriptions(rmDispatcherID)
 
@@ -156,6 +153,8 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 }
 
 func generateSubscribeEvents(num int) []SubscribeEvent {
+	var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	idsLen := num / 4
 	var dispatcherIDs []uuid.UUID
 	for i := 0; i < idsLen; i++ {
@@ -172,12 +171,12 @@ func generateSubscribeEvents(num int) []SubscribeEvent {
 			for entryIdx := 0; entryIdx < numEntries; entryIdx++ {
 				var topics []string
 				if randSeed.Intn(2) == 1 {
-					topics = []string{test.RandStr(12), test.RandStr(60)}
+					topics = []string{randStr(12), randStr(60)}
 				}
 
 				entry := SubscriptionEntry{
-					Address:    fmt.Sprintf("erd%s", test.RandStr(30)),
-					Identifier: test.RandStr(12),
+					Address:    fmt.Sprintf("erd%s", randStr(30)),
+					Identifier: randStr(12),
 					Topics:     topics,
 				}
 				subEntries = append(subEntries, entry)

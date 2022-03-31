@@ -6,7 +6,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
-	"github.com/ElrondNetwork/notifier-go/test/mocks"
+	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/require"
 )
 
