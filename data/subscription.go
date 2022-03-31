@@ -10,6 +10,7 @@ type SubscribeEvent struct {
 
 // SubscriptionEntry holds the subscription entry data
 type SubscriptionEntry struct {
+	EventType  string   `json:"eventType"`
 	Address    string   `json:"address"`
 	Identifier string   `json:"identifier"`
 	Topics     []string `json:"topics"`
@@ -21,5 +22,6 @@ type Subscription struct {
 	Identifier   string
 	Topics       []string
 	MatchLevel   string
+	EventType    string
 	DispatcherID uuid.UUID
 }

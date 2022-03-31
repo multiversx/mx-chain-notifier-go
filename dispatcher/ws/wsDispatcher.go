@@ -75,6 +75,24 @@ func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	wd.send <- eventBytes
 }
 
+func (wd *websocketDispatcher) RevertEvent(event data.RevertBlock) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wd.send <- eventBytes
+}
+
+func (wd *websocketDispatcher) FinalizedEvent(event data.FinalizedBlock) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wd.send <- eventBytes
+}
+
 // writePump listens on the send-channel and pushes data on the socket stream
 func (wd *websocketDispatcher) writePump() {
 	ticker := time.NewTicker(pingPeriod)

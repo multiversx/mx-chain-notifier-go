@@ -69,6 +69,7 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 			Topics:       subEntry.Topics,
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   matchLevel,
+			EventType:    subEntry.EventType,
 		}
 		sm.appendSubscription(subscription)
 

@@ -6,6 +6,7 @@ import (
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
@@ -157,6 +158,10 @@ func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 
 	for _, event := range blockEvents.Events {
 		for _, subscription := range subscriptions {
+			if subscription.EventType != common.PushBlockEvents {
+				continue
+			}
+
 			if ch.filter.MatchEvent(subscription, event) {
 				mapEventToDispatcher(subscription.DispatcherID, event)
 			}
@@ -174,9 +179,47 @@ func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 
 // TODO: evaluate these 2 scenarios
 func (ch *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.RevertBlock)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.RevertBlockEvents {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = revertBlock
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.RevertEvent(event)
+		}
+	}
 }
 
 func (ch *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.FinalizedBlock)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.FinalizedBlockEvents {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = finalizedBlock
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.FinalizedEvent(event)
+		}
+	}
 }
 
 func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {

@@ -18,3 +18,9 @@ const (
 	// RedisSentinelConnType specifies a redis connection to a setup with sentinel
 	RedisSentinelConnType string = "sentinel"
 )
+
+const (
+	PushBlockEvents      string = "all_events"
+	RevertBlockEvents    string = "revert_events"
+	FinalizedBlockEvents string = "finalized_events"
+)
