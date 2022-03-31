@@ -3,4 +3,4 @@ test:
 	go test -cover -race -coverprofile=coverage.txt -covermode=atomic -v ./...
 
 build:
-	(cd cmd && go build)
+	(cd cmd/notifier && go build)
