@@ -1,9 +1,11 @@
 package ws
 
+// ArgsWSDispatcher -
 type ArgsWSDispatcher struct {
 	argsWebSocketDispatcher
 }
 
+// NewTestWSDispatcher -
 func NewTestWSDispatcher(args ArgsWSDispatcher) (*websocketDispatcher, error) {
 	wsArgs := argsWebSocketDispatcher{
 		Hub:  args.Hub,
@@ -13,10 +15,12 @@ func NewTestWSDispatcher(args ArgsWSDispatcher) (*websocketDispatcher, error) {
 	return newWebSocketDispatcher(wsArgs)
 }
 
+// WritePump -
 func (wd *websocketDispatcher) WritePump() {
 	wd.writePump()
 }
 
+// ReadPump -
 func (wd *websocketDispatcher) ReadPump() {
 	wd.readPump()
 }
