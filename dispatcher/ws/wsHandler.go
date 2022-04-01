@@ -7,31 +7,31 @@ import (
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 
-// ArgsWebSocketHandler defines the argument needed to create a websocketHandler
-type ArgsWebSocketHandler struct {
+// ArgsWebSocketProcessor defines the argument needed to create a websocketHandler
+type ArgsWebSocketProcessor struct {
 	Hub      dispatcher.Hub
 	Upgrader dispatcher.WSUpgrader
 }
 
-type websocketHandler struct {
+type websocketProcessor struct {
 	hub      dispatcher.Hub
 	upgrader dispatcher.WSUpgrader
 }
 
-// NewWebSocketHandler creates a new websocketHandler component
-func NewWebSocketHandler(args ArgsWebSocketHandler) (*websocketHandler, error) {
+// NewWebSocketProcessor creates a new websocketProcessor component
+func NewWebSocketProcessor(args ArgsWebSocketProcessor) (*websocketProcessor, error) {
 	err := checkArgs(args)
 	if err != nil {
 		return nil, err
 	}
 
-	return &websocketHandler{
+	return &websocketProcessor{
 		hub:      args.Hub,
 		upgrader: args.Upgrader,
 	}, nil
 }
 
-func checkArgs(args ArgsWebSocketHandler) error {
+func checkArgs(args ArgsWebSocketProcessor) error {
 	if check.IfNil(args.Hub) {
 		return ErrNilHubHandler
 	}
@@ -43,7 +43,7 @@ func checkArgs(args ArgsWebSocketHandler) error {
 }
 
 // ServeHTTP is the entry point used by a http server to serve the websocket upgrader
-func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (wh *websocketProcessor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := wh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("failed upgrading connection", "err", err.Error())
@@ -66,6 +66,6 @@ func (wh *websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
-func (wh *websocketHandler) IsInterfaceNil() bool {
+func (wh *websocketProcessor) IsInterfaceNil() bool {
 	return wh == nil
 }

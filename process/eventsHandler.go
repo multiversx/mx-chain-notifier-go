@@ -68,7 +68,7 @@ func checkArgs(args ArgsEventsHandler) error {
 // HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 	if events.Hash == "" {
-		log.Info("received empty events block hash",
+		log.Warn("received empty events block hash",
 			"will process", false,
 		)
 		return
@@ -96,7 +96,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 // HandleRevertEvents will handle revents events received from observer
 func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	if revertBlock.Hash == "" {
-		log.Info("received empty revert block hash",
+		log.Warn("received empty revert block hash",
 			"will process", false,
 		)
 		return
@@ -126,7 +126,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 // HandleFinalizedEvents will handle finalized events received from observer
 func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
 	if finalizedBlock.Hash == "" {
-		log.Info("received empty finalized block hash",
+		log.Warn("received empty finalized block hash",
 			"will process", false,
 		)
 		return

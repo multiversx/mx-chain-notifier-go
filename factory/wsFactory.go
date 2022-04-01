@@ -30,14 +30,9 @@ func createWSHandler(hub dispatcher.Hub) (dispatcher.WSHandler, error) {
 		return nil, err
 	}
 
-	args := ws.ArgsWebSocketHandler{
+	args := ws.ArgsWebSocketProcessor{
 		Hub:      hub,
 		Upgrader: upgrader,
 	}
-	wsHandler, err := ws.NewWebSocketHandler(args)
-	if err != nil {
-		return nil, err
-	}
-
-	return wsHandler, nil
+	return ws.NewWebSocketProcessor(args)
 }

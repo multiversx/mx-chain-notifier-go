@@ -25,10 +25,5 @@ func createHub() (dispatcher.Hub, error) {
 		Filter:             filters.NewDefaultFilter(),
 		SubscriptionMapper: dispatcher.NewSubscriptionMapper(),
 	}
-	commonHub, err := hub.NewCommonHub(args)
-	if err != nil {
-		return nil, err
-	}
-
-	return commonHub, nil
+	return hub.NewCommonHub(args)
 }
