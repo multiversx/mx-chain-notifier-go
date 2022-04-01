@@ -3,6 +3,7 @@ package hub
 import (
 	"testing"
 
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
@@ -165,6 +166,69 @@ func TestCommonHubRun(t *testing.T) {
 	hub.Run()
 	err = hub.Close()
 	require.Nil(t, err)
+}
+
+func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	wasCalled := false
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		RevertEventCalled: func(event data.RevertBlock) {
+			wasCalled = true
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.RevertBlockEvents,
+			},
+		},
+	})
+
+	blockEvents := data.RevertBlock{
+		Hash:  "hash1",
+		Nonce: 1,
+	}
+
+	hub.handleRevertBroadcast(blockEvents)
+
+	assert.True(t, wasCalled)
+}
+
+func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	wasCalled := false
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		FinalizedEventCalled: func(event data.FinalizedBlock) {
+			wasCalled = true
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.FinalizedBlockEvents,
+			},
+		},
+	})
+
+	blockEvents := data.FinalizedBlock{
+		Hash: "hash1",
+	}
+
+	hub.handleFinalizedBroadcast(blockEvents)
+
+	assert.True(t, wasCalled)
 }
 
 func getEvents() data.BlockEvents {
