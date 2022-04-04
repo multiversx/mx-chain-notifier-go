@@ -60,6 +60,16 @@ Using the `cmd` package as root, execute the following commands:
 - build executable: `go build -o event-notifier`
 - run `./event-notifier`
 
+---
+This can also be done using a single command from `Makefile`:
+```bash
+# by default, notifier api type
+make run
+
+# specify notifier running mode (eq: rabbit-api)
+make run api_type=rabbit-api
+```
+
 ## Launching the proxy
 
 Before launching the proxy service, it has to be configured so that it runs with the
@@ -99,6 +109,50 @@ The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/config/confi
     
     # Password is the password needed to authorize an observer to push event data
     Password = ""
+```
+
+After the configuration file is set up, the notifier instance can be
+launched.
+
+There are two ways in which notifier-go can be started: `notifier` mode and
+`rabbit-api` mode.  There is a development setup using docker containers (with
+docker compose) that can be used for this.
+
+> If you want to use a similar setup in production systems, make sure to check
+> `docker-compose.yaml` file and set up proper infrastructure and security
+> configurations
+
+* `notifier` mode can be launched as following (check `Makefile` for details): 
+```bash
+# Starts setup with one notifier instance
+make docker-new api_type=notifier
+
+# Stop notifier instance
+make docker-stop
+
+# Start notifier instance
+make docker-start
+```
+
+* `rabbit-api` mode can be launched as following (check `Makefile` for details): 
+Manage RabbitMQ and Redis
+```bash
+# Starts setup with one notifier instance, redis sentinel setup and rabbitmq
+make compose-new
+
+# Stop all containers
+make compose-stop
+
+# Start start all containers
+make compose-start
+
+# Shutdown entire setup
+make compose-rm
+```
+
+Start Notifier instance
+```bash
+make docker-new api_type=rabbit-api
 ```
 
 ## Subscribing
