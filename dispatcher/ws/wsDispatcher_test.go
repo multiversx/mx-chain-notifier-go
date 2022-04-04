@@ -12,12 +12,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// testWriter implements io.WriteCloser
 type testWriter struct{}
 
+// Write implements io.Writer interface for testing
 func (tw *testWriter) Write(p []byte) (n int, err error) {
 	return 0, nil
 }
 
+// Close implements io.Closer interface for testing
 func (tw *testWriter) Close() error {
 	return nil
 }
