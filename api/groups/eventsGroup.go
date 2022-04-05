@@ -68,7 +68,6 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 func (h *eventsGroup) pushEvents(c *gin.Context) {
 	var blockEvents data.BlockEvents
 
-	// TODO: handle when not binding
 	err := c.Bind(&blockEvents)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())

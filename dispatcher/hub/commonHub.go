@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
@@ -13,10 +14,16 @@ import (
 
 var log = logger.GetOrCreate("hub")
 
+// ArgsCommonHub defines the arguments needed for common hub creation
+type ArgsCommonHub struct {
+	Filter             filters.EventFilter
+	SubscriptionMapper dispatcher.SubscriptionMapperHandler
+}
+
 type commonHub struct {
 	rwMut              sync.RWMutex
 	filter             filters.EventFilter
-	subscriptionMapper *dispatcher.SubscriptionMapper
+	subscriptionMapper dispatcher.SubscriptionMapperHandler
 	dispatchers        map[uuid.UUID]dispatcher.EventDispatcher
 	register           chan dispatcher.EventDispatcher
 	unregister         chan dispatcher.EventDispatcher
@@ -28,11 +35,16 @@ type commonHub struct {
 }
 
 // NewCommonHub creates a new commonHub instance
-func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
+func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
+	err := checkArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
 	return &commonHub{
 		rwMut:              sync.RWMutex{},
-		filter:             eventFilter,
-		subscriptionMapper: dispatcher.NewSubscriptionMapper(),
+		filter:             args.Filter,
+		subscriptionMapper: args.SubscriptionMapper,
 		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:           make(chan dispatcher.EventDispatcher),
 		unregister:         make(chan dispatcher.EventDispatcher),
@@ -40,7 +52,18 @@ func NewCommonHub(eventFilter filters.EventFilter) *commonHub {
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
 		closeChan:          make(chan struct{}),
+	}, nil
+}
+
+func checkArgs(args ArgsCommonHub) error {
+	if check.IfNil(args.Filter) {
+		return ErrNilEventFilter
 	}
+	if check.IfNil(args.SubscriptionMapper) {
+		return ErrNilSubscriptionMapper
+	}
+
+	return nil
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
@@ -77,7 +100,7 @@ func (ch *commonHub) run(ctx context.Context) {
 }
 
 // Subscribe is used by a dispatcher to send a dispatcher.SubscribeEvent
-func (ch *commonHub) Subscribe(event dispatcher.SubscribeEvent) {
+func (ch *commonHub) Subscribe(event data.SubscribeEvent) {
 	ch.subscriptionMapper.MatchSubscribeEvent(event)
 }
 

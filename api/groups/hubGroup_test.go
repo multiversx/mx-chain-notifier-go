@@ -2,12 +2,15 @@ package groups_test
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/groups"
 	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,12 +27,13 @@ func TestNewHubGroup(t *testing.T) {
 		require.True(t, check.IfNil(hg))
 	})
 
-	t.Run("dispatch all, should work", func(t *testing.T) {
+	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
+		wasCalled := false
 		facade := &mocks.FacadeStub{
-			GetDispatchTypeCalled: func() string {
-				return "dispatch:*"
+			ServeCalled: func(w http.ResponseWriter, r *http.Request) {
+				wasCalled = true
 			},
 		}
 
@@ -37,6 +41,14 @@ func TestNewHubGroup(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, hg)
 
+		ws := startWebServer(hg, hubPath)
+
+		req, _ := http.NewRequest("GET", "/hub/ws", nil)
+		resp := httptest.NewRecorder()
+
+		ws.ServeHTTP(resp, req)
+
 		require.Equal(t, 0, len(hg.GetAdditionalMiddlewares()))
+		assert.True(t, wasCalled)
 	})
 }

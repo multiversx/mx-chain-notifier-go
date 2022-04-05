@@ -20,7 +20,7 @@ test:
 
 .PHONY: help build run runb kill debug debug-ath
 
-cmd_dir = cmd
+cmd_dir = cmd/notifier
 binary = event-notifier
 
 help:

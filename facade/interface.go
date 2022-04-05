@@ -21,7 +21,7 @@ type HubHandler interface {
 	Run()
 	RegisterEvent(event dispatcher.EventDispatcher)
 	UnregisterEvent(event dispatcher.EventDispatcher)
-	Subscribe(event dispatcher.SubscribeEvent)
+	Subscribe(event data.SubscribeEvent)
 	Close() error
 	IsInterfaceNil() bool
 }

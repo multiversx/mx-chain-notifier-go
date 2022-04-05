@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"net"
-	"net/http"
 	"sync"
 	"time"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/elrond-go-logger/check"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/google/uuid"
@@ -29,44 +29,35 @@ var (
 	space   = []byte{' '}
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin:     func(r *http.Request) bool { return true },
+// argsWebSocketDispatcher defines the arguments needed for ws dispatcher
+type argsWebSocketDispatcher struct {
+	Hub  dispatcher.Hub
+	Conn dispatcher.WSConnection
 }
 
 type websocketDispatcher struct {
 	id   uuid.UUID
 	wg   sync.WaitGroup
 	send chan []byte
-	conn *websocket.Conn
+	conn dispatcher.WSConnection
 	hub  dispatcher.Hub
 }
 
-func newWebsocketDispatcher(
-	conn *websocket.Conn,
-	hub dispatcher.Hub,
-) *websocketDispatcher {
+// newWebSocketDispatcher createa a new ws dispatcher instance
+func newWebSocketDispatcher(args argsWebSocketDispatcher) (*websocketDispatcher, error) {
+	if check.IfNil(args.Hub) {
+		return nil, ErrNilHubHandler
+	}
+	if args.Conn == nil {
+		return nil, ErrNilWSConn
+	}
+
 	return &websocketDispatcher{
 		id:   uuid.New(),
 		send: make(chan []byte, 256),
-		conn: conn,
-		hub:  hub,
-	}
-}
-
-// Serve is the entry point used by a http server to serve the websocket upgrader
-func Serve(hub dispatcher.Hub, w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Error("failed upgrading connection", "err", err.Error())
-		return
-	}
-	wsDispatcher := newWebsocketDispatcher(conn, hub)
-	wsDispatcher.hub.RegisterEvent(wsDispatcher)
-
-	go wsDispatcher.writePump()
-	go wsDispatcher.readPump()
+		conn: args.Conn,
+		hub:  args.Hub,
+	}, nil
 }
 
 // GetID returns the id corresponding to this dispatcher instance
@@ -176,9 +167,9 @@ func (wd *websocketDispatcher) readPump() {
 	}
 }
 
-func (wd *websocketDispatcher) trySendSubscribeEvent(data []byte) {
-	var subscribeEvent dispatcher.SubscribeEvent
-	err := json.Unmarshal(data, &subscribeEvent)
+func (wd *websocketDispatcher) trySendSubscribeEvent(eventBytes []byte) {
+	var subscribeEvent data.SubscribeEvent
+	err := json.Unmarshal(eventBytes, &subscribeEvent)
 	if err != nil {
 		log.Error("failure unmarshalling subscribe event", "err", err.Error())
 		return

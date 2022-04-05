@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +31,7 @@ func TestSubscriptionMap_Subscriptions(t *testing.T) {
 func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) {
 	t.Parallel()
 
-	entry := SubscriptionEntry{}
+	entry := data.SubscriptionEntry{}
 
 	subMap := NewSubscriptionMapper()
 
@@ -48,16 +49,16 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 		subMap.MatchSubscribeEvent(subEvent)
 	}
 
-	var subsFromEntries []Subscription
+	var subsFromEntries []data.Subscription
 	for _, subEvent := range subEvents {
 		if len(subEvent.SubscriptionEntries) == 0 {
-			subsFromEntries = append(subsFromEntries, Subscription{
+			subsFromEntries = append(subsFromEntries, data.Subscription{
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   MatchAll,
 			})
 		}
 		for _, entry := range subEvent.SubscriptionEntries {
-			subsFromEntries = append(subsFromEntries, Subscription{
+			subsFromEntries = append(subsFromEntries, data.Subscription{
 				Address:      entry.Address,
 				Identifier:   entry.Identifier,
 				Topics:       entry.Topics,
@@ -89,8 +90,8 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 	addr2 := "erd222"
 	addr3 := "erd333"
 	dispatcherId := uuid.New()
-	subEvent := SubscribeEvent{
-		SubscriptionEntries: []SubscriptionEntry{
+	subEvent := data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
 			{
 				Address: addr1,
 			},
@@ -152,7 +153,7 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 	}
 }
 
-func generateSubscribeEvents(num int) []SubscribeEvent {
+func generateSubscribeEvents(num int) []data.SubscribeEvent {
 	var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	idsLen := num / 4
@@ -161,12 +162,12 @@ func generateSubscribeEvents(num int) []SubscribeEvent {
 		dispatcherIDs = append(dispatcherIDs, uuid.New())
 	}
 
-	var events []SubscribeEvent
+	var events []data.SubscribeEvent
 	for i := 0; i < num; i++ {
 		dispatchID := dispatcherIDs[randSeed.Intn(idsLen)]
 		numEntries := randSeed.Intn(3)
 
-		var subEntries []SubscriptionEntry
+		var subEntries []data.SubscriptionEntry
 		if numEntries > 0 {
 			for entryIdx := 0; entryIdx < numEntries; entryIdx++ {
 				var topics []string
@@ -174,7 +175,7 @@ func generateSubscribeEvents(num int) []SubscribeEvent {
 					topics = []string{randStr(12), randStr(60)}
 				}
 
-				entry := SubscriptionEntry{
+				entry := data.SubscriptionEntry{
 					Address:    fmt.Sprintf("erd%s", randStr(30)),
 					Identifier: randStr(12),
 					Topics:     topics,
@@ -182,11 +183,21 @@ func generateSubscribeEvents(num int) []SubscribeEvent {
 				subEntries = append(subEntries, entry)
 			}
 		}
-		event := SubscribeEvent{
+		event := data.SubscribeEvent{
 			DispatcherID:        dispatchID,
 			SubscriptionEntries: subEntries,
 		}
 		events = append(events, event)
 	}
 	return events
+}
+
+func randStr(length int) string {
+	randSeed := rand.New(rand.NewSource(time.Now().UnixNano()))
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[randSeed.Intn(len(charset))]
+	}
+	return string(b)
 }

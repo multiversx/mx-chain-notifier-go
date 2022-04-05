@@ -33,7 +33,7 @@ func (d *DispatcherMock) PushEvents(events []data.Event) {
 }
 
 // Subscribe -
-func (d *DispatcherMock) Subscribe(event dispatcher.SubscribeEvent) {
+func (d *DispatcherMock) Subscribe(event data.SubscribeEvent) {
 	d.hub.Subscribe(event)
 }
 

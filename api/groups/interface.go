@@ -1,8 +1,9 @@
 package groups
 
 import (
+	"net/http"
+
 	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 
 // EventsFacadeHandler defines the behavior of a facade handler needed for events group
@@ -16,7 +17,6 @@ type EventsFacadeHandler interface {
 
 // HubFacadeHandler defines the behavior of a facade handler needed for hub group
 type HubFacadeHandler interface {
-	GetHub() dispatcher.Hub
-	GetDispatchType() string
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	IsInterfaceNil() bool
 }

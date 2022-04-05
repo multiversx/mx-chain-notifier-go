@@ -7,3 +7,6 @@ var ErrInvalidAPIType = errors.New("invalid api type provided")
 
 // ErrInvalidDispatchType signals that an invalid dispatch type has been provided
 var ErrInvalidDispatchType = errors.New("invalid dispatch type")
+
+// ErrInvalidRedisConnType signals that an invalid redis connection type has been provided
+var ErrInvalidRedisConnType = errors.New("invalid redis connection type")

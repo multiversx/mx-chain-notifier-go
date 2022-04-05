@@ -2,29 +2,32 @@ package config
 
 import "github.com/ElrondNetwork/elrond-go-core/core"
 
+// GeneralConfig defines the config setup based on main config file
 type GeneralConfig struct {
 	ConnectorApi ConnectorApiConfig
-	PubSub       PubSubConfig
+	Redis        RedisConfig
 	RabbitMQ     RabbitMQConfig
 	Flags        *FlagsConfig
 }
 
+// ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
 	Port            string
-	HubType         string
-	DispatchType    string
 	Username        string
 	Password        string
 	CheckDuplicates bool
 }
 
-type PubSubConfig struct {
-	Url         string
-	Channel     string
-	MasterName  string
-	SentinelUrl string
+// RedisConfig maps the redis configuration
+type RedisConfig struct {
+	Url            string
+	Channel        string
+	MasterName     string
+	SentinelUrl    string
+	ConnectionType string
 }
 
+// RabbitMQConfig maps the rabbitMQ configuration
 type RabbitMQConfig struct {
 	Url                     string
 	EventsExchange          string
