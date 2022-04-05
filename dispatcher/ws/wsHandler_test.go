@@ -1,12 +1,9 @@
 package ws_test
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-logger/check"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -53,24 +50,4 @@ func TestNewWebSocketHandler(t *testing.T) {
 		require.False(t, check.IfNil(wh))
 		require.Nil(t, err)
 	})
-}
-
-func TestServeHTTP(t *testing.T) {
-	t.Parallel()
-
-	args := createMockArgsWSHandler()
-
-	wasCalled := false
-	args.Upgrader = &mocks.WSUpgraderStub{
-		UpgradeCalled: func(w http.ResponseWriter, r *http.Request, responseHeader http.Header) (dispatcher.WSConnection, error) {
-			wasCalled = true
-			return &mocks.WSConnStub{}, nil
-		},
-	}
-
-	wh, err := ws.NewWebSocketHandler(args)
-	require.Nil(t, err)
-
-	wh.ServeHTTP(httptest.NewRecorder(), &http.Request{})
-	assert.True(t, wasCalled)
 }
