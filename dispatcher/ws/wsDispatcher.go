@@ -87,7 +87,7 @@ func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	wd.send <- wsEventBytes
 }
 
-// RevertEvent receives a reverted block event and processes it before pushing to socket
+// RevertEvent receives a reverted block event and process it before pushing to socket
 func (wd *websocketDispatcher) RevertEvent(event data.RevertBlock) {
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
@@ -107,7 +107,7 @@ func (wd *websocketDispatcher) RevertEvent(event data.RevertBlock) {
 	wd.send <- wsEventBytes
 }
 
-// FinalizedEvent receives a finalized block event and processes it before pushing to socket
+// FinalizedEvent receives a finalized block event and process it before pushing to socket
 func (wd *websocketDispatcher) FinalizedEvent(event data.FinalizedBlock) {
 	eventBytes, err := json.Marshal(event)
 	if err != nil {

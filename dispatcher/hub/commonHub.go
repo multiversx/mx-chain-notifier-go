@@ -177,7 +177,6 @@ func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 	}
 }
 
-// TODO: evaluate these 2 scenarios
 func (ch *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
 	subscriptions := ch.subscriptionMapper.Subscriptions()
 
