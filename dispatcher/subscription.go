@@ -65,7 +65,7 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 
 	for _, subEntry := range event.SubscriptionEntries {
 		matchLevel := sm.matchLevelFromInput(subEntry)
-		eventType := sm.getEventType(subEntry)
+		eventType := getEventType(subEntry)
 		subscription := data.Subscription{
 			Address:      subEntry.Address,
 			Identifier:   subEntry.Identifier,
@@ -131,20 +131,20 @@ func (sm *SubscriptionMapper) matchLevelFromInput(subEntry data.SubscriptionEntr
 	return MatchAll
 }
 
-func (sm *SubscriptionMapper) getEventType(subEntry data.SubscriptionEntry) string {
+func (sm *SubscriptionMapper) appendSubscription(sub data.Subscription) {
+	sm.rwMut.Lock()
+	defer sm.rwMut.Unlock()
+
+	sm.subscriptions[sub.DispatcherID] = append(sm.subscriptions[sub.DispatcherID], sub)
+}
+
+func getEventType(subEntry data.SubscriptionEntry) string {
 	if subEntry.EventType == common.FinalizedBlockEvents ||
 		subEntry.EventType == common.RevertBlockEvents {
 		return subEntry.EventType
 	}
 
 	return common.PushBlockEvents
-}
-
-func (sm *SubscriptionMapper) appendSubscription(sub data.Subscription) {
-	sm.rwMut.Lock()
-	defer sm.rwMut.Unlock()
-
-	sm.subscriptions[sub.DispatcherID] = append(sm.subscriptions[sub.DispatcherID], sub)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
