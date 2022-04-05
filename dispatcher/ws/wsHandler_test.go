@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createMockArgsWSHandler() ws.ArgsWebSocketHandler {
-	return ws.ArgsWebSocketHandler{
+func createMockArgsWSHandler() ws.ArgsWebSocketProcessor {
+	return ws.ArgsWebSocketProcessor{
 		Hub:      &mocks.HubStub{},
 		Upgrader: &mocks.WSUpgraderStub{},
 	}
@@ -26,7 +26,7 @@ func TestNewWebSocketHandler(t *testing.T) {
 		args := createMockArgsWSHandler()
 		args.Hub = nil
 
-		wh, err := ws.NewWebSocketHandler(args)
+		wh, err := ws.NewWebSocketProcessor(args)
 		require.True(t, check.IfNil(wh))
 		assert.Equal(t, ws.ErrNilHubHandler, err)
 	})
@@ -37,7 +37,7 @@ func TestNewWebSocketHandler(t *testing.T) {
 		args := createMockArgsWSHandler()
 		args.Upgrader = nil
 
-		wh, err := ws.NewWebSocketHandler(args)
+		wh, err := ws.NewWebSocketProcessor(args)
 		require.True(t, check.IfNil(wh))
 		assert.Equal(t, ws.ErrNilWSUpgrader, err)
 	})
@@ -46,7 +46,7 @@ func TestNewWebSocketHandler(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWSHandler()
-		wh, err := ws.NewWebSocketHandler(args)
+		wh, err := ws.NewWebSocketProcessor(args)
 		require.False(t, check.IfNil(wh))
 		require.Nil(t, err)
 	})

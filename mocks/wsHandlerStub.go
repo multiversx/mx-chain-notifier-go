@@ -9,6 +9,9 @@ type WSHandlerStub struct {
 
 // ServeHTTP -
 func (whs *WSHandlerStub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if whs.ServeHTTPCalled != nil {
+		whs.ServeHTTPCalled(w, r)
+	}
 }
 
 // IsInterfaceNil -

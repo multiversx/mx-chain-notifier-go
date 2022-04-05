@@ -15,7 +15,7 @@ import (
 
 var log = logger.GetOrCreate("hub")
 
-// ArgsCommonHub defines the arguments needed for common hub  creation
+// ArgsCommonHub defines the arguments needed for common hub creation
 type ArgsCommonHub struct {
 	Filter             filters.EventFilter
 	SubscriptionMapper dispatcher.SubscriptionMapperHandler
