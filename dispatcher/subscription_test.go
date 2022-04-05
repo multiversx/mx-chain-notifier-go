@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -55,6 +56,7 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 			subsFromEntries = append(subsFromEntries, data.Subscription{
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   MatchAll,
+				EventType:    common.PushBlockEvents,
 			})
 		}
 		for _, entry := range subEvent.SubscriptionEntries {
@@ -64,6 +66,7 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 				Topics:       entry.Topics,
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   subMap.matchLevelFromInput(entry),
+				EventType:    entry.EventType,
 			})
 		}
 	}
@@ -179,6 +182,7 @@ func generateSubscribeEvents(num int) []data.SubscribeEvent {
 					Address:    fmt.Sprintf("erd%s", randStr(30)),
 					Identifier: randStr(12),
 					Topics:     topics,
+					EventType:  common.PushBlockEvents,
 				}
 				subEntries = append(subEntries, entry)
 			}
