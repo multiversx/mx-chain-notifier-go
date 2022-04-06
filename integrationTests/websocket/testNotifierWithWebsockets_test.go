@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -209,6 +210,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			}
 		}
 	}(wg)
+
+	time.Sleep(time.Second)
 
 	go webServer.PushEventsRequest(blockEvents)
 	go webServer.FinalizedEventsRequest(finalizedBlock)
