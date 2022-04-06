@@ -2,24 +2,22 @@ package integrationTests
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 
-	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/gorilla/websocket"
 )
 
-type wsServer struct {
+type wsClient struct {
 	wsConn     dispatcher.WSConnection
 	httpServer *httptest.Server
 }
 
-// NewWSServer creates a new http server with websocket handler
-func NewWSServer(h http.Handler) (*wsServer, error) {
+// NewWSClient creates a new http server with websocket handler
+func NewWSClient(h http.Handler) (*wsClient, error) {
 	s := httptest.NewServer(h)
 	wsURL := "ws" + strings.TrimPrefix(s.URL, "http")
 
@@ -28,13 +26,14 @@ func NewWSServer(h http.Handler) (*wsServer, error) {
 		return nil, err
 	}
 
-	return &wsServer{
+	return &wsClient{
 		wsConn:     ws,
 		httpServer: s,
 	}, nil
 }
 
-func (ws *wsServer) SendSubscribeMessage(subscribeEvent *data.SubscribeEvent) error {
+// SendSubscribeMessage will send subscribe message
+func (ws *wsClient) SendSubscribeMessage(subscribeEvent *data.SubscribeEvent) error {
 	m, err := json.Marshal(subscribeEvent)
 	if err != nil {
 		return err
@@ -47,7 +46,7 @@ func (ws *wsServer) SendSubscribeMessage(subscribeEvent *data.SubscribeEvent) er
 	return nil
 }
 
-func (ws *wsServer) ReadMessage() ([]byte, error) {
+func (ws *wsClient) ReadMessage() ([]byte, error) {
 	_, m, err := ws.wsConn.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -56,39 +55,8 @@ func (ws *wsServer) ReadMessage() ([]byte, error) {
 	return m, nil
 }
 
-func (ws *wsServer) ReceiveEvent() (interface{}, error) {
-	m, err := ws.ReadMessage()
-	if err != nil {
-		return nil, err
-	}
-
-	var reply data.WSEvent
-	err = json.Unmarshal(m, &reply)
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		switch reply.Type {
-		case common.PushBlockEvents:
-			var pushEvent []data.Event
-			_ = json.Unmarshal(reply.Data, &pushEvent)
-			return pushEvent, nil
-		case common.RevertBlockEvents:
-			var pushEvent *data.RevertBlock
-			_ = json.Unmarshal(reply.Data, &pushEvent)
-			return pushEvent, nil
-		case common.FinalizedBlockEvents:
-			var pushEvent *data.FinalizedBlock
-			_ = json.Unmarshal(reply.Data, &pushEvent)
-			return pushEvent, nil
-		default:
-			return nil, errors.New("invalid reply type")
-		}
-	}
-}
-
-func (ws *wsServer) ReceiveEvents() ([]data.Event, error) {
+// ReceiveEvents will try to receive events
+func (ws *wsClient) ReceiveEvents() ([]data.Event, error) {
 	m, err := ws.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -109,7 +77,8 @@ func (ws *wsServer) ReceiveEvents() ([]data.Event, error) {
 	return event, nil
 }
 
-func (ws *wsServer) ReceiveRevertBlock() (*data.RevertBlock, error) {
+// ReceiveRevertBlock will try to receive revert block event
+func (ws *wsClient) ReceiveRevertBlock() (*data.RevertBlock, error) {
 	m, err := ws.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -130,7 +99,8 @@ func (ws *wsServer) ReceiveRevertBlock() (*data.RevertBlock, error) {
 	return &event, nil
 }
 
-func (ws *wsServer) ReceiveFinalized() (*data.FinalizedBlock, error) {
+// ReceiveFinalized will try to receive finalized block event
+func (ws *wsClient) ReceiveFinalized() (*data.FinalizedBlock, error) {
 	m, err := ws.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -151,7 +121,8 @@ func (ws *wsServer) ReceiveFinalized() (*data.FinalizedBlock, error) {
 	return &event, nil
 }
 
-func (ws *wsServer) Close() {
+// Close will close connection
+func (ws *wsClient) Close() {
 	ws.httpServer.Close()
 	ws.wsConn.Close()
 }

@@ -22,7 +22,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
-	ws, err := integrationTests.NewWSServer(notifier.WSHandler)
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
 	require.Nil(t, err)
 	defer ws.Close()
 
@@ -64,7 +64,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
-	ws, err := integrationTests.NewWSServer(notifier.WSHandler)
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
 	require.Nil(t, err)
 	defer ws.Close()
 
@@ -101,7 +101,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
-	ws, err := integrationTests.NewWSServer(notifier.WSHandler)
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
 	require.Nil(t, err)
 	defer ws.Close()
 
@@ -137,7 +137,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
-	ws, err := integrationTests.NewWSServer(notifier.WSHandler)
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
 	require.Nil(t, err)
 	defer ws.Close()
 
@@ -176,41 +176,43 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Events: events,
 	}
 
-	go webServer.PushEventsRequest(blockEvents)
-	go webServer.FinalizedEventsRequest(finalizedBlock)
-	go webServer.RevertEventsRequest(revertBlock)
-
-	m, err := ws.ReadMessage()
-	require.Nil(t, err)
-
-	var reply data.WSEvent
-	err = json.Unmarshal(m, &reply)
-	require.Nil(t, err)
-
 	wg := &sync.WaitGroup{}
 	wg.Add(3)
 
-	for i := 0; i < 3; i++ {
-		switch reply.Type {
-		case common.PushBlockEvents:
-			var pushEvent []data.Event
-			_ = json.Unmarshal(reply.Data, &pushEvent)
-			assert.Equal(t, events, pushEvent)
-			wg.Done()
-		case common.RevertBlockEvents:
-			var pushEvent *data.RevertBlock
-			_ = json.Unmarshal(reply.Data, &pushEvent)
-			assert.Equal(t, revertBlock, pushEvent)
-			wg.Done()
-		case common.FinalizedBlockEvents:
-			var pushEvent *data.FinalizedBlock
-			_ = json.Unmarshal(reply.Data, &pushEvent)
-			assert.Equal(t, finalizedBlock, pushEvent)
-			wg.Done()
-		default:
-			t.Errorf("invalid message type")
+	go func(wg *sync.WaitGroup) {
+		for i := 0; i < 3; i++ {
+			m, err := ws.ReadMessage()
+			require.Nil(t, err)
+
+			var reply data.WSEvent
+			err = json.Unmarshal(m, &reply)
+			require.Nil(t, err)
+
+			switch reply.Type {
+			case common.PushBlockEvents:
+				var pushEvent []data.Event
+				_ = json.Unmarshal(reply.Data, &pushEvent)
+				assert.Equal(t, events, pushEvent)
+				wg.Done()
+			case common.RevertBlockEvents:
+				var pushEvent *data.RevertBlock
+				_ = json.Unmarshal(reply.Data, &pushEvent)
+				assert.Equal(t, revertBlock, pushEvent)
+				wg.Done()
+			case common.FinalizedBlockEvents:
+				var pushEvent *data.FinalizedBlock
+				_ = json.Unmarshal(reply.Data, &pushEvent)
+				assert.Equal(t, finalizedBlock, pushEvent)
+				wg.Done()
+			default:
+				t.Errorf("invalid message type")
+			}
 		}
-	}
+	}(wg)
+
+	go webServer.PushEventsRequest(blockEvents)
+	go webServer.FinalizedEventsRequest(finalizedBlock)
+	go webServer.RevertEventsRequest(revertBlock)
 
 	wg.Wait()
 }
