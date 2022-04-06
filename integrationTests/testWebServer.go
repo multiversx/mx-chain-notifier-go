@@ -47,9 +47,6 @@ func NewTestWebServer(facade shared.FacadeHandler, apiType string) *TestWebServe
 	return webServer
 }
 
-func (w *TestWebServer) run() {
-}
-
 // DoRequest preforms a test request on the web server, returning the response ready to be parsed
 func (w *TestWebServer) DoRequest(request *http.Request) *httptest.ResponseRecorder {
 	w.mutWs.Lock()
@@ -60,11 +57,6 @@ func (w *TestWebServer) DoRequest(request *http.Request) *httptest.ResponseRecor
 
 	return resp
 }
-
-// // WebSocketServe will serve websocket request
-// func (w *TestWebServer) WSHandler(c *gin.Context) {
-// 	ws.Serve(w.facade.GetHub(), c.Writer, c.Request)
-// }
 
 func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 	groupsMap := make(map[string]shared.GroupHandler)
@@ -84,6 +76,7 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 	return groupsMap
 }
 
+// PushEventsRequest will send a http request for push events
 func (w *TestWebServer) PushEventsRequest(events *data.BlockEvents) *httptest.ResponseRecorder {
 	jsonBytes, _ := json.Marshal(events)
 
@@ -94,6 +87,7 @@ func (w *TestWebServer) PushEventsRequest(events *data.BlockEvents) *httptest.Re
 	return resp
 }
 
+// RevertEventsRequest will send a http request for revert event
 func (w *TestWebServer) RevertEventsRequest(events *data.RevertBlock) *httptest.ResponseRecorder {
 	jsonBytes, _ := json.Marshal(events)
 
@@ -104,6 +98,7 @@ func (w *TestWebServer) RevertEventsRequest(events *data.RevertBlock) *httptest.
 	return resp
 }
 
+// FinalizedEventsRequest will send a http request for finalized event
 func (w *TestWebServer) FinalizedEventsRequest(events *data.FinalizedBlock) *httptest.ResponseRecorder {
 	jsonBytes, _ := json.Marshal(events)
 
