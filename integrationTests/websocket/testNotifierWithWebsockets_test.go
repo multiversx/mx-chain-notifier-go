@@ -130,6 +130,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
+	cfg.ConnectorApi.CheckDuplicates = true
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
@@ -191,19 +192,19 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 			switch reply.Type {
 			case common.PushBlockEvents:
-				var pushEvent []data.Event
-				_ = json.Unmarshal(reply.Data, &pushEvent)
-				assert.Equal(t, events, pushEvent)
+				var event []data.Event
+				_ = json.Unmarshal(reply.Data, &event)
+				assert.Equal(t, events, event)
 				wg.Done()
 			case common.RevertBlockEvents:
-				var pushEvent *data.RevertBlock
-				_ = json.Unmarshal(reply.Data, &pushEvent)
-				assert.Equal(t, revertBlock, pushEvent)
+				var event *data.RevertBlock
+				_ = json.Unmarshal(reply.Data, &event)
+				assert.Equal(t, revertBlock, event)
 				wg.Done()
 			case common.FinalizedBlockEvents:
-				var pushEvent *data.FinalizedBlock
-				_ = json.Unmarshal(reply.Data, &pushEvent)
-				assert.Equal(t, finalizedBlock, pushEvent)
+				var event *data.FinalizedBlock
+				_ = json.Unmarshal(reply.Data, &event)
+				assert.Equal(t, finalizedBlock, event)
 				wg.Done()
 			default:
 				t.Errorf("invalid message type")
@@ -212,10 +213,13 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	}(wg)
 
 	time.Sleep(time.Second)
-
 	go webServer.PushEventsRequest(blockEvents)
+	time.Sleep(time.Second)
 	go webServer.FinalizedEventsRequest(finalizedBlock)
+	time.Sleep(time.Second)
 	go webServer.RevertEventsRequest(revertBlock)
 
 	wg.Wait()
+
+	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
 }
