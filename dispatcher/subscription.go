@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/google/uuid"
 )
@@ -53,6 +54,7 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 		sm.appendSubscription(data.Subscription{
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   MatchAll,
+			EventType:    common.PushBlockEvents,
 		})
 		log.Info("subscribed dispatcher",
 			"dispatcherID", event.DispatcherID,
@@ -63,12 +65,14 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 
 	for _, subEntry := range event.SubscriptionEntries {
 		matchLevel := sm.matchLevelFromInput(subEntry)
+		eventType := getEventType(subEntry)
 		subscription := data.Subscription{
 			Address:      subEntry.Address,
 			Identifier:   subEntry.Identifier,
 			Topics:       subEntry.Topics,
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   matchLevel,
+			EventType:    eventType,
 		}
 		sm.appendSubscription(subscription)
 
@@ -132,6 +136,15 @@ func (sm *SubscriptionMapper) appendSubscription(sub data.Subscription) {
 	defer sm.rwMut.Unlock()
 
 	sm.subscriptions[sub.DispatcherID] = append(sm.subscriptions[sub.DispatcherID], sub)
+}
+
+func getEventType(subEntry data.SubscriptionEntry) string {
+	if subEntry.EventType == common.FinalizedBlockEvents ||
+		subEntry.EventType == common.RevertBlockEvents {
+		return subEntry.EventType
+	}
+
+	return common.PushBlockEvents
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

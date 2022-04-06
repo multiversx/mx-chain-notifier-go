@@ -9,6 +9,7 @@ import (
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
 	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/google/uuid"
@@ -72,7 +73,58 @@ func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
-	wd.send <- eventBytes
+
+	wsEvent := &data.WSEvent{
+		Type: common.PushBlockEvents,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
+}
+
+// RevertEvent receives a reverted block event and process it before pushing to socket
+func (wd *websocketDispatcher) RevertEvent(event data.RevertBlock) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wsEvent := &data.WSEvent{
+		Type: common.RevertBlockEvents,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
+}
+
+// FinalizedEvent receives a finalized block event and process it before pushing to socket
+func (wd *websocketDispatcher) FinalizedEvent(event data.FinalizedBlock) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wsEvent := &data.WSEvent{
+		Type: common.FinalizedBlockEvents,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
 }
 
 // writePump listens on the send-channel and pushes data on the socket stream

@@ -13,6 +13,8 @@ import (
 type EventDispatcher interface {
 	GetID() uuid.UUID
 	PushEvents(events []data.Event)
+	RevertEvent(event data.RevertBlock)
+	FinalizedEvent(event data.FinalizedBlock)
 }
 
 // Hub defines the behaviour of a hub component which should be able to register

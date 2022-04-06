@@ -18,3 +18,14 @@ const (
 	// RedisSentinelConnType specifies a redis connection to a setup with sentinel
 	RedisSentinelConnType string = "sentinel"
 )
+
+const (
+	// PushBlockEvents defines the subscription event type for pushing block events
+	PushBlockEvents string = "all_events"
+
+	// RevertBlockEvents defines the subscription event type for revert block
+	RevertBlockEvents string = "revert_events"
+
+	// FinalizedBlockEvents defines the subscription event type for finalized blocks
+	FinalizedBlockEvents string = "finalized_events"
+)

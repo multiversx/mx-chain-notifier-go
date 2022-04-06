@@ -1,5 +1,13 @@
 package data
 
+import "encoding/json"
+
+// WSEvent defines a websocket event
+type WSEvent struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
+}
+
 // TxLog holds log data
 type TxLog struct {
 	Address string  `json:"scAddress"`
