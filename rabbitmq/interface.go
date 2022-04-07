@@ -8,6 +8,11 @@ import (
 // RabbitMqClient defines the behaviour of a rabbitMq client
 type RabbitMqClient interface {
 	Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
+	ConnErrChan() chan *amqp.Error
+	CloseErrChan() chan *amqp.Error
+	Reconnect()
+	ReopenChannel()
+	Close()
 	IsInterfaceNil() bool
 }
 
