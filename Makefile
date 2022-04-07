@@ -36,7 +36,7 @@ build:
 api_type="notifier"
 run: build
 	cd ${cmd_dir} && \
-		./${binary} --api-type=${api_type}
+		./${binary} --api-type=${api_type} --log-level="*:DEBUG"
 
 runb: build
 	cd ${cmd_dir} && \
@@ -71,7 +71,7 @@ docker-new: docker-build
 		--network "host" \
 		--name ${container_name} \
 		${image}:${image_tag} \
-		--api-type ${api_type}
+		--api-type ${api_type} --log-level="*:DEBUG"
 
 docker-start:
 	docker start ${container_name}
