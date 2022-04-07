@@ -36,7 +36,7 @@ build:
 api_type="notifier"
 run: build
 	cd ${cmd_dir} && \
-		./${binary} --api-type=${api_type}
+		./${binary} --api-type=${api_type} --log-level="*:DEBUG"
 
 runb: build
 	cd ${cmd_dir} && \
