@@ -60,7 +60,18 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			log.Debug("Publish: published message ack")
 		case <-rc.narkCh:
 			log.Debug("Publish: published message nack")
-			log.Debug("Publish: will retry to publish message")
+			continue
+		case err := <-rc.connErrCh:
+			if err != nil {
+				log.Error("rabbitMQ connection failure", "err", err.Error())
+				rc.Reconnect()
+			}
+			continue
+		case err := <-rc.chanErr:
+			if err != nil {
+				log.Error("rabbitMQ channel failure", "err", err.Error())
+				rc.ReopenChannel()
+			}
 			continue
 		}
 
