@@ -20,6 +20,8 @@ type rabbitMqClient struct {
 
 	connErrCh chan *amqp.Error
 	chanErr   chan *amqp.Error
+	arkCh     chan uint64
+	narkCh    chan uint64
 }
 
 // NewRabbitMQClient creates a new rabbitMQ client instance
@@ -42,13 +44,30 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 	rc.pubMut.Lock()
 	defer rc.pubMut.Unlock()
 
-	return rc.ch.Publish(
-		exchange,
-		key,
-		mandatory,
-		immediate,
-		msg,
-	)
+	var err error
+
+	for {
+		err = rc.ch.Publish(
+			exchange,
+			key,
+			mandatory,
+			immediate,
+			msg,
+		)
+
+		select {
+		case <-rc.arkCh:
+			log.Debug("Publish: published message ack")
+		case <-rc.narkCh:
+			log.Debug("Publish: published message nack")
+			log.Debug("Publish: will retry to publish message")
+			continue
+		}
+
+		break
+	}
+
+	return err
 }
 
 // dial will return a rabbitMq connection
@@ -93,6 +112,12 @@ func (rc *rabbitMqClient) openChannel() error {
 
 	rc.chanErr = make(chan *amqp.Error)
 	rc.ch.NotifyClose(rc.chanErr)
+	rc.arkCh, rc.narkCh = rc.ch.NotifyConfirm(make(chan uint64), make(chan uint64))
+
+	err = rc.ch.Confirm(false)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
