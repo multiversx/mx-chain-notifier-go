@@ -33,7 +33,7 @@ build:
 	cd ${cmd_dir} && \
 		go build -o ${binary}
 
-api_type="notifier"
+api_type="rabbit-api"
 run: build
 	cd ${cmd_dir} && \
 		./${binary} --api-type=${api_type} --log-level="*:DEBUG"
@@ -92,10 +92,7 @@ docker-rm: docker-stop
 
 .PHONY: compose-new compose-start compose-stop
 
-notifier_name = notifier
-
 # Notifier with Redis sentinel and RabbitMQ
-compose-new: export API_TYPE = rabbit-api
 compose-new:
 	docker-compose up -d
 
@@ -105,6 +102,5 @@ compose-start:
 compose-stop:
 	docker-compose stop
 
-compose-rm: export API_TYPE = rabbit-api
 compose-rm:
 	docker-compose down
