@@ -46,6 +46,13 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 
 	var err error
 
+	// In order to avoid losing any event, check rabbitmq ack event for the
+	// published message. If not-acknowledged, check if there is a connection or
+	// channel issue, and after that is solved try again.  This was done to
+	// make sure no event is lost, for example, if rabbitmq connection is not
+	// closing gracefully (port disabled from firewall), it may happen that the
+	// main loop will not catch the conn err event, and it will still try to
+	// publish the message.
 	for {
 		err = rc.ch.Publish(
 			exchange,
