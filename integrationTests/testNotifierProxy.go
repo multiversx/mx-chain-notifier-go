@@ -22,6 +22,7 @@ type testNotifier struct {
 	RabbitMQClient *mocks.RabbitClientMock
 }
 
+// NewTestNotifierWithWS will create a notifier instance for websockets flow
 func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 	redisClient := mocks.NewRedisClientMock()
 	locker, err := redis.NewRedlockWrapper(redisClient)
@@ -81,6 +82,7 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 	}, nil
 }
 
+// NewTestNotifierWithRabbitMq will create a notifier instance with rabbitmq
 func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, error) {
 	redisClient := mocks.NewRedisClientMock()
 	locker, err := redis.NewRedlockWrapper(redisClient)
