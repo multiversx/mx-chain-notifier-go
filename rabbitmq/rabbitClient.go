@@ -20,8 +20,7 @@ type rabbitMqClient struct {
 
 	connErrCh chan *amqp.Error
 	chanErr   chan *amqp.Error
-	arkCh     chan uint64
-	narkCh    chan uint64
+	ackCh     chan uint64
 }
 
 // NewRabbitMQClient creates a new rabbitMQ client instance
@@ -44,8 +43,6 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 	rc.pubMut.Lock()
 	defer rc.pubMut.Unlock()
 
-	var err error
-
 	// In order to avoid losing any event, check rabbitmq ack event for the
 	// published message. If not-acknowledged, check if there is a connection or
 	// channel issue, and after that is solved try again.  This was done to
@@ -54,7 +51,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 	// main loop will not catch the conn err event, and it will still try to
 	// publish the message.
 	for {
-		err = rc.ch.Publish(
+		err := rc.ch.Publish(
 			exchange,
 			key,
 			mandatory,
@@ -63,29 +60,21 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 		)
 
 		select {
-		case <-rc.arkCh:
+		case <-rc.ackCh:
 			log.Debug("Publish: published message ack")
-		case <-rc.narkCh:
-			log.Debug("Publish: published message nack")
-			continue
+			return err
 		case err := <-rc.connErrCh:
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
 				rc.Reconnect()
 			}
-			continue
 		case err := <-rc.chanErr:
 			if err != nil {
 				log.Error("rabbitMQ channel failure", "err", err.Error())
 				rc.ReopenChannel()
 			}
-			continue
 		}
-
-		break
 	}
-
-	return err
 }
 
 // dial will return a rabbitMq connection
@@ -130,14 +119,9 @@ func (rc *rabbitMqClient) openChannel() error {
 
 	rc.chanErr = make(chan *amqp.Error)
 	rc.ch.NotifyClose(rc.chanErr)
-	rc.arkCh, rc.narkCh = rc.ch.NotifyConfirm(make(chan uint64), make(chan uint64))
+	rc.ackCh, _ = rc.ch.NotifyConfirm(make(chan uint64), make(chan uint64))
 
-	err = rc.ch.Confirm(false)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return rc.ch.Confirm(false)
 }
 
 // Reconnect will try to reconnect to rabbitmq
