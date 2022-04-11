@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
@@ -14,6 +15,7 @@ import (
 type wsClient struct {
 	wsConn     dispatcher.WSConnection
 	httpServer *httptest.Server
+	mutWsConn  sync.RWMutex
 }
 
 // NewWSClient creates a new http server with websocket handler
@@ -47,6 +49,9 @@ func (ws *wsClient) SendSubscribeMessage(subscribeEvent *data.SubscribeEvent) er
 }
 
 func (ws *wsClient) ReadMessage() ([]byte, error) {
+	ws.mutWsConn.Lock()
+	defer ws.mutWsConn.Unlock()
+
 	_, m, err := ws.wsConn.ReadMessage()
 	if err != nil {
 		return nil, err

@@ -46,15 +46,21 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		Hash:   "hash1",
 		Events: events,
 	}
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveEvents()
+		require.Nil(t, err)
+
+		assert.Equal(t, events, reply)
+		wg.Done()
+	}()
+
 	resp := webServer.PushEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
-	time.Sleep(time.Second)
-
-	reply, err := ws.ReceiveEvents()
-	require.Nil(t, err)
-
-	assert.Equal(t, events, reply)
+	wg.Wait()
 }
 
 func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
@@ -85,15 +91,22 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 		Hash:  "hash1",
 		Nonce: 1,
 	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveRevertBlock()
+		require.Nil(t, err)
+
+		assert.Equal(t, blockEvents, reply)
+		wg.Done()
+	}()
+
 	resp := webServer.RevertEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
-	time.Sleep(time.Second)
-
-	reply, err := ws.ReceiveRevertBlock()
-	require.Nil(t, err)
-
-	assert.Equal(t, blockEvents, reply)
+	wg.Wait()
 }
 
 func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
@@ -123,15 +136,21 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	blockEvents := &data.FinalizedBlock{
 		Hash: "hash1",
 	}
-	resp := webServer.FinalizedEventsRequest(blockEvents)
-	require.NotNil(t, resp)
 
-	time.Sleep(time.Second)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
-	reply, err := ws.ReceiveFinalized()
-	require.Nil(t, err)
+	go func() {
+		reply, err := ws.ReceiveFinalized()
+		require.Nil(t, err)
 
-	assert.Equal(t, blockEvents, reply)
+		assert.Equal(t, blockEvents, reply)
+		wg.Done()
+	}()
+
+	webServer.FinalizedEventsRequest(blockEvents)
+
+	wg.Wait()
 }
 
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
@@ -219,10 +238,9 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	}(wg)
 
 	time.Sleep(time.Second)
+
 	go webServer.PushEventsRequest(blockEvents)
-	time.Sleep(time.Second)
 	go webServer.FinalizedEventsRequest(finalizedBlock)
-	time.Sleep(time.Second)
 	go webServer.RevertEventsRequest(revertBlock)
 
 	wg.Wait()
