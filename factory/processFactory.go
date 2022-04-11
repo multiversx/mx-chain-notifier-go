@@ -8,12 +8,11 @@ import (
 
 // ArgsEventsHandlerFactory defines the arguments needed for events handler creation
 type ArgsEventsHandlerFactory struct {
-	APIConfig           config.ConnectorApiConfig
-	Locker              process.LockService
-	MqPublisher         process.Publisher
-	HubPublisher        process.Publisher
-	APIType             string
-	MaxLockerConRetries int
+	APIConfig    config.ConnectorApiConfig
+	Locker       process.LockService
+	MqPublisher  process.Publisher
+	HubPublisher process.Publisher
+	APIType      string
 }
 
 // CreateEventsHandler will create an events handler processor
@@ -24,10 +23,9 @@ func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, 
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:              args.APIConfig,
-		Locker:              args.Locker,
-		Publisher:           publisher,
-		MaxLockerConRetries: args.MaxLockerConRetries,
+		Config:    args.APIConfig,
+		Locker:    args.Locker,
+		Publisher: publisher,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
