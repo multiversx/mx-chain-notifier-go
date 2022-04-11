@@ -16,9 +16,6 @@ import (
 
 var log = logger.GetOrCreate("notifierRunner")
 
-// TODO: evaluate adding to configs
-const maxLockerConRetries = 10
-
 type notifierRunner struct {
 	configs *config.GeneralConfig
 }
@@ -57,12 +54,11 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		APIConfig:           nr.configs.ConnectorApi,
-		Locker:              lockService,
-		MqPublisher:         publisher,
-		HubPublisher:        hub,
-		APIType:             nr.configs.Flags.APIType,
-		MaxLockerConRetries: maxLockerConRetries,
+		APIConfig:    nr.configs.ConnectorApi,
+		Locker:       lockService,
+		MqPublisher:  publisher,
+		HubPublisher: hub,
+		APIType:      nr.configs.Flags.APIType,
 	}
 	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
 	if err != nil {

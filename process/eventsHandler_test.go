@@ -19,9 +19,8 @@ func createMockEventsHandlerArgs() process.ArgsEventsHandler {
 		Config: config.ConnectorApiConfig{
 			CheckDuplicates: false,
 		},
-		Locker:              &mocks.LockerStub{},
-		MaxLockerConRetries: 2,
-		Publisher:           &mocks.PublisherStub{},
+		Locker:    &mocks.LockerStub{},
+		Publisher: &mocks.PublisherStub{},
 	}
 }
 
@@ -47,17 +46,6 @@ func TestNewEventsHandler(t *testing.T) {
 
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Equal(t, process.ErrNilPublisherService, err)
-		require.Nil(t, eventsHandler)
-	})
-
-	t.Run("invalid max locker connection retries", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsHandlerArgs()
-		args.MaxLockerConRetries = 0
-
-		eventsHandler, err := process.NewEventsHandler(args)
-		require.True(t, errors.Is(err, process.ErrInvalidValue))
 		require.Nil(t, eventsHandler)
 	})
 
@@ -350,25 +338,5 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
 		assert.True(t, ok)
-	})
-
-	t.Run("locker service is failing, reached max retry limit", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsHandlerArgs()
-		args.Locker = &mocks.LockerStub{
-			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
-				return false, errors.New("fail to process")
-			},
-			HasConnectionCalled: func(ctx context.Context) bool {
-				return false
-			},
-		}
-
-		eventsHandler, err := process.NewEventsHandler(args)
-		require.Nil(t, err)
-
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
-		assert.False(t, ok)
 	})
 }

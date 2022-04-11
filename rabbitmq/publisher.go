@@ -73,13 +73,23 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			log.Debug("RabbitMQ publisher is stopping...")
-			return
+			rp.client.Close()
 		case events := <-rp.broadcast:
 			rp.publishToExchanges(events)
 		case revertBlock := <-rp.broadcastRevert:
 			rp.publishRevertToExchange(revertBlock)
 		case finalizedBlock := <-rp.broadcastFinalized:
 			rp.publishFinalizedToExchange(finalizedBlock)
+		case err := <-rp.client.ConnErrChan():
+			if err != nil {
+				log.Error("rabbitMQ connection failure", "err", err.Error())
+				rp.client.Reconnect()
+			}
+		case err := <-rp.client.CloseErrChan():
+			if err != nil {
+				log.Error("rabbitMQ channel failure", "err", err.Error())
+				rp.client.ReopenChannel()
+			}
 		}
 	}
 }

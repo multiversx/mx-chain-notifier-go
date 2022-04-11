@@ -1,8 +1,6 @@
 package factory
 
 import (
-	"context"
-
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/disabled"
@@ -22,7 +20,7 @@ func CreatePublisher(apiType string, config *config.GeneralConfig) (rabbitmq.Pub
 }
 
 func createRabbitMqPublisher(config config.RabbitMQConfig) (rabbitmq.PublisherService, error) {
-	rabbitClient, err := rabbitmq.NewRabbitMQClient(context.Background(), config.Url)
+	rabbitClient, err := rabbitmq.NewRabbitMQClient(config.Url)
 	if err != nil {
 		return nil, err
 	}

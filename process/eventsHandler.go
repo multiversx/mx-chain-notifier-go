@@ -2,7 +2,6 @@ package process
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
@@ -22,17 +21,15 @@ const (
 
 // ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
-	Config              config.ConnectorApiConfig
-	Locker              LockService
-	MaxLockerConRetries int
-	Publisher           Publisher
+	Config    config.ConnectorApiConfig
+	Locker    LockService
+	Publisher Publisher
 }
 
 type eventsHandler struct {
-	config              config.ConnectorApiConfig
-	locker              LockService
-	maxLockerConRetries int
-	publisher           Publisher
+	config    config.ConnectorApiConfig
+	locker    LockService
+	publisher Publisher
 }
 
 // NewEventsHandler creates a new events handler component
@@ -43,10 +40,9 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:              args.Locker,
-		publisher:           args.Publisher,
-		config:              args.Config,
-		maxLockerConRetries: args.MaxLockerConRetries,
+		locker:    args.Locker,
+		publisher: args.Publisher,
+		config:    args.Config,
 	}, nil
 }
 
@@ -56,10 +52,6 @@ func checkArgs(args ArgsEventsHandler) error {
 	}
 	if check.IfNil(args.Publisher) {
 		return ErrNilPublisherService
-	}
-	if args.MaxLockerConRetries < minRetries {
-		return fmt.Errorf("%w for Max locker connection retries: got %d, minimum %d",
-			ErrInvalidValue, args.MaxLockerConRetries, minRetries)
 	}
 
 	return nil
@@ -156,7 +148,6 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 	var err error
 	var setSuccessful bool
 
-	numRetries := 0
 	for {
 		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), blockHash)
 
@@ -164,14 +155,7 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 			if !eh.locker.HasConnection(context.Background()) {
 				log.Error("failure connecting to locker service")
 
-				if numRetries >= eh.maxLockerConRetries {
-					err = fmt.Errorf("reached max locker connection retries limit")
-					break
-				}
-
 				time.Sleep(retryDuration)
-				numRetries++
-
 				continue
 			}
 		}
