@@ -57,6 +57,8 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		wg.Done()
 	}()
 
+	time.Sleep(time.Second)
+
 	resp := webServer.PushEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
@@ -103,6 +105,8 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 		wg.Done()
 	}()
 
+	time.Sleep(time.Second)
+
 	resp := webServer.RevertEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
@@ -147,6 +151,8 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 		assert.Equal(t, blockEvents, reply)
 		wg.Done()
 	}()
+
+	time.Sleep(time.Second)
 
 	webServer.FinalizedEventsRequest(blockEvents)
 
