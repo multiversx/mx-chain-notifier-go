@@ -29,12 +29,34 @@ func (rc *RabbitClientMock) Publish(exchange, key string, mandatory, immediate b
 	return nil
 }
 
+// ConnErrChan -
+func (rc *RabbitClientMock) ConnErrChan() chan *amqp.Error {
+	return make(chan *amqp.Error)
+}
+
+// CloseErrChan -
+func (rc *RabbitClientMock) CloseErrChan() chan *amqp.Error {
+	return make(chan *amqp.Error)
+}
+
+// Reconnect -
+func (rc *RabbitClientMock) Reconnect() {
+}
+
+// ReopenChannel -
+func (rc *RabbitClientMock) ReopenChannel() {
+}
+
 // GetEntries -
 func (rc *RabbitClientMock) GetEntries() map[string]amqp.Publishing {
 	rc.mut.Lock()
 	defer rc.mut.Unlock()
 
 	return rc.events
+}
+
+// Close -
+func (rc *RabbitClientMock) Close() {
 }
 
 // IsInterfaceNil -

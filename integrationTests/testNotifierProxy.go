@@ -40,10 +40,9 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:              cfg.ConnectorApi,
-		Locker:              locker,
-		Publisher:           publisher,
-		MaxLockerConRetries: 2,
+		Config:    cfg.ConnectorApi,
+		Locker:    locker,
+		Publisher: publisher,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -98,10 +97,9 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 	publisher, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:              cfg.ConnectorApi,
-		Locker:              locker,
-		Publisher:           publisher,
-		MaxLockerConRetries: 2,
+		Config:    cfg.ConnectorApi,
+		Locker:    locker,
+		Publisher: publisher,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
