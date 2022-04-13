@@ -54,7 +54,7 @@ The corresponding config section for enabling the driver:
 
 ## Install
 
-Using the `cmd` package as root, execute the following commands:
+Using the `cmd/notifier` package as root, execute the following commands:
 
 - install go dependencies: `go install`
 - build executable: `go build -o event-notifier`
@@ -63,10 +63,10 @@ Using the `cmd` package as root, execute the following commands:
 ---
 This can also be done using a single command from `Makefile`:
 ```bash
-# by default, notifier api type
+# by default, rabbit-api type
 make run
 
-# specify notifier running mode (eq: rabbit-api)
+# specify notifier running mode (eq: rabbit-api, notifier)
 make run api_type=rabbit-api
 ```
 
@@ -78,37 +78,26 @@ correct environment variables.
 The supported config variables are:
 - `Port`: the port on which the http server listens on. Should be the same 
   as the port in the `ProxyUrl` described above.
-- `HubType`: defaults to `common`. If one wants to use a custom hub implementation, 
-  it can be added to the hub [factory](https://github.com/ElrondNetwork/notifier-go/blob/main/proxy/handlers/hub.go#L30-L34). 
-  This can be registered with the custom name in the `config.toml` file.
-- `DispatchType`: default to `websocket`. This variable specifies the communication
-channels the hub supports and uses for events broadcasting. The current implementation 
-  supports `websocket` and `graphql subscriptions` for broadcasting.
 - `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false`.
 - `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false`.
+- `CheckDuplicates`: if true, it will check (based on a locker service using redis) if the event have been already pushed to clients
   
-The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/config/config.toml) file:
+The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/cmd/notifier/config/config.toml) file:
 
 ```toml
 [ConnectorApi]
     # The port on which the Hub listens for subscriptions
     Port = "5000"
 
-    # The type of the hub. Options: | common | custom:<your_hub_id> |
-    # Used for custom implementations for subscriptions/events filtering
-    # Defaults to: common
-    HubType = "common"
-
-    # The dispathing type. Options: | websocket | graphql | dispatch:* |
-    # The driver can receive subscribe events and broadcast on one or more channels
-    # Defaults to: websocket.
-    DispatchType = "websocket"
-
     # Username is the username needed to authorize an observer to push data
     Username = ""
     
     # Password is the password needed to authorize an observer to push event data
     Password = ""
+
+    # CheckDuplicates signals if the events received from observers have been already pushed to clients
+    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
+    CheckDuplicates = true
 ```
 
 After the configuration file is set up, the notifier instance can be
@@ -117,6 +106,10 @@ launched.
 There are two ways in which notifier-go can be started: `notifier` mode and
 `rabbit-api` mode.  There is a development setup using docker containers (with
 docker compose) that can be used for this.
+
+If it is important that no event is lost, the setup with rabbitmq (as messaging
+system) and redis (as locker service) is recommended (to make sure no duplicated
+events are being processed).
 
 > If you want to use a similar setup in production systems, make sure to check
 > `docker-compose.yaml` file and set up proper infrastructure and security
@@ -155,13 +148,55 @@ Start Notifier instance
 make docker-new api_type=rabbit-api
 ```
 
+## Redis
+
+In this setup, `Redis` is used as a locker service. If `CheckDuplicates` config
+parameter is set to `true` notifier instance will check for duplicated events
+in locker service.
+
+Check `Redis` section from config in order to set up the available options.
+
+## RabbitMQ
+
+If `--api-type` command line parameter is set to `rabbit-api`, the notifier instance
+will try to publish events to `RabbitMQ`. Check `RabbitMQ` section for config in order to
+set up the url properly.
+
+Please make sure that the exchanges from config are created accordingly,
+as type: `fanout`.
+```toml
+[RabbitMQ]
+    # The url used to connect to a rabbitMQ server
+    # Note: not required for running in the notifier mode
+    Url = "amqp://guest:guest@localhost:5672"
+
+    # The exchange name which holds all events
+    # Expected type: fanout
+    EventsExchange = "all_events"
+
+    # The exchange name which holds revert events
+    # Expected type: fanout
+    RevertEventsExchange = "revert_events"
+
+    # The exchange name which holds finalized block events
+    # Expected type: fanout
+    FinalizedEventsExchange = "finalized_events"
+```
+
 ## Subscribing
 
-Once the proxy is launched together with the observer/s, the driver's `SaveBlock`
+Once the proxy is launched together with the observer/s, the driver's methods
 will be called. 
 
 Note: For empty logs in any given block the driver won't push data, 
 so subscribers won't be notified.
+
+### RabbitMQ
+
+When using a setup with `RabbitMQ` you have to subscribe to each exchange
+separately.
+
+### WebSockets
 
 In order for a consumer to subscribe, it needs to select the correct
 communication protocol and send a payload signalling the intention of
@@ -180,7 +215,6 @@ Example:
   "address": "erd111",
   "identifier": "swapTokens",
   "topics": ["RUdMRA==", "RVRI"],
-  "data": ""
 }
 ```
 
@@ -250,6 +284,29 @@ The `MatchLevel` is assigned using the input payload sent while subscribing. Exa
 }
 ```
 
+The subscription entry has also a field for specifying event type, which can be
+one of the followings: `all_events`, `revert_events`, `finalized_events`.  By
+default, it is set to `all_events`, for backwards compatibility reasons.
 
+All other fields, like `address`, `identifier`, `topics` can be used for
+`all_events`.  The other events type (`revert_events` and `finalized_events`)
+do not have these fields associated with them.
 
+A subscription example with `eventType` will be like this:
+```json
+{
+  "subscriptionEntries": [
+    {
+      "eventType": "all_events",
+      "address": "erdFirst",
+      "identifier": "ESDTTransfer"
+    },
+    {
+      "eventType": "finalized_events",
+    }
+  ]
+}
+```
 
+Note: if eventType type is not specified, it will be set to `all_events` by
+default.

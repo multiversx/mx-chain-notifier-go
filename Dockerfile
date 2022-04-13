@@ -18,4 +18,4 @@ EXPOSE 8080
 WORKDIR /elrond
 
 ENTRYPOINT ["./notifier"]
-CMD ["--api-type", "notifier"]
+CMD ["--api-type", "rabbit-api"]
