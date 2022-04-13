@@ -54,7 +54,7 @@ The corresponding config section for enabling the driver:
 
 ## Install
 
-Using the `cmd` package as root, execute the following commands:
+Using the `cmd/notifier` package as root, execute the following commands:
 
 - install go dependencies: `go install`
 - build executable: `go build -o event-notifier`
@@ -63,10 +63,10 @@ Using the `cmd` package as root, execute the following commands:
 ---
 This can also be done using a single command from `Makefile`:
 ```bash
-# by default, notifier api type
+# by default, rabbit-api type
 make run
 
-# specify notifier running mode (eq: rabbit-api)
+# specify notifier running mode (eq: rabbit-api, notifier)
 make run api_type=rabbit-api
 ```
 
@@ -107,9 +107,9 @@ There are two ways in which notifier-go can be started: `notifier` mode and
 `rabbit-api` mode.  There is a development setup using docker containers (with
 docker compose) that can be used for this.
 
-If it is important that no event is lost, the setup with rabbitmq as messaging
-system and redis as locker service (to make sure no duplicated events are being
-sent) is recommended.
+If it is important that no event is lost, the setup with rabbitmq (as messaging
+system) and redis (as locker service) is recommended (to make sure no duplicated
+events are being processed).
 
 > If you want to use a similar setup in production systems, make sure to check
 > `docker-compose.yaml` file and set up proper infrastructure and security
@@ -162,7 +162,8 @@ If `--api-type` command line parameter is set to `rabbit-api`, the notifier inst
 will try to publish events to `RabbitMQ`. Check `RabbitMQ` section for config in order to
 set up the url properly.
 
-Please make sure that the exchanges from config are created properly, as type: `fanout`.
+Please make sure that the exchanges from config are created accordingly,
+as type: `fanout`.
 ```toml
 [RabbitMQ]
     # The url used to connect to a rabbitMQ server
@@ -184,18 +185,18 @@ Please make sure that the exchanges from config are created properly, as type: `
 
 ## Subscribing
 
+Once the proxy is launched together with the observer/s, the driver's methods
+will be called. 
+
+Note: For empty logs in any given block the driver won't push data, 
+so subscribers won't be notified.
+
 ### RabbitMQ
 
 When using a setup with `RabbitMQ` you have to subscribe to each exchange
 separately.
 
 ### WebSockets
-
-Once the proxy is launched together with the observer/s, the driver's methods
-will be called. 
-
-Note: For empty logs in any given block the driver won't push data, 
-so subscribers won't be notified.
 
 In order for a consumer to subscribe, it needs to select the correct
 communication protocol and send a payload signalling the intention of
@@ -287,7 +288,7 @@ The subscription entry has also a field for specifying event type, which can be
 one of the followings: `all_events`, `revert_events`, `finalized_events`.  By
 default, it is set to `all_events`, for backwards compatibility reasons.
 
-All other fields, like `address`, `identifier`, `topics` can be for
+All other fields, like `address`, `identifier`, `topics` can be used for
 `all_events`.  The other events type (`revert_events` and `finalized_events`)
 do not have these fields associated with them.
 
@@ -306,3 +307,6 @@ A subscription example with `eventType` will be like this:
   ]
 }
 ```
+
+Note: if eventType type is not specified, it will be set to `all_events` by
+default.
