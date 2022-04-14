@@ -289,26 +289,6 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		assert.True(t, ok)
 	})
 
-	t.Run("locker service is failing on first try, but has connection", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsHandlerArgs()
-		args.Locker = &mocks.LockerStub{
-			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
-				return false, errors.New("fail to process")
-			},
-			HasConnectionCalled: func(ctx context.Context) bool {
-				return true
-			},
-		}
-
-		eventsHandler, err := process.NewEventsHandler(args)
-		require.Nil(t, err)
-
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
-		assert.False(t, ok)
-	})
-
 	t.Run("locker service is failing on first try, has no connection, works on second try", func(t *testing.T) {
 		t.Parallel()
 
