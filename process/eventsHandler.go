@@ -13,10 +13,11 @@ import (
 var log = logger.GetOrCreate("process")
 
 const (
-	retryDuration      = time.Millisecond * 500
-	minRetries         = 1
-	revertKeyPrefix    = "revert_"
-	finalizedKeyPrefix = "finalized_"
+	setRetryDuration       = time.Millisecond * 500
+	reconnectRetryDuration = time.Second * 2
+	minRetries             = 1
+	revertKeyPrefix        = "revert_"
+	finalizedKeyPrefix     = "finalized_"
 )
 
 // ArgsEventsHandler defines the arguments needed for an events handler
@@ -151,16 +152,18 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 	for {
 		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), blockHash)
 
-		if err != nil {
-			if !eh.locker.HasConnection(context.Background()) {
-				log.Error("failure connecting to locker service")
-
-				time.Sleep(retryDuration)
-				continue
-			}
+		if err == nil {
+			break
 		}
 
-		break
+		log.Error("failed to check event in locker", "error", err.Error())
+		if !eh.locker.HasConnection(context.Background()) {
+			log.Error("failure connecting to locker service")
+
+			time.Sleep(reconnectRetryDuration)
+		} else {
+			time.Sleep(setRetryDuration)
+		}
 	}
 
 	if err != nil {
