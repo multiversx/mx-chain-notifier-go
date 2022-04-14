@@ -166,11 +166,6 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 		}
 	}
 
-	if err != nil {
-		log.Error("failed to check event in locker", "error", err.Error())
-		return false
-	}
-
 	if !setSuccessful {
 		log.Debug("did not succeed to set event in locker")
 		return false
