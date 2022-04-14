@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/ElrondNetwork/elrond-go-core v1.1.6
-	github.com/ElrondNetwork/elrond-go-logger v1.0.4
+	github.com/ElrondNetwork/elrond-go-logger v1.0.7
 	github.com/gin-contrib/cors v0.0.0-20190301062745-f9e10995c85a
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-redis/redis/v8 v8.11.3

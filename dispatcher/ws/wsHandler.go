@@ -3,7 +3,7 @@ package ws
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 )
 

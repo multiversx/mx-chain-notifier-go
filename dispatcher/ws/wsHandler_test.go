@@ -3,7 +3,7 @@ package ws_test
 import (
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-logger/check"
+	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
