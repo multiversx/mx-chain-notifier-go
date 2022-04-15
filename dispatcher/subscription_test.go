@@ -7,19 +7,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/notifier-go/test"
+	"github.com/ElrondNetwork/notifier-go/common"
+	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
-
-var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func TestSubscriptionMap_Subscriptions(t *testing.T) {
 	t.Parallel()
 
 	subMap := NewSubscriptionMapper()
 
-	subEvents := generateSubscribeEvents(1000)
+	subEvents := generateSubscribeEvents(10)
 
 	for _, subEvent := range subEvents {
 		subMap.MatchSubscribeEvent(subEvent)
@@ -33,7 +32,7 @@ func TestSubscriptionMap_Subscriptions(t *testing.T) {
 func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) {
 	t.Parallel()
 
-	entry := SubscriptionEntry{}
+	entry := data.SubscriptionEntry{}
 
 	subMap := NewSubscriptionMapper()
 
@@ -43,7 +42,7 @@ func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) 
 func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T) {
 	t.Parallel()
 
-	subEvents := generateSubscribeEvents(1000)
+	subEvents := generateSubscribeEvents(10)
 
 	subMap := NewSubscriptionMapper()
 
@@ -51,21 +50,23 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 		subMap.MatchSubscribeEvent(subEvent)
 	}
 
-	var subsFromEntries []Subscription
+	var subsFromEntries []data.Subscription
 	for _, subEvent := range subEvents {
 		if len(subEvent.SubscriptionEntries) == 0 {
-			subsFromEntries = append(subsFromEntries, Subscription{
+			subsFromEntries = append(subsFromEntries, data.Subscription{
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   MatchAll,
+				EventType:    common.PushBlockEvents,
 			})
 		}
 		for _, entry := range subEvent.SubscriptionEntries {
-			subsFromEntries = append(subsFromEntries, Subscription{
+			subsFromEntries = append(subsFromEntries, data.Subscription{
 				Address:      entry.Address,
 				Identifier:   entry.Identifier,
 				Topics:       entry.Topics,
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   subMap.matchLevelFromInput(entry),
+				EventType:    entry.EventType,
 			})
 		}
 	}
@@ -92,8 +93,8 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 	addr2 := "erd222"
 	addr3 := "erd333"
 	dispatcherId := uuid.New()
-	subEvent := SubscribeEvent{
-		SubscriptionEntries: []SubscriptionEntry{
+	subEvent := data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
 			{
 				Address: addr1,
 			},
@@ -134,7 +135,7 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 	t.Parallel()
 
-	subEvents := generateSubscribeEvents(10_000)
+	subEvents := generateSubscribeEvents(10)
 
 	subMap := NewSubscriptionMapper()
 
@@ -142,7 +143,7 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 		subMap.MatchSubscribeEvent(subEvent)
 	}
 
-	rmDispatcherID := subEvents[1200].DispatcherID
+	rmDispatcherID := subEvents[2].DispatcherID
 
 	subMap.RemoveSubscriptions(rmDispatcherID)
 
@@ -155,39 +156,52 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 	}
 }
 
-func generateSubscribeEvents(num int) []SubscribeEvent {
+func generateSubscribeEvents(num int) []data.SubscribeEvent {
+	var randSeed = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	idsLen := num / 4
 	var dispatcherIDs []uuid.UUID
 	for i := 0; i < idsLen; i++ {
 		dispatcherIDs = append(dispatcherIDs, uuid.New())
 	}
 
-	var events []SubscribeEvent
+	var events []data.SubscribeEvent
 	for i := 0; i < num; i++ {
 		dispatchID := dispatcherIDs[randSeed.Intn(idsLen)]
 		numEntries := randSeed.Intn(3)
 
-		var subEntries []SubscriptionEntry
+		var subEntries []data.SubscriptionEntry
 		if numEntries > 0 {
 			for entryIdx := 0; entryIdx < numEntries; entryIdx++ {
 				var topics []string
 				if randSeed.Intn(2) == 1 {
-					topics = []string{test.RandStr(12), test.RandStr(60)}
+					topics = []string{randStr(12), randStr(60)}
 				}
 
-				entry := SubscriptionEntry{
-					Address:    fmt.Sprintf("erd%s", test.RandStr(30)),
-					Identifier: test.RandStr(12),
+				entry := data.SubscriptionEntry{
+					Address:    fmt.Sprintf("erd%s", randStr(30)),
+					Identifier: randStr(12),
 					Topics:     topics,
+					EventType:  common.PushBlockEvents,
 				}
 				subEntries = append(subEntries, entry)
 			}
 		}
-		event := SubscribeEvent{
+		event := data.SubscribeEvent{
 			DispatcherID:        dispatchID,
 			SubscriptionEntries: subEntries,
 		}
 		events = append(events, event)
 	}
 	return events
+}
+
+func randStr(length int) string {
+	randSeed := rand.New(rand.NewSource(time.Now().UnixNano()))
+	charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[randSeed.Intn(len(charset))]
+	}
+	return string(b)
 }

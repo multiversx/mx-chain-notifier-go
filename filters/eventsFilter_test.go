@@ -36,7 +36,7 @@ var filter = NewDefaultFilter()
 func TestDefaultFilter_MatchEventMatchAll(t *testing.T) {
 	t.Parallel()
 
-	s := dispatcher.Subscription{
+	s := data.Subscription{
 		MatchLevel: dispatcher.MatchAll,
 	}
 
@@ -48,7 +48,7 @@ func TestDefaultFilter_MatchEventMatchAll(t *testing.T) {
 func TestDefaultFilter_MatchEventMatchAddress(t *testing.T) {
 	t.Parallel()
 
-	s := dispatcher.Subscription{
+	s := data.Subscription{
 		Address:    "erd2",
 		MatchLevel: dispatcher.MatchAddress,
 	}
@@ -59,7 +59,7 @@ func TestDefaultFilter_MatchEventMatchAddress(t *testing.T) {
 func TestDefaultFilter_MatchEventMatchAddressIdentifier(t *testing.T) {
 	t.Parallel()
 
-	s := dispatcher.Subscription{
+	s := data.Subscription{
 		Address:    "erd1",
 		Identifier: "swap",
 		MatchLevel: dispatcher.MatchAddressIdentifier,
@@ -71,7 +71,7 @@ func TestDefaultFilter_MatchEventMatchAddressIdentifier(t *testing.T) {
 func TestDefaultFilter_MatchEventMatchIdentifier(t *testing.T) {
 	t.Parallel()
 
-	s := dispatcher.Subscription{
+	s := data.Subscription{
 		Identifier: "setValue",
 		MatchLevel: dispatcher.MatchIdentifier,
 	}

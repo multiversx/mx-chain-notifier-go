@@ -3,9 +3,8 @@ module github.com/ElrondNetwork/notifier-go
 go 1.16
 
 require (
-	github.com/99designs/gqlgen v0.13.0
 	github.com/ElrondNetwork/elrond-go-core v1.1.6
-	github.com/ElrondNetwork/elrond-go-logger v1.0.4
+	github.com/ElrondNetwork/elrond-go-logger v1.0.7
 	github.com/gin-contrib/cors v0.0.0-20190301062745-f9e10995c85a
 	github.com/gin-gonic/gin v1.7.2
 	github.com/go-redis/redis/v8 v8.11.3
@@ -15,5 +14,4 @@ require (
 	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
-	github.com/vektah/gqlparser/v2 v2.1.0
 )
