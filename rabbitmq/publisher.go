@@ -30,6 +30,7 @@ type rabbitMqPublisher struct {
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+	broadcastTxs       chan data.BlockTxs
 
 	cancelFunc func()
 	closeChan  chan struct{}
@@ -46,6 +47,7 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
+		broadcastTxs:       make(chan data.BlockTxs),
 		cfg:                args.Config,
 		client:             args.Client,
 		closeChan:          make(chan struct{}),
@@ -80,6 +82,8 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 			rp.publishRevertToExchange(revertBlock)
 		case finalizedBlock := <-rp.broadcastFinalized:
 			rp.publishFinalizedToExchange(finalizedBlock)
+		case blockTxs := <-rp.broadcastTxs:
+			rp.publishTxsToExchange(blockTxs)
 		case err := <-rp.client.ConnErrChan():
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -114,6 +118,14 @@ func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
 func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
 	select {
 	case rp.broadcastFinalized <- events:
+	case <-rp.closeChan:
+	}
+}
+
+// BroadcastTxs will handle the txs event pushed by producers, and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
+	select {
+	case rp.broadcastTxs <- events:
 	case <-rp.closeChan:
 	}
 }
@@ -159,6 +171,21 @@ func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.Fina
 		err = rp.publishFanout(rp.cfg.FinalizedEventsExchange, finalizedBlockBytes)
 		if err != nil {
 			log.Error("failed to publish finalized event to rabbitMQ", "err", err.Error())
+		}
+	}
+}
+
+func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
+	if rp.cfg.TxsEventsExchange != "" {
+		txsBlockBytes, err := json.Marshal(blockTxs)
+		if err != nil {
+			log.Error("could not marshal block txs event", "err", err.Error())
+			return
+		}
+
+		err = rp.publishFanout(rp.cfg.TxsEventsExchange, txsBlockBytes)
+		if err != nil {
+			log.Error("failed to publish block txs event to rabbitMQ", "err", err.Error())
 		}
 	}
 }

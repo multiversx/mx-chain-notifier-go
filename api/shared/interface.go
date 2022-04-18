@@ -26,6 +26,7 @@ type FacadeHandler interface {
 	HandlePushEvents(events data.BlockEvents)
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	HandleTxsEvents(blockTxs data.BlockTxs)
 	GetConnectorUserAndPass() (string, string)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 	IsInterfaceNil() bool

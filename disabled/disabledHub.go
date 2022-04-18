@@ -25,6 +25,10 @@ func (h *Hub) BroadcastRevert(_ data.RevertBlock) {
 func (h *Hub) BroadcastFinalized(_ data.FinalizedBlock) {
 }
 
+// BroadcastTxs does nothing
+func (h *Hub) BroadcastTxs(_ data.BlockTxs) {
+}
+
 // RegisterEvent does nothing
 func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }

@@ -1,6 +1,10 @@
 package data
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/ElrondNetwork/elrond-go-core/data"
+)
 
 // WSEvent defines a websocket event
 type WSEvent struct {
@@ -39,4 +43,9 @@ type RevertBlock struct {
 // FinalizedBlock holds finalized block data
 type FinalizedBlock struct {
 	Hash string `json:"hash"`
+}
+
+type BlockTxs struct {
+	Hash string                             `json:"hash"`
+	Txs  map[string]data.TransactionHandler `json:"txs"`
 }

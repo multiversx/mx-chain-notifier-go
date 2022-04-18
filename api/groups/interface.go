@@ -11,6 +11,7 @@ type EventsFacadeHandler interface {
 	HandlePushEvents(events data.BlockEvents)
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	HandleTxsEvents(blockTxs data.BlockTxs)
 	GetConnectorUserAndPass() (string, string)
 	IsInterfaceNil() bool
 }

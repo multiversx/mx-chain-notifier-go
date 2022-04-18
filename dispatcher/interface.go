@@ -24,6 +24,7 @@ type Hub interface {
 	Broadcast(events data.BlockEvents)
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)
+	BroadcastTxs(event data.BlockTxs)
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
 	Subscribe(event data.SubscribeEvent)

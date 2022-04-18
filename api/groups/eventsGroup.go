@@ -15,6 +15,7 @@ const (
 	pushEventsEndpoint      = "/push"
 	revertEventsEndpoint    = "/revert"
 	finalizedEventsEndpoint = "/finalized"
+	txsEventsEndpoint       = "/txs"
 )
 
 type eventsGroup struct {
@@ -52,6 +53,11 @@ func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
 			Method:  http.MethodPost,
 			Path:    finalizedEventsEndpoint,
 			Handler: h.finalizedEvents,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    txsEventsEndpoint,
+			Handler: h.txsEvents,
 		},
 	}
 
@@ -103,6 +109,20 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 	}
 
 	h.facade.HandleFinalizedEvents(finalizedBlock)
+
+	shared.JSONResponse(c, http.StatusOK, nil, "")
+}
+
+func (h *eventsGroup) txsEvents(c *gin.Context) {
+	var blockTxs data.BlockTxs
+
+	err := c.Bind(&blockTxs)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	h.facade.HandleTxsEvents(blockTxs)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }

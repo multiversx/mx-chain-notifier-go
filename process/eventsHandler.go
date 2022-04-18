@@ -18,6 +18,7 @@ const (
 	minRetries             = 1
 	revertKeyPrefix        = "revert_"
 	finalizedKeyPrefix     = "finalized_"
+	txsKeyPrefix           = "txs_"
 )
 
 // ArgsEventsHandler defines the arguments needed for an events handler
@@ -141,6 +142,35 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 
 	log.Info("received duplicated finalized event for block",
 		"block hash", finalizedBlock.Hash,
+		"processed", false,
+	)
+}
+
+// HandleTxsEvents will handle txs events received from observer
+func (eh *eventsHandler) HandleTxsEvents(blockTxs data.BlockTxs) {
+	if blockTxs.Hash == "" {
+		log.Warn("received empty finalized block hash",
+			"will process", false,
+		)
+		return
+	}
+	shouldProcessTxs := true
+	if eh.config.CheckDuplicates {
+		txsKey := txsKeyPrefix + blockTxs.Hash
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
+	}
+
+	if shouldProcessTxs {
+		log.Info("received txs events for block",
+			"block hash", blockTxs.Hash,
+			"will process", shouldProcessTxs,
+		)
+		eh.publisher.BroadcastTxs(blockTxs)
+		return
+	}
+
+	log.Info("received duplicated txs event for block",
+		"block hash", blockTxs.Hash,
 		"processed", false,
 	)
 }

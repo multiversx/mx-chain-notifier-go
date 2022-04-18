@@ -62,6 +62,11 @@ func (nf *notifierFacade) HandleFinalizedEvents(events data.FinalizedBlock) {
 	nf.eventsHandler.HandleFinalizedEvents(events)
 }
 
+// HandleTxsEvents
+func (nf *notifierFacade) HandleTxsEvents(events data.BlockTxs) {
+	nf.eventsHandler.HandleTxsEvents(events)
+}
+
 // ServeHTTP will handle a websocket request
 func (nf *notifierFacade) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	nf.wsHandler.ServeHTTP(w, r)
