@@ -21,6 +21,7 @@ const (
 	pushEventEndpoint       = "/events/push"
 	revertEventsEndpoint    = "/events/revert"
 	finalizedEventsEndpoint = "/events/finalized"
+	txsEventEndpoint        = "/events/txs"
 )
 
 type eventNotifier struct {
@@ -58,8 +59,38 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 	}
 
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
+
+	events := en.getLogEventsFromTransactionsPool(args.TransactionsPool.Logs)
+	log.Debug("extracted events from block logs", "num events", len(events))
+
+	headerHash := hex.EncodeToString(args.HeaderHash)
+
+	blockEvents := data.BlockEvents{
+		Hash:   headerHash,
+		Events: events,
+	}
+
+	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
+	if err != nil {
+		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting event data", err)
+	}
+
+	blockTxs := data.BlockTxs{
+		Hash: headerHash,
+		Txs:  args.TransactionsPool.Txs,
+	}
+
+	err = en.httpClient.Post(txsEventEndpoint, blockTxs, nil)
+	if err != nil {
+		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting txs data", err)
+	}
+
+	return nil
+}
+
+func (en *eventNotifier) getLogEventsFromTransactionsPool(logs []*nodeData.LogData) []data.Event {
 	var logEvents []nodeData.EventHandler
-	for _, logData := range args.TransactionsPool.Logs {
+	for _, logData := range logs {
 		if logData == nil {
 			continue
 		}
@@ -94,20 +125,11 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 		}
 	}
 
-	log.Debug("extracted events from block logs", "num events", len(events))
-
-	blockEvents := data.BlockEvents{
-		Hash:   hex.EncodeToString(args.HeaderHash),
-		Events: events,
-	}
-
-	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
-	if err != nil {
-		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting event data", err)
-	}
-
-	return nil
+	return events
 }
+
+// func (en *eventNotifier) getTxsFromTransactionsPool(txs map[string]nodeData.TransactionHandler) []data.Event {
+// }
 
 // RevertIndexedBlock converts revert data in order to be pushed to subscribers
 func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, _ nodeData.BodyHandler) error {
