@@ -75,6 +75,8 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting event data", err)
 	}
 
+	log.Debug("checking if block has txs", "num txs", len(args.TransactionsPool.Txs))
+
 	blockTxs := data.BlockTxs{
 		Hash: headerHash,
 		Txs:  args.TransactionsPool.Txs,
