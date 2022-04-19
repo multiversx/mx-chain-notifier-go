@@ -3,7 +3,7 @@ package data
 import (
 	"encoding/json"
 
-	"github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 )
 
 // WSEvent defines a websocket event
@@ -47,5 +47,5 @@ type FinalizedBlock struct {
 
 type BlockTxs struct {
 	Hash string                             `json:"hash"`
-	Txs  map[string]data.TransactionHandler `json:"txs"`
+	Txs  map[string]transaction.Transaction `json:"txs"`
 }

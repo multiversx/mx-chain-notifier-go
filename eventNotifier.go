@@ -77,7 +77,12 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 
 	log.Debug("checking if block has txs", "num txs", len(args.TransactionsPool.Txs))
 
-	blockTxs := data.BlockTxs{
+	type BlockTxs struct {
+		Hash string                                 `json:"hash"`
+		Txs  map[string]nodeData.TransactionHandler `json:"txs"`
+	}
+
+	blockTxs := BlockTxs{
 		Hash: headerHash,
 		Txs:  args.TransactionsPool.Txs,
 	}
