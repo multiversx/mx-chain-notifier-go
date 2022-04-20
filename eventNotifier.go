@@ -21,7 +21,6 @@ const (
 	pushEventEndpoint       = "/events/push"
 	revertEventsEndpoint    = "/events/revert"
 	finalizedEventsEndpoint = "/events/finalized"
-	txsEventEndpoint        = "/events/txs"
 )
 
 type eventNotifier struct {
@@ -78,7 +77,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 		LogEvents: events,
 	}
 
-	err := en.httpClient.Post(txsEventEndpoint, blockData, nil)
+	err := en.httpClient.Post(pushEventEndpoint, blockData, nil)
 	if err != nil {
 		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err)
 	}
