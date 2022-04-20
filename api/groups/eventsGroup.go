@@ -15,7 +15,6 @@ const (
 	pushEventsEndpoint      = "/push"
 	revertEventsEndpoint    = "/revert"
 	finalizedEventsEndpoint = "/finalized"
-	txsEventsEndpoint       = "/txs"
 )
 
 type eventsGroup struct {
@@ -54,11 +53,6 @@ func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
 			Path:    finalizedEventsEndpoint,
 			Handler: h.finalizedEvents,
 		},
-		{
-			Method:  http.MethodPost,
-			Path:    txsEventsEndpoint,
-			Handler: h.txsEvents,
-		},
 	}
 
 	h.endpoints = endpoints
@@ -72,13 +66,17 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
-	var blockEvents data.BlockEvents
+	var blockEvents data.SaveBlockData
 
 	err := c.Bind(&blockEvents)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
+
+	log.Debug("blockEvents", "hash", blockEvents.Hash)
+	log.Debug("blockEvents", "logs", blockEvents.LogEvents)
+	log.Debug("blockEvents", "txs", blockEvents.Txs)
 
 	h.facade.HandlePushEvents(blockEvents)
 
@@ -109,20 +107,6 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 	}
 
 	h.facade.HandleFinalizedEvents(finalizedBlock)
-
-	shared.JSONResponse(c, http.StatusOK, nil, "")
-}
-
-func (h *eventsGroup) txsEvents(c *gin.Context) {
-	var blockTxs data.BlockTxs
-
-	err := c.Bind(&blockTxs)
-	if err != nil {
-		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
-	}
-
-	h.facade.HandleTxsEvents(blockTxs)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }

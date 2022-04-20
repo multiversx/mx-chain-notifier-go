@@ -48,8 +48,18 @@ func checkArgs(args ArgsNotifierFacade) error {
 }
 
 // HandlePushEvents will handle push events received from observer
-func (nf *notifierFacade) HandlePushEvents(events data.BlockEvents) {
-	nf.eventsHandler.HandlePushEvents(events)
+func (nf *notifierFacade) HandlePushEvents(allEvents data.SaveBlockData) {
+	pushEvents := data.BlockEvents{
+		Hash:   allEvents.Hash,
+		Events: allEvents.LogEvents,
+	}
+	nf.eventsHandler.HandlePushEvents(pushEvents)
+
+	txs := data.BlockTxs{
+		Hash: allEvents.Hash,
+		Txs:  allEvents.Txs,
+	}
+	nf.eventsHandler.HandleTxsEvents(txs)
 }
 
 // HandleRevertEvents will handle revents events received from observer
@@ -60,11 +70,6 @@ func (nf *notifierFacade) HandleRevertEvents(events data.RevertBlock) {
 // HandleFinalizedEvents will handle finalized events received from observer
 func (nf *notifierFacade) HandleFinalizedEvents(events data.FinalizedBlock) {
 	nf.eventsHandler.HandleFinalizedEvents(events)
-}
-
-// HandleTxsEvents
-func (nf *notifierFacade) HandleTxsEvents(events data.BlockTxs) {
-	nf.eventsHandler.HandleTxsEvents(events)
 }
 
 // ServeHTTP will handle a websocket request

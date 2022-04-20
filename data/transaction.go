@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 )
 
@@ -48,4 +49,11 @@ type FinalizedBlock struct {
 type BlockTxs struct {
 	Hash string                             `json:"hash"`
 	Txs  map[string]transaction.Transaction `json:"txs"`
+}
+
+type SaveBlockData struct {
+	Hash      string                                             `json:"hash"`
+	Txs       map[string]transaction.Transaction                 `json:"txs"`
+	Scrs      map[string]smartContractResult.SmartContractResult `json:"scrs"`
+	LogEvents []Event                                            `json:"events"`
 }

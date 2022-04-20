@@ -59,37 +59,28 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 	}
 
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
+	log.Debug("checking if block has txs", "num txs", len(args.TransactionsPool.Txs))
 
 	events := en.getLogEventsFromTransactionsPool(args.TransactionsPool.Logs)
 	log.Debug("extracted events from block logs", "num events", len(events))
 
-	headerHash := hex.EncodeToString(args.HeaderHash)
-
-	blockEvents := data.BlockEvents{
-		Hash:   headerHash,
-		Events: events,
+	type SaveBlockData struct {
+		Hash      string                                 `json:"hash"`
+		Txs       map[string]nodeData.TransactionHandler `json:"txs"`
+		Scrs      map[string]nodeData.TransactionHandler `json:"scrs"`
+		LogEvents []data.Event                           `json:"events"`
 	}
 
-	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
+	blockData := SaveBlockData{
+		Hash:      hex.EncodeToString(args.HeaderHash),
+		Txs:       args.TransactionsPool.Txs,
+		Scrs:      args.TransactionsPool.Scrs,
+		LogEvents: events,
+	}
+
+	err := en.httpClient.Post(txsEventEndpoint, blockData, nil)
 	if err != nil {
-		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting event data", err)
-	}
-
-	log.Debug("checking if block has txs", "num txs", len(args.TransactionsPool.Txs))
-
-	type BlockTxs struct {
-		Hash string                                 `json:"hash"`
-		Txs  map[string]nodeData.TransactionHandler `json:"txs"`
-	}
-
-	blockTxs := BlockTxs{
-		Hash: headerHash,
-		Txs:  args.TransactionsPool.Txs,
-	}
-
-	err = en.httpClient.Post(txsEventEndpoint, blockTxs, nil)
-	if err != nil {
-		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting txs data", err)
+		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err)
 	}
 
 	return nil
