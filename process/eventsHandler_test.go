@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/config"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/mocks"
@@ -244,6 +246,134 @@ func TestHandleFinalizedEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleFinalizedEvents(events)
+		assert.False(t, wasCalled)
+	})
+}
+
+func TestHandleTxsEvents(t *testing.T) {
+	t.Parallel()
+
+	t.Run("broadcast txs event was called", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastTxsCalled: func(event data.BlockTxs) {
+				wasCalled = true
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		events := data.BlockTxs{
+			Hash: "hash1",
+			Txs: map[string]transaction.Transaction{
+				"hash1": {
+					Nonce: 1,
+				},
+			},
+		}
+
+		eventsHandler.HandleTxsEvents(events)
+		assert.True(t, wasCalled)
+	})
+
+	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Config.CheckDuplicates = true
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastTxsCalled: func(event data.BlockTxs) {
+				wasCalled = true
+			},
+		}
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return false, nil
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		events := data.BlockTxs{
+			Hash: "hash1",
+			Txs: map[string]transaction.Transaction{
+				"hash1": {
+					Nonce: 1,
+				},
+			},
+		}
+
+		eventsHandler.HandleTxsEvents(events)
+		assert.False(t, wasCalled)
+	})
+}
+
+func TestHandleScrsEvents(t *testing.T) {
+	t.Parallel()
+
+	t.Run("broadcast scrs event was called", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastScrsCalled: func(event data.BlockScrs) {
+				wasCalled = true
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		events := data.BlockScrs{
+			Hash: "hash1",
+			Scrs: map[string]smartContractResult.SmartContractResult{
+				"hash2": {
+					Nonce: 2,
+				},
+			},
+		}
+
+		eventsHandler.HandleScrsEvents(events)
+		assert.True(t, wasCalled)
+	})
+
+	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Config.CheckDuplicates = true
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastScrsCalled: func(event data.BlockScrs) {
+				wasCalled = true
+			},
+		}
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return false, nil
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		events := data.BlockScrs{
+			Hash: "hash1",
+			Scrs: map[string]smartContractResult.SmartContractResult{
+				"hash2": {
+					Nonce: 2,
+				},
+			},
+		}
+
+		eventsHandler.HandleScrsEvents(events)
 		assert.False(t, wasCalled)
 	})
 }

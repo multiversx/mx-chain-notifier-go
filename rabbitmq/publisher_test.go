@@ -22,6 +22,8 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 			EventsExchange:          "allevents",
 			RevertEventsExchange:    "revert",
 			FinalizedEventsExchange: "finalized",
+			TxsEventsExchange:       "txs",
+			ScrsEventsExchange:      "scrs",
 		},
 	}
 }
@@ -137,6 +139,68 @@ func TestBroadcastFinalized(t *testing.T) {
 	wg.Add(1)
 
 	rabbitmq.BroadcastFinalized(data.FinalizedBlock{})
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestBroadcastTxs(t *testing.T) {
+	t.Parallel()
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+
+	client := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+			return nil
+		},
+	}
+
+	args := createMockArgsRabbitMqPublisher()
+	args.Client = client
+
+	rabbitmq, err := rabbitmq.NewRabbitMqPublisher(args)
+	require.Nil(t, err)
+
+	rabbitmq.Run()
+	defer rabbitmq.Close()
+	wg.Add(1)
+
+	rabbitmq.BroadcastTxs(data.BlockTxs{})
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestBroadcastScrs(t *testing.T) {
+	t.Parallel()
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+
+	client := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+			return nil
+		},
+	}
+
+	args := createMockArgsRabbitMqPublisher()
+	args.Client = client
+
+	rabbitmq, err := rabbitmq.NewRabbitMqPublisher(args)
+	require.Nil(t, err)
+
+	rabbitmq.Run()
+	defer rabbitmq.Close()
+	wg.Add(1)
+
+	rabbitmq.BroadcastScrs(data.BlockScrs{})
 
 	wg.Wait()
 

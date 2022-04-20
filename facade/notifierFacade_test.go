@@ -1,10 +1,15 @@
 package facade_test
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/config"
+	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/facade"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -52,6 +57,143 @@ func TestNewNotifierFacade(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, facade)
 	})
+}
+
+func TestHandlePushEvents(t *testing.T) {
+	t.Parallel()
+
+	args := createMockFacadeArgs()
+
+	blockHash := "blockHash1"
+	txs := map[string]transaction.Transaction{
+		"hash1": {
+			Nonce: 1,
+		},
+	}
+	scrs := map[string]smartContractResult.SmartContractResult{
+		"hash2": {
+			Nonce: 2,
+		},
+	}
+	logEvents := []data.Event{
+		{
+			Address: "addr1",
+		},
+	}
+
+	blockData := data.SaveBlockData{
+		Hash:      blockHash,
+		Txs:       txs,
+		Scrs:      scrs,
+		LogEvents: logEvents,
+	}
+
+	expTxsData := data.BlockTxs{
+		Hash: blockHash,
+		Txs:  txs,
+	}
+	expScrsData := data.BlockScrs{
+		Hash: blockHash,
+		Scrs: scrs,
+	}
+	expLogEvents := data.BlockEvents{
+		Hash:   blockHash,
+		Events: logEvents,
+	}
+
+	pushWasCalled := false
+	txsWasCalled := false
+	scrsWasCalled := false
+	args.EventsHandler = &mocks.EventsHandlerStub{
+		HandlePushEventsCalled: func(events data.BlockEvents) {
+			pushWasCalled = true
+			assert.Equal(t, expLogEvents, events)
+		},
+		HandleTxsEventsCalled: func(blockTxs data.BlockTxs) {
+			txsWasCalled = true
+			assert.Equal(t, expTxsData, blockTxs)
+		},
+		HandleScrsEventsCalled: func(blockScrs data.BlockScrs) {
+			scrsWasCalled = true
+			assert.Equal(t, expScrsData, blockScrs)
+		},
+	}
+	facade, err := facade.NewNotifierFacade(args)
+	require.Nil(t, err)
+
+	facade.HandlePushEvents(blockData)
+
+	assert.True(t, pushWasCalled)
+	assert.True(t, txsWasCalled)
+	assert.True(t, scrsWasCalled)
+}
+
+func TestHandleRevertEvents(t *testing.T) {
+	t.Parallel()
+
+	args := createMockFacadeArgs()
+
+	revertData := data.RevertBlock{
+		Hash:  "hash1",
+		Nonce: 1,
+	}
+
+	pushWasCalled := false
+	args.EventsHandler = &mocks.EventsHandlerStub{
+		HandleRevertEventsCalled: func(revertBlock data.RevertBlock) {
+			pushWasCalled = true
+			assert.Equal(t, revertData, revertBlock)
+		},
+	}
+	facade, err := facade.NewNotifierFacade(args)
+	require.Nil(t, err)
+
+	facade.HandleRevertEvents(revertData)
+
+	assert.True(t, pushWasCalled)
+}
+
+func TestHandleFinalizedEvents(t *testing.T) {
+	t.Parallel()
+
+	args := createMockFacadeArgs()
+
+	finalizedData := data.FinalizedBlock{
+		Hash: "hash1",
+	}
+
+	pushWasCalled := false
+	args.EventsHandler = &mocks.EventsHandlerStub{
+		HandleFinalizedEventsCalled: func(finalizedBlock data.FinalizedBlock) {
+			pushWasCalled = true
+			assert.Equal(t, finalizedData, finalizedBlock)
+		},
+	}
+	facade, err := facade.NewNotifierFacade(args)
+	require.Nil(t, err)
+
+	facade.HandleFinalizedEvents(finalizedData)
+
+	assert.True(t, pushWasCalled)
+}
+
+func TestServerHTTP(t *testing.T) {
+	t.Parallel()
+
+	args := createMockFacadeArgs()
+
+	serveHTTPWasCalled := false
+	args.WSHandler = &mocks.WSHandlerStub{
+		ServeHTTPCalled: func(w http.ResponseWriter, r *http.Request) {
+			serveHTTPWasCalled = true
+		},
+	}
+	facade, err := facade.NewNotifierFacade(args)
+	require.Nil(t, err)
+
+	facade.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil))
+
+	assert.True(t, serveHTTPWasCalled)
 }
 
 func TestGetters(t *testing.T) {
