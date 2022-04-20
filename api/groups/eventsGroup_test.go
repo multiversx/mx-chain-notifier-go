@@ -79,9 +79,9 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		blockEvents := data.BlockEvents{
+		blockEvents := data.SaveBlockData{
 			Hash: "hash1",
-			Events: []data.Event{
+			LogEvents: []data.Event{
 				{
 					Address: "addr1",
 				},
@@ -91,7 +91,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsCalled: func(events data.BlockEvents) {
+			HandlePushEventsCalled: func(events data.SaveBlockData) {
 				wasCalled = true
 				assert.Equal(t, blockEvents, events)
 			},

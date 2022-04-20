@@ -42,9 +42,9 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 			Address: "addr1",
 		},
 	}
-	blockEvents := &data.BlockEvents{
-		Hash:   "hash1",
-		Events: events,
+	blockEvents := &data.SaveBlockData{
+		Hash:      "hash1",
+		LogEvents: events,
 	}
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
@@ -204,9 +204,9 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			Address: "addr1",
 		},
 	}
-	blockEvents := &data.BlockEvents{
-		Hash:   "hash1",
-		Events: events,
+	blockEvents := &data.SaveBlockData{
+		Hash:      "hash1",
+		LogEvents: events,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -251,5 +251,5 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 5, len(notifier.RedisClient.GetEntries()))
 }

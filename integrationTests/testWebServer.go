@@ -77,7 +77,7 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 }
 
 // PushEventsRequest will send a http request for push events
-func (w *TestWebServer) PushEventsRequest(events *data.BlockEvents) *httptest.ResponseRecorder {
+func (w *TestWebServer) PushEventsRequest(events *data.SaveBlockData) *httptest.ResponseRecorder {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
