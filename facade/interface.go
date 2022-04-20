@@ -12,6 +12,7 @@ type EventsHandler interface {
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	HandleTxsEvents(blockTxs data.BlockTxs)
+	HandleScrsEvents(blockScrs data.BlockScrs)
 	IsInterfaceNil() bool
 }
 

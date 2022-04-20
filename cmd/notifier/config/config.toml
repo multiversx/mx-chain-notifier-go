@@ -52,3 +52,7 @@
     # The exchange name which holds block txs events
     # Expected type: fanout
     TxsEventsExchange = "txs_events"
+
+    # The exchange name which holds block scrs events
+    # Expected type: fanout
+    ScrsEventsExchange = "scrs_events"

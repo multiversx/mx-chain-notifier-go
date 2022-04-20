@@ -24,6 +24,7 @@ type PublisherService interface {
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)
 	BroadcastTxs(event data.BlockTxs)
+	BroadcastScrs(event data.BlockScrs)
 	Close() error
 	IsInterfaceNil() bool
 }

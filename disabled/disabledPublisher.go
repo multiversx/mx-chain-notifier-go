@@ -27,6 +27,10 @@ func (dp *Publisher) BroadcastFinalized(_ data.FinalizedBlock) {
 func (dp *Publisher) BroadcastTxs(_ data.BlockTxs) {
 }
 
+// BroadcastScrs does nothing
+func (dp *Publisher) BroadcastScrs(_ data.BlockScrs) {
+}
+
 // Close returns nil
 func (dp *Publisher) Close() error {
 	return nil

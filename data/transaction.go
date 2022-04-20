@@ -51,6 +51,11 @@ type BlockTxs struct {
 	Txs  map[string]transaction.Transaction `json:"txs"`
 }
 
+type BlockScrs struct {
+	Hash string                                             `json:"hash"`
+	Scrs map[string]smartContractResult.SmartContractResult `json:"scrs"`
+}
+
 type SaveBlockData struct {
 	Hash      string                                             `json:"hash"`
 	Txs       map[string]transaction.Transaction                 `json:"txs"`

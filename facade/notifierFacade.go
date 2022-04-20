@@ -60,6 +60,12 @@ func (nf *notifierFacade) HandlePushEvents(allEvents data.SaveBlockData) {
 		Txs:  allEvents.Txs,
 	}
 	nf.eventsHandler.HandleTxsEvents(txs)
+
+	scrs := data.BlockScrs{
+		Hash: allEvents.Hash,
+		Scrs: allEvents.Scrs,
+	}
+	nf.eventsHandler.HandleScrsEvents(scrs)
 }
 
 // HandleRevertEvents will handle revents events received from observer

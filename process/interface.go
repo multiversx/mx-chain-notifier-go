@@ -21,6 +21,7 @@ type Publisher interface {
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)
 	BroadcastTxs(event data.BlockTxs)
+	BroadcastScrs(event data.BlockScrs)
 	IsInterfaceNil() bool
 }
 
@@ -30,5 +31,6 @@ type EventsHandler interface {
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	HandleTxsEvents(blockTxs data.BlockTxs)
+	HandleScrsEvents(blockScrs data.BlockScrs)
 	IsInterfaceNil() bool
 }

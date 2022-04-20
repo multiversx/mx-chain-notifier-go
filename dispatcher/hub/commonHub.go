@@ -32,6 +32,7 @@ type commonHub struct {
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
 	broadcastTxs       chan data.BlockTxs
+	broadcastScrs      chan data.BlockScrs
 	closeChan          chan struct{}
 	cancelFunc         func()
 }
@@ -54,6 +55,7 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
 		broadcastTxs:       make(chan data.BlockTxs),
+		broadcastScrs:      make(chan data.BlockScrs),
 		closeChan:          make(chan struct{}),
 	}, nil
 }
@@ -139,6 +141,15 @@ func (ch *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
 func (ch *commonHub) BroadcastTxs(event data.BlockTxs) {
 	select {
 	case ch.broadcastTxs <- event:
+	case <-ch.closeChan:
+	}
+}
+
+// BroadcastScrs handles block scrs event pushed by producers into the broadcast channel
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (ch *commonHub) BroadcastScrs(event data.BlockScrs) {
+	select {
+	case ch.broadcastScrs <- event:
 	case <-ch.closeChan:
 	}
 }

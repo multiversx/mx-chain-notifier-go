@@ -31,6 +31,7 @@ type rabbitMqPublisher struct {
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
 	broadcastTxs       chan data.BlockTxs
+	broadcastScrs      chan data.BlockScrs
 
 	cancelFunc func()
 	closeChan  chan struct{}
@@ -48,6 +49,7 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
 		broadcastTxs:       make(chan data.BlockTxs),
+		broadcastScrs:      make(chan data.BlockScrs),
 		cfg:                args.Config,
 		client:             args.Client,
 		closeChan:          make(chan struct{}),
@@ -84,6 +86,8 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 			rp.publishFinalizedToExchange(finalizedBlock)
 		case blockTxs := <-rp.broadcastTxs:
 			rp.publishTxsToExchange(blockTxs)
+		case blockScrs := <-rp.broadcastScrs:
+			rp.publishScrsToExchange(blockScrs)
 		case err := <-rp.client.ConnErrChan():
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -126,6 +130,14 @@ func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
 func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
 	select {
 	case rp.broadcastTxs <- events:
+	case <-rp.closeChan:
+	}
+}
+
+// BroadcastScrs will handle the scrs event pushed by producers, and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastScrs(events data.BlockScrs) {
+	select {
+	case rp.broadcastScrs <- events:
 	case <-rp.closeChan:
 	}
 }
@@ -186,6 +198,21 @@ func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
 		err = rp.publishFanout(rp.cfg.TxsEventsExchange, txsBlockBytes)
 		if err != nil {
 			log.Error("failed to publish block txs event to rabbitMQ", "err", err.Error())
+		}
+	}
+}
+
+func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
+	if rp.cfg.ScrsEventsExchange != "" {
+		scrsBlockBytes, err := json.Marshal(blockScrs)
+		if err != nil {
+			log.Error("could not marshal block scrs event", "err", err.Error())
+			return
+		}
+
+		err = rp.publishFanout(rp.cfg.ScrsEventsExchange, scrsBlockBytes)
+		if err != nil {
+			log.Error("failed to publish block scrs event to rabbitMQ", "err", err.Error())
 		}
 	}
 }

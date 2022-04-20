@@ -34,6 +34,7 @@ type RabbitMQConfig struct {
 	RevertEventsExchange    string
 	FinalizedEventsExchange string
 	TxsEventsExchange       string
+	ScrsEventsExchange      string
 }
 
 // FlagsConfig holds the values for CLI flags

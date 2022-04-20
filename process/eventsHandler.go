@@ -19,6 +19,7 @@ const (
 	revertKeyPrefix        = "revert_"
 	finalizedKeyPrefix     = "finalized_"
 	txsKeyPrefix           = "txs_"
+	scrsKeyPrefix          = "scrs_"
 )
 
 // ArgsEventsHandler defines the arguments needed for an events handler
@@ -149,7 +150,7 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 // HandleTxsEvents will handle txs events received from observer
 func (eh *eventsHandler) HandleTxsEvents(blockTxs data.BlockTxs) {
 	if blockTxs.Hash == "" {
-		log.Warn("received empty finalized block hash",
+		log.Warn("received empty txs block hash",
 			"will process", false,
 		)
 		return
@@ -171,6 +172,35 @@ func (eh *eventsHandler) HandleTxsEvents(blockTxs data.BlockTxs) {
 
 	log.Info("received duplicated txs event for block",
 		"block hash", blockTxs.Hash,
+		"processed", false,
+	)
+}
+
+// HandleScrsEvents will handle scrs events received from observer
+func (eh *eventsHandler) HandleScrsEvents(blockScrs data.BlockScrs) {
+	if blockScrs.Hash == "" {
+		log.Warn("received empty scrs block hash",
+			"will process", false,
+		)
+		return
+	}
+	shouldProcessScrs := true
+	if eh.config.CheckDuplicates {
+		scrsKey := scrsKeyPrefix + blockScrs.Hash
+		shouldProcessScrs = eh.tryCheckProcessedWithRetry(scrsKey)
+	}
+
+	if shouldProcessScrs {
+		log.Info("received scrs events for block",
+			"block hash", blockScrs.Hash,
+			"will process", shouldProcessScrs,
+		)
+		eh.publisher.BroadcastScrs(blockScrs)
+		return
+	}
+
+	log.Info("received duplicated scrs event for block",
+		"block hash", blockScrs.Hash,
 		"processed", false,
 	)
 }

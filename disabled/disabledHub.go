@@ -29,6 +29,10 @@ func (h *Hub) BroadcastFinalized(_ data.FinalizedBlock) {
 func (h *Hub) BroadcastTxs(_ data.BlockTxs) {
 }
 
+// BroadcastScrs does nothing
+func (h *Hub) BroadcastScrs(_ data.BlockScrs) {
+}
+
 // RegisterEvent does nothing
 func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }
