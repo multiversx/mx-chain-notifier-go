@@ -95,6 +95,12 @@ func (ch *commonHub) run(ctx context.Context) {
 		case finalizedEvent := <-ch.broadcastFinalized:
 			ch.handleFinalizedBroadcast(finalizedEvent)
 
+		case txsEvent := <-ch.broadcastTxs:
+			ch.handleTxsBroadcast(txsEvent)
+
+		case scrsEvent := <-ch.broadcastScrs:
+			ch.handleScrsBroadcast(scrsEvent)
+
 		case dispatcherClient := <-ch.register:
 			ch.registerDispatcher(dispatcherClient)
 
@@ -239,6 +245,50 @@ func (ch *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.FinalizedEvent(event)
+		}
+	}
+}
+
+func (ch *commonHub) handleTxsBroadcast(blockTxs data.BlockTxs) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockTxs)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.BlockTxsEvents {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = blockTxs
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.TxsEvent(event)
+		}
+	}
+}
+
+func (ch *commonHub) handleScrsBroadcast(blockScrs data.BlockScrs) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockScrs)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.BlockTxsEvents {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = blockScrs
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.ScrsEvent(event)
 		}
 	}
 }

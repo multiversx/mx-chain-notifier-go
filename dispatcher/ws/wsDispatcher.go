@@ -127,6 +127,46 @@ func (wd *websocketDispatcher) FinalizedEvent(event data.FinalizedBlock) {
 	wd.send <- wsEventBytes
 }
 
+// TxsEvent receives a block txs event and process it before pushing to socket
+func (wd *websocketDispatcher) TxsEvent(event data.BlockTxs) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wsEvent := &data.WSEvent{
+		Type: common.BlockTxsEvents,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
+}
+
+// ScrsEvent receives a block scrs event and process it before pushing to socket
+func (wd *websocketDispatcher) ScrsEvent(event data.BlockScrs) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wsEvent := &data.WSEvent{
+		Type: common.BlockScrsEvents,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
+}
+
 // writePump listens on the send-channel and pushes data on the socket stream
 func (wd *websocketDispatcher) writePump() {
 	ticker := time.NewTicker(pingPeriod)
