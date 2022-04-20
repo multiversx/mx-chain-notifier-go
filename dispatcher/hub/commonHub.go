@@ -277,7 +277,7 @@ func (ch *commonHub) handleScrsBroadcast(blockScrs data.BlockScrs) {
 	dispatchersMap := make(map[uuid.UUID]data.BlockScrs)
 
 	for _, subscription := range subscriptions {
-		if subscription.EventType != common.BlockTxsEvents {
+		if subscription.EventType != common.BlockScrsEvents {
 			continue
 		}
 

@@ -140,7 +140,9 @@ func (sm *SubscriptionMapper) appendSubscription(sub data.Subscription) {
 
 func getEventType(subEntry data.SubscriptionEntry) string {
 	if subEntry.EventType == common.FinalizedBlockEvents ||
-		subEntry.EventType == common.RevertBlockEvents {
+		subEntry.EventType == common.RevertBlockEvents ||
+		subEntry.EventType == common.BlockTxsEvents ||
+		subEntry.EventType == common.BlockScrsEvents {
 		return subEntry.EventType
 	}
 
