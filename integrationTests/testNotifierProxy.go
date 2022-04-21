@@ -146,6 +146,8 @@ func GetDefaultConfigs() *config.GeneralConfig {
 			EventsExchange:          "all_events",
 			RevertEventsExchange:    "revert_events",
 			FinalizedEventsExchange: "finalized_events",
+			TxsEventsExchange:       "txs",
+			ScrsEventsExchange:      "scrs",
 		},
 		Flags: &config.FlagsConfig{
 			LogLevel:          "*:INFO",
