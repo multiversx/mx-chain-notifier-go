@@ -20,7 +20,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -72,7 +72,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -120,7 +120,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -166,7 +166,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -223,7 +223,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -281,7 +281,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()

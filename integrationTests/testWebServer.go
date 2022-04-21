@@ -109,17 +109,6 @@ func (w *TestWebServer) FinalizedEventsRequest(events *data.FinalizedBlock) *htt
 	return resp
 }
 
-// TxsEventsRequest will send a http request for finalized event
-func (w *TestWebServer) TxsEventsRequest(events *data.FinalizedBlock) *httptest.ResponseRecorder {
-	jsonBytes, _ := json.Marshal(events)
-
-	req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
-	req.Header.Set("Content-Type", "application/json")
-
-	resp := w.DoRequest(req)
-	return resp
-}
-
 func loadResponse(t *testing.T, rsp io.Reader, destination interface{}) {
 	jsonParser := json.NewDecoder(rsp)
 	err := jsonParser.Decode(destination)

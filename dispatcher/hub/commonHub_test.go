@@ -65,16 +65,18 @@ func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	require.Nil(t, err)
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
-	//dispatcher2 := mocks.NewDispatcherMock(nil, hub)
+	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
 
 	hub.Run()
 	defer hub.Close()
 
 	hub.RegisterEvent(dispatcher1)
-	require.True(t, hub.CheckDispatcherByID(dispatcher1.GetID(), dispatcher1))
+	hub.RegisterEvent(dispatcher2)
 
-	// hub.RegisterEvent(dispatcher2)
-	// require.True(t, hub.CheckDispatcherByID(dispatcher2.GetID(), dispatcher2))
+	time.Sleep(time.Millisecond * 100)
+
+	require.True(t, hub.CheckDispatcherByID(dispatcher1.GetID(), dispatcher1))
+	require.True(t, hub.CheckDispatcherByID(dispatcher2.GetID(), dispatcher2))
 }
 
 func TestCommonHub_UnregisterDispatcher(t *testing.T) {

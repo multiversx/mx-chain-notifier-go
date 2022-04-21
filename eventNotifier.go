@@ -125,9 +125,6 @@ func (en *eventNotifier) getLogEventsFromTransactionsPool(logs []*nodeData.LogDa
 	return events
 }
 
-// func (en *eventNotifier) getTxsFromTransactionsPool(txs map[string]nodeData.TransactionHandler) []data.Event {
-// }
-
 // RevertIndexedBlock converts revert data in order to be pushed to subscribers
 func (en *eventNotifier) RevertIndexedBlock(header nodeData.HeaderHandler, _ nodeData.BodyHandler) error {
 	blockHash, err := core.CalculateHash(en.marshalizer, en.hasher, header)
