@@ -1,6 +1,7 @@
 package rabbitmq_test
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -40,6 +41,61 @@ func TestRabbitMqPublisher(t *testing.T) {
 		client, err := rabbitmq.NewRabbitMqPublisher(args)
 		require.True(t, check.IfNil(client))
 		require.Equal(t, rabbitmq.ErrNilRabbitMqClient, err)
+	})
+
+	t.Run("invalid events exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.EventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid revert exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.RevertEventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid finalized exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.FinalizedEventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid txs exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.TxsEventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid scrs exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.ScrsEventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
 	})
 
 	t.Run("should work", func(t *testing.T) {

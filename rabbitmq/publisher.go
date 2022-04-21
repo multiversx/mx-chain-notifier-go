@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	logger "github.com/ElrondNetwork/elrond-go-logger"
@@ -59,6 +60,21 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 func checkArgs(args ArgsRabbitMqPublisher) error {
 	if check.IfNil(args.Client) {
 		return ErrNilRabbitMqClient
+	}
+	if args.Config.EventsExchange == "" {
+		return fmt.Errorf("empty events exchange name: %w", ErrInvalidRabbitMqExchangeName)
+	}
+	if args.Config.RevertEventsExchange == "" {
+		return fmt.Errorf("empty revert exchange name: %w", ErrInvalidRabbitMqExchangeName)
+	}
+	if args.Config.FinalizedEventsExchange == "" {
+		return fmt.Errorf("empty finalized exchange name: %w", ErrInvalidRabbitMqExchangeName)
+	}
+	if args.Config.TxsEventsExchange == "" {
+		return fmt.Errorf("empty txs exchange name: %w", ErrInvalidRabbitMqExchangeName)
+	}
+	if args.Config.ScrsEventsExchange == "" {
+		return fmt.Errorf("empty scrs exchange name: %w", ErrInvalidRabbitMqExchangeName)
 	}
 
 	return nil
@@ -143,77 +159,67 @@ func (rp *rabbitMqPublisher) BroadcastScrs(events data.BlockScrs) {
 }
 
 func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
-	if rp.cfg.EventsExchange != "" {
-		eventsBytes, err := json.Marshal(events)
-		if err != nil {
-			log.Error("could not marshal events", "err", err.Error())
-			return
-		}
+	eventsBytes, err := json.Marshal(events)
+	if err != nil {
+		log.Error("could not marshal events", "err", err.Error())
+		return
+	}
 
-		err = rp.publishFanout(rp.cfg.EventsExchange, eventsBytes)
-		if err != nil {
-			log.Error("failed to publish events to rabbitMQ", "err", err.Error())
-		}
+	err = rp.publishFanout(rp.cfg.EventsExchange, eventsBytes)
+	if err != nil {
+		log.Error("failed to publish events to rabbitMQ", "err", err.Error())
 	}
 }
 
 func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBlock) {
-	if rp.cfg.RevertEventsExchange != "" {
-		revertBlockBytes, err := json.Marshal(revertBlock)
-		if err != nil {
-			log.Error("could not marshal revert event", "err", err.Error())
-			return
-		}
+	revertBlockBytes, err := json.Marshal(revertBlock)
+	if err != nil {
+		log.Error("could not marshal revert event", "err", err.Error())
+		return
+	}
 
-		err = rp.publishFanout(rp.cfg.RevertEventsExchange, revertBlockBytes)
-		if err != nil {
-			log.Error("failed to publish revert event to rabbitMQ", "err", err.Error())
-		}
+	err = rp.publishFanout(rp.cfg.RevertEventsExchange, revertBlockBytes)
+	if err != nil {
+		log.Error("failed to publish revert event to rabbitMQ", "err", err.Error())
 	}
 }
 
 func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.FinalizedBlock) {
-	if rp.cfg.FinalizedEventsExchange != "" {
-		finalizedBlockBytes, err := json.Marshal(finalizedBlock)
-		if err != nil {
-			log.Error("could not marshal finalized event", "err", err.Error())
-			return
-		}
+	finalizedBlockBytes, err := json.Marshal(finalizedBlock)
+	if err != nil {
+		log.Error("could not marshal finalized event", "err", err.Error())
+		return
+	}
 
-		err = rp.publishFanout(rp.cfg.FinalizedEventsExchange, finalizedBlockBytes)
-		if err != nil {
-			log.Error("failed to publish finalized event to rabbitMQ", "err", err.Error())
-		}
+	err = rp.publishFanout(rp.cfg.FinalizedEventsExchange, finalizedBlockBytes)
+	if err != nil {
+		log.Error("failed to publish finalized event to rabbitMQ", "err", err.Error())
 	}
 }
 
 func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
-	if rp.cfg.TxsEventsExchange != "" {
-		txsBlockBytes, err := json.Marshal(blockTxs)
-		if err != nil {
-			log.Error("could not marshal block txs event", "err", err.Error())
-			return
-		}
+	txsBlockBytes, err := json.Marshal(blockTxs)
+	if err != nil {
+		log.Error("could not marshal block txs event", "err", err.Error())
+		return
+	}
 
-		err = rp.publishFanout(rp.cfg.TxsEventsExchange, txsBlockBytes)
-		if err != nil {
-			log.Error("failed to publish block txs event to rabbitMQ", "err", err.Error())
-		}
+	err = rp.publishFanout(rp.cfg.TxsEventsExchange, txsBlockBytes)
+	if err != nil {
+		log.Error("failed to publish block txs event to rabbitMQ", "err", err.Error())
 	}
 }
 
 func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
-	if rp.cfg.ScrsEventsExchange != "" {
-		scrsBlockBytes, err := json.Marshal(blockScrs)
-		if err != nil {
-			log.Error("could not marshal block scrs event", "err", err.Error())
-			return
-		}
+	scrsBlockBytes, err := json.Marshal(blockScrs)
+	if err != nil {
+		log.Error("could not marshal block scrs event", "err", err.Error())
+		return
+	}
 
-		err = rp.publishFanout(rp.cfg.ScrsEventsExchange, scrsBlockBytes)
-		if err != nil {
-			log.Error("failed to publish block scrs event to rabbitMQ", "err", err.Error())
-		}
+	err = rp.publishFanout(rp.cfg.ScrsEventsExchange, scrsBlockBytes)
+	if err != nil {
+		log.Error("failed to publish block scrs event to rabbitMQ", "err", err.Error())
 	}
 }
 
