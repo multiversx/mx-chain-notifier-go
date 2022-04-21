@@ -275,7 +275,7 @@ func TestHandleTxsEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler.HandleTxsEvents(events)
+		eventsHandler.HandleBlockTxs(events)
 		require.True(t, wasCalled)
 	})
 
@@ -308,7 +308,7 @@ func TestHandleTxsEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler.HandleTxsEvents(events)
+		eventsHandler.HandleBlockTxs(events)
 		require.False(t, wasCalled)
 	})
 }
@@ -339,7 +339,7 @@ func TestHandleScrsEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler.HandleScrsEvents(events)
+		eventsHandler.HandleBlockScrs(events)
 		require.True(t, wasCalled)
 	})
 
@@ -372,7 +372,7 @@ func TestHandleScrsEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler.HandleScrsEvents(events)
+		eventsHandler.HandleBlockScrs(events)
 		require.False(t, wasCalled)
 	})
 }

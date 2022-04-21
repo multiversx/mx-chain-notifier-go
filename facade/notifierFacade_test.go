@@ -109,11 +109,11 @@ func TestHandlePushEvents(t *testing.T) {
 			pushWasCalled = true
 			assert.Equal(t, expLogEvents, events)
 		},
-		HandleTxsEventsCalled: func(blockTxs data.BlockTxs) {
+		HandleBlockTxsCalled: func(blockTxs data.BlockTxs) {
 			txsWasCalled = true
 			assert.Equal(t, expTxsData, blockTxs)
 		},
-		HandleScrsEventsCalled: func(blockScrs data.BlockScrs) {
+		HandleBlockScrsCalled: func(blockScrs data.BlockScrs) {
 			scrsWasCalled = true
 			assert.Equal(t, expScrsData, blockScrs)
 		},
@@ -162,10 +162,10 @@ func TestHandleFinalizedEvents(t *testing.T) {
 		Hash: "hash1",
 	}
 
-	pushWasCalled := false
+	finalizedWasCalled := false
 	args.EventsHandler = &mocks.EventsHandlerStub{
 		HandleFinalizedEventsCalled: func(finalizedBlock data.FinalizedBlock) {
-			pushWasCalled = true
+			finalizedWasCalled = true
 			assert.Equal(t, finalizedData, finalizedBlock)
 		},
 	}
@@ -174,7 +174,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 
 	facade.HandleFinalizedEvents(finalizedData)
 
-	assert.True(t, pushWasCalled)
+	assert.True(t, finalizedWasCalled)
 }
 
 func TestServerHTTP(t *testing.T) {

@@ -135,7 +135,7 @@ func (wd *websocketDispatcher) TxsEvent(event data.BlockTxs) {
 		return
 	}
 	wsEvent := &data.WSEvent{
-		Type: common.BlockTxsEvents,
+		Type: common.BlockTxs,
 		Data: eventBytes,
 	}
 	wsEventBytes, err := json.Marshal(wsEvent)
@@ -155,7 +155,7 @@ func (wd *websocketDispatcher) ScrsEvent(event data.BlockScrs) {
 		return
 	}
 	wsEvent := &data.WSEvent{
-		Type: common.BlockScrsEvents,
+		Type: common.BlockScrs,
 		Data: eventBytes,
 	}
 	wsEventBytes, err := json.Marshal(wsEvent)

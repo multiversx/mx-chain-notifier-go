@@ -32,7 +32,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: "all_events",
+				EventType: common.PushBlockEvents,
 			},
 		},
 	}
@@ -84,7 +84,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: "revert_events",
+				EventType: common.RevertBlockEvents,
 			},
 		},
 	}
@@ -132,7 +132,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: "finalized_events",
+				EventType: common.FinalizedBlockEvents,
 			},
 		},
 	}
@@ -178,7 +178,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: "txs_events",
+				EventType: common.BlockTxs,
 			},
 		},
 	}
@@ -235,7 +235,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: "scrs_events",
+				EventType: common.BlockScrs,
 			},
 		},
 	}
@@ -293,19 +293,19 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: "all_events",
+				EventType: common.PushBlockEvents,
 			},
 			{
-				EventType: "revert_events",
+				EventType: common.RevertBlockEvents,
 			},
 			{
-				EventType: "finalized_events",
+				EventType: common.FinalizedBlockEvents,
 			},
 			{
-				EventType: "txs_events",
+				EventType: common.BlockTxs,
 			},
 			{
-				EventType: "scrs_events",
+				EventType: common.BlockScrs,
 			},
 		},
 	}
@@ -382,12 +382,12 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, finalizedBlock, event)
 				wg.Done()
-			case common.BlockTxsEvents:
+			case common.BlockTxs:
 				var event *data.BlockTxs
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, blockTxs, event)
 				wg.Done()
-			case common.BlockScrsEvents:
+			case common.BlockScrs:
 				var event *data.BlockScrs
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, blockScrs, event)

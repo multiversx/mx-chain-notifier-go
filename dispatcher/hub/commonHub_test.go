@@ -289,7 +289,7 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 	hub.Subscribe(data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.BlockTxsEvents,
+				EventType: common.BlockTxs,
 			},
 		},
 	})
@@ -328,7 +328,7 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 	hub.Subscribe(data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.BlockScrsEvents,
+				EventType: common.BlockScrs,
 			},
 		},
 	})

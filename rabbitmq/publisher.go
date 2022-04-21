@@ -70,11 +70,11 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 	if args.Config.FinalizedEventsExchange == "" {
 		return fmt.Errorf("empty finalized exchange name: %w", ErrInvalidRabbitMqExchangeName)
 	}
-	if args.Config.TxsEventsExchange == "" {
-		return fmt.Errorf("empty txs exchange name: %w", ErrInvalidRabbitMqExchangeName)
+	if args.Config.BlockTxsExchange == "" {
+		return fmt.Errorf("empty block txs exchange name: %w", ErrInvalidRabbitMqExchangeName)
 	}
-	if args.Config.ScrsEventsExchange == "" {
-		return fmt.Errorf("empty scrs exchange name: %w", ErrInvalidRabbitMqExchangeName)
+	if args.Config.BlockScrsExchange == "" {
+		return fmt.Errorf("empty block scrs exchange name: %w", ErrInvalidRabbitMqExchangeName)
 	}
 
 	return nil
@@ -204,7 +204,7 @@ func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
 		return
 	}
 
-	err = rp.publishFanout(rp.cfg.TxsEventsExchange, txsBlockBytes)
+	err = rp.publishFanout(rp.cfg.BlockTxsExchange, txsBlockBytes)
 	if err != nil {
 		log.Error("failed to publish block txs event to rabbitMQ", "err", err.Error())
 	}
@@ -217,7 +217,7 @@ func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
 		return
 	}
 
-	err = rp.publishFanout(rp.cfg.ScrsEventsExchange, scrsBlockBytes)
+	err = rp.publishFanout(rp.cfg.BlockScrsExchange, scrsBlockBytes)
 	if err != nil {
 		log.Error("failed to publish block scrs event to rabbitMQ", "err", err.Error())
 	}

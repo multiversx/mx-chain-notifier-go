@@ -150,8 +150,8 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 	eh.publisher.BroadcastFinalized(finalizedBlock)
 }
 
-// HandleTxsEvents will handle txs events received from observer
-func (eh *eventsHandler) HandleTxsEvents(blockTxs data.BlockTxs) {
+// HandleBlockTxs will handle txs events received from observer
+func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 	if blockTxs.Hash == "" {
 		log.Warn("received empty txs block hash",
 			"will process", false,
@@ -180,8 +180,8 @@ func (eh *eventsHandler) HandleTxsEvents(blockTxs data.BlockTxs) {
 	eh.publisher.BroadcastTxs(blockTxs)
 }
 
-// HandleScrsEvents will handle scrs events received from observer
-func (eh *eventsHandler) HandleScrsEvents(blockScrs data.BlockScrs) {
+// HandleBlockScrs will handle scrs events received from observer
+func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	if blockScrs.Hash == "" {
 		log.Warn("received empty scrs block hash",
 			"will process", false,

@@ -23,8 +23,8 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 			EventsExchange:          "allevents",
 			RevertEventsExchange:    "revert",
 			FinalizedEventsExchange: "finalized",
-			TxsEventsExchange:       "txs",
-			ScrsEventsExchange:      "scrs",
+			BlockTxsExchange:        "txs",
+			BlockScrsExchange:       "scrs",
 		},
 	}
 }
@@ -80,7 +80,7 @@ func TestRabbitMqPublisher(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsRabbitMqPublisher()
-		args.Config.TxsEventsExchange = ""
+		args.Config.BlockTxsExchange = ""
 
 		client, err := rabbitmq.NewRabbitMqPublisher(args)
 		require.True(t, check.IfNil(client))
@@ -91,7 +91,7 @@ func TestRabbitMqPublisher(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsRabbitMqPublisher()
-		args.Config.ScrsEventsExchange = ""
+		args.Config.BlockScrsExchange = ""
 
 		client, err := rabbitmq.NewRabbitMqPublisher(args)
 		require.True(t, check.IfNil(client))

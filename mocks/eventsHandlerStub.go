@@ -7,8 +7,8 @@ type EventsHandlerStub struct {
 	HandlePushEventsCalled      func(events data.BlockEvents)
 	HandleRevertEventsCalled    func(revertBlock data.RevertBlock)
 	HandleFinalizedEventsCalled func(finalizedBlock data.FinalizedBlock)
-	HandleTxsEventsCalled       func(blockTxs data.BlockTxs)
-	HandleScrsEventsCalled      func(blockScrs data.BlockScrs)
+	HandleBlockTxsCalled        func(blockTxs data.BlockTxs)
+	HandleBlockScrsCalled       func(blockScrs data.BlockScrs)
 }
 
 // HandlePushEvents -
@@ -32,17 +32,17 @@ func (e *EventsHandlerStub) HandleFinalizedEvents(finalizedBlock data.FinalizedB
 	}
 }
 
-// HandleTxsEvents -
-func (e *EventsHandlerStub) HandleTxsEvents(blockTxs data.BlockTxs) {
-	if e.HandleTxsEventsCalled != nil {
-		e.HandleTxsEventsCalled(blockTxs)
+// HandleBlockTxs -
+func (e *EventsHandlerStub) HandleBlockTxs(blockTxs data.BlockTxs) {
+	if e.HandleBlockTxsCalled != nil {
+		e.HandleBlockTxsCalled(blockTxs)
 	}
 }
 
-// HandleScrsEvents -
-func (e *EventsHandlerStub) HandleScrsEvents(blockScrs data.BlockScrs) {
-	if e.HandleScrsEventsCalled != nil {
-		e.HandleScrsEventsCalled(blockScrs)
+// HandleBlockScrs -
+func (e *EventsHandlerStub) HandleBlockScrs(blockScrs data.BlockScrs) {
+	if e.HandleBlockScrsCalled != nil {
+		e.HandleBlockScrsCalled(blockScrs)
 	}
 }
 
