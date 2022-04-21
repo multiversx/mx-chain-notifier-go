@@ -275,7 +275,7 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 
 	args := createMockCommonHubArgs()
 	hub, err := NewCommonHub(args)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	wg := sync.WaitGroup{}
 	numCalls := uint32(0)

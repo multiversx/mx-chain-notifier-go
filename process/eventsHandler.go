@@ -73,19 +73,20 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
 	}
 
-	if events.Events != nil && shouldProcessEvents {
-		log.Info("received events for block",
+	if events.Events == nil || !shouldProcessEvents {
+		log.Info("received duplicated events for block",
 			"block hash", events.Hash,
-			"will process", shouldProcessEvents,
+			"processed", false,
 		)
-		eh.publisher.Broadcast(events)
 		return
 	}
 
-	log.Info("received duplicated events for block",
+	log.Info("received events for block",
 		"block hash", events.Hash,
-		"processed", false,
+		"will process", shouldProcessEvents,
 	)
+
+	eh.publisher.Broadcast(events)
 }
 
 // HandleRevertEvents will handle revents events received from observer
@@ -103,19 +104,20 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 		shouldProcessRevert = eh.tryCheckProcessedWithRetry(revertKey)
 	}
 
-	if shouldProcessRevert {
-		log.Info("received revert event for block",
+	if !shouldProcessRevert {
+		log.Info("received duplicated revert event for block",
 			"block hash", revertBlock.Hash,
-			"will process", shouldProcessRevert,
+			"processed", false,
 		)
-		eh.publisher.BroadcastRevert(revertBlock)
 		return
 	}
 
-	log.Info("received duplicated revert event for block",
+	log.Info("received revert event for block",
 		"block hash", revertBlock.Hash,
-		"processed", false,
+		"will process", shouldProcessRevert,
 	)
+
+	eh.publisher.BroadcastRevert(revertBlock)
 }
 
 // HandleFinalizedEvents will handle finalized events received from observer
@@ -132,19 +134,20 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(finalizedKey)
 	}
 
-	if shouldProcessFinalized {
-		log.Info("received finalized events for block",
+	if !shouldProcessFinalized {
+		log.Info("received duplicated finalized event for block",
 			"block hash", finalizedBlock.Hash,
-			"will process", shouldProcessFinalized,
+			"processed", false,
 		)
-		eh.publisher.BroadcastFinalized(finalizedBlock)
 		return
 	}
 
-	log.Info("received duplicated finalized event for block",
+	log.Info("received finalized events for block",
 		"block hash", finalizedBlock.Hash,
-		"processed", false,
+		"will process", shouldProcessFinalized,
 	)
+
+	eh.publisher.BroadcastFinalized(finalizedBlock)
 }
 
 // HandleTxsEvents will handle txs events received from observer
@@ -161,19 +164,20 @@ func (eh *eventsHandler) HandleTxsEvents(blockTxs data.BlockTxs) {
 		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
 	}
 
-	if shouldProcessTxs {
-		log.Info("received txs events for block",
+	if !shouldProcessTxs {
+		log.Info("received duplicated txs event for block",
 			"block hash", blockTxs.Hash,
-			"will process", shouldProcessTxs,
+			"processed", false,
 		)
-		eh.publisher.BroadcastTxs(blockTxs)
 		return
 	}
 
-	log.Info("received duplicated txs event for block",
+	log.Info("received txs events for block",
 		"block hash", blockTxs.Hash,
-		"processed", false,
+		"will process", shouldProcessTxs,
 	)
+
+	eh.publisher.BroadcastTxs(blockTxs)
 }
 
 // HandleScrsEvents will handle scrs events received from observer
@@ -190,19 +194,20 @@ func (eh *eventsHandler) HandleScrsEvents(blockScrs data.BlockScrs) {
 		shouldProcessScrs = eh.tryCheckProcessedWithRetry(scrsKey)
 	}
 
-	if shouldProcessScrs {
-		log.Info("received scrs events for block",
+	if !shouldProcessScrs {
+		log.Info("received duplicated scrs event for block",
 			"block hash", blockScrs.Hash,
-			"will process", shouldProcessScrs,
+			"processed", false,
 		)
-		eh.publisher.BroadcastScrs(blockScrs)
 		return
 	}
 
-	log.Info("received duplicated scrs event for block",
+	log.Info("received scrs events for block",
 		"block hash", blockScrs.Hash,
-		"processed", false,
+		"will process", shouldProcessScrs,
 	)
+
+	eh.publisher.BroadcastScrs(blockScrs)
 }
 
 func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {

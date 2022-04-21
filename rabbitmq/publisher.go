@@ -102,7 +102,7 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 	}
 }
 
-// Broadcast will handle the block events pushed by producers, and sends them to rabbitMQ channel
+// Broadcast will handle the block events pushed by producers and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) Broadcast(events data.BlockEvents) {
 	select {
 	case rp.broadcast <- events:
@@ -110,7 +110,7 @@ func (rp *rabbitMqPublisher) Broadcast(events data.BlockEvents) {
 	}
 }
 
-// BroadcastRevert will handle the revert event pushed by producers, and sends them to rabbitMQ channel
+// BroadcastRevert will handle the revert event pushed by producers and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
 	select {
 	case rp.broadcastRevert <- events:
@@ -118,7 +118,7 @@ func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
 	}
 }
 
-// BroadcastFinalized will handle the finalized event pushed by producers, and sends them to rabbitMQ channel
+// BroadcastFinalized will handle the finalized event pushed by producers and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
 	select {
 	case rp.broadcastFinalized <- events:
@@ -126,7 +126,7 @@ func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
 	}
 }
 
-// BroadcastTxs will handle the txs event pushed by producers, and sends them to rabbitMQ channel
+// BroadcastTxs will handle the txs event pushed by producers and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
 	select {
 	case rp.broadcastTxs <- events:
@@ -134,7 +134,7 @@ func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
 	}
 }
 
-// BroadcastScrs will handle the scrs event pushed by producers, and sends them to rabbitMQ channel
+// BroadcastScrs will handle the scrs event pushed by producers and sends them to rabbitMQ channel
 func (rp *rabbitMqPublisher) BroadcastScrs(events data.BlockScrs) {
 	select {
 	case rp.broadcastScrs <- events:

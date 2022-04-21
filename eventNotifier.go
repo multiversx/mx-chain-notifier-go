@@ -23,6 +23,14 @@ const (
 	finalizedEventsEndpoint = "/events/finalized"
 )
 
+// SaveBlockData holds the data that will be sent to notifier instance
+type SaveBlockData struct {
+	Hash      string                                 `json:"hash"`
+	Txs       map[string]nodeData.TransactionHandler `json:"txs"`
+	Scrs      map[string]nodeData.TransactionHandler `json:"scrs"`
+	LogEvents []data.Event                           `json:"events"`
+}
+
 type eventNotifier struct {
 	isNilNotifier   bool
 	httpClient      client.HttpClient
@@ -62,13 +70,6 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 
 	events := en.getLogEventsFromTransactionsPool(args.TransactionsPool.Logs)
 	log.Debug("extracted events from block logs", "num events", len(events))
-
-	type SaveBlockData struct {
-		Hash      string                                 `json:"hash"`
-		Txs       map[string]nodeData.TransactionHandler `json:"txs"`
-		Scrs      map[string]nodeData.TransactionHandler `json:"scrs"`
-		LogEvents []data.Event                           `json:"events"`
-	}
 
 	blockData := SaveBlockData{
 		Hash:      hex.EncodeToString(args.HeaderHash),

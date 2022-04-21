@@ -138,10 +138,10 @@ func TestHandleRevertEvents(t *testing.T) {
 		Nonce: 1,
 	}
 
-	pushWasCalled := false
+	revertWasCalled := false
 	args.EventsHandler = &mocks.EventsHandlerStub{
 		HandleRevertEventsCalled: func(revertBlock data.RevertBlock) {
-			pushWasCalled = true
+			revertWasCalled = true
 			assert.Equal(t, revertData, revertBlock)
 		},
 	}
@@ -150,7 +150,7 @@ func TestHandleRevertEvents(t *testing.T) {
 
 	facade.HandleRevertEvents(revertData)
 
-	assert.True(t, pushWasCalled)
+	assert.True(t, revertWasCalled)
 }
 
 func TestHandleFinalizedEvents(t *testing.T) {

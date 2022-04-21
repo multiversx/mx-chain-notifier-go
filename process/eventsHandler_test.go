@@ -12,7 +12,6 @@ import (
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/ElrondNetwork/notifier-go/process"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -84,7 +83,7 @@ func TestHandlePushEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandlePushEvents(events)
-		assert.False(t, wasCalled)
+		require.False(t, wasCalled)
 	})
 
 	t.Run("broadcast event was called", func(t *testing.T) {
@@ -107,7 +106,7 @@ func TestHandlePushEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandlePushEvents(events)
-		assert.True(t, wasCalled)
+		require.True(t, wasCalled)
 	})
 
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
@@ -136,7 +135,7 @@ func TestHandlePushEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandlePushEvents(events)
-		assert.False(t, wasCalled)
+		require.False(t, wasCalled)
 	})
 }
 
@@ -163,7 +162,7 @@ func TestHandleRevertEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleRevertEvents(events)
-		assert.True(t, wasCalled)
+		require.True(t, wasCalled)
 	})
 
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
@@ -192,7 +191,7 @@ func TestHandleRevertEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleRevertEvents(events)
-		assert.False(t, wasCalled)
+		require.False(t, wasCalled)
 	})
 }
 
@@ -218,7 +217,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleFinalizedEvents(events)
-		assert.True(t, wasCalled)
+		require.True(t, wasCalled)
 	})
 
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
@@ -246,7 +245,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleFinalizedEvents(events)
-		assert.False(t, wasCalled)
+		require.False(t, wasCalled)
 	})
 }
 
@@ -277,7 +276,7 @@ func TestHandleTxsEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleTxsEvents(events)
-		assert.True(t, wasCalled)
+		require.True(t, wasCalled)
 	})
 
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
@@ -310,7 +309,7 @@ func TestHandleTxsEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleTxsEvents(events)
-		assert.False(t, wasCalled)
+		require.False(t, wasCalled)
 	})
 }
 
@@ -341,7 +340,7 @@ func TestHandleScrsEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleScrsEvents(events)
-		assert.True(t, wasCalled)
+		require.True(t, wasCalled)
 	})
 
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
@@ -374,7 +373,7 @@ func TestHandleScrsEvents(t *testing.T) {
 		}
 
 		eventsHandler.HandleScrsEvents(events)
-		assert.False(t, wasCalled)
+		require.False(t, wasCalled)
 	})
 }
 
@@ -398,7 +397,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
-		assert.False(t, ok)
+		require.False(t, ok)
 	})
 
 	t.Run("event is already processed", func(t *testing.T) {
@@ -416,7 +415,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
-		assert.True(t, ok)
+		require.True(t, ok)
 	})
 
 	t.Run("locker service is failing on first try, has no connection, works on second try", func(t *testing.T) {
@@ -447,6 +446,6 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		require.Nil(t, err)
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
-		assert.True(t, ok)
+		require.True(t, ok)
 	})
 }

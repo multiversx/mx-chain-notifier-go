@@ -55,7 +55,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		reply, err := ws.ReceiveEvents()
 		require.Nil(t, err)
 
-		assert.Equal(t, events, reply)
+		require.Equal(t, events, reply)
 		wg.Done()
 	}()
 
@@ -103,7 +103,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 		reply, err := ws.ReceiveRevertBlock()
 		require.Nil(t, err)
 
-		assert.Equal(t, blockEvents, reply)
+		require.Equal(t, blockEvents, reply)
 		wg.Done()
 	}()
 
@@ -150,7 +150,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 		reply, err := ws.ReceiveFinalized()
 		require.Nil(t, err)
 
-		assert.Equal(t, blockEvents, reply)
+		require.Equal(t, blockEvents, reply)
 		wg.Done()
 	}()
 
@@ -207,7 +207,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		reply, err := ws.ReceiveTxs()
 		require.Nil(t, err)
 
-		assert.Equal(t, expBlockTxs, reply)
+		require.Equal(t, expBlockTxs, reply)
 		wg.Done()
 	}()
 
@@ -264,7 +264,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		reply, err := ws.ReceiveScrs()
 		require.Nil(t, err)
 
-		assert.Equal(t, expBlockScrs, reply)
+		require.Equal(t, expBlockScrs, reply)
 		wg.Done()
 	}()
 
@@ -406,5 +406,5 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 	wg.Wait()
 
-	assert.Equal(t, 5, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
 }
