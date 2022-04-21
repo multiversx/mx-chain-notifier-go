@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/integrationTests"
@@ -159,6 +161,120 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	wg.Wait()
 }
 
+func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
+	cfg := integrationTests.GetDefaultConfigs()
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	require.Nil(t, err)
+
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+
+	notifier.Publisher.Run()
+	defer notifier.Publisher.Close()
+
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
+	require.Nil(t, err)
+	defer ws.Close()
+
+	subscribeEvent := &data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: "txs_events",
+			},
+		},
+	}
+
+	ws.SendSubscribeMessage(subscribeEvent)
+
+	blockHash := "hash1"
+	txs := map[string]transaction.Transaction{
+		"txhash1": {
+			Nonce: 1,
+		},
+	}
+	blockEvents := &data.SaveBlockData{
+		Hash: blockHash,
+		Txs:  txs,
+	}
+	expBlockTxs := &data.BlockTxs{
+		Hash: blockHash,
+		Txs:  txs,
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveTxs()
+		require.Nil(t, err)
+
+		assert.Equal(t, expBlockTxs, reply)
+		wg.Done()
+	}()
+
+	time.Sleep(time.Second)
+
+	webServer.PushEventsRequest(blockEvents)
+
+	wg.Wait()
+}
+
+func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
+	cfg := integrationTests.GetDefaultConfigs()
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	require.Nil(t, err)
+
+	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+
+	notifier.Publisher.Run()
+	defer notifier.Publisher.Close()
+
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
+	require.Nil(t, err)
+	defer ws.Close()
+
+	subscribeEvent := &data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: "scrs_events",
+			},
+		},
+	}
+
+	ws.SendSubscribeMessage(subscribeEvent)
+
+	blockHash := "hash1"
+	scrs := map[string]smartContractResult.SmartContractResult{
+		"hash2": {
+			Nonce: 2,
+		},
+	}
+	blockEvents := &data.SaveBlockData{
+		Hash: blockHash,
+		Scrs: scrs,
+	}
+	expBlockScrs := &data.BlockScrs{
+		Hash: blockHash,
+		Scrs: scrs,
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveScrs()
+		require.Nil(t, err)
+
+		assert.Equal(t, expBlockScrs, reply)
+		wg.Done()
+	}()
+
+	time.Sleep(time.Second)
+
+	webServer.PushEventsRequest(blockEvents)
+
+	wg.Wait()
+}
+
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
 	cfg.ConnectorApi.CheckDuplicates = true
@@ -185,6 +301,12 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			{
 				EventType: "finalized_events",
 			},
+			{
+				EventType: "txs_events",
+			},
+			{
+				EventType: "scrs_events",
+			},
 		},
 	}
 
@@ -204,16 +326,39 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			Address: "addr1",
 		},
 	}
+
+	txs := map[string]transaction.Transaction{
+		"txhash1": {
+			Nonce: 1,
+		},
+	}
+	scrs := map[string]smartContractResult.SmartContractResult{
+		"txhash2": {
+			Nonce: 2,
+		},
+	}
+	blockHash := "hash1"
+	blockTxs := &data.BlockTxs{
+		Hash: blockHash,
+		Txs:  txs,
+	}
+	blockScrs := &data.BlockScrs{
+		Hash: blockHash,
+		Scrs: scrs,
+	}
 	blockEvents := &data.SaveBlockData{
-		Hash:      "hash1",
+		Hash:      blockHash,
 		LogEvents: events,
+		Txs:       txs,
+		Scrs:      scrs,
 	}
 
+	numEvents := 5
 	wg := &sync.WaitGroup{}
-	wg.Add(3)
+	wg.Add(numEvents)
 
 	go func(wg *sync.WaitGroup) {
-		for i := 0; i < 3; i++ {
+		for i := 0; i < numEvents; i++ {
 			m, err := ws.ReadMessage()
 			require.Nil(t, err)
 
@@ -236,6 +381,16 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				var event *data.FinalizedBlock
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, finalizedBlock, event)
+				wg.Done()
+			case common.BlockTxsEvents:
+				var event *data.BlockTxs
+				_ = json.Unmarshal(reply.Data, &event)
+				assert.Equal(t, blockTxs, event)
+				wg.Done()
+			case common.BlockScrsEvents:
+				var event *data.BlockScrs
+				_ = json.Unmarshal(reply.Data, &event)
+				assert.Equal(t, blockScrs, event)
 				wg.Done()
 			default:
 				t.Errorf("invalid message type")
