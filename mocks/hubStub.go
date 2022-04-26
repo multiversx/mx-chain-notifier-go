@@ -11,6 +11,8 @@ type HubStub struct {
 	BroadcastCalled          func(events data.BlockEvents)
 	BroadcastRevertCalled    func(event data.RevertBlock)
 	BroadcastFinalizedCalled func(event data.FinalizedBlock)
+	BroadcastTxsCalled       func(event data.BlockTxs)
+	BroadcastScrsCalled      func(event data.BlockScrs)
 	RegisterEventCalled      func(event dispatcher.EventDispatcher)
 	UnregisterEventCalled    func(event dispatcher.EventDispatcher)
 	SubscribeCalled          func(event data.SubscribeEvent)
@@ -42,6 +44,20 @@ func (h *HubStub) BroadcastRevert(event data.RevertBlock) {
 func (h *HubStub) BroadcastFinalized(event data.FinalizedBlock) {
 	if h.BroadcastFinalizedCalled != nil {
 		h.BroadcastFinalizedCalled(event)
+	}
+}
+
+// BroadcastTxs -
+func (h *HubStub) BroadcastTxs(event data.BlockTxs) {
+	if h.BroadcastTxsCalled != nil {
+		h.BroadcastTxsCalled(event)
+	}
+}
+
+// BroadcastScrs -
+func (h *HubStub) BroadcastScrs(event data.BlockScrs) {
+	if h.BroadcastScrsCalled != nil {
+		h.BroadcastScrsCalled(event)
 	}
 }
 

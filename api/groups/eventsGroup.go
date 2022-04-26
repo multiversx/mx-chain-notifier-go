@@ -66,7 +66,7 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
-	var blockEvents data.BlockEvents
+	var blockEvents data.SaveBlockData
 
 	err := c.Bind(&blockEvents)
 	if err != nil {

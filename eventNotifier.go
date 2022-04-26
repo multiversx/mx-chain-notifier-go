@@ -23,6 +23,14 @@ const (
 	finalizedEventsEndpoint = "/events/finalized"
 )
 
+// SaveBlockData holds the data that will be sent to notifier instance
+type SaveBlockData struct {
+	Hash      string                                 `json:"hash"`
+	Txs       map[string]nodeData.TransactionHandler `json:"txs"`
+	Scrs      map[string]nodeData.TransactionHandler `json:"scrs"`
+	LogEvents []data.Event                           `json:"events"`
+}
+
 type eventNotifier struct {
 	isNilNotifier   bool
 	httpClient      client.HttpClient
@@ -58,8 +66,29 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 	}
 
 	log.Debug("checking if block has logs", "num logs", len(args.TransactionsPool.Logs))
+	log.Debug("checking if block has txs", "num txs", len(args.TransactionsPool.Txs))
+
+	events := en.getLogEventsFromTransactionsPool(args.TransactionsPool.Logs)
+	log.Debug("extracted events from block logs", "num events", len(events))
+
+	blockData := SaveBlockData{
+		Hash:      hex.EncodeToString(args.HeaderHash),
+		Txs:       args.TransactionsPool.Txs,
+		Scrs:      args.TransactionsPool.Scrs,
+		LogEvents: events,
+	}
+
+	err := en.httpClient.Post(pushEventEndpoint, blockData, nil)
+	if err != nil {
+		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err)
+	}
+
+	return nil
+}
+
+func (en *eventNotifier) getLogEventsFromTransactionsPool(logs []*nodeData.LogData) []data.Event {
 	var logEvents []nodeData.EventHandler
-	for _, logData := range args.TransactionsPool.Logs {
+	for _, logData := range logs {
 		if logData == nil {
 			continue
 		}
@@ -94,19 +123,7 @@ func (en *eventNotifier) SaveBlock(args *indexer.ArgsSaveBlockData) error {
 		}
 	}
 
-	log.Debug("extracted events from block logs", "num events", len(events))
-
-	blockEvents := data.BlockEvents{
-		Hash:   hex.EncodeToString(args.HeaderHash),
-		Events: events,
-	}
-
-	err := en.httpClient.Post(pushEventEndpoint, blockEvents, nil)
-	if err != nil {
-		return fmt.Errorf("%w in eventNotifier.SaveBlock while posting event data", err)
-	}
-
-	return nil
+	return events
 }
 
 // RevertIndexedBlock converts revert data in order to be pushed to subscribers

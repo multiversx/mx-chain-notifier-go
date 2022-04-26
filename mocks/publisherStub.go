@@ -8,6 +8,8 @@ type PublisherStub struct {
 	BroadcastCalled          func(events data.BlockEvents)
 	BroadcastRevertCalled    func(event data.RevertBlock)
 	BroadcastFinalizedCalled func(event data.FinalizedBlock)
+	BroadcastTxsCalled       func(event data.BlockTxs)
+	BroadcastScrsCalled      func(event data.BlockScrs)
 }
 
 // Run -
@@ -35,6 +37,20 @@ func (ps *PublisherStub) BroadcastRevert(event data.RevertBlock) {
 func (ps *PublisherStub) BroadcastFinalized(event data.FinalizedBlock) {
 	if ps.BroadcastFinalizedCalled != nil {
 		ps.BroadcastFinalizedCalled(event)
+	}
+}
+
+// BroadcastTxs -
+func (ps *PublisherStub) BroadcastTxs(event data.BlockTxs) {
+	if ps.BroadcastTxsCalled != nil {
+		ps.BroadcastTxsCalled(event)
+	}
+}
+
+// BroadcastScrs -
+func (ps *PublisherStub) BroadcastScrs(event data.BlockScrs) {
+	if ps.BroadcastScrsCalled != nil {
+		ps.BroadcastScrsCalled(event)
 	}
 }
 

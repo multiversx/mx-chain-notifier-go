@@ -40,6 +40,14 @@ func (d *DispatcherMock) RevertEvent(event data.RevertBlock) {
 func (d *DispatcherMock) FinalizedEvent(event data.FinalizedBlock) {
 }
 
+// TxsEvent -
+func (d *DispatcherMock) TxsEvent(event data.BlockTxs) {
+}
+
+// ScrsEvent -
+func (d *DispatcherMock) ScrsEvent(event data.BlockScrs) {
+}
+
 // Subscribe -
 func (d *DispatcherMock) Subscribe(event data.SubscribeEvent) {
 	d.hub.Subscribe(event)

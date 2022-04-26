@@ -15,6 +15,8 @@ type EventDispatcher interface {
 	PushEvents(events []data.Event)
 	RevertEvent(event data.RevertBlock)
 	FinalizedEvent(event data.FinalizedBlock)
+	TxsEvent(event data.BlockTxs)
+	ScrsEvent(event data.BlockScrs)
 }
 
 // Hub defines the behaviour of a hub component which should be able to register
@@ -24,6 +26,8 @@ type Hub interface {
 	Broadcast(events data.BlockEvents)
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)
+	BroadcastTxs(event data.BlockTxs)
+	BroadcastScrs(event data.BlockScrs)
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
 	Subscribe(event data.SubscribeEvent)

@@ -28,4 +28,10 @@ const (
 
 	// FinalizedBlockEvents defines the subscription event type for finalized blocks
 	FinalizedBlockEvents string = "finalized_events"
+
+	// BlockTxs defines the subscription event type for block txs
+	BlockTxs string = "block_txs"
+
+	// BlockScrs defines the subscription event type for block scrs
+	BlockScrs string = "block_scrs"
 )

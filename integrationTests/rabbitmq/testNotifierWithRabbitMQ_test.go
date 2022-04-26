@@ -41,14 +41,14 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	assert.Equal(t, 5, responses[http.StatusOK])
 	mutResponses.Unlock()
 
-	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 3, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, 5, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 5, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.BlockEvents{
+	blockEvents := &data.SaveBlockData{
 		Hash: "hash1",
-		Events: []data.Event{
+		LogEvents: []data.Event{
 			{
 				Address: "addr1",
 			},

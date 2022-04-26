@@ -126,6 +126,50 @@ func (ws *wsClient) ReceiveFinalized() (*data.FinalizedBlock, error) {
 	return &event, nil
 }
 
+// ReceiveTxs will try to receive block txs event
+func (ws *wsClient) ReceiveTxs() (*data.BlockTxs, error) {
+	m, err := ws.ReadMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	var reply data.WSEvent
+	err = json.Unmarshal(m, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	var event data.BlockTxs
+	err = json.Unmarshal(reply.Data, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	return &event, nil
+}
+
+// ReceiveScrs will try to receive block txs event
+func (ws *wsClient) ReceiveScrs() (*data.BlockScrs, error) {
+	m, err := ws.ReadMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	var reply data.WSEvent
+	err = json.Unmarshal(m, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	var event data.BlockScrs
+	err = json.Unmarshal(reply.Data, &event)
+	if err != nil {
+		return nil, err
+	}
+
+	return &event, nil
+}
+
 // Close will close connection
 func (ws *wsClient) Close() {
 	ws.httpServer.Close()
