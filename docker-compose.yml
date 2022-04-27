@@ -1,0 +1,37 @@
+version: "3"
+
+networks:
+  notifier-net:
+    driver: bridge
+
+services:
+  redis-master:
+    image: "bitnami/redis"
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+        - "6379:6379"
+    networks:
+      - notifier-net
+  redis-sentinel:
+    image: "bitnami/redis-sentinel"
+    environment:
+      - REDIS_MASTER_SET=mymaster
+      - REDIS_MASTER_HOST=redis-master
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_SENTINEL_DOWN_AFTER_MILLISECONDS=10000
+    depends_on:
+      - redis-master
+    ports:
+        - "26379:26379"
+    networks:
+      - notifier-net
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    ports:
+        - "5672:5672"
+        - "15672:15672"
+    networks:
+      - notifier-net

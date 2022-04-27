@@ -1,0 +1,50 @@
+[ConnectorApi]
+    # The port on which the Hub listens for subscriptions
+    Port = "5000"
+
+    # Username is the username needed to authorize an observer to push data
+    Username = ""
+
+    # Password is the password needed to authorize an observer to push event data
+    Password = ""
+
+    # CheckDuplicates signals if the events received from observers have been already pushed to clients
+    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
+    CheckDuplicates = true
+
+[Redis]
+    # The url used to connect to a pubsub server
+    # Note: not required for running in the notifier mode
+    Url = "redis://localhost:6379/0"
+
+    # The pubsub channel used for publishing/subscribing
+    # Note: not required for running in the notifier mode
+    Channel = "pub-sub"
+
+    # The master name for failover client
+    MasterName = "mymaster"
+
+    # The sentinel url for failover client
+    SentinelUrl = "localhost:26379"
+
+    # The redis connection type. Options: | instance | sentinel |
+    # instance - it will try to connect to a single redis instance
+    # sentinel - it will try to connect to redis setup with master, slave and sentinel instances
+    ConnectionType = "sentinel"
+
+[RabbitMQ]
+    # The url used to connect to a rabbitMQ server
+    # Note: not required for running in the notifier mode
+    Url = "amqp://guest:guest@localhost:5672"
+
+    # The exchange name which holds all events
+    # Expected type: fanout
+    EventsExchange = "all_events"
+
+    # The exchange name which holds revert events
+    # Expected type: fanout
+    RevertEventsExchange = "revert_events"
+
+    # The exchange name which holds finalized block events
+    # Expected type: fanout
+    FinalizedEventsExchange = "finalized_events"

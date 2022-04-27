@@ -3,17 +3,63 @@ package hub
 import (
 	"testing"
 
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/ElrondNetwork/notifier-go/filters"
-	"github.com/ElrondNetwork/notifier-go/test/mocks"
+	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func createMockCommonHubArgs() ArgsCommonHub {
+	return ArgsCommonHub{
+		Filter:             filters.NewDefaultFilter(),
+		SubscriptionMapper: dispatcher.NewSubscriptionMapper(),
+	}
+}
+
+func TestNewCommonHub(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nil event filter", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockCommonHubArgs()
+		args.Filter = nil
+
+		hub, err := NewCommonHub(args)
+		require.Nil(t, hub)
+		assert.Equal(t, ErrNilEventFilter, err)
+	})
+
+	t.Run("nil subscription mapper", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockCommonHubArgs()
+		args.SubscriptionMapper = nil
+
+		hub, err := NewCommonHub(args)
+		require.Nil(t, hub)
+		assert.Equal(t, ErrNilSubscriptionMapper, err)
+	})
+
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockCommonHubArgs()
+		hub, err := NewCommonHub(args)
+		require.Nil(t, err)
+		require.NotNil(t, hub)
+	})
+}
 
 func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
@@ -28,7 +74,9 @@ func TestCommonHub_RegisterDispatcher(t *testing.T) {
 func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
@@ -45,15 +93,17 @@ func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	consumer := mocks.NewConsumerMock()
 	dispatcher1 := mocks.NewDispatcherMock(consumer, hub)
 
 	hub.registerDispatcher(dispatcher1)
-	hub.Subscribe(dispatcher.SubscribeEvent{
+	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID:        dispatcher1.GetID(),
-		SubscriptionEntries: []dispatcher.SubscriptionEntry{},
+		SubscriptionEntries: []data.SubscriptionEntry{},
 	})
 
 	blockEvents := getEvents()
@@ -67,7 +117,9 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	t.Parallel()
 
-	hub := makeHub()
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
 
 	consumer1 := mocks.NewConsumerMock()
 	dispatcher1 := mocks.NewDispatcherMock(consumer1, hub)
@@ -77,18 +129,18 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	hub.registerDispatcher(dispatcher1)
 	hub.registerDispatcher(dispatcher2)
 
-	hub.Subscribe(dispatcher.SubscribeEvent{
+	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher1.GetID(),
-		SubscriptionEntries: []dispatcher.SubscriptionEntry{
+		SubscriptionEntries: []data.SubscriptionEntry{
 			{
 				Address:    "erd1",
 				Identifier: "swap",
 			},
 		},
 	})
-	hub.Subscribe(dispatcher.SubscribeEvent{
+	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher2.GetID(),
-		SubscriptionEntries: []dispatcher.SubscriptionEntry{
+		SubscriptionEntries: []data.SubscriptionEntry{
 			{
 				Address:    "erd2",
 				Identifier: "lock",
@@ -102,6 +154,81 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 
 	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
 	require.True(t, consumer2.HasEvent(blockEvents.Events[1]))
+}
+
+func TestCommonHubRun(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	hub.Run()
+	err = hub.Close()
+	require.Nil(t, err)
+}
+
+func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	wasCalled := false
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		RevertEventCalled: func(event data.RevertBlock) {
+			wasCalled = true
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.RevertBlockEvents,
+			},
+		},
+	})
+
+	blockEvents := data.RevertBlock{
+		Hash:  "hash1",
+		Nonce: 1,
+	}
+
+	hub.handleRevertBroadcast(blockEvents)
+
+	assert.True(t, wasCalled)
+}
+
+func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	wasCalled := false
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		FinalizedEventCalled: func(event data.FinalizedBlock) {
+			wasCalled = true
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.FinalizedBlockEvents,
+			},
+		},
+	})
+
+	blockEvents := data.FinalizedBlock{
+		Hash: "hash1",
+	}
+
+	hub.handleFinalizedBroadcast(blockEvents)
+
+	assert.True(t, wasCalled)
 }
 
 func getEvents() data.BlockEvents {
@@ -128,8 +255,4 @@ func getEvents() data.BlockEvents {
 			},
 		},
 	}
-}
-
-func makeHub() *commonHub {
-	return NewCommonHub(filters.NewDefaultFilter())
 }

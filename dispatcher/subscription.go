@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	logger "github.com/ElrondNetwork/elrond-go-logger"
+	"github.com/ElrondNetwork/notifier-go/common"
+	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/google/uuid"
 )
 
@@ -31,45 +33,28 @@ const (
 	erdTag = "erd"
 )
 
-type SubscribeEvent struct {
-	DispatcherID        uuid.UUID
-	SubscriptionEntries []SubscriptionEntry `json:"subscriptionEntries"`
-}
-
-type SubscriptionEntry struct {
-	Address    string   `json:"address"`
-	Identifier string   `json:"identifier"`
-	Topics     []string `json:"topics"`
-}
-
-type Subscription struct {
-	Address      string
-	Identifier   string
-	Topics       []string
-	MatchLevel   string
-	DispatcherID uuid.UUID
-}
-
+// SubscriptionMapper defines a subscriptions manager component
 type SubscriptionMapper struct {
 	rwMut         sync.RWMutex
-	subscriptions map[uuid.UUID][]Subscription
+	subscriptions map[uuid.UUID][]data.Subscription
 }
 
 // NewSubscriptionMapper initializes an empty map for subscriptions
 func NewSubscriptionMapper() *SubscriptionMapper {
 	return &SubscriptionMapper{
 		rwMut:         sync.RWMutex{},
-		subscriptions: make(map[uuid.UUID][]Subscription),
+		subscriptions: make(map[uuid.UUID][]data.Subscription),
 	}
 }
 
 // MatchSubscribeEvent creates a subscription entry in the subscriptions map
 // It assigns each SubscribeEvent a match level from the input provided
-func (sm *SubscriptionMapper) MatchSubscribeEvent(event SubscribeEvent) {
+func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
-		sm.appendSubscription(Subscription{
+		sm.appendSubscription(data.Subscription{
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   MatchAll,
+			EventType:    common.PushBlockEvents,
 		})
 		log.Info("subscribed dispatcher",
 			"dispatcherID", event.DispatcherID,
@@ -80,12 +65,14 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event SubscribeEvent) {
 
 	for _, subEntry := range event.SubscriptionEntries {
 		matchLevel := sm.matchLevelFromInput(subEntry)
-		subscription := Subscription{
+		eventType := getEventType(subEntry)
+		subscription := data.Subscription{
 			Address:      subEntry.Address,
 			Identifier:   subEntry.Identifier,
 			Topics:       subEntry.Topics,
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   matchLevel,
+			EventType:    eventType,
 		}
 		sm.appendSubscription(subscription)
 
@@ -111,11 +98,11 @@ func (sm *SubscriptionMapper) RemoveSubscriptions(dispatcherID uuid.UUID) {
 }
 
 // Subscriptions returns a slice reflecting the subscriptions present in the map
-func (sm *SubscriptionMapper) Subscriptions() []Subscription {
+func (sm *SubscriptionMapper) Subscriptions() []data.Subscription {
 	sm.rwMut.RLock()
 	defer sm.rwMut.RUnlock()
 
-	var subscriptions []Subscription
+	var subscriptions []data.Subscription
 	for _, sub := range sm.subscriptions {
 		subscriptions = append(subscriptions, sub...)
 	}
@@ -123,7 +110,7 @@ func (sm *SubscriptionMapper) Subscriptions() []Subscription {
 	return subscriptions
 }
 
-func (sm *SubscriptionMapper) matchLevelFromInput(subEntry SubscriptionEntry) string {
+func (sm *SubscriptionMapper) matchLevelFromInput(subEntry data.SubscriptionEntry) string {
 	hasAddress := subEntry.Address != "" && strings.Contains(subEntry.Address, erdTag)
 	hasIdentifier := subEntry.Identifier != ""
 	hasTopics := len(subEntry.Topics) > 0
@@ -144,9 +131,23 @@ func (sm *SubscriptionMapper) matchLevelFromInput(subEntry SubscriptionEntry) st
 	return MatchAll
 }
 
-func (sm *SubscriptionMapper) appendSubscription(sub Subscription) {
+func (sm *SubscriptionMapper) appendSubscription(sub data.Subscription) {
 	sm.rwMut.Lock()
 	defer sm.rwMut.Unlock()
 
 	sm.subscriptions[sub.DispatcherID] = append(sm.subscriptions[sub.DispatcherID], sub)
+}
+
+func getEventType(subEntry data.SubscriptionEntry) string {
+	if subEntry.EventType == common.FinalizedBlockEvents ||
+		subEntry.EventType == common.RevertBlockEvents {
+		return subEntry.EventType
+	}
+
+	return common.PushBlockEvents
+}
+
+// IsInterfaceNil returns true if there is no value under the interface
+func (sm *SubscriptionMapper) IsInterfaceNil() bool {
+	return sm == nil
 }
