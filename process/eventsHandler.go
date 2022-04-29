@@ -73,7 +73,15 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
 	}
 
-	if events.Events == nil || !shouldProcessEvents {
+	if events.Events == nil {
+		log.Info("received empty events for block",
+			"block hash", events.Hash,
+			"processed", false,
+		)
+		return
+	}
+
+	if !shouldProcessEvents {
 		log.Info("received duplicated events for block",
 			"block hash", events.Hash,
 			"processed", false,
@@ -172,6 +180,14 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 		return
 	}
 
+	if len(blockTxs.Txs) == 0 {
+		log.Info("received empty txs event for block",
+			"block hash", blockTxs.Hash,
+			"processed", false,
+		)
+		return
+	}
+
 	log.Info("received txs events for block",
 		"block hash", blockTxs.Hash,
 		"will process", shouldProcessTxs,
@@ -196,6 +212,14 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 
 	if !shouldProcessScrs {
 		log.Info("received duplicated scrs event for block",
+			"block hash", blockScrs.Hash,
+			"processed", false,
+		)
+		return
+	}
+
+	if len(blockScrs.Scrs) == 0 {
+		log.Info("received empty scrs event for block",
 			"block hash", blockScrs.Hash,
 			"processed", false,
 		)
