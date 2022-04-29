@@ -104,3 +104,21 @@ compose-stop:
 
 compose-rm:
 	docker-compose down
+
+
+# #########################
+# Test Data
+# #########################
+
+test_data_file = ./examples/requests.json
+
+# it can be "push", "revert", "finalized"
+event_type = "push"
+
+request-test:
+	curl \
+		-X POST \
+		-H "Content-Type: application/json" \
+		-u aaaa:aaa \
+		-d @${test_data_file} \
+		http://localhost:5000/events/${event_type}
