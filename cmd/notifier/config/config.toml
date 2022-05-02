@@ -32,6 +32,9 @@
     # sentinel - it will try to connect to redis setup with master, slave and sentinel instances
     ConnectionType = "sentinel"
 
+    # Time to live (in minutes) for redis lock entry
+    TTL = 30
+
 [RabbitMQ]
     # The url used to connect to a rabbitMQ server
     # Note: not required for running in the notifier mode

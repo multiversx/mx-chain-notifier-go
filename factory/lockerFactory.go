@@ -18,7 +18,11 @@ func CreateLockService(checkDuplicates bool, config config.RedisConfig) (redis.L
 		return nil, err
 	}
 
-	lockService, err := redis.NewRedlockWrapper(redisClient)
+	redlockArgs := redis.ArgsRedlockWrapper{
+		Client:       redisClient,
+		TTLInMinutes: config.TTL,
+	}
+	lockService, err := redis.NewRedlockWrapper(redlockArgs)
 	if err != nil {
 		return nil, err
 	}
