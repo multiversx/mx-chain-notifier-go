@@ -63,29 +63,6 @@ func TestNewEventsHandler(t *testing.T) {
 func TestHandlePushEvents(t *testing.T) {
 	t.Parallel()
 
-	t.Run("broadcast event was NOT called", func(t *testing.T) {
-		t.Parallel()
-
-		wasCalled := false
-		args := createMockEventsHandlerArgs()
-		args.Publisher = &mocks.PublisherStub{
-			BroadcastCalled: func(events data.BlockEvents) {
-				wasCalled = true
-			},
-		}
-
-		eventsHandler, err := process.NewEventsHandler(args)
-		require.Nil(t, err)
-
-		events := data.BlockEvents{
-			Hash:   "hash1",
-			Events: nil,
-		}
-
-		eventsHandler.HandlePushEvents(events)
-		require.False(t, wasCalled)
-	})
-
 	t.Run("broadcast event was called", func(t *testing.T) {
 		t.Parallel()
 

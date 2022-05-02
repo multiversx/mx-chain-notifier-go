@@ -73,14 +73,6 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
 	}
 
-	if events.Events == nil {
-		log.Info("received empty events for block",
-			"block hash", events.Hash,
-			"processed", false,
-		)
-		return
-	}
-
 	if !shouldProcessEvents {
 		log.Info("received duplicated events for block",
 			"block hash", events.Hash,
@@ -89,10 +81,17 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 		return
 	}
 
-	log.Info("received events for block",
-		"block hash", events.Hash,
-		"will process", shouldProcessEvents,
-	)
+	if len(events.Events) == 0 {
+		log.Info("received empty events for block",
+			"block hash", events.Hash,
+			"will process", shouldProcessEvents,
+		)
+	} else {
+		log.Info("received events for block",
+			"block hash", events.Hash,
+			"will process", shouldProcessEvents,
+		)
+	}
 
 	eh.publisher.Broadcast(events)
 }
@@ -183,15 +182,14 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 	if len(blockTxs.Txs) == 0 {
 		log.Info("received empty txs event for block",
 			"block hash", blockTxs.Hash,
-			"processed", false,
+			"will process", shouldProcessTxs,
 		)
-		return
+	} else {
+		log.Info("received txs events for block",
+			"block hash", blockTxs.Hash,
+			"will process", shouldProcessTxs,
+		)
 	}
-
-	log.Info("received txs events for block",
-		"block hash", blockTxs.Hash,
-		"will process", shouldProcessTxs,
-	)
 
 	eh.publisher.BroadcastTxs(blockTxs)
 }
@@ -221,15 +219,14 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	if len(blockScrs.Scrs) == 0 {
 		log.Info("received empty scrs event for block",
 			"block hash", blockScrs.Hash,
-			"processed", false,
+			"will process", shouldProcessScrs,
 		)
-		return
+	} else {
+		log.Info("received scrs events for block",
+			"block hash", blockScrs.Hash,
+			"will process", shouldProcessScrs,
+		)
 	}
-
-	log.Info("received scrs events for block",
-		"block hash", blockScrs.Hash,
-		"will process", shouldProcessScrs,
-	)
 
 	eh.publisher.BroadcastScrs(blockScrs)
 }
