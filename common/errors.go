@@ -2,9 +2,6 @@ package common
 
 import "errors"
 
-// ErrInvalidValue signals that an invalid value has been provided
-var ErrInvalidValue = errors.New("invalid value")
-
 // ErrInvalidAPIType signals that an invalid api type has been provided
 var ErrInvalidAPIType = errors.New("invalid api type provided")
 

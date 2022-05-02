@@ -6,10 +6,7 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/notifier-go/common"
 )
-
-const minTTLInMinutes = 0
 
 type ArgsRedlockWrapper struct {
 	Client       RedLockClient
@@ -26,9 +23,8 @@ func NewRedlockWrapper(args ArgsRedlockWrapper) (*redlockWrapper, error) {
 	if check.IfNil(args.Client) {
 		return nil, ErrNilRedlockClient
 	}
-	if args.TTLInMinutes <= minTTLInMinutes {
-		return nil, fmt.Errorf("%w for TTL in minutes, got: %d, minimum: %d",
-			common.ErrInvalidValue, args.TTLInMinutes, minTTLInMinutes)
+	if args.TTLInMinutes == 0 {
+		return nil, fmt.Errorf("%w for TTL in minutes", ErrZeroValueReceived)
 	}
 
 	ttl := time.Minute * time.Duration(args.TTLInMinutes)

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/ElrondNetwork/notifier-go/redis"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +42,7 @@ func TestNewRedlockWrapper(t *testing.T) {
 
 		redlock, err := redis.NewRedlockWrapper(args)
 		assert.True(t, check.IfNil(redlock))
-		assert.True(t, errors.Is(err, common.ErrInvalidValue))
+		assert.True(t, errors.Is(err, redis.ErrZeroValueReceived))
 	})
 
 	t.Run("should work", func(t *testing.T) {
