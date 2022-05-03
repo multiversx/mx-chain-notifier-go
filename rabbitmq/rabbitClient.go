@@ -21,6 +21,7 @@ type rabbitMqClient struct {
 	connErrCh chan *amqp.Error
 	chanErr   chan *amqp.Error
 	ackCh     chan uint64
+	nackCh    chan uint64
 }
 
 // NewRabbitMQClient creates a new rabbitMQ client instance
@@ -63,6 +64,8 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 		case <-rc.ackCh:
 			log.Debug("Publish: published message ack")
 			return err
+		case <-rc.nackCh:
+			log.Debug("Publish: published message nack, will retry to publish message", "error", err)
 		case err := <-rc.connErrCh:
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -119,7 +122,7 @@ func (rc *rabbitMqClient) openChannel() error {
 
 	rc.chanErr = make(chan *amqp.Error)
 	rc.ch.NotifyClose(rc.chanErr)
-	rc.ackCh, _ = rc.ch.NotifyConfirm(make(chan uint64), make(chan uint64))
+	rc.ackCh, rc.nackCh = rc.ch.NotifyConfirm(make(chan uint64), make(chan uint64))
 
 	return rc.ch.Confirm(false)
 }
