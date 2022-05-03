@@ -2,6 +2,7 @@ package redis_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -12,21 +13,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func createMockRedlockWrapperArgs() redis.ArgsRedlockWrapper {
+	return redis.ArgsRedlockWrapper{
+		Client:       &mocks.RedisClientMock{},
+		TTLInMinutes: 30,
+	}
+}
+
 func TestNewRedlockWrapper(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil redlock client, should fail", func(t *testing.T) {
 		t.Parallel()
 
-		redlock, err := redis.NewRedlockWrapper(nil)
+		args := createMockRedlockWrapperArgs()
+		args.Client = nil
+
+		redlock, err := redis.NewRedlockWrapper(args)
 		assert.True(t, check.IfNil(redlock))
 		assert.Equal(t, redis.ErrNilRedlockClient, err)
+	})
+
+	t.Run("invalid ttl value", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockRedlockWrapperArgs()
+		args.TTLInMinutes = 0
+
+		redlock, err := redis.NewRedlockWrapper(args)
+		assert.True(t, check.IfNil(redlock))
+		assert.True(t, errors.Is(err, redis.ErrZeroValueReceived))
 	})
 
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		redlock, err := redis.NewRedlockWrapper(&mocks.RedisClientStub{})
+		redlock, err := redis.NewRedlockWrapper(createMockRedlockWrapperArgs())
 		assert.Nil(t, err)
 		assert.False(t, check.IfNil(redlock))
 	})
@@ -36,13 +58,16 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 	t.Parallel()
 
 	t.Run("set should work", func(t *testing.T) {
-		client := &mocks.RedisClientStub{
+		t.Parallel()
+
+		args := createMockRedlockWrapperArgs()
+		args.Client = &mocks.RedisClientStub{
 			SetEntryCalled: func(key string, value bool, ttl time.Duration) (bool, error) {
 				return true, nil
 			},
 		}
 
-		redlock, err := redis.NewRedlockWrapper(client)
+		redlock, err := redis.NewRedlockWrapper(args)
 		require.Nil(t, err)
 
 		ok, err := redlock.IsEventProcessed(context.Background(), "randStr")
@@ -55,7 +80,8 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 
 		existingKey := "exists"
 
-		client := &mocks.RedisClientStub{
+		args := createMockRedlockWrapperArgs()
+		args.Client = &mocks.RedisClientStub{
 			SetEntryCalled: func(key string, value bool, ttl time.Duration) (bool, error) {
 				if key == existingKey {
 					return false, nil
@@ -65,7 +91,7 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 			},
 		}
 
-		redlock, err := redis.NewRedlockWrapper(client)
+		redlock, err := redis.NewRedlockWrapper(args)
 		require.Nil(t, err)
 
 		ok, err := redlock.IsEventProcessed(context.Background(), "randStr")
@@ -81,13 +107,14 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 func TestRedlockWrapper_HasConnection(t *testing.T) {
 	t.Parallel()
 
-	client := &mocks.RedisClientStub{
+	args := createMockRedlockWrapperArgs()
+	args.Client = &mocks.RedisClientStub{
 		IsConnectedCalled: func() bool {
 			return true
 		},
 	}
 
-	redlock, err := redis.NewRedlockWrapper(client)
+	redlock, err := redis.NewRedlockWrapper(args)
 	require.Nil(t, err)
 
 	ok := redlock.HasConnection(context.Background())

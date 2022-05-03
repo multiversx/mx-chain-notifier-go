@@ -25,6 +25,7 @@ type RedisConfig struct {
 	MasterName     string
 	SentinelUrl    string
 	ConnectionType string
+	TTL            uint32
 }
 
 // RabbitMQConfig maps the rabbitMQ configuration

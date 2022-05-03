@@ -25,7 +25,11 @@ type testNotifier struct {
 // NewTestNotifierWithWS will create a notifier instance for websockets flow
 func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 	redisClient := mocks.NewRedisClientMock()
-	locker, err := redis.NewRedlockWrapper(redisClient)
+	redlockArgs := redis.ArgsRedlockWrapper{
+		Client:       redisClient,
+		TTLInMinutes: cfg.Redis.TTL,
+	}
+	locker, err := redis.NewRedlockWrapper(redlockArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +88,11 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 // NewTestNotifierWithRabbitMq will create a notifier instance with rabbitmq
 func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, error) {
 	redisClient := mocks.NewRedisClientMock()
-	locker, err := redis.NewRedlockWrapper(redisClient)
+	redlockArgs := redis.ArgsRedlockWrapper{
+		Client:       redisClient,
+		TTLInMinutes: cfg.Redis.TTL,
+	}
+	locker, err := redis.NewRedlockWrapper(redlockArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -140,6 +148,7 @@ func GetDefaultConfigs() *config.GeneralConfig {
 			MasterName:     "mymaster",
 			SentinelUrl:    "localhost:26379",
 			ConnectionType: "sentinel",
+			TTL:            30,
 		},
 		RabbitMQ: config.RabbitMQConfig{
 			Url:                     "amqp://guest:guest@localhost:5672",
