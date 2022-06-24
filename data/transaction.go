@@ -1,6 +1,11 @@
 package data
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
+)
 
 // WSEvent defines a websocket event
 type WSEvent struct {
@@ -39,4 +44,24 @@ type RevertBlock struct {
 // FinalizedBlock holds finalized block data
 type FinalizedBlock struct {
 	Hash string `json:"hash"`
+}
+
+// BlockTxs holds the block transactions
+type BlockTxs struct {
+	Hash string                             `json:"hash"`
+	Txs  map[string]transaction.Transaction `json:"txs"`
+}
+
+// BlockScrs holds the block smart contract results
+type BlockScrs struct {
+	Hash string                                             `json:"hash"`
+	Scrs map[string]smartContractResult.SmartContractResult `json:"scrs"`
+}
+
+// SaveBlockData holds the block data that will be received on push events
+type SaveBlockData struct {
+	Hash      string                                             `json:"hash"`
+	Txs       map[string]transaction.Transaction                 `json:"txs"`
+	Scrs      map[string]smartContractResult.SmartContractResult `json:"scrs"`
+	LogEvents []Event                                            `json:"events"`
 }

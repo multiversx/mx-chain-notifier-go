@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/groups"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -79,9 +81,19 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		blockEvents := data.BlockEvents{
+		blockEvents := data.SaveBlockData{
 			Hash: "hash1",
-			Events: []data.Event{
+			Txs: map[string]transaction.Transaction{
+				"hash2": {
+					Nonce: 2,
+				},
+			},
+			Scrs: map[string]smartContractResult.SmartContractResult{
+				"hash3": {
+					Nonce: 3,
+				},
+			},
+			LogEvents: []data.Event{
 				{
 					Address: "addr1",
 				},
@@ -91,7 +103,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsCalled: func(events data.BlockEvents) {
+			HandlePushEventsCalled: func(events data.SaveBlockData) {
 				wasCalled = true
 				assert.Equal(t, blockEvents, events)
 			},

@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/integrationTests"
@@ -41,14 +43,24 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	assert.Equal(t, 5, responses[http.StatusOK])
 	mutResponses.Unlock()
 
-	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 3, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, 5, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 5, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.BlockEvents{
+	blockEvents := &data.SaveBlockData{
 		Hash: "hash1",
-		Events: []data.Event{
+		Txs: map[string]transaction.Transaction{
+			"txHash1": {
+				Nonce: 1,
+			},
+		},
+		Scrs: map[string]smartContractResult.SmartContractResult{
+			"scrHash1": {
+				Nonce: 2,
+			},
+		},
+		LogEvents: []data.Event{
 			{
 				Address: "addr1",
 			},

@@ -25,6 +25,7 @@ type RedisConfig struct {
 	MasterName     string
 	SentinelUrl    string
 	ConnectionType string
+	TTL            uint32
 }
 
 // RabbitMQConfig maps the rabbitMQ configuration
@@ -33,6 +34,8 @@ type RabbitMQConfig struct {
 	EventsExchange          string
 	RevertEventsExchange    string
 	FinalizedEventsExchange string
+	BlockTxsExchange        string
+	BlockScrsExchange       string
 }
 
 // FlagsConfig holds the values for CLI flags

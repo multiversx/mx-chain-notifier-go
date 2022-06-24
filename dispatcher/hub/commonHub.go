@@ -31,6 +31,8 @@ type commonHub struct {
 	broadcast          chan data.BlockEvents
 	broadcastRevert    chan data.RevertBlock
 	broadcastFinalized chan data.FinalizedBlock
+	broadcastTxs       chan data.BlockTxs
+	broadcastScrs      chan data.BlockScrs
 	closeChan          chan struct{}
 	cancelFunc         func()
 }
@@ -52,6 +54,8 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 		broadcast:          make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
+		broadcastTxs:       make(chan data.BlockTxs),
+		broadcastScrs:      make(chan data.BlockScrs),
 		closeChan:          make(chan struct{}),
 	}, nil
 }
@@ -91,6 +95,12 @@ func (ch *commonHub) run(ctx context.Context) {
 		case finalizedEvent := <-ch.broadcastFinalized:
 			ch.handleFinalizedBroadcast(finalizedEvent)
 
+		case txsEvent := <-ch.broadcastTxs:
+			ch.handleTxsBroadcast(txsEvent)
+
+		case scrsEvent := <-ch.broadcastScrs:
+			ch.handleScrsBroadcast(scrsEvent)
+
 		case dispatcherClient := <-ch.register:
 			ch.registerDispatcher(dispatcherClient)
 
@@ -128,6 +138,24 @@ func (ch *commonHub) BroadcastRevert(event data.RevertBlock) {
 func (ch *commonHub) BroadcastFinalized(event data.FinalizedBlock) {
 	select {
 	case ch.broadcastFinalized <- event:
+	case <-ch.closeChan:
+	}
+}
+
+// BroadcastTxs handles block txs event pushed by producers into the broadcast channel
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (ch *commonHub) BroadcastTxs(event data.BlockTxs) {
+	select {
+	case ch.broadcastTxs <- event:
+	case <-ch.closeChan:
+	}
+}
+
+// BroadcastScrs handles block scrs event pushed by producers into the broadcast channel
+// Upon reading the channel, the hub notifies the registered dispatchers, if any
+func (ch *commonHub) BroadcastScrs(event data.BlockScrs) {
+	select {
+	case ch.broadcastScrs <- event:
 	case <-ch.closeChan:
 	}
 }
@@ -217,6 +245,50 @@ func (ch *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.FinalizedEvent(event)
+		}
+	}
+}
+
+func (ch *commonHub) handleTxsBroadcast(blockTxs data.BlockTxs) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockTxs)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.BlockTxs {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = blockTxs
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.TxsEvent(event)
+		}
+	}
+}
+
+func (ch *commonHub) handleScrsBroadcast(blockScrs data.BlockScrs) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockScrs)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.BlockScrs {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = blockScrs
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.ScrsEvent(event)
 		}
 	}
 }

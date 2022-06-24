@@ -1,6 +1,7 @@
 package rabbitmq_test
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -22,6 +23,8 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 			EventsExchange:          "allevents",
 			RevertEventsExchange:    "revert",
 			FinalizedEventsExchange: "finalized",
+			BlockTxsExchange:        "txs",
+			BlockScrsExchange:       "scrs",
 		},
 	}
 }
@@ -38,6 +41,61 @@ func TestRabbitMqPublisher(t *testing.T) {
 		client, err := rabbitmq.NewRabbitMqPublisher(args)
 		require.True(t, check.IfNil(client))
 		require.Equal(t, rabbitmq.ErrNilRabbitMqClient, err)
+	})
+
+	t.Run("invalid events exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.EventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid revert exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.RevertEventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid finalized exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.FinalizedEventsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid txs exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.BlockTxsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid scrs exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.BlockScrsExchange = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
 	})
 
 	t.Run("should work", func(t *testing.T) {
@@ -137,6 +195,68 @@ func TestBroadcastFinalized(t *testing.T) {
 	wg.Add(1)
 
 	rabbitmq.BroadcastFinalized(data.FinalizedBlock{})
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestBroadcastTxs(t *testing.T) {
+	t.Parallel()
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+
+	client := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+			return nil
+		},
+	}
+
+	args := createMockArgsRabbitMqPublisher()
+	args.Client = client
+
+	rabbitmq, err := rabbitmq.NewRabbitMqPublisher(args)
+	require.Nil(t, err)
+
+	rabbitmq.Run()
+	defer rabbitmq.Close()
+	wg.Add(1)
+
+	rabbitmq.BroadcastTxs(data.BlockTxs{})
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestBroadcastScrs(t *testing.T) {
+	t.Parallel()
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+
+	client := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+			return nil
+		},
+	}
+
+	args := createMockArgsRabbitMqPublisher()
+	args.Client = client
+
+	rabbitmq, err := rabbitmq.NewRabbitMqPublisher(args)
+	require.Nil(t, err)
+
+	rabbitmq.Run()
+	defer rabbitmq.Close()
+	wg.Add(1)
+
+	rabbitmq.BroadcastScrs(data.BlockScrs{})
 
 	wg.Wait()
 

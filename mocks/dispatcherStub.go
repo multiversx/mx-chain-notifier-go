@@ -11,6 +11,8 @@ type DispatcherStub struct {
 	PushEventsCalled     func(events []data.Event)
 	RevertEventCalled    func(event data.RevertBlock)
 	FinalizedEventCalled func(event data.FinalizedBlock)
+	TxsEventCalled       func(event data.BlockTxs)
+	ScrsEventCalled      func(event data.BlockScrs)
 }
 
 // GetID -
@@ -40,5 +42,19 @@ func (d *DispatcherStub) RevertEvent(event data.RevertBlock) {
 func (d *DispatcherStub) FinalizedEvent(event data.FinalizedBlock) {
 	if d.FinalizedEventCalled != nil {
 		d.FinalizedEventCalled(event)
+	}
+}
+
+// TxsEvent -
+func (d *DispatcherStub) TxsEvent(event data.BlockTxs) {
+	if d.TxsEventCalled != nil {
+		d.TxsEventCalled(event)
+	}
+}
+
+// ScrsEvent -
+func (d *DispatcherStub) ScrsEvent(event data.BlockScrs) {
+	if d.ScrsEventCalled != nil {
+		d.ScrsEventCalled(event)
 	}
 }

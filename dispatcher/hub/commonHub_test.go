@@ -1,7 +1,10 @@
 package hub
 
 import (
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
@@ -64,11 +67,16 @@ func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
 
-	hub.registerDispatcher(dispatcher1)
-	require.True(t, hub.dispatchers[dispatcher1.GetID()] == dispatcher1)
+	hub.Run()
+	defer hub.Close()
 
-	hub.registerDispatcher(dispatcher2)
-	require.True(t, hub.dispatchers[dispatcher2.GetID()] == dispatcher2)
+	hub.RegisterEvent(dispatcher1)
+	hub.RegisterEvent(dispatcher2)
+
+	time.Sleep(time.Millisecond * 100)
+
+	require.True(t, hub.CheckDispatcherByID(dispatcher1.GetID(), dispatcher1))
+	require.True(t, hub.CheckDispatcherByID(dispatcher2.GetID(), dispatcher2))
 }
 
 func TestCommonHub_UnregisterDispatcher(t *testing.T) {
@@ -81,13 +89,18 @@ func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
 
-	hub.registerDispatcher(dispatcher1)
-	hub.registerDispatcher(dispatcher2)
+	hub.Run()
+	defer hub.Close()
 
-	hub.unregisterDispatcher(dispatcher1)
+	hub.RegisterEvent(dispatcher1)
+	hub.RegisterEvent(dispatcher2)
 
-	require.True(t, hub.dispatchers[dispatcher1.GetID()] == nil)
-	require.True(t, hub.dispatchers[dispatcher2.GetID()] == dispatcher2)
+	hub.UnregisterEvent(dispatcher1)
+
+	time.Sleep(time.Millisecond * 100)
+
+	require.True(t, hub.CheckDispatcherByID(dispatcher1.GetID(), nil))
+	require.True(t, hub.CheckDispatcherByID(dispatcher2.GetID(), dispatcher2))
 }
 
 func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
@@ -106,9 +119,14 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 		SubscriptionEntries: []data.SubscriptionEntry{},
 	})
 
+	hub.Run()
+	defer hub.Close()
+
 	blockEvents := getEvents()
 
-	hub.handleBroadcast(blockEvents)
+	hub.Broadcast(blockEvents)
+
+	time.Sleep(time.Millisecond * 100)
 
 	require.True(t, consumer.HasEvents(blockEvents.Events))
 	require.True(t, len(consumer.CollectedEvents()) == len(blockEvents.Events))
@@ -126,8 +144,11 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	consumer2 := mocks.NewConsumerMock()
 	dispatcher2 := mocks.NewDispatcherMock(consumer2, hub)
 
-	hub.registerDispatcher(dispatcher1)
-	hub.registerDispatcher(dispatcher2)
+	hub.Run()
+	defer hub.Close()
+
+	hub.RegisterEvent(dispatcher1)
+	hub.RegisterEvent(dispatcher2)
 
 	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher1.GetID(),
@@ -150,7 +171,9 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 
 	blockEvents := getEvents()
 
-	hub.handleBroadcast(blockEvents)
+	hub.Broadcast(blockEvents)
+
+	time.Sleep(time.Millisecond * 100)
 
 	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
 	require.True(t, consumer2.HasEvent(blockEvents.Events[1]))
@@ -175,10 +198,12 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 	hub, err := NewCommonHub(args)
 	require.Nil(t, err)
 
-	wasCalled := false
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
 		RevertEventCalled: func(event data.RevertBlock) {
-			wasCalled = true
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
 		},
 	})
 
@@ -190,14 +215,20 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 		},
 	})
 
+	hub.Run()
+	defer hub.Close()
+	wg.Add(1)
+
 	blockEvents := data.RevertBlock{
 		Hash:  "hash1",
 		Nonce: 1,
 	}
 
-	hub.handleRevertBroadcast(blockEvents)
+	hub.BroadcastRevert(blockEvents)
 
-	assert.True(t, wasCalled)
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
 func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
@@ -207,10 +238,12 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 	hub, err := NewCommonHub(args)
 	require.Nil(t, err)
 
-	wasCalled := false
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
 		FinalizedEventCalled: func(event data.FinalizedBlock) {
-			wasCalled = true
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
 		},
 	})
 
@@ -222,13 +255,97 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 		},
 	})
 
+	hub.Run()
+	defer hub.Close()
+	wg.Add(1)
+
 	blockEvents := data.FinalizedBlock{
 		Hash: "hash1",
 	}
 
-	hub.handleFinalizedBroadcast(blockEvents)
+	hub.BroadcastFinalized(blockEvents)
 
-	assert.True(t, wasCalled)
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.NoError(t, err)
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		TxsEventCalled: func(event data.BlockTxs) {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.BlockTxs,
+			},
+		},
+	})
+
+	hub.Run()
+	defer hub.Close()
+	wg.Add(1)
+
+	blockEvents := data.BlockTxs{
+		Hash: "hash1",
+	}
+
+	hub.BroadcastTxs(blockEvents)
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		ScrsEventCalled: func(event data.BlockScrs) {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.BlockScrs,
+			},
+		},
+	})
+
+	hub.Run()
+	defer hub.Close()
+	wg.Add(1)
+
+	blockEvents := data.BlockScrs{
+		Hash: "hash1",
+	}
+
+	hub.BroadcastScrs(blockEvents)
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
 func getEvents() data.BlockEvents {
