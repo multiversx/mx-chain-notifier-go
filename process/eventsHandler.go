@@ -81,7 +81,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) {
 		return
 	}
 
-	if events.Events == nil || len(events.Events) == 0 {
+	if len(events.Events) == 0 {
 		log.Info("received empty events for block",
 			"block hash", events.Hash,
 			"will process", shouldProcessEvents,
