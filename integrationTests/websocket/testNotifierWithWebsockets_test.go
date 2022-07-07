@@ -42,6 +42,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	events := []data.Event{
 		{
 			Address: "addr1",
+			TxHash:  "txHash1",
 		},
 	}
 	blockEvents := &data.SaveBlockData{
