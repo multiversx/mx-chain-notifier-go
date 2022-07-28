@@ -151,12 +151,27 @@ func GetDefaultConfigs() *config.GeneralConfig {
 			TTL:            30,
 		},
 		RabbitMQ: config.RabbitMQConfig{
-			Url:                     "amqp://guest:guest@localhost:5672",
-			EventsExchange:          "all_events",
-			RevertEventsExchange:    "revert_events",
-			FinalizedEventsExchange: "finalized_events",
-			BlockTxsExchange:        "txs",
-			BlockScrsExchange:       "scrs",
+			Url: "amqp://guest:guest@localhost:5672",
+			EventsExchange: config.RabbitMQExchangeConfig{
+				Name: "allevents",
+				Type: "fanout",
+			},
+			RevertEventsExchange: config.RabbitMQExchangeConfig{
+				Name: "revert",
+				Type: "fanout",
+			},
+			FinalizedEventsExchange: config.RabbitMQExchangeConfig{
+				Name: "finalized",
+				Type: "fanout",
+			},
+			BlockTxsExchange: config.RabbitMQExchangeConfig{
+				Name: "blocktxs",
+				Type: "fanout",
+			},
+			BlockScrsExchange: config.RabbitMQExchangeConfig{
+				Name: "blockscrs",
+				Type: "fanout",
+			},
 		},
 		Flags: &config.FlagsConfig{
 			LogLevel:          "*:INFO",

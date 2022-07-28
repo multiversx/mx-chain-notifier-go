@@ -4,18 +4,27 @@ import "github.com/streadway/amqp"
 
 // RabbitClientStub -
 type RabbitClientStub struct {
-	PublishCalled       func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
-	ConnErrChanCalled   func() chan *amqp.Error
-	CloseErrChanCalled  func() chan *amqp.Error
-	ReconnectCalled     func()
-	ReopenChannelCalled func()
-	CloseCalled         func()
+	PublishCalled         func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error
+	ExchangeDeclareCalled func(name, kind string) error
+	ConnErrChanCalled     func() chan *amqp.Error
+	CloseErrChanCalled    func() chan *amqp.Error
+	ReconnectCalled       func()
+	ReopenChannelCalled   func()
+	CloseCalled           func()
 }
 
 // Publish -
 func (rc *RabbitClientStub) Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
 	if rc.PublishCalled != nil {
 		return rc.PublishCalled(exchange, key, mandatory, immediate, msg)
+	}
+	return nil
+}
+
+// ExchangeDeclare -
+func (rc *RabbitClientStub) ExchangeDeclare(name, kind string) error {
+	if rc.ExchangeDeclareCalled != nil {
+		return rc.ExchangeDeclareCalled(name, kind)
 	}
 	return nil
 }
