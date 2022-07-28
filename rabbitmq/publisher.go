@@ -55,7 +55,7 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 		closeChan:          make(chan struct{}),
 	}
 
-	err = rp.checkAndCreateExchanges()
+	err = rp.createExchanges()
 	if err != nil {
 		return nil, err
 	}
@@ -68,28 +68,59 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 		return ErrNilRabbitMqClient
 	}
 
+	if args.Config.EventsExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.EventsExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
+	if args.Config.RevertEventsExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.RevertEventsExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
+	if args.Config.FinalizedEventsExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.FinalizedEventsExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
+	if args.Config.BlockTxsExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.BlockTxsExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
+	if args.Config.BlockScrsExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.BlockScrsExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
+
 	return nil
 }
 
 // checkAndCreateExchanges creates exchanges if they are not existing already
-func (rp *rabbitMqPublisher) checkAndCreateExchanges() error {
-	err := rp.checkAndCreateExchange(rp.cfg.EventsExchange)
+func (rp *rabbitMqPublisher) createExchanges() error {
+	err := rp.createExchange(rp.cfg.EventsExchange)
 	if err != nil {
 		return err
 	}
-	err = rp.checkAndCreateExchange(rp.cfg.RevertEventsExchange)
+	err = rp.createExchange(rp.cfg.RevertEventsExchange)
 	if err != nil {
 		return err
 	}
-	err = rp.checkAndCreateExchange(rp.cfg.FinalizedEventsExchange)
+	err = rp.createExchange(rp.cfg.FinalizedEventsExchange)
 	if err != nil {
 		return err
 	}
-	err = rp.checkAndCreateExchange(rp.cfg.BlockTxsExchange)
+	err = rp.createExchange(rp.cfg.BlockTxsExchange)
 	if err != nil {
 		return err
 	}
-	err = rp.checkAndCreateExchange(rp.cfg.BlockScrsExchange)
+	err = rp.createExchange(rp.cfg.BlockScrsExchange)
 	if err != nil {
 		return err
 	}
@@ -97,14 +128,7 @@ func (rp *rabbitMqPublisher) checkAndCreateExchanges() error {
 	return nil
 }
 
-func (rp *rabbitMqPublisher) checkAndCreateExchange(conf config.RabbitMQExchangeConfig) error {
-	if conf.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
-	}
-	if conf.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
-	}
-
+func (rp *rabbitMqPublisher) createExchange(conf config.RabbitMQExchangeConfig) error {
 	err := rp.client.ExchangeDeclare(conf.Name, conf.Type)
 	if err != nil {
 		return err
