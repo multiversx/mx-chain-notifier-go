@@ -9,6 +9,12 @@ import (
 
 const (
 	reconnectRetryMs = 500
+
+	// ExchangeDeclare constants
+	isDurable  = true
+	autoDelete = false
+	isInternal = false
+	noWait     = false
 )
 
 type rabbitMqClient struct {
@@ -42,13 +48,13 @@ func NewRabbitMQClient(url string) (*rabbitMqClient, error) {
 // ExchangeDeclare will declare an exchange
 func (rc *rabbitMqClient) ExchangeDeclare(name, kind string) error {
 	return rc.ch.ExchangeDeclare(
-		name,  // name
-		kind,  // type
-		true,  // durable
-		false, // auto-deleted
-		false, // internal
-		false, // no-wait
-		nil,   // arguments
+		name,
+		kind,
+		isDurable,
+		autoDelete,
+		isInternal,
+		noWait,
+		nil,
 	)
 }
 
