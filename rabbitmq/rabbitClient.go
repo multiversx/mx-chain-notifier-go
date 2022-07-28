@@ -39,7 +39,7 @@ func NewRabbitMQClient(url string) (*rabbitMqClient, error) {
 	return rc, nil
 }
 
-// ExchangeDeclare will check and declare an exchange if it's not existing already
+// ExchangeDeclare will declare an exchange
 func (rc *rabbitMqClient) ExchangeDeclare(name, kind string) error {
 	return rc.ch.ExchangeDeclare(
 		name,  // name
