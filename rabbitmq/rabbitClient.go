@@ -39,6 +39,19 @@ func NewRabbitMQClient(url string) (*rabbitMqClient, error) {
 	return rc, nil
 }
 
+// ExchangeDeclare will check and declare an exchange if it's not existing already
+func (rc *rabbitMqClient) ExchangeDeclare(name, kind string) error {
+	return rc.ch.ExchangeDeclare(
+		name,  // name
+		kind,  // type
+		true,  // durable
+		false, // auto-deleted
+		false, // internal
+		false, // no-wait
+		nil,   // arguments
+	)
+}
+
 // Publish will publich an item on the rabbitMq channel
 func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
 	rc.pubMut.Lock()
