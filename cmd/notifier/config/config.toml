@@ -40,22 +40,27 @@
     # Note: not required for running in the notifier mode
     Url = "amqp://guest:guest@localhost:5672"
 
-    # The exchange name which holds all events
-    # Expected type: fanout
-    EventsExchange = "all_events"
+    # The exchange which holds all logs and events
+    [RabbitMQ.EventsExchange]
+        Name = "all_events"
+        Type = "fanout"
 
-    # The exchange name which holds revert events
-    # Expected type: fanout
-    RevertEventsExchange = "revert_events"
+    # The exchange which holds revert events
+    [RabbitMQ.RevertEventsExchange]
+        Name = "revert_events"
+        Type = "fanout"
 
-    # The exchange name which holds finalized block events
-    # Expected type: fanout
-    FinalizedEventsExchange = "finalized_events"
+    # The exchange which holds finalized block events
+    [RabbitMQ.FinalizedEventsExchange]
+        Name = "finalized_events"
+        Type = "fanout"
 
-    # The exchange name which holds block txs events
-    # Expected type: fanout
-    BlockTxsExchange = "block_txs"
+    # The exchange which holds block txs events
+    [RabbitMQ.BlockTxsExchange]
+        Name = "block_txs"
+        Type = "fanout"
 
-    # The exchange name which holds block scrs events
-    # Expected type: fanout
-    BlockScrsExchange = "block_scrs"
+    # The exchange which holds block scrs events
+    [RabbitMQ.BlockScrsExchange]
+        Name = "block_scrs"
+        Type = "fanout"

@@ -29,6 +29,11 @@ func (rc *RabbitClientMock) Publish(exchange, key string, mandatory, immediate b
 	return nil
 }
 
+// ExchangeDeclare -
+func (rc *RabbitClientMock) ExchangeDeclare(name, kind string) error {
+	return nil
+}
+
 // ConnErrChan -
 func (rc *RabbitClientMock) ConnErrChan() chan *amqp.Error {
 	return make(chan *amqp.Error)
