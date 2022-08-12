@@ -1,16 +1,8 @@
 # Elrond events notifier
 
-The notifier service is a component that implements the Driver interface
-declared in the [elrond-go](https://github.com/ElrondNetwork/elrond-go)
-repository. This allows for one or multiple observers to push block data 
-after each round. 
-
-The notifier has two main modules:
-- The factory module, which is used by an observer to initialize 
-  an `eventNotifier` instance, that implements the Driver interface
-- The proxy module, which exposes a REST API, is used by the 
-`eventNotifier` to push events to the Hub, which then broadcasts on 
-  the opened channels. 
+The notifier service is a component that receives block events synchronously
+from elrond observer nodes, and it forwards them to a subscribing component
+(via message queuing service or websockets)
   
 ## Prerequisites
 
@@ -72,7 +64,12 @@ make run api_type=rabbit-api
 
 ## Launching the proxy
 
-Before launching the proxy service, it has to be configured so that it runs with the
+CLI: run `--help` to get the command line parameters
+```bash
+./cmd/notifier/event-notifier --help
+```
+
+Before launching the proxy (notifier) service, it has to be configured so that it runs with the
 correct environment variables.
 
 The supported config variables are:
@@ -103,8 +100,11 @@ The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/cmd/notifier
 After the configuration file is set up, the notifier instance can be
 launched.
 
-There are two ways in which notifier-go can be started: `notifier` mode and
-`rabbit-api` mode.  There is a development setup using docker containers (with
+There are two ways in which notifier-go can be started:
+* `notifier` mode: it will launch a websocket handler (check [WebSockets](#websockets) section)
+* `rabbit-api` mode: it will set up a rabbitMQ client based on the RabbitMQ section from main config file (check [RabbitMQ](#rabbitmq) section)
+
+There is a development setup using docker containers (with
 docker compose) that can be used for this.
 
 If it is important that no event is lost, the setup with rabbitmq (as messaging
@@ -148,6 +148,19 @@ Start Notifier instance
 make docker-new api_type=rabbit-api
 ```
 
+### API Endpoints
+
+Notifier service will expose several events routes, the observer nodes will
+push events to these routes:
+- `/events/push` (POST) -> it will handle all events for each round
+- `/events/revert` (POST) -> if there is a reverted block, the event will be
+  pushed on this route
+- `/events/finalized` (POST) -> when the block has been finalized, the events
+  will be pushed on this route
+
+If the service will be in "notifier" mode, it will expose a additional route:
+- `/hub/ws` (GET) - this route can be used to manage the websocket connection (check [websocket subscribing](#websockets) section for more details on this)
+
 ## Redis
 
 In this setup, `Redis` is used as a locker service. If `CheckDuplicates` config
@@ -160,36 +173,12 @@ Check `Redis` section from config in order to set up the available options.
 
 If `--api-type` command line parameter is set to `rabbit-api`, the notifier instance
 will try to publish events to `RabbitMQ`. Check `RabbitMQ` section for config in order to
-set up the url properly.
-
-Please make sure that the exchanges from config are created accordingly,
-as type: `fanout`.
-```toml
-[RabbitMQ]
-    # The url used to connect to a rabbitMQ server
-    # Note: not required for running in the notifier mode
-    Url = "amqp://guest:guest@localhost:5672"
-
-    # The exchange name which holds all events
-    # Expected type: fanout
-    EventsExchange = "all_events"
-
-    # The exchange name which holds revert events
-    # Expected type: fanout
-    RevertEventsExchange = "revert_events"
-
-    # The exchange name which holds finalized block events
-    # Expected type: fanout
-    FinalizedEventsExchange = "finalized_events"
-```
+set up the url and exchanges properly.
 
 ## Subscribing
 
 Once the proxy is launched together with the observer/s, the driver's methods
 will be called. 
-
-Note: For empty logs in any given block the driver won't push data, 
-so subscribers won't be notified.
 
 ### RabbitMQ
 
