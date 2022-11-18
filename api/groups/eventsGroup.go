@@ -66,13 +66,15 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
-	var blockEvents data.SaveBlockData
+	var blockEvents data.ArgsSaveBlockData
 
 	err := c.Bind(&blockEvents)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
+
+	log.Info("blockEvents", "blockEvents", blockEvents)
 
 	h.facade.HandlePushEvents(blockEvents)
 

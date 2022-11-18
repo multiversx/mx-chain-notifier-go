@@ -3,6 +3,8 @@ package data
 import (
 	"encoding/json"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
+	"github.com/ElrondNetwork/elrond-go-core/data/outport"
 	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 )
@@ -65,4 +67,18 @@ type SaveBlockData struct {
 	Txs       map[string]transaction.Transaction                 `json:"txs"`
 	Scrs      map[string]smartContractResult.SmartContractResult `json:"scrs"`
 	LogEvents []Event                                            `json:"events"`
+}
+
+// ArgsSaveBlockData will contain all information that are needed to save block data
+type ArgsSaveBlockData struct {
+	HeaderHash             []byte
+	Body                   *block.Body
+	Header                 *block.HeaderV2
+	SignersIndexes         []uint64
+	NotarizedHeadersHashes []string
+	HeaderGasConsumption   outport.HeaderGasConsumption
+	TransactionsPool       *outport.Pool
+	AlteredAccounts        map[string]*outport.AlteredAccount
+	NumberOfShards         uint32
+	IsImportDB             bool
 }
