@@ -34,3 +34,9 @@ type EventsHandler interface {
 	HandleBlockScrs(blockScrs data.BlockScrs)
 	IsInterfaceNil() bool
 }
+
+// EventsInterceptor defines the behaviour of an events interceptor component
+type EventsInterceptor interface {
+	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) *data.SaveBlockData
+	IsInterfaceNil() bool
+}
