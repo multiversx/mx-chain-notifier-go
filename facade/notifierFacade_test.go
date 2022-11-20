@@ -18,9 +18,10 @@ import (
 
 func createMockFacadeArgs() facade.ArgsNotifierFacade {
 	return facade.ArgsNotifierFacade{
-		EventsHandler: &mocks.EventsHandlerStub{},
-		APIConfig:     config.ConnectorApiConfig{},
-		WSHandler:     &mocks.WSHandlerStub{},
+		EventsHandler:     &mocks.EventsHandlerStub{},
+		APIConfig:         config.ConnectorApiConfig{},
+		WSHandler:         &mocks.WSHandlerStub{},
+		EventsInterceptor: &mocks.EventsInterceptorStub{},
 	}
 }
 
@@ -75,17 +76,29 @@ func TestHandlePushEvents(t *testing.T) {
 			Nonce: 2,
 		},
 	}
+	logData := []*data.LogData{
+		{
+			LogHandler: &transaction.Log{
+				Address: []byte("logaddr1"),
+				Events:  []*transaction.Event{},
+			},
+			TxHash: "logHash1",
+		},
+	}
+
 	logEvents := []data.Event{
 		{
 			Address: "addr1",
 		},
 	}
 
-	blockData := data.SaveBlockData{
-		Hash:      blockHash,
-		Txs:       txs,
-		Scrs:      scrs,
-		LogEvents: logEvents,
+	blockData := data.ArgsSaveBlockData{
+		HeaderHash: []byte(blockHash),
+		TransactionsPool: &data.Pool{
+			Txs:  txs,
+			Scrs: scrs,
+			Logs: logData,
+		},
 	}
 
 	expTxsData := data.BlockTxs{
@@ -118,6 +131,17 @@ func TestHandlePushEvents(t *testing.T) {
 			assert.Equal(t, expScrsData, blockScrs)
 		},
 	}
+	args.EventsInterceptor = &mocks.EventsInterceptorStub{
+		ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) *data.SaveBlockData {
+			return &data.SaveBlockData{
+				Hash:      blockHash,
+				Txs:       txs,
+				Scrs:      scrs,
+				LogEvents: logEvents,
+			}
+		},
+	}
+
 	facade, err := facade.NewNotifierFacade(args)
 	require.Nil(t, err)
 

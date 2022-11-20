@@ -81,29 +81,36 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		blockEvents := data.SaveBlockData{
-			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
-				"hash2": {
-					Nonce: 2,
+		blockEvents := data.ArgsSaveBlockData{
+			HeaderHash: []byte{},
+			TransactionsPool: &data.Pool{
+				Txs: map[string]transaction.Transaction{
+					"hash2": {
+						Nonce: 2,
+					},
 				},
-			},
-			Scrs: map[string]smartContractResult.SmartContractResult{
-				"hash3": {
-					Nonce: 3,
+				Scrs: map[string]smartContractResult.SmartContractResult{
+					"hash3": {
+						Nonce: 3,
+					},
 				},
-			},
-			LogEvents: []data.Event{
-				{
-					Address: "addr1",
+				Logs: []*data.LogData{
+					{
+						LogHandler: &transaction.Log{
+							Address: []byte("logaddr1"),
+							Events:  []*transaction.Event{},
+						},
+						TxHash: "logHash1",
+					},
 				},
 			},
 		}
+
 		jsonBytes, _ := json.Marshal(blockEvents)
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsCalled: func(events data.SaveBlockData) {
+			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) {
 				wasCalled = true
 				assert.Equal(t, blockEvents, events)
 			},

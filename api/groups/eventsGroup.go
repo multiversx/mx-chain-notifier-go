@@ -74,8 +74,6 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	log.Info("blockEvents", "blockEvents", blockEvents)
-
 	h.facade.HandlePushEvents(blockEvents)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
