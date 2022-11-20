@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/mocks"
@@ -45,6 +46,53 @@ func TestProcessBlockEvents(t *testing.T) {
 	t.Parallel()
 
 	eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+
+	txs := map[string]transaction.Transaction{
+		"hash2": {
+			Nonce: 2,
+		},
+	}
+	scrs := map[string]smartContractResult.SmartContractResult{
+		"hash3": {
+			Nonce: 3,
+		},
+	}
+	addr := []byte("addr1")
+
+	blockHash := []byte("blockHash")
+	blockEvents := data.ArgsSaveBlockData{
+		HeaderHash: blockHash,
+		TransactionsPool: &data.Pool{
+			Txs:  txs,
+			Scrs: scrs,
+			Logs: []*data.LogData{
+				{
+					LogHandler: &transaction.Log{
+						Address: addr,
+						Events: []*transaction.Event{
+							{
+								Address: addr,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	expEvents := &data.SaveBlockData{
+		Hash: hex.EncodeToString(blockHash),
+		Txs:  txs,
+		Scrs: scrs,
+		LogEvents: []data.Event{
+			{
+				Address: hex.EncodeToString(addr),
+			},
+		},
+	}
+
+	events := eventsInterceptor.ProcessBlockEvents(&blockEvents)
+	require.Equal(t, expEvents, events)
 }
 
 func TestGetLogEventsFromTransactionsPool(t *testing.T) {

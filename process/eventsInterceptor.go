@@ -32,13 +32,12 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) *data.SaveBlockData {
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
-	data := &data.SaveBlockData{
+	return &data.SaveBlockData{
 		Hash:      hex.EncodeToString(eventsData.HeaderHash),
 		Txs:       eventsData.TransactionsPool.Txs,
 		Scrs:      eventsData.TransactionsPool.Scrs,
 		LogEvents: events,
 	}
-	return data
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogData) []data.Event {

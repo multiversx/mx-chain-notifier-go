@@ -59,10 +59,6 @@ func checkArgs(args ArgsNotifierFacade) error {
 // HandlePushEvents will handle push events received from observer
 // It splits block data and handles log, txs and srcs events separately
 func (nf *notifierFacade) HandlePushEvents(allEvents data.ArgsSaveBlockData) {
-	log.Info("txs", "txs", allEvents.TransactionsPool.Txs)
-	log.Info("log events", "events", allEvents.TransactionsPool.Logs[0].TxHash)
-	log.Info("log events", "events", allEvents.TransactionsPool.Logs[0].LogHandler)
-
 	eventsData := nf.eventsInterceptor.ProcessBlockEvents(&allEvents)
 
 	pushEvents := data.BlockEvents{
