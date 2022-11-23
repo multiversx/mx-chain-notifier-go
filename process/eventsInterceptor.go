@@ -29,7 +29,14 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 }
 
 // ProcessBlockEvents will process block events data
-func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) *data.SaveBlockData {
+func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+	if eventsData == nil {
+		return nil, ErrNilBlockEvents
+	}
+	if eventsData.TransactionsPool == nil {
+		return nil, ErrNilTransactionsPool
+	}
+
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
 	return &data.SaveBlockData{
@@ -37,7 +44,7 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		Txs:       eventsData.TransactionsPool.Txs,
 		Scrs:      eventsData.TransactionsPool.Scrs,
 		LogEvents: events,
-	}
+	}, nil
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogData) []data.Event {

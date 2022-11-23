@@ -78,12 +78,51 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
+	t.Run("facade error, should fail", func(t *testing.T) {
+		t.Parallel()
+
+		blockEvents := data.ArgsSaveBlockData{
+			HeaderHash: []byte{},
+			TransactionsPool: &data.TransactionsPool{
+				Txs: map[string]transaction.Transaction{
+					"hash2": {
+						Nonce: 2,
+					},
+				},
+			},
+		}
+
+		jsonBytes, _ := json.Marshal(blockEvents)
+
+		wasCalled := false
+		facade := &mocks.FacadeStub{
+			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
+				wasCalled = true
+				return errors.New("facade error")
+			},
+		}
+
+		eg, err := groups.NewEventsGroup(facade)
+		require.Nil(t, err)
+
+		ws := startWebServer(eg, eventsPath)
+
+		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
+		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
+
+		ws.ServeHTTP(resp, req)
+
+		assert.True(t, wasCalled)
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+	})
+
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
 		blockEvents := data.ArgsSaveBlockData{
 			HeaderHash: []byte{},
-			TransactionsPool: &data.Pool{
+			TransactionsPool: &data.TransactionsPool{
 				Txs: map[string]transaction.Transaction{
 					"hash2": {
 						Nonce: 2,
@@ -110,9 +149,10 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) {
+			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
 				wasCalled = true
 				assert.Equal(t, blockEvents, events)
+				return nil
 			},
 		}
 

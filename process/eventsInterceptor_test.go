@@ -45,54 +45,82 @@ func TestNewEventsInterceptor(t *testing.T) {
 func TestProcessBlockEvents(t *testing.T) {
 	t.Parallel()
 
-	eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+	t.Run("nil block events data", func(t *testing.T) {
+		t.Parallel()
 
-	txs := map[string]transaction.Transaction{
-		"hash2": {
-			Nonce: 2,
-		},
-	}
-	scrs := map[string]smartContractResult.SmartContractResult{
-		"hash3": {
-			Nonce: 3,
-		},
-	}
-	addr := []byte("addr1")
+		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+		events, err := eventsInterceptor.ProcessBlockEvents(nil)
+		require.Nil(t, events)
+		require.Equal(t, process.ErrNilBlockEvents, err)
+	})
 
-	blockHash := []byte("blockHash")
-	blockEvents := data.ArgsSaveBlockData{
-		HeaderHash: blockHash,
-		TransactionsPool: &data.Pool{
-			Txs:  txs,
-			Scrs: scrs,
-			Logs: []*data.LogData{
-				{
-					LogHandler: &transaction.Log{
-						Address: addr,
-						Events: []*transaction.Event{
-							{
-								Address: addr,
+	t.Run("nil transactions pool", func(t *testing.T) {
+		t.Parallel()
+
+		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+
+		eventsData := &data.ArgsSaveBlockData{
+			HeaderHash:       []byte("headerHash"),
+			TransactionsPool: nil,
+		}
+		events, err := eventsInterceptor.ProcessBlockEvents(eventsData)
+		require.Nil(t, events)
+		require.Equal(t, process.ErrNilTransactionsPool, err)
+	})
+
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+
+		txs := map[string]transaction.Transaction{
+			"hash2": {
+				Nonce: 2,
+			},
+		}
+		scrs := map[string]smartContractResult.SmartContractResult{
+			"hash3": {
+				Nonce: 3,
+			},
+		}
+		addr := []byte("addr1")
+
+		blockHash := []byte("blockHash")
+		blockEvents := data.ArgsSaveBlockData{
+			HeaderHash: blockHash,
+			TransactionsPool: &data.TransactionsPool{
+				Txs:  txs,
+				Scrs: scrs,
+				Logs: []*data.LogData{
+					{
+						LogHandler: &transaction.Log{
+							Address: addr,
+							Events: []*transaction.Event{
+								{
+									Address: addr,
+								},
 							},
 						},
 					},
 				},
 			},
-		},
-	}
+		}
 
-	expEvents := &data.SaveBlockData{
-		Hash: hex.EncodeToString(blockHash),
-		Txs:  txs,
-		Scrs: scrs,
-		LogEvents: []data.Event{
-			{
-				Address: hex.EncodeToString(addr),
+		expEvents := &data.SaveBlockData{
+			Hash: hex.EncodeToString(blockHash),
+			Txs:  txs,
+			Scrs: scrs,
+			LogEvents: []data.Event{
+				{
+					Address: hex.EncodeToString(addr),
+				},
 			},
-		},
-	}
+		}
 
-	events := eventsInterceptor.ProcessBlockEvents(&blockEvents)
-	require.Equal(t, expEvents, events)
+		events, err := eventsInterceptor.ProcessBlockEvents(&blockEvents)
+		require.Nil(t, err)
+		require.Equal(t, expEvents, events)
+	})
 }
 
 func TestGetLogEventsFromTransactionsPool(t *testing.T) {

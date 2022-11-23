@@ -86,7 +86,7 @@ type ArgsSaveBlockData struct {
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
 	HeaderGasConsumption   outport.HeaderGasConsumption
-	TransactionsPool       *Pool
+	TransactionsPool       *TransactionsPool
 	AlteredAccounts        map[string]*outport.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
@@ -98,8 +98,8 @@ type LogData struct {
 	TxHash     string
 }
 
-// Pool will hold all types of transaction
-type Pool struct {
+// TransactionsPool holds all types of transaction
+type TransactionsPool struct {
 	Txs      map[string]transaction.Transaction
 	Scrs     map[string]smartContractResult.SmartContractResult
 	Rewards  map[string]rewardTx.RewardTx

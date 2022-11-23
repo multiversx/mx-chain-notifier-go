@@ -50,7 +50,7 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: []byte("hash1"),
-		TransactionsPool: &data.Pool{
+		TransactionsPool: &data.TransactionsPool{
 			Txs: map[string]transaction.Transaction{
 				"txHash1": {
 					Nonce: 1,

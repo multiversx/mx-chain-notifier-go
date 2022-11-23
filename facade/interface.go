@@ -39,6 +39,6 @@ type Publisher interface {
 
 // EventsInterceptor defines the behaviour of an events interceptor component
 type EventsInterceptor interface {
-	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) *data.SaveBlockData
+	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error)
 	IsInterfaceNil() bool
 }

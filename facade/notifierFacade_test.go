@@ -50,6 +50,17 @@ func TestNewNotifierFacade(t *testing.T) {
 		require.Equal(t, facade.ErrNilWSHandler, err)
 	})
 
+	t.Run("nil events interceptor", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockFacadeArgs()
+		args.EventsInterceptor = nil
+
+		f, err := facade.NewNotifierFacade(args)
+		require.True(t, check.IfNil(f))
+		require.Equal(t, facade.ErrNilEventsInterceptor, err)
+	})
+
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -94,7 +105,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 	blockData := data.ArgsSaveBlockData{
 		HeaderHash: []byte(blockHash),
-		TransactionsPool: &data.Pool{
+		TransactionsPool: &data.TransactionsPool{
 			Txs:  txs,
 			Scrs: scrs,
 			Logs: logData,
@@ -132,13 +143,13 @@ func TestHandlePushEvents(t *testing.T) {
 		},
 	}
 	args.EventsInterceptor = &mocks.EventsInterceptorStub{
-		ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) *data.SaveBlockData {
+		ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
 			return &data.SaveBlockData{
 				Hash:      blockHash,
 				Txs:       txs,
 				Scrs:      scrs,
 				LogEvents: logEvents,
-			}
+			}, nil
 		},
 	}
 

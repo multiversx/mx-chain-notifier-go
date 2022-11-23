@@ -49,7 +49,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	}
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: []byte("hash1"),
-		TransactionsPool: &data.Pool{
+		TransactionsPool: &data.TransactionsPool{
 			Logs: []*data.LogData{
 				{
 					LogHandler: &transaction.Log{
@@ -210,7 +210,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	}
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: blockHash,
-		TransactionsPool: &data.Pool{
+		TransactionsPool: &data.TransactionsPool{
 			Txs: txs,
 		},
 	}
@@ -269,7 +269,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	}
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: blockHash,
-		TransactionsPool: &data.Pool{
+		TransactionsPool: &data.TransactionsPool{
 			Scrs: scrs,
 		},
 	}
@@ -370,7 +370,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	}
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: []byte(blockHash),
-		TransactionsPool: &data.Pool{
+		TransactionsPool: &data.TransactionsPool{
 			Txs:  txs,
 			Scrs: scrs,
 			Logs: []*data.LogData{
