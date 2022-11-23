@@ -8,7 +8,7 @@ import (
 	"github.com/ElrondNetwork/notifier-go/data"
 )
 
-// ArgsEventsInterceptor defines the arguments needed for cresating an events interceptor instance
+// ArgsEventsInterceptor defines the arguments needed for creating an events interceptor instance
 type ArgsEventsInterceptor struct {
 	PubKeyConverter core.PubkeyConverter
 }
