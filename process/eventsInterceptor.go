@@ -17,7 +17,7 @@ type eventsInterceptor struct {
 	pubKeyConverter core.PubkeyConverter
 }
 
-// NewEventsInterceptor created a new eventsInterceptor instance
+// NewEventsInterceptor creates a new eventsInterceptor instance
 func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error) {
 	if check.IfNil(args.PubKeyConverter) {
 		return nil, ErrNilPubKeyConverter
