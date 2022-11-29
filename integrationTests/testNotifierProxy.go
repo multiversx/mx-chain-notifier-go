@@ -66,10 +66,19 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 		return nil, err
 	}
 
+	eventsInterceptorArgs := process.ArgsEventsInterceptor{
+		PubKeyConverter: &mocks.PubkeyConverterMock{},
+	}
+	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
+	if err != nil {
+		return nil, err
+	}
+
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler: eventsHandler,
-		APIConfig:     cfg.ConnectorApi,
-		WSHandler:     wsHandler,
+		EventsHandler:     eventsHandler,
+		APIConfig:         cfg.ConnectorApi,
+		WSHandler:         wsHandler,
+		EventsInterceptor: eventsInterceptor,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
@@ -114,11 +123,20 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 		return nil, err
 	}
 
+	eventsInterceptorArgs := process.ArgsEventsInterceptor{
+		PubKeyConverter: &mocks.PubkeyConverterMock{},
+	}
+	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
+	if err != nil {
+		return nil, err
+	}
+
 	wsHandler := &disabled.WSHandler{}
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler: eventsHandler,
-		APIConfig:     cfg.ConnectorApi,
-		WSHandler:     wsHandler,
+		EventsHandler:     eventsHandler,
+		APIConfig:         cfg.ConnectorApi,
+		WSHandler:         wsHandler,
+		EventsInterceptor: eventsInterceptor,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {

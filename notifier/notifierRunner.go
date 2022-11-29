@@ -65,10 +65,16 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	eventsInterceptor, err := factory.CreateEventsInterceptor()
+	if err != nil {
+		return err
+	}
+
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler: eventsHandler,
-		APIConfig:     nr.configs.ConnectorApi,
-		WSHandler:     wsHandler,
+		EventsHandler:     eventsHandler,
+		APIConfig:         nr.configs.ConnectorApi,
+		WSHandler:         wsHandler,
+		EventsInterceptor: eventsInterceptor,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {

@@ -1,6 +1,7 @@
 package facade_test
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,9 +19,10 @@ import (
 
 func createMockFacadeArgs() facade.ArgsNotifierFacade {
 	return facade.ArgsNotifierFacade{
-		EventsHandler: &mocks.EventsHandlerStub{},
-		APIConfig:     config.ConnectorApiConfig{},
-		WSHandler:     &mocks.WSHandlerStub{},
+		EventsHandler:     &mocks.EventsHandlerStub{},
+		APIConfig:         config.ConnectorApiConfig{},
+		WSHandler:         &mocks.WSHandlerStub{},
+		EventsInterceptor: &mocks.EventsInterceptorStub{},
 	}
 }
 
@@ -49,6 +51,17 @@ func TestNewNotifierFacade(t *testing.T) {
 		require.Equal(t, facade.ErrNilWSHandler, err)
 	})
 
+	t.Run("nil events interceptor", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockFacadeArgs()
+		args.EventsInterceptor = nil
+
+		f, err := facade.NewNotifierFacade(args)
+		require.True(t, check.IfNil(f))
+		require.Equal(t, facade.ErrNilEventsInterceptor, err)
+	})
+
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -62,70 +75,119 @@ func TestNewNotifierFacade(t *testing.T) {
 func TestHandlePushEvents(t *testing.T) {
 	t.Parallel()
 
-	args := createMockFacadeArgs()
+	t.Run("process block events error, should fail", func(t *testing.T) {
+		t.Parallel()
 
-	blockHash := "blockHash1"
-	txs := map[string]transaction.Transaction{
-		"hash1": {
-			Nonce: 1,
-		},
-	}
-	scrs := map[string]smartContractResult.SmartContractResult{
-		"hash2": {
-			Nonce: 2,
-		},
-	}
-	logEvents := []data.Event{
-		{
-			Address: "addr1",
-		},
-	}
+		args := createMockFacadeArgs()
 
-	blockData := data.SaveBlockData{
-		Hash:      blockHash,
-		Txs:       txs,
-		Scrs:      scrs,
-		LogEvents: logEvents,
-	}
+		expectedErr := errors.New("expected error")
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+				return nil, expectedErr
+			},
+		}
 
-	expTxsData := data.BlockTxs{
-		Hash: blockHash,
-		Txs:  txs,
-	}
-	expScrsData := data.BlockScrs{
-		Hash: blockHash,
-		Scrs: scrs,
-	}
-	expLogEvents := data.BlockEvents{
-		Hash:   blockHash,
-		Events: logEvents,
-	}
+		facade, err := facade.NewNotifierFacade(args)
+		require.Nil(t, err)
 
-	pushWasCalled := false
-	txsWasCalled := false
-	scrsWasCalled := false
-	args.EventsHandler = &mocks.EventsHandlerStub{
-		HandlePushEventsCalled: func(events data.BlockEvents) {
-			pushWasCalled = true
-			assert.Equal(t, expLogEvents, events)
-		},
-		HandleBlockTxsCalled: func(blockTxs data.BlockTxs) {
-			txsWasCalled = true
-			assert.Equal(t, expTxsData, blockTxs)
-		},
-		HandleBlockScrsCalled: func(blockScrs data.BlockScrs) {
-			scrsWasCalled = true
-			assert.Equal(t, expScrsData, blockScrs)
-		},
-	}
-	facade, err := facade.NewNotifierFacade(args)
-	require.Nil(t, err)
+		blockData := data.ArgsSaveBlockData{
+			HeaderHash: []byte("blockHash"),
+		}
+		err = facade.HandlePushEvents(blockData)
+		require.Equal(t, expectedErr, err)
+	})
 
-	facade.HandlePushEvents(blockData)
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
 
-	assert.True(t, pushWasCalled)
-	assert.True(t, txsWasCalled)
-	assert.True(t, scrsWasCalled)
+		args := createMockFacadeArgs()
+
+		blockHash := "blockHash1"
+		txs := map[string]transaction.Transaction{
+			"hash1": {
+				Nonce: 1,
+			},
+		}
+		scrs := map[string]smartContractResult.SmartContractResult{
+			"hash2": {
+				Nonce: 2,
+			},
+		}
+		logData := []*data.LogData{
+			{
+				LogHandler: &transaction.Log{
+					Address: []byte("logaddr1"),
+					Events:  []*transaction.Event{},
+				},
+				TxHash: "logHash1",
+			},
+		}
+
+		logEvents := []data.Event{
+			{
+				Address: "addr1",
+			},
+		}
+
+		blockData := data.ArgsSaveBlockData{
+			HeaderHash: []byte(blockHash),
+			TransactionsPool: &data.TransactionsPool{
+				Txs:  txs,
+				Scrs: scrs,
+				Logs: logData,
+			},
+		}
+
+		expTxsData := data.BlockTxs{
+			Hash: blockHash,
+			Txs:  txs,
+		}
+		expScrsData := data.BlockScrs{
+			Hash: blockHash,
+			Scrs: scrs,
+		}
+		expLogEvents := data.BlockEvents{
+			Hash:   blockHash,
+			Events: logEvents,
+		}
+
+		pushWasCalled := false
+		txsWasCalled := false
+		scrsWasCalled := false
+		args.EventsHandler = &mocks.EventsHandlerStub{
+			HandlePushEventsCalled: func(events data.BlockEvents) {
+				pushWasCalled = true
+				assert.Equal(t, expLogEvents, events)
+			},
+			HandleBlockTxsCalled: func(blockTxs data.BlockTxs) {
+				txsWasCalled = true
+				assert.Equal(t, expTxsData, blockTxs)
+			},
+			HandleBlockScrsCalled: func(blockScrs data.BlockScrs) {
+				scrsWasCalled = true
+				assert.Equal(t, expScrsData, blockScrs)
+			},
+		}
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+				return &data.SaveBlockData{
+					Hash:      blockHash,
+					Txs:       txs,
+					Scrs:      scrs,
+					LogEvents: logEvents,
+				}, nil
+			},
+		}
+
+		facade, err := facade.NewNotifierFacade(args)
+		require.Nil(t, err)
+
+		facade.HandlePushEvents(blockData)
+
+		assert.True(t, pushWasCalled)
+		assert.True(t, txsWasCalled)
+		assert.True(t, scrsWasCalled)
+	})
 }
 
 func TestHandleRevertEvents(t *testing.T) {

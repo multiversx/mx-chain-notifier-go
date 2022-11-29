@@ -8,7 +8,7 @@ import (
 
 // FacadeHandler defines facade behaviour
 type FacadeHandler interface {
-	HandlePushEvents(events data.SaveBlockData)
+	HandlePushEvents(events data.ArgsSaveBlockData) error
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)

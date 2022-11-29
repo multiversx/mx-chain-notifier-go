@@ -48,25 +48,31 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.SaveBlockData{
-		Hash: "hash1",
-		Txs: map[string]transaction.Transaction{
-			"txHash1": {
-				Nonce: 1,
+	blockEvents := &data.ArgsSaveBlockData{
+		HeaderHash: []byte("hash1"),
+		TransactionsPool: &data.TransactionsPool{
+			Txs: map[string]transaction.Transaction{
+				"txHash1": {
+					Nonce: 1,
+				},
 			},
-		},
-		Scrs: map[string]smartContractResult.SmartContractResult{
-			"scrHash1": {
-				Nonce: 2,
+			Scrs: map[string]smartContractResult.SmartContractResult{
+				"scrHash1": {
+					Nonce: 2,
+				},
 			},
-		},
-		LogEvents: []data.Event{
-			{
-				Address: "addr1",
-				TxHash:  "txHash1",
+			Logs: []*data.LogData{
+				{
+					LogHandler: &transaction.Log{
+						Address: []byte("addr1"),
+						Events:  []*transaction.Event{},
+					},
+					TxHash: "txHash1",
+				},
 			},
 		},
 	}
+
 	resp := webServer.PushEventsRequest(blockEvents)
 
 	mutResponses.Lock()

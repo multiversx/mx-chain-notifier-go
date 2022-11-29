@@ -3,6 +3,11 @@ package data
 import (
 	"encoding/json"
 
+	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
+	"github.com/ElrondNetwork/elrond-go-core/data/outport"
+	"github.com/ElrondNetwork/elrond-go-core/data/receipt"
+	"github.com/ElrondNetwork/elrond-go-core/data/rewardTx"
 	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 )
@@ -17,6 +22,12 @@ type WSEvent struct {
 type TxLog struct {
 	Address string  `json:"scAddress"`
 	Events  []Event `json:"events"`
+}
+
+// LogEvent defines a log event associated with corresponding tx hash
+type LogEvent struct {
+	EventHandler nodeData.EventHandler
+	TxHash       string
 }
 
 // Event holds event data
@@ -65,4 +76,34 @@ type SaveBlockData struct {
 	Txs       map[string]transaction.Transaction                 `json:"txs"`
 	Scrs      map[string]smartContractResult.SmartContractResult `json:"scrs"`
 	LogEvents []Event                                            `json:"events"`
+}
+
+// ArgsSaveBlockData will contain all information that are needed to save block data
+type ArgsSaveBlockData struct {
+	HeaderHash             []byte
+	Body                   *block.Body
+	Header                 *block.HeaderV2
+	SignersIndexes         []uint64
+	NotarizedHeadersHashes []string
+	HeaderGasConsumption   outport.HeaderGasConsumption
+	TransactionsPool       *TransactionsPool
+	AlteredAccounts        map[string]*outport.AlteredAccount
+	NumberOfShards         uint32
+	IsImportDB             bool
+}
+
+// LogData holds the data needed for indexing logs and events
+type LogData struct {
+	LogHandler *transaction.Log
+	TxHash     string
+}
+
+// TransactionsPool holds all types of transaction
+type TransactionsPool struct {
+	Txs      map[string]transaction.Transaction
+	Scrs     map[string]smartContractResult.SmartContractResult
+	Rewards  map[string]rewardTx.RewardTx
+	Invalid  map[string]transaction.Transaction
+	Receipts map[string]receipt.Receipt
+	Logs     []*LogData
 }
