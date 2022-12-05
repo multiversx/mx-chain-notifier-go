@@ -77,7 +77,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 	}
 	log.Debug("pushEvents", "hash", blockEvents.Hash)
 
-	err = h.facade.HandlePushEventsOld(blockEvents)
+	err = h.facade.HandlePushEventsV1(blockEvents)
 	if err != nil {
 		if err == common.ErrReceivedEmptyEvents {
 			h.pushEventsV2(c)
@@ -100,7 +100,7 @@ func (h *eventsGroup) pushEventsV2(c *gin.Context) {
 	}
 	log.Debug("pushEventsV2", "hash", blockEvents.HeaderHash)
 
-	err = h.facade.HandlePushEvents(blockEvents)
+	err = h.facade.HandlePushEventsV2(blockEvents)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return

@@ -8,8 +8,8 @@ import (
 
 // EventsFacadeHandler defines the behavior of a facade handler needed for events group
 type EventsFacadeHandler interface {
-	HandlePushEvents(events data.ArgsSaveBlockData) error
-	HandlePushEventsOld(events data.SaveBlockData) error
+	HandlePushEventsV2(events data.ArgsSaveBlockData) error
+	HandlePushEventsV1(events data.SaveBlockData) error
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)

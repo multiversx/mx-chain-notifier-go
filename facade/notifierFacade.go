@@ -56,9 +56,9 @@ func checkArgs(args ArgsNotifierFacade) error {
 	return nil
 }
 
-// HandlePushEvents will handle push events received from observer
+// HandlePushEventsV2 will handle push events received from observer
 // It splits block data and handles log, txs and srcs events separately
-func (nf *notifierFacade) HandlePushEvents(allEvents data.ArgsSaveBlockData) error {
+func (nf *notifierFacade) HandlePushEventsV2(allEvents data.ArgsSaveBlockData) error {
 	eventsData, err := nf.eventsInterceptor.ProcessBlockEvents(&allEvents)
 	if err != nil {
 		return err
@@ -88,10 +88,10 @@ func (nf *notifierFacade) HandlePushEvents(allEvents data.ArgsSaveBlockData) err
 	return nil
 }
 
-// HandlePushEvents will handle push events received from observer
+// HandlePushEventsV1 will handle push events received from observer
 // It splits block data and handles log, txs and srcs events separately
 // TODO: remove this implementation
-func (nf *notifierFacade) HandlePushEventsOld(eventsData data.SaveBlockData) error {
+func (nf *notifierFacade) HandlePushEventsV1(eventsData data.SaveBlockData) error {
 	pushEvents := data.BlockEvents{
 		Hash:   eventsData.Hash,
 		Events: eventsData.LogEvents,

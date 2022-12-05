@@ -97,7 +97,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsOldCalled: func(events data.SaveBlockData) error {
+			HandlePushEventsV1Called: func(events data.SaveBlockData) error {
 				wasCalled = true
 				return errors.New("facade error")
 			},
@@ -150,10 +150,10 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsOldCalled: func(eventsData data.SaveBlockData) error {
+			HandlePushEventsV1Called: func(eventsData data.SaveBlockData) error {
 				return common.ErrReceivedEmptyEvents
 			},
-			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
+			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
 				wasCalled = true
 				assert.Equal(t, blockEvents, events)
 				return nil
