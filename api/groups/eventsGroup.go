@@ -81,7 +81,6 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 	if err != nil {
 		if err == common.ErrReceivedEmptyEvents {
 			h.pushEventsV2(c)
-			c.IndentedJSON(http.StatusOK, blockEvents)
 			return
 		}
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())

@@ -155,9 +155,10 @@ func TestHandlePushEvents(t *testing.T) {
 		txsWasCalled := false
 		scrsWasCalled := false
 		args.EventsHandler = &mocks.EventsHandlerStub{
-			HandlePushEventsCalled: func(events data.BlockEvents) {
+			HandlePushEventsCalled: func(events data.BlockEvents) error {
 				pushWasCalled = true
 				assert.Equal(t, expLogEvents, events)
+				return nil
 			},
 			HandleBlockTxsCalled: func(blockTxs data.BlockTxs) {
 				txsWasCalled = true

@@ -13,6 +13,7 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/groups"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -96,7 +97,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
-			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
+			HandlePushEventsOldCalled: func(events data.SaveBlockData) error {
 				wasCalled = true
 				return errors.New("facade error")
 			},
@@ -149,6 +150,9 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
+			HandlePushEventsOldCalled: func(eventsData data.SaveBlockData) error {
+				return common.ErrReceivedEmptyEvents
+			},
 			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
 				wasCalled = true
 				assert.Equal(t, blockEvents, events)

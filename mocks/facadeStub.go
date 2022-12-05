@@ -9,6 +9,7 @@ import (
 // FacadeStub implements FacadeHandler interface
 type FacadeStub struct {
 	HandlePushEventsCalled        func(events data.ArgsSaveBlockData) error
+	HandlePushEventsOldCalled     func(eventsData data.SaveBlockData) error
 	HandleRevertEventsCalled      func(events data.RevertBlock)
 	HandleFinalizedEventsCalled   func(events data.FinalizedBlock)
 	ServeCalled                   func(w http.ResponseWriter, r *http.Request)
@@ -19,6 +20,15 @@ type FacadeStub struct {
 func (fs *FacadeStub) HandlePushEvents(events data.ArgsSaveBlockData) error {
 	if fs.HandlePushEventsCalled != nil {
 		return fs.HandlePushEventsCalled(events)
+	}
+
+	return nil
+}
+
+// HandlePushEventsOld -
+func (fs *FacadeStub) HandlePushEventsOld(events data.SaveBlockData) error {
+	if fs.HandlePushEventsOldCalled != nil {
+		return fs.HandlePushEventsOldCalled(events)
 	}
 
 	return nil
