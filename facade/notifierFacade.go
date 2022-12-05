@@ -68,7 +68,38 @@ func (nf *notifierFacade) HandlePushEvents(allEvents data.ArgsSaveBlockData) err
 		Hash:   eventsData.Hash,
 		Events: eventsData.LogEvents,
 	}
-	nf.eventsHandler.HandlePushEvents(pushEvents)
+	err = nf.eventsHandler.HandlePushEvents(pushEvents)
+	if err != nil {
+		return err
+	}
+
+	txs := data.BlockTxs{
+		Hash: eventsData.Hash,
+		Txs:  eventsData.Txs,
+	}
+	nf.eventsHandler.HandleBlockTxs(txs)
+
+	scrs := data.BlockScrs{
+		Hash: eventsData.Hash,
+		Scrs: eventsData.Scrs,
+	}
+	nf.eventsHandler.HandleBlockScrs(scrs)
+
+	return nil
+}
+
+// HandlePushEvents will handle push events received from observer
+// It splits block data and handles log, txs and srcs events separately
+// TODO: remove this implementation
+func (nf *notifierFacade) HandlePushEventsOld(eventsData data.SaveBlockData) error {
+	pushEvents := data.BlockEvents{
+		Hash:   eventsData.Hash,
+		Events: eventsData.LogEvents,
+	}
+	err := nf.eventsHandler.HandlePushEvents(pushEvents)
+	if err != nil {
+		return err
+	}
 
 	txs := data.BlockTxs{
 		Hash: eventsData.Hash,

@@ -8,7 +8,7 @@ import (
 // EventsHandler defines the behavior of an events handler component.
 // This will handle push events from observer node.
 type EventsHandler interface {
-	HandlePushEvents(events data.BlockEvents)
+	HandlePushEvents(events data.BlockEvents) error
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	HandleBlockTxs(blockTxs data.BlockTxs)

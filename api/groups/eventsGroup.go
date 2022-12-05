@@ -7,8 +7,10 @@ import (
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/api/errors"
 	"github.com/ElrondNetwork/notifier-go/api/shared"
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 const (
@@ -66,13 +68,38 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
-	var blockEvents data.ArgsSaveBlockData
+	var blockEvents data.SaveBlockData
 
-	err := c.Bind(&blockEvents)
+	err := c.ShouldBindBodyWith(&blockEvents, binding.JSON)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
+	log.Debug("pushEvents", "hash", blockEvents.Hash)
+
+	err = h.facade.HandlePushEventsOld(blockEvents)
+	if err != nil {
+		if err == common.ErrReceivedEmptyEvents {
+			h.pushEventsV2(c)
+			c.IndentedJSON(http.StatusOK, blockEvents)
+			return
+		}
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	shared.JSONResponse(c, http.StatusOK, nil, "")
+}
+
+func (h *eventsGroup) pushEventsV2(c *gin.Context) {
+	var blockEvents data.ArgsSaveBlockData
+
+	err := c.ShouldBindBodyWith(&blockEvents, binding.JSON)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+	log.Debug("pushEventsV2", "hash", blockEvents.HeaderHash)
 
 	err = h.facade.HandlePushEvents(blockEvents)
 	if err != nil {

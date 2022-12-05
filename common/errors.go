@@ -10,3 +10,6 @@ var ErrInvalidDispatchType = errors.New("invalid dispatch type")
 
 // ErrInvalidRedisConnType signals that an invalid redis connection type has been provided
 var ErrInvalidRedisConnType = errors.New("invalid redis connection type")
+
+// ErrReceivedEmptyEvents signals that empty events has been received
+var ErrReceivedEmptyEvents = errors.New("recived empty events")
