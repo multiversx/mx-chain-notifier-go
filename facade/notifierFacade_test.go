@@ -93,7 +93,7 @@ func TestHandlePushEvents(t *testing.T) {
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte("blockHash"),
 		}
-		err = facade.HandlePushEvents(blockData)
+		err = facade.HandlePushEventsV2(blockData)
 		require.Equal(t, expectedErr, err)
 	})
 
@@ -155,9 +155,10 @@ func TestHandlePushEvents(t *testing.T) {
 		txsWasCalled := false
 		scrsWasCalled := false
 		args.EventsHandler = &mocks.EventsHandlerStub{
-			HandlePushEventsCalled: func(events data.BlockEvents) {
+			HandlePushEventsCalled: func(events data.BlockEvents) error {
 				pushWasCalled = true
 				assert.Equal(t, expLogEvents, events)
+				return nil
 			},
 			HandleBlockTxsCalled: func(blockTxs data.BlockTxs) {
 				txsWasCalled = true
@@ -182,7 +183,7 @@ func TestHandlePushEvents(t *testing.T) {
 		facade, err := facade.NewNotifierFacade(args)
 		require.Nil(t, err)
 
-		facade.HandlePushEvents(blockData)
+		facade.HandlePushEventsV2(blockData)
 
 		assert.True(t, pushWasCalled)
 		assert.True(t, txsWasCalled)
