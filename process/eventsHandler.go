@@ -64,7 +64,7 @@ func checkArgs(args ArgsEventsHandler) error {
 // HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 	if events.Hash == "" {
-		log.Warn("received empty events block hash",
+		log.Debug("received empty events block hash",
 			"will process", false,
 		)
 		return common.ErrReceivedEmptyEvents
