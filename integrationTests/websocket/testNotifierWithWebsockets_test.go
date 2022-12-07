@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"sync"
 	"testing"
@@ -39,16 +40,31 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
+	addr := []byte("addr1")
 	events := []data.Event{
 		{
-			Address: "addr1",
-			TxHash:  "txHash1",
+			Address: hex.EncodeToString(addr),
+			TxHash:  hex.EncodeToString([]byte("txHash1")),
 		},
 	}
-	blockEvents := &data.SaveBlockData{
-		Hash:      "hash1",
-		LogEvents: events,
+	blockEvents := &data.ArgsSaveBlockData{
+		HeaderHash: []byte("hash1"),
+		TransactionsPool: &data.TransactionsPool{
+			Logs: []*data.LogData{
+				{
+					LogHandler: &transaction.Log{
+						Events: []*transaction.Event{
+							{
+								Address: addr,
+							},
+						},
+					},
+					TxHash: "txHash1",
+				},
+			},
+		},
 	}
+
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
@@ -186,18 +202,20 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
-	blockHash := "hash1"
+	blockHash := []byte("hash1")
 	txs := map[string]transaction.Transaction{
 		"txhash1": {
 			Nonce: 1,
 		},
 	}
-	blockEvents := &data.SaveBlockData{
-		Hash: blockHash,
-		Txs:  txs,
+	blockEvents := &data.ArgsSaveBlockData{
+		HeaderHash: blockHash,
+		TransactionsPool: &data.TransactionsPool{
+			Txs: txs,
+		},
 	}
 	expBlockTxs := &data.BlockTxs{
-		Hash: blockHash,
+		Hash: hex.EncodeToString(blockHash),
 		Txs:  txs,
 	}
 
@@ -243,18 +261,20 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
-	blockHash := "hash1"
+	blockHash := []byte("hash1")
 	scrs := map[string]smartContractResult.SmartContractResult{
 		"hash2": {
 			Nonce: 2,
 		},
 	}
-	blockEvents := &data.SaveBlockData{
-		Hash: blockHash,
-		Scrs: scrs,
+	blockEvents := &data.ArgsSaveBlockData{
+		HeaderHash: blockHash,
+		TransactionsPool: &data.TransactionsPool{
+			Scrs: scrs,
+		},
 	}
 	expBlockScrs := &data.BlockScrs{
-		Hash: blockHash,
+		Hash: hex.EncodeToString(blockHash),
 		Scrs: scrs,
 	}
 
@@ -322,9 +342,10 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Hash: "hash1",
 	}
 
+	addr := []byte("addr1")
 	events := []data.Event{
 		{
-			Address: "addr1",
+			Address: hex.EncodeToString(addr),
 		},
 	}
 
@@ -338,20 +359,32 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			Nonce: 2,
 		},
 	}
-	blockHash := "hash1"
+	blockHash := []byte("hash1")
 	blockTxs := &data.BlockTxs{
-		Hash: blockHash,
+		Hash: hex.EncodeToString(blockHash),
 		Txs:  txs,
 	}
 	blockScrs := &data.BlockScrs{
-		Hash: blockHash,
+		Hash: hex.EncodeToString(blockHash),
 		Scrs: scrs,
 	}
-	blockEvents := &data.SaveBlockData{
-		Hash:      blockHash,
-		LogEvents: events,
-		Txs:       txs,
-		Scrs:      scrs,
+	blockEvents := &data.ArgsSaveBlockData{
+		HeaderHash: []byte(blockHash),
+		TransactionsPool: &data.TransactionsPool{
+			Txs:  txs,
+			Scrs: scrs,
+			Logs: []*data.LogData{
+				{
+					LogHandler: &transaction.Log{
+						Events: []*transaction.Event{
+							{
+								Address: addr,
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	numEvents := 5
