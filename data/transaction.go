@@ -59,12 +59,14 @@ type FinalizedBlock struct {
 }
 
 // BlockTxs holds the block transactions
+// TODO: set transaction with order here also
 type BlockTxs struct {
 	Hash string                             `json:"hash"`
 	Txs  map[string]transaction.Transaction `json:"txs"`
 }
 
 // BlockScrs holds the block smart contract results
+// TODO: set scr with order here also
 type BlockScrs struct {
 	Hash string                                             `json:"hash"`
 	Scrs map[string]smartContractResult.SmartContractResult `json:"scrs"`
@@ -100,10 +102,34 @@ type LogData struct {
 
 // TransactionsPool holds all types of transaction
 type TransactionsPool struct {
-	Txs      map[string]transaction.Transaction
-	Scrs     map[string]smartContractResult.SmartContractResult
-	Rewards  map[string]rewardTx.RewardTx
-	Invalid  map[string]transaction.Transaction
-	Receipts map[string]receipt.Receipt
+	Txs      map[string]TransactionWithOrder
+	Scrs     map[string]SmartContractResultWithOrder
+	Rewards  map[string]RewardTxWithOrder
+	Invalid  map[string]TransactionWithOrder
+	Receipts map[string]ReceiptWithOrder
 	Logs     []*LogData
+}
+
+// TransactionWithOrder defines a wrapper over transaction
+type TransactionWithOrder struct {
+	transaction.Transaction
+	ExecutionOrder int
+}
+
+// SmartContractResultWithOrder defines a wrapper over scr
+type SmartContractResultWithOrder struct {
+	smartContractResult.SmartContractResult
+	ExecutionOrder int
+}
+
+// RewardTxWithOrder defines a wrapper over rewardTx
+type RewardTxWithOrder struct {
+	rewardTx.RewardTx
+	ExecutionOrder int
+}
+
+// ReceiptWithOrder defines a wrapper over receipt
+type ReceiptWithOrder struct {
+	receipt.Receipt
+	ExecutionOrder int
 }

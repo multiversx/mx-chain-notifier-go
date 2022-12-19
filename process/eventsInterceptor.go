@@ -5,6 +5,8 @@ import (
 
 	"github.com/ElrondNetwork/elrond-go-core/core"
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/data"
 )
 
@@ -39,10 +41,20 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
+	txs := make(map[string]transaction.Transaction)
+	for hash, tx := range eventsData.TransactionsPool.Txs {
+		txs[hash] = tx.Transaction
+	}
+
+	scrs := make(map[string]smartContractResult.SmartContractResult)
+	for hash, scr := range eventsData.TransactionsPool.Scrs {
+		scrs[hash] = scr.SmartContractResult
+	}
+
 	return &data.SaveBlockData{
 		Hash:      hex.EncodeToString(eventsData.HeaderHash),
-		Txs:       eventsData.TransactionsPool.Txs,
-		Scrs:      eventsData.TransactionsPool.Scrs,
+		Txs:       txs,
+		Scrs:      scrs,
 		LogEvents: events,
 	}, nil
 }

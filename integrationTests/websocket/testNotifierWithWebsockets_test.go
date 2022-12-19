@@ -203,9 +203,11 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	txs := map[string]transaction.Transaction{
-		"txhash1": {
-			Nonce: 1,
+	txs := map[string]data.TransactionWithOrder{
+		"hash1": {
+			Transaction: transaction.Transaction{
+				Nonce: 1,
+			},
 		},
 	}
 	blockEvents := &data.ArgsSaveBlockData{
@@ -214,9 +216,15 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 			Txs: txs,
 		},
 	}
+
+	expTxs := map[string]transaction.Transaction{
+		"hash1": {
+			Nonce: 1,
+		},
+	}
 	expBlockTxs := &data.BlockTxs{
 		Hash: hex.EncodeToString(blockHash),
-		Txs:  txs,
+		Txs:  expTxs,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -262,9 +270,11 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	scrs := map[string]smartContractResult.SmartContractResult{
+	scrs := map[string]data.SmartContractResultWithOrder{
 		"hash2": {
-			Nonce: 2,
+			SmartContractResult: smartContractResult.SmartContractResult{
+				Nonce: 2,
+			},
 		},
 	}
 	blockEvents := &data.ArgsSaveBlockData{
@@ -273,9 +283,15 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 			Scrs: scrs,
 		},
 	}
+
+	expScrs := map[string]smartContractResult.SmartContractResult{
+		"hash2": {
+			Nonce: 2,
+		},
+	}
 	expBlockScrs := &data.BlockScrs{
 		Hash: hex.EncodeToString(blockHash),
-		Scrs: scrs,
+		Scrs: expScrs,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -349,25 +365,42 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 	}
 
-	txs := map[string]transaction.Transaction{
-		"txhash1": {
-			Nonce: 1,
+	txs := map[string]data.TransactionWithOrder{
+		"hash1": {
+			Transaction: transaction.Transaction{
+				Nonce: 1,
+			},
 		},
 	}
-	scrs := map[string]smartContractResult.SmartContractResult{
-		"txhash2": {
-			Nonce: 2,
+	scrs := map[string]data.SmartContractResultWithOrder{
+		"hash2": {
+			SmartContractResult: smartContractResult.SmartContractResult{
+				Nonce: 2,
+			},
 		},
 	}
 	blockHash := []byte("hash1")
+
+	expTxs := map[string]transaction.Transaction{
+		"hash1": {
+			Nonce: 1,
+		},
+	}
 	blockTxs := &data.BlockTxs{
 		Hash: hex.EncodeToString(blockHash),
-		Txs:  txs,
+		Txs:  expTxs,
+	}
+
+	expScrs := map[string]smartContractResult.SmartContractResult{
+		"hash2": {
+			Nonce: 2,
+		},
 	}
 	blockScrs := &data.BlockScrs{
 		Hash: hex.EncodeToString(blockHash),
-		Scrs: scrs,
+		Scrs: expScrs,
 	}
+
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: []byte(blockHash),
 		TransactionsPool: &data.TransactionsPool{
