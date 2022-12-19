@@ -103,14 +103,18 @@ func TestHandlePushEvents(t *testing.T) {
 		args := createMockFacadeArgs()
 
 		blockHash := "blockHash1"
-		txs := map[string]transaction.Transaction{
+		txs := map[string]data.TransactionWithOrder{
 			"hash1": {
-				Nonce: 1,
+				Transaction: transaction.Transaction{
+					Nonce: 1,
+				},
 			},
 		}
-		scrs := map[string]smartContractResult.SmartContractResult{
+		scrs := map[string]data.SmartContractResultWithOrder{
 			"hash2": {
-				Nonce: 2,
+				SmartContractResult: smartContractResult.SmartContractResult{
+					Nonce: 2,
+				},
 			},
 		}
 		logData := []*data.LogData{
@@ -138,13 +142,24 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
+		expTxs := map[string]transaction.Transaction{
+			"hash1": {
+				Nonce: 1,
+			},
+		}
+		expScrs := map[string]smartContractResult.SmartContractResult{
+			"hash2": {
+				Nonce: 2,
+			},
+		}
+
 		expTxsData := data.BlockTxs{
 			Hash: blockHash,
-			Txs:  txs,
+			Txs:  expTxs,
 		}
 		expScrsData := data.BlockScrs{
 			Hash: blockHash,
-			Scrs: scrs,
+			Scrs: expScrs,
 		}
 		expLogEvents := data.BlockEvents{
 			Hash:   blockHash,
@@ -173,8 +188,8 @@ func TestHandlePushEvents(t *testing.T) {
 			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
 				return &data.SaveBlockData{
 					Hash:      blockHash,
-					Txs:       txs,
-					Scrs:      scrs,
+					Txs:       expTxs,
+					Scrs:      expScrs,
 					LogEvents: logEvents,
 				}, nil
 			},

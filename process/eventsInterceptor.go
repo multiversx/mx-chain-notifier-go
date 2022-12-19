@@ -43,12 +43,12 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	txs := make(map[string]transaction.Transaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
-		txs[hash] = tx.GetInnerTx()
+		txs[hash] = tx.Transaction
 	}
 
 	scrs := make(map[string]smartContractResult.SmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
-		scrs[hash] = scr.GetInnerScr()
+		scrs[hash] = scr.SmartContractResult
 	}
 
 	return &data.SaveBlockData{

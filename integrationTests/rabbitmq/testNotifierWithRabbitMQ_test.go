@@ -51,14 +51,18 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 	blockEvents := &data.ArgsSaveBlockData{
 		HeaderHash: []byte("hash1"),
 		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]transaction.Transaction{
+			Txs: map[string]data.TransactionWithOrder{
 				"txHash1": {
-					Nonce: 1,
+					Transaction: transaction.Transaction{
+						Nonce: 1,
+					},
 				},
 			},
-			Scrs: map[string]smartContractResult.SmartContractResult{
+			Scrs: map[string]data.SmartContractResultWithOrder{
 				"scrHash1": {
-					Nonce: 2,
+					SmartContractResult: smartContractResult.SmartContractResult{
+						Nonce: 2,
+					},
 				},
 			},
 			Logs: []*data.LogData{

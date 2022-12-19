@@ -110,33 +110,25 @@ type TransactionsPool struct {
 	Logs     []*LogData
 }
 
+// TransactionWithOrder defines a wrapper over transaction
 type TransactionWithOrder struct {
 	transaction.Transaction
 	ExecutionOrder int
 }
 
-// GetInnerTx will return the transaction structure without execution order field
-// For backwards compatibility
-func (to *TransactionWithOrder) GetInnerTx() transaction.Transaction {
-	return to.Transaction
-}
-
+// SmartContractResultWithOrder defines a wrapper over scr
 type SmartContractResultWithOrder struct {
 	smartContractResult.SmartContractResult
 	ExecutionOrder int
 }
 
-// GetInnerScr will return the scr structure without execution order field
-// For backwards compatibility
-func (scro *SmartContractResultWithOrder) GetInnerScr() smartContractResult.SmartContractResult {
-	return scro.SmartContractResult
-}
-
+// RewardTxWithOrder defines a wrapper over rewardTx
 type RewardTxWithOrder struct {
 	rewardTx.RewardTx
 	ExecutionOrder int
 }
 
+// ReceiptWithOrder defines a wrapper over receipt
 type ReceiptWithOrder struct {
 	receipt.Receipt
 	ExecutionOrder int
