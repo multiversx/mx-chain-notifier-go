@@ -31,12 +31,18 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 }
 
 // ProcessBlockEvents will process block events data
-func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 	if eventsData == nil {
 		return nil, ErrNilBlockEvents
 	}
 	if eventsData.TransactionsPool == nil {
 		return nil, ErrNilTransactionsPool
+	}
+	if eventsData.Body == nil {
+		return nil, ErrNilBlockBody
+	}
+	if eventsData.Header == nil {
+		return nil, ErrNilBlockHeader
 	}
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
@@ -51,7 +57,7 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		scrs[hash] = scr.SmartContractResult
 	}
 
-	return &data.SaveBlockData{
+	return &data.InterceptorBlockData{
 		Hash:      hex.EncodeToString(eventsData.HeaderHash),
 		Txs:       txs,
 		Scrs:      scrs,

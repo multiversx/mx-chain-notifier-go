@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
@@ -75,6 +76,8 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 				},
 			},
 		},
+		Body:   &block.Body{},
+		Header: &block.HeaderV2{},
 	}
 
 	resp := webServer.PushEventsRequest(blockEvents)

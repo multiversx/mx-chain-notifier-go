@@ -19,3 +19,9 @@ var ErrNilBlockEvents = errors.New("nil block events provided")
 
 // ErrNilTransactionsPool signals that a nil transactions pool has been provided
 var ErrNilTransactionsPool = errors.New("nil transactions pool provided")
+
+// ErrNilBlockBody signals that a nil block body has been provided
+var ErrNilBlockBody = errors.New("nil block body provided")
+
+// ErrNilBlockHeader signals that a nil block header has been provided
+var ErrNilBlockHeader = errors.New("nil block header provided")

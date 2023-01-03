@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
@@ -63,6 +64,8 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				},
 			},
 		},
+		Body:   &block.Body{},
+		Header: &block.HeaderV2{},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -215,6 +218,8 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		TransactionsPool: &data.TransactionsPool{
 			Txs: txs,
 		},
+		Body:   &block.Body{},
+		Header: &block.HeaderV2{},
 	}
 
 	expTxs := map[string]transaction.Transaction{
@@ -282,6 +287,8 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		TransactionsPool: &data.TransactionsPool{
 			Scrs: scrs,
 		},
+		Body:   &block.Body{},
+		Header: &block.HeaderV2{},
 	}
 
 	expScrs := map[string]smartContractResult.SmartContractResult{
@@ -418,6 +425,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				},
 			},
 		},
+		Body:   &block.Body{},
+		Header: &block.HeaderV2{},
 	}
 
 	numEvents := 5
