@@ -76,8 +76,15 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 				},
 			},
 		},
-		Body:   &block.Body{},
-		Header: &block.HeaderV2{},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	resp := webServer.PushEventsRequest(blockEvents)

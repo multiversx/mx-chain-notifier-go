@@ -123,11 +123,20 @@ func TestProcessBlockEvents(t *testing.T) {
 		}
 		addr := []byte("addr1")
 
+		blockBody := &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		}
+		blockHeader := &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		}
 		blockHash := []byte("blockHash")
 		blockEvents := data.ArgsSaveBlockData{
 			HeaderHash: blockHash,
-			Body:       &block.Body{},
-			Header:     &block.HeaderV2{},
+			Body:       blockBody,
+			Header:     blockHeader,
 			TransactionsPool: &data.TransactionsPool{
 				Txs:  txs,
 				Scrs: scrs,
@@ -158,9 +167,11 @@ func TestProcessBlockEvents(t *testing.T) {
 		}
 
 		expEvents := &data.InterceptorBlockData{
-			Hash: hex.EncodeToString(blockHash),
-			Txs:  expTxs,
-			Scrs: expScrs,
+			Hash:   hex.EncodeToString(blockHash),
+			Body:   blockBody,
+			Header: blockHeader,
+			Txs:    expTxs,
+			Scrs:   expScrs,
 			LogEvents: []data.Event{
 				{
 					Address: hex.EncodeToString(addr),
