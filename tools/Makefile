@@ -2,6 +2,10 @@ SHELL := $(shell which bash)
 
 .PHONY: ws-run rabbit-run request-test
 
+obs-run:
+	cd obs && \
+		go run main.go
+
 ws-run:
 	cd wsClient && \
 		go run main.go
