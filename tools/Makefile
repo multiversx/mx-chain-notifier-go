@@ -1,6 +1,6 @@
 SHELL := $(shell which bash)
 
-.PHONY: ws-run rabbit-run request-test
+.PHONY: obs-run ws-run rabbit-run request-test
 
 obs-run:
 	cd obs && \
@@ -19,7 +19,7 @@ rabbit-run:
 # Test Data
 # #########################
 
-test_data_file = ./requests2.json
+test_data_file = ./requests.json
 
 # it can be "push", "revert", "finalized"
 event_type = "push"
