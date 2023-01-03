@@ -64,8 +64,15 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				},
 			},
 		},
-		Body:   &block.Body{},
-		Header: &block.HeaderV2{},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -224,8 +231,15 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		TransactionsPool: &data.TransactionsPool{
 			Txs: txs,
 		},
-		Body:   &block.Body{},
-		Header: &block.HeaderV2{},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	expTxs := map[string]transaction.Transaction{
@@ -295,8 +309,15 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		TransactionsPool: &data.TransactionsPool{
 			Scrs: scrs,
 		},
-		Body:   &block.Body{},
-		Header: &block.HeaderV2{},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	expScrs := map[string]smartContractResult.SmartContractResult{
