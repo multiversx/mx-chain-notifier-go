@@ -45,10 +45,15 @@ func main() {
 		m, err := ws.ReadMessage()
 		if err != nil {
 			fmt.Println(err.Error())
+			continue
 		}
 
 		var reply data.WSEvent
 		err = json.Unmarshal(m, &reply)
+		if err != nil {
+			fmt.Println(err.Error())
+			continue
+		}
 
 		switch reply.Type {
 		case common.PushBlockEvents:
@@ -102,16 +107,15 @@ func NewWSClient() (*wsClient, error) {
 
 // SendSubscribeMessage will send subscribe message
 func (ws *wsClient) SendSubscribeMessage(subscribeEvent *data.SubscribeEvent) error {
+	ws.mutWsConn.Lock()
+	defer ws.mutWsConn.Unlock()
+
 	m, err := json.Marshal(subscribeEvent)
 	if err != nil {
 		return err
 	}
 
-	if err := ws.wsConn.WriteMessage(websocket.BinaryMessage, m); err != nil {
-		return err
-	}
-
-	return nil
+	return ws.wsConn.WriteMessage(websocket.BinaryMessage, m)
 }
 
 // ReadMessage will read the received message
@@ -129,5 +133,8 @@ func (ws *wsClient) ReadMessage() ([]byte, error) {
 
 // Close will close connection
 func (ws *wsClient) Close() {
+	ws.mutWsConn.Lock()
+	defer ws.mutWsConn.Unlock()
+
 	ws.wsConn.Close()
 }
