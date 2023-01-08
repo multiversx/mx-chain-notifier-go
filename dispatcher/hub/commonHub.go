@@ -22,19 +22,20 @@ type ArgsCommonHub struct {
 }
 
 type commonHub struct {
-	rwMut              sync.RWMutex
-	filter             filters.EventFilter
-	subscriptionMapper dispatcher.SubscriptionMapperHandler
-	dispatchers        map[uuid.UUID]dispatcher.EventDispatcher
-	register           chan dispatcher.EventDispatcher
-	unregister         chan dispatcher.EventDispatcher
-	broadcast          chan data.BlockEvents
-	broadcastRevert    chan data.RevertBlock
-	broadcastFinalized chan data.FinalizedBlock
-	broadcastTxs       chan data.BlockTxs
-	broadcastScrs      chan data.BlockScrs
-	closeChan          chan struct{}
-	cancelFunc         func()
+	rwMut                sync.RWMutex
+	filter               filters.EventFilter
+	subscriptionMapper   dispatcher.SubscriptionMapperHandler
+	dispatchers          map[uuid.UUID]dispatcher.EventDispatcher
+	register             chan dispatcher.EventDispatcher
+	unregister           chan dispatcher.EventDispatcher
+	broadcastEvents      chan data.BlockEvents
+	broadcastBlockEvents chan data.BlockEvents
+	broadcastRevert      chan data.RevertBlock
+	broadcastFinalized   chan data.FinalizedBlock
+	broadcastTxs         chan data.BlockTxs
+	broadcastScrs        chan data.BlockScrs
+	closeChan            chan struct{}
+	cancelFunc           func()
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -51,7 +52,7 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:           make(chan dispatcher.EventDispatcher),
 		unregister:         make(chan dispatcher.EventDispatcher),
-		broadcast:          make(chan data.BlockEvents),
+		broadcastEvents:    make(chan data.BlockEvents),
 		broadcastRevert:    make(chan data.RevertBlock),
 		broadcastFinalized: make(chan data.FinalizedBlock),
 		broadcastTxs:       make(chan data.BlockTxs),
@@ -86,7 +87,10 @@ func (ch *commonHub) run(ctx context.Context) {
 			log.Debug("commonHub is stopping...")
 			return
 
-		case events := <-ch.broadcast:
+		case events := <-ch.broadcastEvents:
+			ch.handleBroadcast(events)
+
+		case events := <-ch.broadcastBlockEvents:
 			ch.handleBroadcast(events)
 
 		case revertEvent := <-ch.broadcastRevert:
@@ -119,7 +123,7 @@ func (ch *commonHub) Subscribe(event data.SubscribeEvent) {
 // Upon reading the channel, the hub notifies the registered dispatchers, if any
 func (ch *commonHub) Broadcast(events data.BlockEvents) {
 	select {
-	case ch.broadcast <- events:
+	case ch.broadcastEvents <- events:
 	case <-ch.closeChan:
 	}
 }
@@ -201,6 +205,42 @@ func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 	for id, eventValues := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.PushEvents(eventValues)
+		}
+	}
+}
+
+func (ch *commonHub) handleBroadcastBlockEvents(blockEvents data.BlockEvents) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockEvents)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.PushBlockEventsFull {
+			continue
+		}
+
+		events := make([]data.Event, 0)
+		for _, event := range blockEvents.Events {
+			if ch.filter.MatchEvent(subscription, event) {
+				events = append(events, event)
+			}
+		}
+
+		blockEvents := data.BlockEvents{
+			Hash:      blockEvents.Hash,
+			ShardID:   blockEvents.ShardID,
+			TimeStamp: blockEvents.TimeStamp,
+			Events:    events,
+		}
+
+		dispatchersMap[subscription.DispatcherID] = blockEvents
+	}
+
+	ch.rwMut.RLock()
+	defer ch.rwMut.RUnlock()
+	for id, blockEvents := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.BlockEvents(blockEvents)
 		}
 	}
 }
