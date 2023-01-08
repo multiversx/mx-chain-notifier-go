@@ -191,6 +191,45 @@ func TestCommonHubRun(t *testing.T) {
 	require.Nil(t, err)
 }
 
+func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	wg := sync.WaitGroup{}
+	numCalls := uint32(0)
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		BlockEventsCalled: func(event data.BlockEvents) {
+			atomic.AddUint32(&numCalls, 1)
+			wg.Done()
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.PushBlockEventsFull,
+			},
+		},
+	})
+
+	hub.Run()
+	defer hub.Close()
+	wg.Add(1)
+
+	blockEvents := data.BlockEvents{
+		Hash: "hash1",
+	}
+
+	hub.Broadcast(blockEvents)
+
+	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
 func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 	t.Parallel()
 

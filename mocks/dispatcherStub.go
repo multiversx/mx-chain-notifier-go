@@ -9,6 +9,7 @@ import (
 type DispatcherStub struct {
 	GetIDCalled          func() uuid.UUID
 	PushEventsCalled     func(events []data.Event)
+	BlockEventsCalled    func(event data.BlockEvents)
 	RevertEventCalled    func(event data.RevertBlock)
 	FinalizedEventCalled func(event data.FinalizedBlock)
 	TxsEventCalled       func(event data.BlockTxs)
@@ -28,6 +29,13 @@ func (d *DispatcherStub) GetID() uuid.UUID {
 func (d *DispatcherStub) PushEvents(events []data.Event) {
 	if d.PushEventsCalled != nil {
 		d.PushEventsCalled(events)
+	}
+}
+
+// BlockEvents -
+func (d *DispatcherStub) BlockEvents(events data.BlockEvents) {
+	if d.BlockEventsCalled != nil {
+		d.BlockEventsCalled(events)
 	}
 }
 
