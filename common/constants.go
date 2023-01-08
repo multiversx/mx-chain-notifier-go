@@ -20,11 +20,11 @@ const (
 )
 
 const (
-	// PushBlockEvents defines the subscription event type for pushing block events
-	PushBlockEvents string = "all_events"
+	// PushLogsAndEvents defines the subscription event type for pushing block events
+	PushLogsAndEvents string = "all_events"
 
-	// PushBlockEventsFull defines the subscription event type for block info with logs and events
-	PushBlockEventsFull string = "block_events"
+	// PushBlockEvents defines the subscription event type for block info with logs and events
+	PushBlockEvents string = "block_events"
 
 	// RevertBlockEvents defines the subscription event type for revert block
 	RevertBlockEvents string = "revert_events"

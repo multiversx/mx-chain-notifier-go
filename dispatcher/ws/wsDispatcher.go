@@ -75,7 +75,7 @@ func (wd *websocketDispatcher) BlockEvents(events data.BlockEvents) {
 	}
 
 	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEventsFull,
+		Type: common.PushBlockEvents,
 		Data: eventBytes,
 	}
 	wsEventBytes, err := json.Marshal(wsEvent)
@@ -96,7 +96,7 @@ func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	}
 
 	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEvents,
+		Type: common.PushLogsAndEvents,
 		Data: eventBytes,
 	}
 	wsEventBytes, err := json.Marshal(wsEvent)

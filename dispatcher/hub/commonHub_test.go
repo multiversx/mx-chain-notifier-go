@@ -210,7 +210,7 @@ func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
 	hub.Subscribe(data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEventsFull,
+				EventType: common.PushBlockEvents,
 			},
 		},
 	})

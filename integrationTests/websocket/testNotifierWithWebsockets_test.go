@@ -34,7 +34,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.PushLogsAndEvents,
 			},
 		},
 	}
@@ -113,7 +113,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEventsFull,
+				EventType: common.PushBlockEvents,
 			},
 		},
 	}
@@ -455,10 +455,10 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.PushLogsAndEvents,
 			},
 			{
-				EventType: common.PushBlockEventsFull,
+				EventType: common.PushBlockEvents,
 			},
 			{
 				EventType: common.RevertBlockEvents,
@@ -578,7 +578,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			require.Nil(t, err)
 
 			switch reply.Type {
-			case common.PushBlockEvents:
+			case common.PushLogsAndEvents:
 				var event []data.Event
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, events, event)
@@ -588,7 +588,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, revertBlock, event)
 				wg.Done()
-			case common.PushBlockEventsFull:
+			case common.PushBlockEvents:
 				var event data.BlockEvents
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, expBlockEvents, event)

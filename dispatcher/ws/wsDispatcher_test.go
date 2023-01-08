@@ -155,7 +155,7 @@ func TestPushEvents(t *testing.T) {
 	wd.PushEvents(events)
 
 	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEvents,
+		Type: common.PushLogsAndEvents,
 		Data: eventBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)
@@ -190,7 +190,7 @@ func TestBlockEvents(t *testing.T) {
 	wd.BlockEvents(blockData)
 
 	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEventsFull,
+		Type: common.PushBlockEvents,
 		Data: blockDataBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)

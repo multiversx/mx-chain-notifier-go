@@ -54,7 +54,7 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 		sm.appendSubscription(data.Subscription{
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   MatchAll,
-			EventType:    common.PushBlockEvents,
+			EventType:    common.PushLogsAndEvents,
 		})
 		log.Info("subscribed dispatcher",
 			"dispatcherID", event.DispatcherID,
@@ -143,11 +143,11 @@ func getEventType(subEntry data.SubscriptionEntry) string {
 		subEntry.EventType == common.RevertBlockEvents ||
 		subEntry.EventType == common.BlockTxs ||
 		subEntry.EventType == common.BlockScrs ||
-		subEntry.EventType == common.PushBlockEventsFull {
+		subEntry.EventType == common.PushBlockEvents {
 		return subEntry.EventType
 	}
 
-	return common.PushBlockEvents
+	return common.PushLogsAndEvents
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

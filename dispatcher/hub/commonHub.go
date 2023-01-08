@@ -180,10 +180,10 @@ func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 	subscriptions := ch.subscriptionMapper.Subscriptions()
 
 	for _, subscription := range subscriptions {
-		if subscription.EventType == common.PushBlockEvents {
+		if subscription.EventType == common.PushLogsAndEvents {
 			ch.handlePushBlockEvents(blockEvents, subscription)
 		}
-		if subscription.EventType == common.PushBlockEventsFull {
+		if subscription.EventType == common.PushBlockEvents {
 			ch.handlePushBlockEventsFull(blockEvents, subscription)
 		}
 	}
