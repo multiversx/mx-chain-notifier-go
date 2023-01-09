@@ -1,6 +1,6 @@
 FROM golang:1.17.6 as builder
 
-MAINTAINER ElrondNetwork
+MAINTAINER MultiversX
 
 WORKDIR /elrond
 COPY . .
