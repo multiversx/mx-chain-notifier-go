@@ -1,7 +1,7 @@
 package hub
 
 import (
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/google/uuid"
 )
 

@@ -3,8 +3,8 @@ package redis
 import (
 	"context"
 
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/notifier-go/config"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/go-redis/redis/v8"
 )
 

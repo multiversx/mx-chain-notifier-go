@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/ElrondNetwork/notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

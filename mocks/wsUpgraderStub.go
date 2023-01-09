@@ -3,7 +3,7 @@ package mocks
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 )
 
 // WSUpgraderStub implements dispatcher.WSUpgrader interface
