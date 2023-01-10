@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/ElrondNetwork/notifier-go/filters"
-	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/filters"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

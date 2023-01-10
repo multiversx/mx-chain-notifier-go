@@ -3,12 +3,12 @@ package gin_test
 import (
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
-	"github.com/ElrondNetwork/notifier-go/api/gin"
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
+	"github.com/multiversx/mx-chain-notifier-go/api/gin"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/require"
 )
 

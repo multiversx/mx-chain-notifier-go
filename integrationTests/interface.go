@@ -3,7 +3,7 @@ package integrationTests
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // FacadeHandler defines facade behaviour

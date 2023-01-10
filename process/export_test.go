@@ -1,6 +1,6 @@
 package process
 
-import "github.com/ElrondNetwork/notifier-go/data"
+import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // TryCheckProcessedWithRetry exports internal method for testing
 func (eh *eventsHandler) TryCheckProcessedWithRetry(blockHash string) bool {

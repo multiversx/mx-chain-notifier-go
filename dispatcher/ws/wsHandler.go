@@ -3,8 +3,8 @@ package ws
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 )
 
 // ArgsWebSocketProcessor defines the argument needed to create a websocketHandler

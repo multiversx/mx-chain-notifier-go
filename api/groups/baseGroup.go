@@ -1,8 +1,8 @@
 package groups
 
 import (
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/notifier-go/api/shared"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/gin-gonic/gin"
 )
 

@@ -1,8 +1,8 @@
 package facade
 
 import (
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 )
 
 // EventsHandler defines the behavior of an events handler component.

@@ -1,10 +1,10 @@
 package factory
 
 import (
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/disabled"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/disabled"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher/ws"
 )
 
 const (
