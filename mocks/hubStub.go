@@ -7,16 +7,17 @@ import (
 
 // HubStub implements Hub interface
 type HubStub struct {
-	RunCalled                func()
-	BroadcastCalled          func(events data.BlockEvents)
-	BroadcastRevertCalled    func(event data.RevertBlock)
-	BroadcastFinalizedCalled func(event data.FinalizedBlock)
-	BroadcastTxsCalled       func(event data.BlockTxs)
-	BroadcastScrsCalled      func(event data.BlockScrs)
-	RegisterEventCalled      func(event dispatcher.EventDispatcher)
-	UnregisterEventCalled    func(event dispatcher.EventDispatcher)
-	SubscribeCalled          func(event data.SubscribeEvent)
-	CloseCalled              func() error
+	RunCalled                   func()
+	BroadcastCalled             func(events data.BlockEvents)
+	BroadcastRevertCalled       func(event data.RevertBlock)
+	BroadcastFinalizedCalled    func(event data.FinalizedBlock)
+	BroadcastTxsCalled          func(event data.BlockTxs)
+	BroadcastScrsCalled         func(event data.BlockScrs)
+	BroadcastTxsWithOrderCalled func(event data.BlockTxsWithOrder)
+	RegisterEventCalled         func(event dispatcher.EventDispatcher)
+	UnregisterEventCalled       func(event dispatcher.EventDispatcher)
+	SubscribeCalled             func(event data.SubscribeEvent)
+	CloseCalled                 func() error
 }
 
 // Run -
@@ -58,6 +59,13 @@ func (h *HubStub) BroadcastTxs(event data.BlockTxs) {
 func (h *HubStub) BroadcastScrs(event data.BlockScrs) {
 	if h.BroadcastScrsCalled != nil {
 		h.BroadcastScrsCalled(event)
+	}
+}
+
+// BroadcastTxsWithOrder -
+func (h *HubStub) BroadcastTxsWithOrder(event data.BlockTxsWithOrder) {
+	if h.BroadcastTxsWithOrderCalled != nil {
+		h.BroadcastTxsWithOrderCalled(event)
 	}
 }
 

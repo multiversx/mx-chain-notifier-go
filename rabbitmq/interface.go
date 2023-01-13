@@ -26,6 +26,7 @@ type PublisherService interface {
 	BroadcastFinalized(event data.FinalizedBlock)
 	BroadcastTxs(event data.BlockTxs)
 	BroadcastScrs(event data.BlockScrs)
+	BroadcastTxsWithOrder(event data.BlockTxsWithOrder)
 	Close() error
 	IsInterfaceNil() bool
 }

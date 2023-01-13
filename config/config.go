@@ -30,12 +30,13 @@ type RedisConfig struct {
 
 // RabbitMQConfig maps the rabbitMQ configuration
 type RabbitMQConfig struct {
-	Url                     string
-	EventsExchange          RabbitMQExchangeConfig
-	RevertEventsExchange    RabbitMQExchangeConfig
-	FinalizedEventsExchange RabbitMQExchangeConfig
-	BlockTxsExchange        RabbitMQExchangeConfig
-	BlockScrsExchange       RabbitMQExchangeConfig
+	Url                       string
+	EventsExchange            RabbitMQExchangeConfig
+	RevertEventsExchange      RabbitMQExchangeConfig
+	FinalizedEventsExchange   RabbitMQExchangeConfig
+	BlockTxsExchange          RabbitMQExchangeConfig
+	BlockScrsExchange         RabbitMQExchangeConfig
+	BlockTxsWithOrderExchange RabbitMQExchangeConfig
 }
 
 // RabbitMQExchangeConfig holds the configuration for a rabbitMQ exchange

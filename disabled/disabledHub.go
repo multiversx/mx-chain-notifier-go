@@ -33,6 +33,10 @@ func (h *Hub) BroadcastTxs(_ data.BlockTxs) {
 func (h *Hub) BroadcastScrs(_ data.BlockScrs) {
 }
 
+// BroadcastTxsWithOrder does nothing
+func (h *Hub) BroadcastTxsWithOrder(_ data.BlockTxsWithOrder) {
+}
+
 // RegisterEvent does nothing
 func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }

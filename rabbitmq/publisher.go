@@ -27,11 +27,12 @@ type rabbitMqPublisher struct {
 	client RabbitMqClient
 	cfg    config.RabbitMQConfig
 
-	broadcast          chan data.BlockEvents
-	broadcastRevert    chan data.RevertBlock
-	broadcastFinalized chan data.FinalizedBlock
-	broadcastTxs       chan data.BlockTxs
-	broadcastScrs      chan data.BlockScrs
+	broadcast             chan data.BlockEvents
+	broadcastRevert       chan data.RevertBlock
+	broadcastFinalized    chan data.FinalizedBlock
+	broadcastTxs          chan data.BlockTxs
+	broadcastTxsWithOrder chan data.BlockTxsWithOrder
+	broadcastScrs         chan data.BlockScrs
 
 	cancelFunc func()
 	closeChan  chan struct{}
@@ -124,6 +125,10 @@ func (rp *rabbitMqPublisher) createExchanges() error {
 	if err != nil {
 		return err
 	}
+	err = rp.createExchange(rp.cfg.BlockTxsWithOrderExchange)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -163,6 +168,8 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 			rp.publishTxsToExchange(blockTxs)
 		case blockScrs := <-rp.broadcastScrs:
 			rp.publishScrsToExchange(blockScrs)
+		case blockTxs := <-rp.broadcastTxsWithOrder:
+			rp.publishTxsWithOrderToExchange(blockTxs)
 		case err := <-rp.client.ConnErrChan():
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -213,6 +220,14 @@ func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
 func (rp *rabbitMqPublisher) BroadcastScrs(events data.BlockScrs) {
 	select {
 	case rp.broadcastScrs <- events:
+	case <-rp.closeChan:
+	}
+}
+
+// BroadcastTxsWithOrder will handle the txs event pushed by producers and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastTxsWithOrder(events data.BlockTxsWithOrder) {
+	select {
+	case rp.broadcastTxsWithOrder <- events:
 	case <-rp.closeChan:
 	}
 }
@@ -279,6 +294,19 @@ func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
 	err = rp.publishFanout(rp.cfg.BlockScrsExchange.Name, scrsBlockBytes)
 	if err != nil {
 		log.Error("failed to publish block scrs event to rabbitMQ", "err", err.Error())
+	}
+}
+
+func (rp *rabbitMqPublisher) publishTxsWithOrderToExchange(blockTxs data.BlockTxsWithOrder) {
+	txsBlockBytes, err := json.Marshal(blockTxs)
+	if err != nil {
+		log.Error("could not marshal block txs event", "err", err.Error())
+		return
+	}
+
+	err = rp.publishFanout(rp.cfg.BlockTxsWithOrderExchange.Name, txsBlockBytes)
+	if err != nil {
+		log.Error("failed to publish block txs with order event to rabbitMQ", "err", err.Error())
 	}
 }
 

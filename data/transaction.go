@@ -67,6 +67,14 @@ type BlockTxs struct {
 	Txs  map[string]transaction.Transaction `json:"txs"`
 }
 
+// BlockTxsWithOrder holds the block transactions with order
+type BlockTxsWithOrder struct {
+	Hash      string                          `json:"hash"`
+	ShardID   uint32                          `json:"shardId"`
+	TimeStamp uint64                          `json:"timestamp"`
+	Txs       map[string]TransactionWithOrder `json:"txs"`
+}
+
 // BlockScrs holds the block smart contract results
 // TODO: set scr with order here also
 type BlockScrs struct {
@@ -84,12 +92,13 @@ type SaveBlockData struct {
 
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
-	Hash      string
-	Body      *block.Body
-	Header    *block.HeaderV2
-	Txs       map[string]transaction.Transaction
-	Scrs      map[string]smartContractResult.SmartContractResult
-	LogEvents []Event
+	Hash         string
+	Body         *block.Body
+	Header       *block.HeaderV2
+	Txs          map[string]transaction.Transaction
+	TxsWithOrder map[string]TransactionWithOrder
+	Scrs         map[string]smartContractResult.SmartContractResult
+	LogEvents    []Event
 }
 
 // ArgsSaveBlockData will contain all information that are needed to save block data

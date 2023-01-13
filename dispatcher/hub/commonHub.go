@@ -160,6 +160,11 @@ func (ch *commonHub) BroadcastScrs(event data.BlockScrs) {
 	}
 }
 
+// BlockTxsWithOrder not implemented yet
+func (ch *commonHub) BroadcastTxsWithOrder(event data.BlockTxsWithOrder) {
+	log.Error("BroadcastTxsWithOrder: not implemented")
+}
+
 // RegisterEvent will send event to a receive-only channel used to register dispatchers
 func (ch *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
 	select {

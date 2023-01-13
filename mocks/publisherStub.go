@@ -4,12 +4,13 @@ import "github.com/ElrondNetwork/notifier-go/data"
 
 // PublisherStub implements PublisherService interface
 type PublisherStub struct {
-	RunCalled                func()
-	BroadcastCalled          func(events data.BlockEvents)
-	BroadcastRevertCalled    func(event data.RevertBlock)
-	BroadcastFinalizedCalled func(event data.FinalizedBlock)
-	BroadcastTxsCalled       func(event data.BlockTxs)
-	BroadcastScrsCalled      func(event data.BlockScrs)
+	RunCalled                   func()
+	BroadcastCalled             func(events data.BlockEvents)
+	BroadcastRevertCalled       func(event data.RevertBlock)
+	BroadcastFinalizedCalled    func(event data.FinalizedBlock)
+	BroadcastTxsCalled          func(event data.BlockTxs)
+	BroadcastScrsCalled         func(event data.BlockScrs)
+	BroadcastTxsWithOrderCalled func(event data.BlockTxsWithOrder)
 }
 
 // Run -
@@ -51,6 +52,13 @@ func (ps *PublisherStub) BroadcastTxs(event data.BlockTxs) {
 func (ps *PublisherStub) BroadcastScrs(event data.BlockScrs) {
 	if ps.BroadcastScrsCalled != nil {
 		ps.BroadcastScrsCalled(event)
+	}
+}
+
+// BroadcastTxsWithOrder -
+func (ps *PublisherStub) BroadcastTxsWithOrder(event data.BlockTxsWithOrder) {
+	if ps.BroadcastTxsWithOrderCalled != nil {
+		ps.BroadcastTxsWithOrderCalled(event)
 	}
 }
 

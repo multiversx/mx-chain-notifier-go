@@ -31,6 +31,10 @@ func (dp *Publisher) BroadcastTxs(_ data.BlockTxs) {
 func (dp *Publisher) BroadcastScrs(_ data.BlockScrs) {
 }
 
+// BroadcastTxsWithOrder does nothing
+func (dp *Publisher) BroadcastTxsWithOrder(_ data.BlockTxsWithOrder) {
+}
+
 // Close returns nil
 func (dp *Publisher) Close() error {
 	return nil

@@ -58,12 +58,13 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	}
 
 	return &data.InterceptorBlockData{
-		Hash:      hex.EncodeToString(eventsData.HeaderHash),
-		Body:      eventsData.Body,
-		Header:    eventsData.Header,
-		Txs:       txs,
-		Scrs:      scrs,
-		LogEvents: events,
+		Hash:         hex.EncodeToString(eventsData.HeaderHash),
+		Body:         eventsData.Body,
+		Header:       eventsData.Header,
+		Txs:          txs,
+		TxsWithOrder: eventsData.TransactionsPool.Txs,
+		Scrs:         scrs,
+		LogEvents:    events,
 	}, nil
 }
 
