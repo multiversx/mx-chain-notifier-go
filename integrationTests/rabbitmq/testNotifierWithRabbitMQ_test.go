@@ -44,8 +44,8 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	assert.Equal(t, 5, responses[http.StatusOK])
 	mutResponses.Unlock()
 
-	assert.Equal(t, 5, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 5, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
@@ -57,6 +57,7 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 					Transaction: transaction.Transaction{
 						Nonce: 1,
 					},
+					ExecutionOrder: 1,
 				},
 			},
 			Scrs: map[string]data.SmartContractResultWithOrder{

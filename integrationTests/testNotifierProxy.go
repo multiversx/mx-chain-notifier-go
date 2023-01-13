@@ -112,6 +112,9 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 		Config: cfg.RabbitMQ,
 	}
 	publisher, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
+	if err != nil {
+		return nil, err
+	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
 		Config:    cfg.ConnectorApi,
@@ -188,6 +191,10 @@ func GetDefaultConfigs() *config.GeneralConfig {
 			},
 			BlockScrsExchange: config.RabbitMQExchangeConfig{
 				Name: "blockscrs",
+				Type: "fanout",
+			},
+			BlockTxsWithOrderExchange: config.RabbitMQExchangeConfig{
+				Name: "blocktxswithorder",
 				Type: "fanout",
 			},
 		},

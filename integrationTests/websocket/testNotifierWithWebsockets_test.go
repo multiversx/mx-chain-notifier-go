@@ -522,7 +522,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		assert.Fail(t, "timeout when handling websocket events")
 	}
 
-	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, numEvents+1, len(notifier.RedisClient.GetEntries()))
 }
 
 // waitTimeout returns true if work group waiting timed out

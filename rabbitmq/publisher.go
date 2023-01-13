@@ -46,14 +46,15 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 	}
 
 	rp := &rabbitMqPublisher{
-		broadcast:          make(chan data.BlockEvents),
-		broadcastRevert:    make(chan data.RevertBlock),
-		broadcastFinalized: make(chan data.FinalizedBlock),
-		broadcastTxs:       make(chan data.BlockTxs),
-		broadcastScrs:      make(chan data.BlockScrs),
-		cfg:                args.Config,
-		client:             args.Client,
-		closeChan:          make(chan struct{}),
+		broadcast:             make(chan data.BlockEvents),
+		broadcastRevert:       make(chan data.RevertBlock),
+		broadcastFinalized:    make(chan data.FinalizedBlock),
+		broadcastTxs:          make(chan data.BlockTxs),
+		broadcastScrs:         make(chan data.BlockScrs),
+		broadcastTxsWithOrder: make(chan data.BlockTxsWithOrder),
+		cfg:                   args.Config,
+		client:                args.Client,
+		closeChan:             make(chan struct{}),
 	}
 
 	err = rp.createExchanges()
