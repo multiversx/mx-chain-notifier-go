@@ -5,6 +5,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/ElrondNetwork/elrond-go-core/core/check"
 	"github.com/ElrondNetwork/notifier-go/config"
@@ -38,6 +39,10 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 			},
 			BlockScrsExchange: config.RabbitMQExchangeConfig{
 				Name: "blockscrs",
+				Type: "fanout",
+			},
+			BlockTxsWithOrderExchange: config.RabbitMQExchangeConfig{
+				Name: "blocktxswithorder",
 				Type: "fanout",
 			},
 		},
@@ -312,6 +317,34 @@ func TestBroadcastScrs(t *testing.T) {
 	rabbitmq.BroadcastScrs(data.BlockScrs{})
 
 	wg.Wait()
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestBroadcastTxsWithOrder(t *testing.T) {
+	t.Parallel()
+
+	numCalls := uint32(0)
+
+	client := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			atomic.AddUint32(&numCalls, 1)
+			return nil
+		},
+	}
+
+	args := createMockArgsRabbitMqPublisher()
+	args.Client = client
+
+	rabbitmq, err := rabbitmq.NewRabbitMqPublisher(args)
+	require.Nil(t, err)
+
+	rabbitmq.Run()
+	defer rabbitmq.Close()
+
+	rabbitmq.BroadcastTxsWithOrder(data.BlockTxsWithOrder{})
+
+	time.Sleep(time.Millisecond * 200)
 
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }

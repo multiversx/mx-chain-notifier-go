@@ -100,6 +100,12 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 	if args.Config.BlockScrsExchange.Type == "" {
 		return ErrInvalidRabbitMqExchangeType
 	}
+	if args.Config.BlockTxsWithOrderExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.BlockTxsWithOrderExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
 
 	return nil
 }
