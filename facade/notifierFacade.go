@@ -65,8 +65,10 @@ func (nf *notifierFacade) HandlePushEventsV2(allEvents data.ArgsSaveBlockData) e
 	}
 
 	pushEvents := data.BlockEvents{
-		Hash:   eventsData.Hash,
-		Events: eventsData.LogEvents,
+		Hash:      eventsData.Hash,
+		ShardID:   eventsData.Header.GetShardID(),
+		TimeStamp: eventsData.Header.GetTimeStamp(),
+		Events:    eventsData.LogEvents,
 	}
 	err = nf.eventsHandler.HandlePushEvents(pushEvents)
 	if err != nil {

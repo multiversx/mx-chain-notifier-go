@@ -82,7 +82,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
-			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return nil, expectedErr
 			},
 		}
@@ -185,8 +185,8 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
-			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
-				return &data.SaveBlockData{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				return &data.InterceptorBlockData{
 					Hash:      blockHash,
 					Txs:       expTxs,
 					Scrs:      expScrs,

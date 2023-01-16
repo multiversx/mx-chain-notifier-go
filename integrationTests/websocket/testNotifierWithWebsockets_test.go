@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
@@ -63,6 +64,15 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				},
 			},
 		},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -81,7 +91,9 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	resp := webServer.PushEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
-	wg.Wait()
+	if waitTimeout(t, wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 }
 
 func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
@@ -129,7 +141,9 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	resp := webServer.RevertEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
-	wg.Wait()
+	if waitTimeout(t, wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 }
 
 func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
@@ -175,7 +189,9 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 	webServer.FinalizedEventsRequest(blockEvents)
 
-	wg.Wait()
+	if waitTimeout(t, wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 }
 
 func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
@@ -215,6 +231,15 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		TransactionsPool: &data.TransactionsPool{
 			Txs: txs,
 		},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	expTxs := map[string]transaction.Transaction{
@@ -242,7 +267,9 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 
 	webServer.PushEventsRequest(blockEvents)
 
-	wg.Wait()
+	if waitTimeout(t, wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 }
 
 func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
@@ -282,6 +309,15 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		TransactionsPool: &data.TransactionsPool{
 			Scrs: scrs,
 		},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	expScrs := map[string]smartContractResult.SmartContractResult{
@@ -309,7 +345,9 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 
 	webServer.PushEventsRequest(blockEvents)
 
-	wg.Wait()
+	if waitTimeout(t, wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 }
 
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
@@ -418,6 +456,15 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				},
 			},
 		},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		},
 	}
 
 	numEvents := 5
@@ -471,7 +518,29 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	go webServer.FinalizedEventsRequest(finalizedBlock)
 	go webServer.RevertEventsRequest(revertBlock)
 
-	wg.Wait()
+	if waitTimeout(t, wg, time.Second*4) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 
 	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
+}
+
+// waitTimeout returns true if work group waiting timed out
+func waitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) bool {
+	ch := make(chan struct{})
+
+	go func() {
+		defer close(ch)
+		wg.Wait()
+	}()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case <-ch:
+		return false
+	case <-timer.C:
+		return true
+	}
 }

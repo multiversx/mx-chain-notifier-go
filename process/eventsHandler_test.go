@@ -66,21 +66,24 @@ func TestHandlePushEvents(t *testing.T) {
 	t.Run("broadcast event was called", func(t *testing.T) {
 		t.Parallel()
 
+		events := data.BlockEvents{
+			Hash:      "hash1",
+			ShardID:   1,
+			TimeStamp: 1234,
+			Events:    []data.Event{},
+		}
+
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
 		args.Publisher = &mocks.PublisherStub{
-			BroadcastCalled: func(events data.BlockEvents) {
+			BroadcastCalled: func(evs data.BlockEvents) {
+				require.Equal(t, events, evs)
 				wasCalled = true
 			},
 		}
 
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
-
-		events := data.BlockEvents{
-			Hash:   "hash1",
-			Events: []data.Event{},
-		}
 
 		eventsHandler.HandlePushEvents(events)
 		require.True(t, wasCalled)
@@ -89,11 +92,19 @@ func TestHandlePushEvents(t *testing.T) {
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
 		t.Parallel()
 
+		blockEvents := data.BlockEvents{
+			Hash:      "hash1",
+			ShardID:   1,
+			TimeStamp: 1234,
+			Events:    []data.Event{},
+		}
+
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
 		args.Config.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastCalled: func(events data.BlockEvents) {
+				require.Equal(t, blockEvents, events)
 				wasCalled = true
 			},
 		}
@@ -106,12 +117,7 @@ func TestHandlePushEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		events := data.BlockEvents{
-			Hash:   "hash1",
-			Events: []data.Event{},
-		}
-
-		eventsHandler.HandlePushEvents(events)
+		eventsHandler.HandlePushEvents(blockEvents)
 		require.False(t, wasCalled)
 	})
 }
@@ -145,11 +151,17 @@ func TestHandleRevertEvents(t *testing.T) {
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
 		t.Parallel()
 
+		revertEvents := data.RevertBlock{
+			Hash:  "hash1",
+			Nonce: 1,
+		}
+
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
 		args.Config.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastRevertCalled: func(events data.RevertBlock) {
+				require.Equal(t, revertEvents, events)
 				wasCalled = true
 			},
 		}
@@ -162,12 +174,7 @@ func TestHandleRevertEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		events := data.RevertBlock{
-			Hash:  "hash1",
-			Nonce: 1,
-		}
-
-		eventsHandler.HandleRevertEvents(events)
+		eventsHandler.HandleRevertEvents(revertEvents)
 		require.False(t, wasCalled)
 	})
 }
@@ -178,10 +185,15 @@ func TestHandleFinalizedEvents(t *testing.T) {
 	t.Run("broadcast finalized event was called", func(t *testing.T) {
 		t.Parallel()
 
+		finalizedEvents := data.FinalizedBlock{
+			Hash: "hash1",
+		}
+
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastFinalizedCalled: func(events data.FinalizedBlock) {
+				require.Equal(t, finalizedEvents, events)
 				wasCalled = true
 			},
 		}
@@ -189,11 +201,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		events := data.FinalizedBlock{
-			Hash: "hash1",
-		}
-
-		eventsHandler.HandleFinalizedEvents(events)
+		eventsHandler.HandleFinalizedEvents(finalizedEvents)
 		require.True(t, wasCalled)
 	})
 
@@ -232,18 +240,7 @@ func TestHandleTxsEvents(t *testing.T) {
 	t.Run("broadcast txs event was called", func(t *testing.T) {
 		t.Parallel()
 
-		wasCalled := false
-		args := createMockEventsHandlerArgs()
-		args.Publisher = &mocks.PublisherStub{
-			BroadcastTxsCalled: func(event data.BlockTxs) {
-				wasCalled = true
-			},
-		}
-
-		eventsHandler, err := process.NewEventsHandler(args)
-		require.Nil(t, err)
-
-		events := data.BlockTxs{
+		blockTxs := data.BlockTxs{
 			Hash: "hash1",
 			Txs: map[string]transaction.Transaction{
 				"hash1": {
@@ -252,18 +249,40 @@ func TestHandleTxsEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler.HandleBlockTxs(events)
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastTxsCalled: func(event data.BlockTxs) {
+				require.Equal(t, blockTxs, event)
+				wasCalled = true
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		eventsHandler.HandleBlockTxs(blockTxs)
 		require.True(t, wasCalled)
 	})
 
 	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
 		t.Parallel()
 
+		blockTxs := data.BlockTxs{
+			Hash: "hash1",
+			Txs: map[string]transaction.Transaction{
+				"hash1": {
+					Nonce: 1,
+				},
+			},
+		}
+
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
 		args.Config.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastTxsCalled: func(event data.BlockTxs) {
+				require.Equal(t, blockTxs, event)
 				wasCalled = true
 			},
 		}
@@ -276,16 +295,7 @@ func TestHandleTxsEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		events := data.BlockTxs{
-			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
-				"hash1": {
-					Nonce: 1,
-				},
-			},
-		}
-
-		eventsHandler.HandleBlockTxs(events)
+		eventsHandler.HandleBlockTxs(blockTxs)
 		require.False(t, wasCalled)
 	})
 }
@@ -296,18 +306,7 @@ func TestHandleScrsEvents(t *testing.T) {
 	t.Run("broadcast scrs event was called", func(t *testing.T) {
 		t.Parallel()
 
-		wasCalled := false
-		args := createMockEventsHandlerArgs()
-		args.Publisher = &mocks.PublisherStub{
-			BroadcastScrsCalled: func(event data.BlockScrs) {
-				wasCalled = true
-			},
-		}
-
-		eventsHandler, err := process.NewEventsHandler(args)
-		require.Nil(t, err)
-
-		events := data.BlockScrs{
+		blockScrs := data.BlockScrs{
 			Hash: "hash1",
 			Scrs: map[string]smartContractResult.SmartContractResult{
 				"hash2": {
@@ -316,7 +315,19 @@ func TestHandleScrsEvents(t *testing.T) {
 			},
 		}
 
-		eventsHandler.HandleBlockScrs(events)
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastScrsCalled: func(event data.BlockScrs) {
+				require.Equal(t, blockScrs, event)
+				wasCalled = true
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		eventsHandler.HandleBlockScrs(blockScrs)
 		require.True(t, wasCalled)
 	})
 

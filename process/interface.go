@@ -37,6 +37,6 @@ type EventsHandler interface {
 
 // EventsInterceptor defines the behaviour of an events interceptor component
 type EventsInterceptor interface {
-	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error)
+	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error)
 	IsInterfaceNil() bool
 }
