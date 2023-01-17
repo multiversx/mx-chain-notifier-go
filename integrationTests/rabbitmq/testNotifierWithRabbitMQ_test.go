@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -48,8 +49,15 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.ArgsSaveBlockData{
+	blockEvents := data.ArgsSaveBlockData{
 		HeaderHash: []byte("hash1"),
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				Nonce:     1,
+				ShardID:   2,
+				TimeStamp: 1234,
+			},
+		},
 		TransactionsPool: &data.TransactionsPool{
 			Txs: map[string]data.TransactionWithOrder{
 				"txHash1": {
@@ -76,8 +84,12 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 			},
 		},
 	}
+	saveBlockData := &data.ArgsSaveBlock{
+		HeaderType:        "HeaderV2",
+		ArgsSaveBlockData: blockEvents,
+	}
 
-	resp := webServer.PushEventsRequest(blockEvents)
+	resp := webServer.PushEventsRequest(saveBlockData)
 
 	mutResponses.Lock()
 	responses[resp.Code]++
