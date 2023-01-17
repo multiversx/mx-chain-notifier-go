@@ -2,25 +2,27 @@ package groups
 
 import (
 	"encoding/json"
+	"errors"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-func GetSaveBlockData(marshalledData []byte) (*data.SaveBlockData, error) {
-	var saveBlockData *data.SaveBlockData
+func GetBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
+	var saveBlockData data.SaveBlockData
 
-	err := json.Unmarshal(marshalledData, saveBlockData)
+	err := json.Unmarshal(marshalledData, &saveBlockData)
 	if err != nil {
 		return nil, err
 	}
 
-	return saveBlockData, nil
+	return &saveBlockData, nil
 }
 
-func GetArgsSaveBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
+func GetBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	argsBlockS := struct {
 		HeaderHash             []byte
 		SignersIndexes         []uint64
@@ -35,17 +37,17 @@ func GetArgsSaveBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error
 		return nil, err
 	}
 
-	body, err := GetBody(marshalledData)
+	body, err := getBody(marshalledData)
 	if err != nil {
 		return nil, err
 	}
 
-	header, err := GetHeader(marshalledData)
+	header, err := getHeader(marshalledData)
 	if err != nil {
 		return nil, err
 	}
 
-	txsPool, err := GetTransactionsPool(marshalledData)
+	txsPool, err := getTransactionsPool(marshalledData)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +66,7 @@ func GetArgsSaveBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error
 	}, nil
 }
 
-func GetTransactionsPool(marshaledData []byte) (*data.TransactionsPool, error) {
+func getTransactionsPool(marshaledData []byte) (*data.TransactionsPool, error) {
 	txPoolStruct := struct {
 		TransactionsPool *data.TransactionsPool
 	}{}
@@ -73,7 +75,7 @@ func GetTransactionsPool(marshaledData []byte) (*data.TransactionsPool, error) {
 	return txPoolStruct.TransactionsPool, err
 }
 
-func GetBody(marshaledData []byte) (nodeData.BodyHandler, error) {
+func getBody(marshaledData []byte) (nodeData.BodyHandler, error) {
 	bodyStruct := struct {
 		Body *block.Body
 	}{}
@@ -82,53 +84,36 @@ func GetBody(marshaledData []byte) (nodeData.BodyHandler, error) {
 	return bodyStruct.Body, err
 }
 
-func GetHeader(marshaledData []byte) (nodeData.HeaderHandler, error) {
-	h2Struct := struct {
-		H *block.HeaderV2 `json:"Header"`
+func getHeader(marshaledData []byte) (nodeData.HeaderHandler, error) {
+	headerTypeStruct := struct {
+		HeaderType core.HeaderType
 	}{}
-	err := json.Unmarshal(marshaledData, &h2Struct)
-	if err == nil {
-		if isHeaderV2(h2Struct.H) {
-			return h2Struct.H, nil
-		}
+
+	err := json.Unmarshal(marshaledData, &headerTypeStruct)
+	if err != nil {
+		return nil, err
 	}
 
-	h1Struct := struct {
-		H *block.Header `json:"Header"`
-	}{}
-	err = json.Unmarshal(marshaledData, &h1Struct)
-	if err == nil {
-		if !isMetaBlock(h1Struct.H) {
-			return h1Struct.H, err
-		}
+	switch headerTypeStruct.HeaderType {
+	case core.MetaHeader:
+		hStruct := struct {
+			H1 *block.MetaBlock `json:"Header"`
+		}{}
+		err = json.Unmarshal(marshaledData, &hStruct)
+		return hStruct.H1, err
+	case core.ShardHeaderV1:
+		hStruct := struct {
+			H1 *block.Header `json:"Header"`
+		}{}
+		err = json.Unmarshal(marshaledData, &hStruct)
+		return hStruct.H1, err
+	case core.ShardHeaderV2:
+		hStruct := struct {
+			H1 *block.HeaderV2 `json:"Header"`
+		}{}
+		err = json.Unmarshal(marshaledData, &hStruct)
+		return hStruct.H1, err
+	default:
+		return nil, errors.New("invalid header type")
 	}
-
-	mStruct := struct {
-		H *block.MetaBlock `json:"Header"`
-	}{}
-	err = json.Unmarshal(marshaledData, &mStruct)
-	if err == nil {
-		return mStruct.H, err
-	}
-
-	return nil, err
-}
-
-func isHeaderV2(header *block.HeaderV2) bool {
-	if header == nil {
-		return false
-	}
-	if header.Header == nil {
-		return false
-	}
-
-	return true
-}
-
-func isMetaBlock(header *block.Header) bool {
-	if header.EpochStartMetaHash == nil {
-		return true
-	}
-
-	return false
 }

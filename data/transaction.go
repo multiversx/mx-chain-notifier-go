@@ -3,6 +3,7 @@ package data
 import (
 	"encoding/json"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -112,6 +113,11 @@ type ArgsSaveBlockData struct {
 	AlteredAccounts        map[string]*outport.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
+}
+
+type ArgsSaveBlock struct {
+	HeaderType core.HeaderType
+	ArgsSaveBlockData
 }
 
 // LogData holds the data needed for indexing logs and events

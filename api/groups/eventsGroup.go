@@ -74,7 +74,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 
 	log.Debug("pushEvents", "data len", len(pushEventsMarshalledData))
 
-	blockEvents, err := GetSaveBlockData(pushEventsMarshalledData)
+	blockEvents, err := GetBlockDataV1(pushEventsMarshalledData)
 	if err == nil {
 		err = h.facade.HandlePushEventsV1(*blockEvents)
 		if err == nil {
@@ -93,7 +93,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 }
 
 func (h *eventsGroup) pushEventsV2(pushEventsMarshalledData []byte) error {
-	saveBlockData, err := GetArgsSaveBlockData(pushEventsMarshalledData)
+	saveBlockData, err := GetBlockDataV2(pushEventsMarshalledData)
 	if err != nil {
 		return err
 	}
