@@ -41,8 +41,10 @@ type Event struct {
 
 // BlockEvents holds events data for a block
 type BlockEvents struct {
-	Hash   string  `json:"hash"`
-	Events []Event `json:"events"`
+	Hash      string  `json:"hash"`
+	ShardID   uint32  `json:"shardId"`
+	TimeStamp uint64  `json:"timestamp"`
+	Events    []Event `json:"events"`
 }
 
 // RevertBlock holds revert event data
@@ -65,6 +67,14 @@ type BlockTxs struct {
 	Txs  map[string]transaction.Transaction `json:"txs"`
 }
 
+// BlockTxsWithOrder holds the block transactions with order
+type BlockTxsWithOrder struct {
+	Hash      string                          `json:"hash"`
+	ShardID   uint32                          `json:"shardId"`
+	TimeStamp uint64                          `json:"timestamp"`
+	Txs       map[string]TransactionWithOrder `json:"txs"`
+}
+
 // BlockScrs holds the block smart contract results
 // TODO: set scr with order here also
 type BlockScrs struct {
@@ -80,11 +90,21 @@ type SaveBlockData struct {
 	LogEvents []Event                                            `json:"events"`
 }
 
-// ArgsSaveBlockData will contain all information that are needed to save block data
+// InterceptorBlockData holds the block data needed for processing
+type InterceptorBlockData struct {
+	Hash         string
+	Body         *block.Body
+	Header       nodeData.HeaderHandler
+	Txs          map[string]transaction.Transaction
+	TxsWithOrder map[string]TransactionWithOrder
+	Scrs         map[string]smartContractResult.SmartContractResult
+	LogEvents    []Event
+}
+
 type ArgsSaveBlockData struct {
 	HeaderHash             []byte
-	Body                   *block.Body
-	Header                 *block.HeaderV2
+	Body                   nodeData.BodyHandler
+	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
 	HeaderGasConsumption   outport.HeaderGasConsumption

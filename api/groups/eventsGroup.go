@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 )
 
 const (
@@ -68,21 +66,25 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
-	var blockEvents data.SaveBlockData
-
-	err := c.ShouldBindBodyWith(&blockEvents, binding.JSON)
+	pushEventsMarshalledData, err := c.GetRawData()
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
-	log.Debug("pushEvents", "hash", blockEvents.Hash)
 
-	err = h.facade.HandlePushEventsV1(blockEvents)
-	if err != nil {
-		if err == common.ErrReceivedEmptyEvents {
-			h.pushEventsV2(c)
+	log.Debug("pushEvents", "data len", len(pushEventsMarshalledData))
+
+	blockEvents, err := GetSaveBlockData(pushEventsMarshalledData)
+	if err == nil {
+		err = h.facade.HandlePushEventsV1(*blockEvents)
+		if err == nil {
+			shared.JSONResponse(c, http.StatusOK, nil, "")
 			return
 		}
+	}
+
+	err = h.pushEventsV2(pushEventsMarshalledData)
+	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
@@ -90,23 +92,20 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsGroup) pushEventsV2(c *gin.Context) {
-	var blockEvents data.ArgsSaveBlockData
-
-	err := c.ShouldBindBodyWith(&blockEvents, binding.JSON)
+func (h *eventsGroup) pushEventsV2(pushEventsMarshalledData []byte) error {
+	saveBlockData, err := GetArgsSaveBlockData(pushEventsMarshalledData)
 	if err != nil {
-		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
+		return err
 	}
-	log.Debug("pushEventsV2", "hash", blockEvents.HeaderHash)
+	log.Debug("pushEvents", "data len", len(saveBlockData.HeaderHash))
+	log.Debug("pushEvents", "shardId", saveBlockData.Header.GetShardID())
 
-	err = h.facade.HandlePushEventsV2(blockEvents)
+	err = h.facade.HandlePushEventsV2(*saveBlockData)
 	if err != nil {
-		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
+		return err
 	}
 
-	shared.JSONResponse(c, http.StatusOK, nil, "")
+	return nil
 }
 
 func (h *eventsGroup) revertEvents(c *gin.Context) {
