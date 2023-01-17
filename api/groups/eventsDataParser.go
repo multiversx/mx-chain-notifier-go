@@ -11,7 +11,8 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-func GetBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
+// UnmarshallBlockDataV1 will try to unmarshal block data with old format
+func UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
 	var saveBlockData data.SaveBlockData
 
 	err := json.Unmarshal(marshalledData, &saveBlockData)
@@ -22,7 +23,8 @@ func GetBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
 	return &saveBlockData, nil
 }
 
-func GetBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
+// UnmarshallBlockDataV2 will try to unmarshal block data v2
+func UnmarshallBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	argsBlockS := struct {
 		HeaderHash             []byte
 		SignersIndexes         []uint64

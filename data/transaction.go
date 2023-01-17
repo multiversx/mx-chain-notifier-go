@@ -5,7 +5,6 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -68,14 +67,6 @@ type BlockTxs struct {
 	Txs  map[string]transaction.Transaction `json:"txs"`
 }
 
-// BlockTxsWithOrder holds the block transactions with order
-type BlockTxsWithOrder struct {
-	Hash      string                          `json:"hash"`
-	ShardID   uint32                          `json:"shardId"`
-	TimeStamp uint64                          `json:"timestamp"`
-	Txs       map[string]TransactionWithOrder `json:"txs"`
-}
-
 // BlockScrs holds the block smart contract results
 // TODO: set scr with order here also
 type BlockScrs struct {
@@ -83,7 +74,7 @@ type BlockScrs struct {
 	Scrs map[string]smartContractResult.SmartContractResult `json:"scrs"`
 }
 
-// SaveBlockData holds the block data that will be received on push events
+// SaveBlockData holds the filtered block data that will be received on push events
 type SaveBlockData struct {
 	Hash      string                                             `json:"hash"`
 	Txs       map[string]transaction.Transaction                 `json:"txs"`
@@ -91,17 +82,7 @@ type SaveBlockData struct {
 	LogEvents []Event                                            `json:"events"`
 }
 
-// InterceptorBlockData holds the block data needed for processing
-type InterceptorBlockData struct {
-	Hash         string
-	Body         *block.Body
-	Header       nodeData.HeaderHandler
-	Txs          map[string]transaction.Transaction
-	TxsWithOrder map[string]TransactionWithOrder
-	Scrs         map[string]smartContractResult.SmartContractResult
-	LogEvents    []Event
-}
-
+// ArgsSaveBlockData holds the block data that will be received on push events
 type ArgsSaveBlockData struct {
 	HeaderHash             []byte
 	Body                   nodeData.BodyHandler
@@ -115,6 +96,7 @@ type ArgsSaveBlockData struct {
 	IsImportDB             bool
 }
 
+// ArgsSaveBlock holds block data with header type
 type ArgsSaveBlock struct {
 	HeaderType core.HeaderType
 	ArgsSaveBlockData

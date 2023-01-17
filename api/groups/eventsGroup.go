@@ -66,15 +66,13 @@ func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
-	pushEventsMarshalledData, err := c.GetRawData()
+	pushEventsRawData, err := c.GetRawData()
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	log.Debug("pushEvents", "data len", len(pushEventsMarshalledData))
-
-	blockEvents, err := GetBlockDataV1(pushEventsMarshalledData)
+	blockEvents, err := UnmarshallBlockDataV1(pushEventsRawData)
 	if err == nil {
 		err = h.facade.HandlePushEventsV1(*blockEvents)
 		if err == nil {
@@ -83,7 +81,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		}
 	}
 
-	err = h.pushEventsV2(pushEventsMarshalledData)
+	err = h.pushEventsV2(pushEventsRawData)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -92,13 +90,11 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsGroup) pushEventsV2(pushEventsMarshalledData []byte) error {
-	saveBlockData, err := GetBlockDataV2(pushEventsMarshalledData)
+func (h *eventsGroup) pushEventsV2(pushEventsRawData []byte) error {
+	saveBlockData, err := UnmarshallBlockDataV2(pushEventsRawData)
 	if err != nil {
 		return err
 	}
-	log.Debug("pushEvents", "data len", len(saveBlockData.HeaderHash))
-	log.Debug("pushEvents", "shardId", saveBlockData.Header.GetShardID())
 
 	err = h.facade.HandlePushEventsV2(*saveBlockData)
 	if err != nil {
