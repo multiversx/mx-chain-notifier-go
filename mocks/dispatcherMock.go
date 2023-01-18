@@ -48,6 +48,10 @@ func (d *DispatcherMock) FinalizedEvent(event data.FinalizedBlock) {
 func (d *DispatcherMock) TxsEvent(event data.BlockTxs) {
 }
 
+// TxsWithOrderEvent -
+func (d *DispatcherMock) TxsWithOrderEvent(event data.BlockTxsWithOrder) {
+}
+
 // ScrsEvent -
 func (d *DispatcherMock) ScrsEvent(event data.BlockScrs) {
 }

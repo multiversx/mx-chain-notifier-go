@@ -17,6 +17,7 @@ type EventDispatcher interface {
 	RevertEvent(event data.RevertBlock)
 	FinalizedEvent(event data.FinalizedBlock)
 	TxsEvent(event data.BlockTxs)
+	TxsWithOrderEvent(event data.BlockTxsWithOrder)
 	ScrsEvent(event data.BlockScrs)
 }
 
