@@ -56,7 +56,7 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 			subsFromEntries = append(subsFromEntries, data.Subscription{
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   MatchAll,
-				EventType:    common.PushBlockEvents,
+				EventType:    common.PushLogsAndEvents,
 			})
 		}
 		for _, entry := range subEvent.SubscriptionEntries {
@@ -182,7 +182,7 @@ func generateSubscribeEvents(num int) []data.SubscribeEvent {
 					Address:    fmt.Sprintf("erd%s", randStr(30)),
 					Identifier: randStr(12),
 					Topics:     topics,
-					EventType:  common.PushBlockEvents,
+					EventType:  common.PushLogsAndEvents,
 				}
 				subEntries = append(subEntries, entry)
 			}

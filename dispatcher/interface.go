@@ -13,6 +13,7 @@ import (
 type EventDispatcher interface {
 	GetID() uuid.UUID
 	PushEvents(events []data.Event)
+	BlockEvents(blockEvents data.BlockEvents)
 	RevertEvent(event data.RevertBlock)
 	FinalizedEvent(event data.FinalizedBlock)
 	TxsEvent(event data.BlockTxs)

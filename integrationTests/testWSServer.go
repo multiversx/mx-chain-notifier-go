@@ -82,6 +82,28 @@ func (ws *wsClient) ReceiveEvents() ([]data.Event, error) {
 	return event, nil
 }
 
+// ReceiveEvents will try to receive events
+func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEvents, error) {
+	m, err := ws.ReadMessage()
+	if err != nil {
+		return nil, err
+	}
+
+	var reply data.WSEvent
+	err = json.Unmarshal(m, &reply)
+	if err != nil {
+		return nil, err
+	}
+
+	var blockData data.BlockEvents
+	err = json.Unmarshal(reply.Data, &blockData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &blockData, nil
+}
+
 // ReceiveRevertBlock will try to receive revert block event
 func (ws *wsClient) ReceiveRevertBlock() (*data.RevertBlock, error) {
 	m, err := ws.ReadMessage()

@@ -1,10 +1,12 @@
 package ws_test
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"testing"
 
+	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
 	"github.com/ElrondNetwork/notifier-go/mocks"
@@ -133,4 +135,67 @@ func TestReadPump(t *testing.T) {
 	wd.ReadPump()
 
 	assert.True(t, wasCalled)
+}
+
+func TestPushEvents(t *testing.T) {
+	t.Parallel()
+
+	args := createMockWSDispatcherArgs()
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	events := []data.Event{
+		{
+			Address:    "addr1",
+			Identifier: "id1",
+		},
+	}
+	eventBytes, _ := json.Marshal(events)
+
+	wd.PushEvents(events)
+
+	wsEvent := &data.WSEvent{
+		Type: common.PushLogsAndEvents,
+		Data: eventBytes,
+	}
+	expectedEventBytes, _ := json.Marshal(wsEvent)
+
+	eventsData := wd.ReadSendChannel()
+
+	require.Equal(t, expectedEventBytes, eventsData)
+}
+
+func TestBlockEvents(t *testing.T) {
+	t.Parallel()
+
+	args := createMockWSDispatcherArgs()
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	events := []data.Event{
+		{
+			Address:    "addr1",
+			Identifier: "id1",
+		},
+	}
+	blockData := data.BlockEvents{
+		Hash:      "hash1",
+		ShardID:   1,
+		TimeStamp: 1234,
+		Events:    events,
+	}
+	blockDataBytes, err := json.Marshal(blockData)
+	require.Nil(t, err)
+
+	wd.BlockEvents(blockData)
+
+	wsEvent := &data.WSEvent{
+		Type: common.PushBlockEvents,
+		Data: blockDataBytes,
+	}
+	expectedEventBytes, _ := json.Marshal(wsEvent)
+
+	eventsData := wd.ReadSendChannel()
+
+	require.Equal(t, expectedEventBytes, eventsData)
 }

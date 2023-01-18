@@ -66,6 +66,27 @@ func (wd *websocketDispatcher) GetID() uuid.UUID {
 	return wd.id
 }
 
+// BlockEvents receives block events and processes it before pushing to socket
+func (wd *websocketDispatcher) BlockEvents(events data.BlockEvents) {
+	eventBytes, err := json.Marshal(events)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wsEvent := &data.WSEvent{
+		Type: common.PushBlockEvents,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
+}
+
 // PushEvents receives an events slice and processes it before pushing to socket
 func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	eventBytes, err := json.Marshal(events)
@@ -75,7 +96,7 @@ func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	}
 
 	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEvents,
+		Type: common.PushLogsAndEvents,
 		Data: eventBytes,
 	}
 	wsEventBytes, err := json.Marshal(wsEvent)

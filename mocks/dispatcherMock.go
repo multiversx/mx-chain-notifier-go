@@ -32,6 +32,10 @@ func (d *DispatcherMock) PushEvents(events []data.Event) {
 	d.consumer.Receive(events)
 }
 
+// BlockEvents -
+func (d *DispatcherMock) BlockEvents(event data.BlockEvents) {
+}
+
 // RevertEvent -
 func (d *DispatcherMock) RevertEvent(event data.RevertBlock) {
 }

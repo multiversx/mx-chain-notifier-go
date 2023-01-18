@@ -22,9 +22,9 @@ type ArgsCommonHub struct {
 }
 
 type commonHub struct {
-	rwMut              sync.RWMutex
 	filter             filters.EventFilter
 	subscriptionMapper dispatcher.SubscriptionMapperHandler
+	mutDispatchers     sync.RWMutex
 	dispatchers        map[uuid.UUID]dispatcher.EventDispatcher
 	register           chan dispatcher.EventDispatcher
 	unregister         chan dispatcher.EventDispatcher
@@ -45,7 +45,7 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 	}
 
 	return &commonHub{
-		rwMut:              sync.RWMutex{},
+		mutDispatchers:     sync.RWMutex{},
 		filter:             args.Filter,
 		subscriptionMapper: args.SubscriptionMapper,
 		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
@@ -184,30 +184,55 @@ func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
 func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 	subscriptions := ch.subscriptionMapper.Subscriptions()
 
-	dispatchersMap := make(map[uuid.UUID][]data.Event)
-	mapEventToDispatcher := func(id uuid.UUID, e data.Event) {
-		dispatchersMap[id] = append(dispatchersMap[id], e)
+	for _, subscription := range subscriptions {
+		switch subscription.EventType {
+		case common.PushLogsAndEvents:
+			ch.handlePushBlockEvents(blockEvents, subscription)
+		case common.PushBlockEvents:
+			ch.handlePushBlockEventsFull(blockEvents, subscription)
+		default:
+			continue
+		}
 	}
+}
 
+func (ch *commonHub) handlePushBlockEventsFull(blockEvents data.BlockEvents, subscription data.Subscription) {
+	events := make([]data.Event, 0)
 	for _, event := range blockEvents.Events {
-		for _, subscription := range subscriptions {
-			if subscription.EventType != common.PushBlockEvents {
-				continue
-			}
-
-			if ch.filter.MatchEvent(subscription, event) {
-				mapEventToDispatcher(subscription.DispatcherID, event)
-			}
+		if ch.filter.MatchEvent(subscription, event) {
+			events = append(events, event)
 		}
 	}
 
-	ch.rwMut.RLock()
-	defer ch.rwMut.RUnlock()
-	for id, eventValues := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.PushEvents(eventValues)
+	blockEventsData := data.BlockEvents{
+		Hash:      blockEvents.Hash,
+		ShardID:   blockEvents.ShardID,
+		TimeStamp: blockEvents.TimeStamp,
+		Events:    events,
+	}
+
+	ch.mutDispatchers.RLock()
+	d, ok := ch.dispatchers[subscription.DispatcherID]
+	if ok {
+		d.BlockEvents(blockEventsData)
+	}
+	ch.mutDispatchers.RUnlock()
+}
+
+func (ch *commonHub) handlePushBlockEvents(blockEvents data.BlockEvents, subscription data.Subscription) {
+	events := make([]data.Event, 0)
+	for _, event := range blockEvents.Events {
+		if ch.filter.MatchEvent(subscription, event) {
+			events = append(events, event)
 		}
 	}
+
+	ch.mutDispatchers.RLock()
+	d, ok := ch.dispatchers[subscription.DispatcherID]
+	if ok {
+		d.PushEvents(events)
+	}
+	ch.mutDispatchers.RUnlock()
 }
 
 func (ch *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
@@ -223,8 +248,8 @@ func (ch *commonHub) handleRevertBroadcast(revertBlock data.RevertBlock) {
 		dispatchersMap[subscription.DispatcherID] = revertBlock
 	}
 
-	ch.rwMut.RLock()
-	defer ch.rwMut.RUnlock()
+	ch.mutDispatchers.RLock()
+	defer ch.mutDispatchers.RUnlock()
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.RevertEvent(event)
@@ -245,8 +270,8 @@ func (ch *commonHub) handleFinalizedBroadcast(finalizedBlock data.FinalizedBlock
 		dispatchersMap[subscription.DispatcherID] = finalizedBlock
 	}
 
-	ch.rwMut.RLock()
-	defer ch.rwMut.RUnlock()
+	ch.mutDispatchers.RLock()
+	defer ch.mutDispatchers.RUnlock()
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.FinalizedEvent(event)
@@ -267,8 +292,8 @@ func (ch *commonHub) handleTxsBroadcast(blockTxs data.BlockTxs) {
 		dispatchersMap[subscription.DispatcherID] = blockTxs
 	}
 
-	ch.rwMut.RLock()
-	defer ch.rwMut.RUnlock()
+	ch.mutDispatchers.RLock()
+	defer ch.mutDispatchers.RUnlock()
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.TxsEvent(event)
@@ -289,8 +314,8 @@ func (ch *commonHub) handleScrsBroadcast(blockScrs data.BlockScrs) {
 		dispatchersMap[subscription.DispatcherID] = blockScrs
 	}
 
-	ch.rwMut.RLock()
-	defer ch.rwMut.RUnlock()
+	ch.mutDispatchers.RLock()
+	defer ch.mutDispatchers.RUnlock()
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.ScrsEvent(event)
@@ -299,8 +324,8 @@ func (ch *commonHub) handleScrsBroadcast(blockScrs data.BlockScrs) {
 }
 
 func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
-	ch.rwMut.Lock()
-	defer ch.rwMut.Unlock()
+	ch.mutDispatchers.Lock()
+	defer ch.mutDispatchers.Unlock()
 
 	if _, ok := ch.dispatchers[d.GetID()]; ok {
 		return
@@ -312,8 +337,8 @@ func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
 }
 
 func (ch *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
-	ch.rwMut.Lock()
-	defer ch.rwMut.Unlock()
+	ch.mutDispatchers.Lock()
+	defer ch.mutDispatchers.Unlock()
 
 	if _, ok := ch.dispatchers[d.GetID()]; ok {
 		delete(ch.dispatchers, d.GetID())
