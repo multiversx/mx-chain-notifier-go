@@ -31,8 +31,8 @@ func (dp *Publisher) BroadcastTxs(_ data.BlockTxs) {
 func (dp *Publisher) BroadcastScrs(_ data.BlockScrs) {
 }
 
-// BroadcastTxsWithOrder does nothing
-func (dp *Publisher) BroadcastTxsWithOrder(_ data.BlockTxsWithOrder) {
+// BroadcastBlockEventsWithOrder does nothing
+func (dp *Publisher) BroadcastBlockEventsWithOrder(_ data.BlockEventsWithOrder) {
 }
 
 // Close returns nil

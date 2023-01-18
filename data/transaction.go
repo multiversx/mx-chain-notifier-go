@@ -67,8 +67,8 @@ type BlockTxs struct {
 	Txs  map[string]transaction.Transaction `json:"txs"`
 }
 
-// BlockTxsWithOrder holds the block transactions with order
-type BlockTxsWithOrder struct {
+// BlockEventsWithOrder holds the block transactions with order
+type BlockEventsWithOrder struct {
 	Hash      string                          `json:"hash"`
 	ShardID   uint32                          `json:"shardId"`
 	TimeStamp uint64                          `json:"timestamp"`

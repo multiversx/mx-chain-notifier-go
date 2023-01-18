@@ -235,10 +235,10 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	eh.publisher.BroadcastScrs(blockScrs)
 }
 
-// HandleBlockTxsWithOrder will handle txs events received from observer
-func (eh *eventsHandler) HandleBlockTxsWithOrder(blockTxs data.BlockTxsWithOrder) {
+// HandleBlockEventsWithOrder will handle full block events received from observer
+func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	if blockTxs.Hash == "" {
-		log.Warn("received empty txs with order block hash",
+		log.Warn("received empty full block events with order block hash",
 			"will process", false,
 		)
 		return
@@ -250,7 +250,7 @@ func (eh *eventsHandler) HandleBlockTxsWithOrder(blockTxs data.BlockTxsWithOrder
 	}
 
 	if !shouldProcessTxs {
-		log.Info("received duplicated txs event for block",
+		log.Info("received duplicated full block events for block",
 			"block hash", blockTxs.Hash,
 			"processed", false,
 		)
@@ -269,7 +269,7 @@ func (eh *eventsHandler) HandleBlockTxsWithOrder(blockTxs data.BlockTxsWithOrder
 		)
 	}
 
-	eh.publisher.BroadcastTxsWithOrder(blockTxs)
+	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
 }
 
 func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {

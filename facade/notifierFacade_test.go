@@ -166,7 +166,7 @@ func TestHandlePushEvents(t *testing.T) {
 			Hash:   blockHash,
 			Events: logEvents,
 		}
-		expTxsWithOrderData := data.BlockTxsWithOrder{
+		expTxsWithOrderData := data.BlockEventsWithOrder{
 			Hash: blockHash,
 			Txs:  txs,
 		}
@@ -189,7 +189,7 @@ func TestHandlePushEvents(t *testing.T) {
 				scrsWasCalled = true
 				assert.Equal(t, expScrsData, blockScrs)
 			},
-			HandleBlockTxsWithOrderCalled: func(blockTxs data.BlockTxsWithOrder) {
+			HandleBlockEventsWithOrderCalled: func(blockTxs data.BlockEventsWithOrder) {
 				txsWithOrderWasCalled = true
 				assert.Equal(t, expTxsWithOrderData, blockTxs)
 			},

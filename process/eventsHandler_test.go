@@ -365,10 +365,10 @@ func TestHandleScrsEvents(t *testing.T) {
 	})
 }
 
-func TestHandleTxsWithOrderEvents(t *testing.T) {
+func TestHandleBlockEventsWithOrderEvents(t *testing.T) {
 	t.Parallel()
 
-	events := data.BlockTxsWithOrder{
+	events := data.BlockEventsWithOrder{
 		Hash: "hash1",
 		Txs: map[string]data.TransactionWithOrder{
 			"hash1": {
@@ -380,13 +380,13 @@ func TestHandleTxsWithOrderEvents(t *testing.T) {
 		},
 	}
 
-	t.Run("broadcast txs with order event was called", func(t *testing.T) {
+	t.Run("broadcast block events with order event was called", func(t *testing.T) {
 		t.Parallel()
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
 		args.Publisher = &mocks.PublisherStub{
-			BroadcastTxsWithOrderCalled: func(event data.BlockTxsWithOrder) {
+			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
 				require.Equal(t, events, events)
 				wasCalled = true
 			},
@@ -395,7 +395,7 @@ func TestHandleTxsWithOrderEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		eventsHandler.HandleBlockTxsWithOrder(events)
+		eventsHandler.HandleBlockEventsWithOrder(events)
 		require.True(t, wasCalled)
 	})
 
@@ -406,7 +406,7 @@ func TestHandleTxsWithOrderEvents(t *testing.T) {
 		args := createMockEventsHandlerArgs()
 		args.Config.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
-			BroadcastTxsWithOrderCalled: func(event data.BlockTxsWithOrder) {
+			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
 				require.Equal(t, events, events)
 				wasCalled = true
 			},
@@ -420,7 +420,7 @@ func TestHandleTxsWithOrderEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		eventsHandler.HandleBlockTxsWithOrder(events)
+		eventsHandler.HandleBlockEventsWithOrder(events)
 		require.False(t, wasCalled)
 	})
 }

@@ -87,13 +87,13 @@ func (nf *notifierFacade) HandlePushEventsV2(allEvents data.ArgsSaveBlockData) e
 	}
 	nf.eventsHandler.HandleBlockScrs(scrs)
 
-	txsWithOrder := data.BlockTxsWithOrder{
+	txsWithOrder := data.BlockEventsWithOrder{
 		Hash:      eventsData.Hash,
 		ShardID:   eventsData.Header.GetShardID(),
 		TimeStamp: eventsData.Header.GetTimeStamp(),
 		Txs:       eventsData.TxsWithOrder,
 	}
-	nf.eventsHandler.HandleBlockTxsWithOrder(txsWithOrder)
+	nf.eventsHandler.HandleBlockEventsWithOrder(txsWithOrder)
 
 	return nil
 }

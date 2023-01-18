@@ -65,7 +65,7 @@
         Name = "block_scrs"
         Type = "fanout"
 
-    # The exchange which holds block txs with order events
-    [RabbitMQ.BlockTxsWithOrderExchange]
-        Name = "block_txs_with_order"
+    # The exchange which holds block events with additional info
+    [RabbitMQ.BlockEventsExchange]
+        Name = "block_events"
         Type = "fanout"

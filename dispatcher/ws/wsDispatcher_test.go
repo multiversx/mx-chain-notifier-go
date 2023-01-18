@@ -201,7 +201,7 @@ func TestBlockEvents(t *testing.T) {
 	require.Equal(t, expectedEventBytes, eventsData)
 }
 
-func TestTxsWithOrderEvents(t *testing.T) {
+func TestBlockEventsWithOrder(t *testing.T) {
 	t.Parallel()
 
 	args := createMockWSDispatcherArgs()
@@ -216,7 +216,7 @@ func TestTxsWithOrderEvents(t *testing.T) {
 			ExecutionOrder: 1,
 		},
 	}
-	blockData := data.BlockTxsWithOrder{
+	blockData := data.BlockEventsWithOrder{
 		Hash:      "hash1",
 		ShardID:   1,
 		TimeStamp: 1234,
@@ -225,10 +225,10 @@ func TestTxsWithOrderEvents(t *testing.T) {
 	blockDataBytes, err := json.Marshal(blockData)
 	require.Nil(t, err)
 
-	wd.TxsWithOrderEvent(blockData)
+	wd.BlockEventsWithOrder(blockData)
 
 	wsEvent := &data.WSEvent{
-		Type: common.BlockTxsWithOrder,
+		Type: common.BlockEventsWithOrder,
 		Data: blockDataBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)

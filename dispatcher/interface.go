@@ -17,7 +17,7 @@ type EventDispatcher interface {
 	RevertEvent(event data.RevertBlock)
 	FinalizedEvent(event data.FinalizedBlock)
 	TxsEvent(event data.BlockTxs)
-	TxsWithOrderEvent(event data.BlockTxsWithOrder)
+	BlockEventsWithOrder(event data.BlockEventsWithOrder)
 	ScrsEvent(event data.BlockScrs)
 }
 
@@ -30,7 +30,7 @@ type Hub interface {
 	BroadcastFinalized(event data.FinalizedBlock)
 	BroadcastTxs(event data.BlockTxs)
 	BroadcastScrs(event data.BlockScrs)
-	BroadcastTxsWithOrder(event data.BlockTxsWithOrder)
+	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
 	Subscribe(event data.SubscribeEvent)

@@ -13,7 +13,7 @@ type EventsHandler interface {
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	HandleBlockTxs(blockTxs data.BlockTxs)
 	HandleBlockScrs(blockScrs data.BlockScrs)
-	HandleBlockTxsWithOrder(blockTxs data.BlockTxsWithOrder)
+	HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
 	IsInterfaceNil() bool
 }
 

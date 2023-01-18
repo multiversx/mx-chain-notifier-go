@@ -193,8 +193,8 @@ func GetDefaultConfigs() *config.GeneralConfig {
 				Name: "blockscrs",
 				Type: "fanout",
 			},
-			BlockTxsWithOrderExchange: config.RabbitMQExchangeConfig{
-				Name: "blocktxswithorder",
+			BlockEventsExchange: config.RabbitMQExchangeConfig{
+				Name: "blockevents",
 				Type: "fanout",
 			},
 		},

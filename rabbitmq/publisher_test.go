@@ -41,8 +41,8 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 				Name: "blockscrs",
 				Type: "fanout",
 			},
-			BlockTxsWithOrderExchange: config.RabbitMQExchangeConfig{
-				Name: "blocktxswithorder",
+			BlockEventsExchange: config.RabbitMQExchangeConfig{
+				Name: "blockeventswithorder",
 				Type: "fanout",
 			},
 		},
@@ -321,7 +321,7 @@ func TestBroadcastScrs(t *testing.T) {
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
-func TestBroadcastTxsWithOrder(t *testing.T) {
+func TestBroadcastBlockEventsWithOrder(t *testing.T) {
 	t.Parallel()
 
 	numCalls := uint32(0)
@@ -342,7 +342,7 @@ func TestBroadcastTxsWithOrder(t *testing.T) {
 	rabbitmq.Run()
 	defer rabbitmq.Close()
 
-	rabbitmq.BroadcastTxsWithOrder(data.BlockTxsWithOrder{})
+	rabbitmq.BroadcastBlockEventsWithOrder(data.BlockEventsWithOrder{})
 
 	time.Sleep(time.Millisecond * 200)
 

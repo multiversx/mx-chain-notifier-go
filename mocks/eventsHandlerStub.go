@@ -4,12 +4,12 @@ import "github.com/ElrondNetwork/notifier-go/data"
 
 // EventsHandlerStub implements EventsHandler interface
 type EventsHandlerStub struct {
-	HandlePushEventsCalled        func(events data.BlockEvents) error
-	HandleRevertEventsCalled      func(revertBlock data.RevertBlock)
-	HandleFinalizedEventsCalled   func(finalizedBlock data.FinalizedBlock)
-	HandleBlockTxsCalled          func(blockTxs data.BlockTxs)
-	HandleBlockScrsCalled         func(blockScrs data.BlockScrs)
-	HandleBlockTxsWithOrderCalled func(blockTxs data.BlockTxsWithOrder)
+	HandlePushEventsCalled           func(events data.BlockEvents) error
+	HandleRevertEventsCalled         func(revertBlock data.RevertBlock)
+	HandleFinalizedEventsCalled      func(finalizedBlock data.FinalizedBlock)
+	HandleBlockTxsCalled             func(blockTxs data.BlockTxs)
+	HandleBlockScrsCalled            func(blockScrs data.BlockScrs)
+	HandleBlockEventsWithOrderCalled func(blockTxs data.BlockEventsWithOrder)
 }
 
 // HandlePushEvents -
@@ -49,10 +49,10 @@ func (e *EventsHandlerStub) HandleBlockScrs(blockScrs data.BlockScrs) {
 	}
 }
 
-// HandleBlockTxsWithOrder -
-func (e *EventsHandlerStub) HandleBlockTxsWithOrder(blockTxs data.BlockTxsWithOrder) {
-	if e.HandleBlockTxsWithOrderCalled != nil {
-		e.HandleBlockTxsWithOrderCalled(blockTxs)
+// HandleBlockEventsWithOrder -
+func (e *EventsHandlerStub) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+	if e.HandleBlockEventsWithOrderCalled != nil {
+		e.HandleBlockEventsWithOrderCalled(blockTxs)
 	}
 }
 
