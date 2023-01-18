@@ -27,6 +27,8 @@ func UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
 func UnmarshallBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	argsBlockS := struct {
 		HeaderHash             []byte
+		Body                   *block.Body
+		TransactionsPool       *data.TransactionsPool
 		SignersIndexes         []uint64
 		NotarizedHeadersHashes []string
 		HeaderGasConsumption   outport.HeaderGasConsumption
@@ -39,51 +41,23 @@ func UnmarshallBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, erro
 		return nil, err
 	}
 
-	body, err := getBody(marshalledData)
-	if err != nil {
-		return nil, err
-	}
-
 	header, err := getHeader(marshalledData)
-	if err != nil {
-		return nil, err
-	}
-
-	txsPool, err := getTransactionsPool(marshalledData)
 	if err != nil {
 		return nil, err
 	}
 
 	return &data.ArgsSaveBlockData{
 		HeaderHash:             argsBlockS.HeaderHash,
-		Body:                   body,
+		Body:                   argsBlockS.Body,
 		SignersIndexes:         argsBlockS.SignersIndexes,
 		NotarizedHeadersHashes: argsBlockS.NotarizedHeadersHashes,
 		HeaderGasConsumption:   argsBlockS.HeaderGasConsumption,
 		AlteredAccounts:        argsBlockS.AlteredAccounts,
 		NumberOfShards:         argsBlockS.NumberOfShards,
 		IsImportDB:             argsBlockS.IsImportDB,
+		TransactionsPool:       argsBlockS.TransactionsPool,
 		Header:                 header,
-		TransactionsPool:       txsPool,
 	}, nil
-}
-
-func getTransactionsPool(marshaledData []byte) (*data.TransactionsPool, error) {
-	txPoolStruct := struct {
-		TransactionsPool *data.TransactionsPool
-	}{}
-
-	err := json.Unmarshal(marshaledData, &txPoolStruct)
-	return txPoolStruct.TransactionsPool, err
-}
-
-func getBody(marshaledData []byte) (nodeData.BodyHandler, error) {
-	bodyStruct := struct {
-		Body *block.Body
-	}{}
-
-	err := json.Unmarshal(marshaledData, &bodyStruct)
-	return bodyStruct.Body, err
 }
 
 func getHeader(marshaledData []byte) (nodeData.HeaderHandler, error) {
