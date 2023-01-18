@@ -6,8 +6,8 @@ import (
 )
 
 func (ch *commonHub) CheckDispatcherByID(uuid uuid.UUID, dispatcher dispatcher.EventDispatcher) bool {
-	ch.rwMut.Lock()
-	defer ch.rwMut.Unlock()
+	ch.mutDispatchers.Lock()
+	defer ch.mutDispatchers.Unlock()
 
 	return ch.dispatchers[uuid] == dispatcher
 }
