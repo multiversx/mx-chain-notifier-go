@@ -41,10 +41,8 @@ type Event struct {
 
 // BlockEvents holds events data for a block
 type BlockEvents struct {
-	Hash      string  `json:"hash"`
-	ShardID   uint32  `json:"shardId"`
-	TimeStamp uint64  `json:"timestamp"`
-	Events    []Event `json:"events"`
+	Hash   string  `json:"hash"`
+	Events []Event `json:"events"`
 }
 
 // RevertBlock holds revert event data
