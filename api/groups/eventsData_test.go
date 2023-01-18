@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetBlockDataV1(t *testing.T) {
+func TestUnmarshallBlockDataV1(t *testing.T) {
 	t.Parallel()
 
 	blockEvents := &data.SaveBlockData{
@@ -34,12 +34,12 @@ func TestGetBlockDataV1(t *testing.T) {
 
 	jsonBytes, _ := json.Marshal(blockEvents)
 
-	retBlockEvents, err := groups.GetBlockDataV1(jsonBytes)
+	retBlockEvents, err := groups.UnmarshallBlockDataV1(jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, blockEvents, retBlockEvents)
 }
 
-func TestGetBlockDataV2(t *testing.T) {
+func TestUnmarshallBlockDataV2(t *testing.T) {
 	t.Parallel()
 
 	argsSaveBlockData := data.ArgsSaveBlockData{
@@ -80,7 +80,7 @@ func TestGetBlockDataV2(t *testing.T) {
 	}
 	jsonBytes, _ := json.Marshal(blockEvents)
 
-	retBlockEvents, err := groups.GetBlockDataV2(jsonBytes)
+	retBlockEvents, err := groups.UnmarshallBlockDataV2(jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, &argsSaveBlockData, retBlockEvents)
 }
