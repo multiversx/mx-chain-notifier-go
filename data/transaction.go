@@ -71,7 +71,7 @@ type BlockTxs struct {
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
 	Hash      string                                  `json:"hash"`
-	ShardID   uint32                                  `json:"shardId"`
+	ShardID   uint32                                  `json:"shardID"`
 	TimeStamp uint64                                  `json:"timestamp"`
 	Txs       map[string]TransactionWithOrder         `json:"txs"`
 	Scrs      map[string]SmartContractResultWithOrder `json:"scrs"`

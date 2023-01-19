@@ -238,7 +238,7 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 // HandleBlockEventsWithOrder will handle full block events received from observer
 func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	if blockTxs.Hash == "" {
-		log.Warn("received empty full block events with order block hash",
+		log.Warn("received full block events with empty block hash",
 			"will process", false,
 		)
 		return
