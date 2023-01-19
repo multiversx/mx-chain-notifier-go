@@ -92,6 +92,8 @@ func (nf *notifierFacade) HandlePushEventsV2(allEvents data.ArgsSaveBlockData) e
 		ShardID:   eventsData.Header.GetShardID(),
 		TimeStamp: eventsData.Header.GetTimeStamp(),
 		Txs:       eventsData.TxsWithOrder,
+		Scrs:      eventsData.ScrsWithOrder,
+		Events:    eventsData.LogEvents,
 	}
 	nf.eventsHandler.HandleBlockEventsWithOrder(txsWithOrder)
 

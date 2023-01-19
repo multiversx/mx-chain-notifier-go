@@ -160,14 +160,6 @@ func TestProcessBlockEvents(t *testing.T) {
 				Nonce: 2,
 			},
 		}
-		expTxsWithOrder := map[string]data.TransactionWithOrder{
-			"hash2": {
-				ExecutionOrder: 1,
-				Transaction: transaction.Transaction{
-					Nonce: 2,
-				},
-			},
-		}
 		expScrs := map[string]smartContractResult.SmartContractResult{
 			"hash3": {
 				Nonce: 3,
@@ -175,12 +167,13 @@ func TestProcessBlockEvents(t *testing.T) {
 		}
 
 		expEvents := &data.InterceptorBlockData{
-			Hash:         hex.EncodeToString(blockHash),
-			Body:         blockBody,
-			Header:       blockHeader,
-			Txs:          expTxs,
-			TxsWithOrder: expTxsWithOrder,
-			Scrs:         expScrs,
+			Hash:          hex.EncodeToString(blockHash),
+			Body:          blockBody,
+			Header:        blockHeader,
+			Txs:           expTxs,
+			TxsWithOrder:  txs,
+			Scrs:          expScrs,
+			ScrsWithOrder: scrs,
 			LogEvents: []data.Event{
 				{
 					Address: hex.EncodeToString(addr),
