@@ -3,8 +3,8 @@ package data
 import (
 	"encoding/json"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -72,7 +72,7 @@ type BlockScrs struct {
 	Scrs map[string]smartContractResult.SmartContractResult `json:"scrs"`
 }
 
-// SaveBlockData holds the block data that will be received on push events
+// SaveBlockData holds the filtered block data that will be received on push events
 type SaveBlockData struct {
 	Hash      string                                             `json:"hash"`
 	Txs       map[string]transaction.Transaction                 `json:"txs"`
@@ -80,11 +80,11 @@ type SaveBlockData struct {
 	LogEvents []Event                                            `json:"events"`
 }
 
-// ArgsSaveBlockData will contain all information that are needed to save block data
+// ArgsSaveBlockData holds the block data that will be received on push events
 type ArgsSaveBlockData struct {
 	HeaderHash             []byte
-	Body                   *block.Body
-	Header                 *block.HeaderV2
+	Body                   nodeData.BodyHandler
+	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
 	HeaderGasConsumption   outport.HeaderGasConsumption
@@ -92,6 +92,12 @@ type ArgsSaveBlockData struct {
 	AlteredAccounts        map[string]*outport.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
+}
+
+// ArgsSaveBlock holds block data with header type
+type ArgsSaveBlock struct {
+	HeaderType core.HeaderType
+	ArgsSaveBlockData
 }
 
 // LogData holds the data needed for indexing logs and events

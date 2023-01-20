@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
@@ -79,21 +80,22 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
-	t.Run("facade error, should fail", func(t *testing.T) {
+	t.Run("facade error, will try push events v2, should fail", func(t *testing.T) {
 		t.Parallel()
 
-		blockEvents := data.ArgsSaveBlockData{
-			HeaderHash: []byte{},
-			TransactionsPool: &data.TransactionsPool{
-				Txs: map[string]data.TransactionWithOrder{
-					"hash2": {
-						Transaction: transaction.Transaction{
-							Nonce: 2,
-						},
-						ExecutionOrder: 1,
-					},
+		blockEvents := &data.SaveBlockData{
+			Hash: "hash1",
+			Txs: map[string]transaction.Transaction{
+				"hash2": {
+					Nonce: 2,
 				},
 			},
+			Scrs: map[string]smartContractResult.SmartContractResult{
+				"hash3": {
+					Nonce: 3,
+				},
+			},
+			LogEvents: []data.Event{},
 		}
 
 		jsonBytes, _ := json.Marshal(blockEvents)
@@ -124,8 +126,10 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		blockEvents := data.ArgsSaveBlockData{
+		argsSaveBlockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte{},
+			Body:       &block.Body{},
+			Header:     &block.HeaderV2{},
 			TransactionsPool: &data.TransactionsPool{
 				Txs: map[string]data.TransactionWithOrder{
 					"hash2": {
@@ -154,6 +158,10 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 				},
 			},
 		}
+		blockEvents := data.ArgsSaveBlock{
+			HeaderType:        "HeaderV2",
+			ArgsSaveBlockData: argsSaveBlockData,
+		}
 
 		jsonBytes, _ := json.Marshal(blockEvents)
 
@@ -164,7 +172,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 			},
 			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
 				wasCalled = true
-				assert.Equal(t, blockEvents, events)
+				assert.Equal(t, argsSaveBlockData, events)
 				return nil
 			},
 		}
