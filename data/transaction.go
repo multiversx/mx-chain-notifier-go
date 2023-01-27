@@ -119,8 +119,7 @@ type TransactionsPool struct {
 // TransactionWithOrder defines a wrapper over transaction
 type TransactionWithOrder struct {
 	TransactionHandler *transaction.Transaction
-	outport.FeeInfo
-	ExecutionOrder int
+	ExecutionOrder     int
 }
 
 // SmartContractResultWithOrder defines a wrapper over scr
