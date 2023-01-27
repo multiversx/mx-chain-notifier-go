@@ -105,14 +105,14 @@ func TestHandlePushEvents(t *testing.T) {
 		blockHash := "blockHash1"
 		txs := map[string]data.TransactionWithOrder{
 			"hash1": {
-				Transaction: transaction.Transaction{
+				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
 				},
 			},
 		}
 		scrs := map[string]data.SmartContractResultWithOrder{
 			"hash2": {
-				SmartContractResult: smartContractResult.SmartContractResult{
+				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,
 				},
 			},
@@ -142,12 +142,12 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
-		expTxs := map[string]transaction.Transaction{
+		expTxs := map[string]*transaction.Transaction{
 			"hash1": {
 				Nonce: 1,
 			},
 		}
-		expScrs := map[string]smartContractResult.SmartContractResult{
+		expScrs := map[string]*smartContractResult.SmartContractResult{
 			"hash2": {
 				Nonce: 2,
 			},

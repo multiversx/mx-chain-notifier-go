@@ -61,14 +61,14 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 		TransactionsPool: &data.TransactionsPool{
 			Txs: map[string]data.TransactionWithOrder{
 				"txHash1": {
-					Transaction: transaction.Transaction{
+					TransactionHandler: &transaction.Transaction{
 						Nonce: 1,
 					},
 				},
 			},
 			Scrs: map[string]data.SmartContractResultWithOrder{
 				"scrHash1": {
-					SmartContractResult: smartContractResult.SmartContractResult{
+					TransactionHandler: &smartContractResult.SmartContractResult{
 						Nonce: 2,
 					},
 				},

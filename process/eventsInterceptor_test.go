@@ -75,7 +75,7 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		txs := map[string]data.TransactionWithOrder{
 			"hash2": {
-				Transaction: transaction.Transaction{
+				TransactionHandler: &transaction.Transaction{
 					Nonce: 2,
 				},
 				ExecutionOrder: 1,
@@ -83,7 +83,7 @@ func TestProcessBlockEvents(t *testing.T) {
 		}
 		scrs := map[string]data.SmartContractResultWithOrder{
 			"hash3": {
-				SmartContractResult: smartContractResult.SmartContractResult{
+				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 3,
 				},
 				ExecutionOrder: 1,
@@ -112,12 +112,12 @@ func TestProcessBlockEvents(t *testing.T) {
 			},
 		}
 
-		expTxs := map[string]transaction.Transaction{
+		expTxs := map[string]*transaction.Transaction{
 			"hash2": {
 				Nonce: 2,
 			},
 		}
-		expScrs := map[string]smartContractResult.SmartContractResult{
+		expScrs := map[string]*smartContractResult.SmartContractResult{
 			"hash3": {
 				Nonce: 3,
 			},
