@@ -72,7 +72,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogDa
 		for _, eventHandler := range logData.LogHandler.GetLogEvents() {
 			le := &data.LogEvent{
 				EventHandler: eventHandler,
-				TxHash:       hex.EncodeToString([]byte(logData.TxHash)),
+				TxHash:       logData.TxHash,
 			}
 
 			logEvents = append(logEvents, le)
