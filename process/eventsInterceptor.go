@@ -41,14 +41,18 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
-	txs := make(map[string]transaction.Transaction)
+	txs := make(map[string]*transaction.Transaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
-		txs[hash] = tx.Transaction
+		txs[hash] = tx.TransactionHandler
+		log.Debug("eventsInterceptor: txs order", "order", tx.ExecutionOrder, "txHash", hash, "sender", tx.TransactionHandler.GetSndAddr(), "receiver", tx.TransactionHandler.GetRcvAddr())
 	}
 
-	scrs := make(map[string]smartContractResult.SmartContractResult)
+	scrs := make(map[string]*smartContractResult.SmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
-		scrs[hash] = scr.SmartContractResult
+		scrs[hash] = scr.TransactionHandler
+		log.Debug("eventsInterceptor: scrs order", "order", scr.ExecutionOrder, "scrHash", hash, "sender", scr.TransactionHandler.GetSndAddr(), "receiver", scr.TransactionHandler.GetRcvAddr())
+		sndAddr := ei.pubKeyConverter.Encode(scr.TransactionHandler.GetSndAddr())
+		log.Debug("eventsInterceptor: scrs order", "sndAddr", sndAddr)
 	}
 
 	return &data.SaveBlockData{
