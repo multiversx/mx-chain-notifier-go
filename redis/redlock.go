@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
+	"github.com/multiversx/mx-chain-core-go/core/check"
 )
 
 type ArgsRedlockWrapper struct {

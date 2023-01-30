@@ -6,10 +6,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
-	"github.com/ElrondNetwork/notifier-go/api/groups"
-	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
+	"github.com/multiversx/mx-chain-notifier-go/api/groups"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

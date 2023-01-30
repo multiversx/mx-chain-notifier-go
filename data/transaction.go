@@ -3,13 +3,13 @@ package data
 import (
 	"encoding/json"
 
-	nodeData "github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
-	"github.com/ElrondNetwork/elrond-go-core/data/outport"
-	"github.com/ElrondNetwork/elrond-go-core/data/receipt"
-	"github.com/ElrondNetwork/elrond-go-core/data/rewardTx"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
+	"github.com/multiversx/mx-chain-core-go/core"
+	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/receipt"
+	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
 
 // WSEvent defines a websocket event
@@ -63,25 +63,26 @@ type FinalizedBlock struct {
 // BlockTxs holds the block transactions
 // TODO: set transaction with order here also
 type BlockTxs struct {
-	Hash string                             `json:"hash"`
-	Txs  map[string]transaction.Transaction `json:"txs"`
+	Hash string                              `json:"hash"`
+	Txs  map[string]*transaction.Transaction `json:"txs"`
 }
 
 // BlockScrs holds the block smart contract results
 // TODO: set scr with order here also
 type BlockScrs struct {
-	Hash string                                             `json:"hash"`
-	Scrs map[string]smartContractResult.SmartContractResult `json:"scrs"`
+	Hash string                                              `json:"hash"`
+	Scrs map[string]*smartContractResult.SmartContractResult `json:"scrs"`
 }
 
-// SaveBlockData holds the block data that will be received on push events
+// SaveBlockData holds the filtered block data that will be received on push events
 type SaveBlockData struct {
-	Hash      string                                             `json:"hash"`
-	Txs       map[string]transaction.Transaction                 `json:"txs"`
-	Scrs      map[string]smartContractResult.SmartContractResult `json:"scrs"`
-	LogEvents []Event                                            `json:"events"`
+	Hash      string                                              `json:"hash"`
+	Txs       map[string]*transaction.Transaction                 `json:"txs"`
+	Scrs      map[string]*smartContractResult.SmartContractResult `json:"scrs"`
+	LogEvents []Event                                             `json:"events"`
 }
 
+<<<<<<< HEAD
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
 	Hash      string
@@ -93,10 +94,13 @@ type InterceptorBlockData struct {
 }
 
 // ArgsSaveBlockData will contain all information that are needed to save block data
+=======
+// ArgsSaveBlockData holds the block data that will be received on push events
+>>>>>>> main
 type ArgsSaveBlockData struct {
 	HeaderHash             []byte
-	Body                   *block.Body
-	Header                 *block.HeaderV2
+	Body                   nodeData.BodyHandler
+	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
 	HeaderGasConsumption   outport.HeaderGasConsumption
@@ -104,6 +108,12 @@ type ArgsSaveBlockData struct {
 	AlteredAccounts        map[string]*outport.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
+}
+
+// ArgsSaveBlock holds block data with header type
+type ArgsSaveBlock struct {
+	HeaderType core.HeaderType
+	ArgsSaveBlockData
 }
 
 // LogData holds the data needed for indexing logs and events
@@ -124,24 +134,24 @@ type TransactionsPool struct {
 
 // TransactionWithOrder defines a wrapper over transaction
 type TransactionWithOrder struct {
-	transaction.Transaction
-	ExecutionOrder int
+	TransactionHandler *transaction.Transaction
+	ExecutionOrder     int
 }
 
 // SmartContractResultWithOrder defines a wrapper over scr
 type SmartContractResultWithOrder struct {
-	smartContractResult.SmartContractResult
-	ExecutionOrder int
+	TransactionHandler *smartContractResult.SmartContractResult
+	ExecutionOrder     int
 }
 
 // RewardTxWithOrder defines a wrapper over rewardTx
 type RewardTxWithOrder struct {
-	rewardTx.RewardTx
-	ExecutionOrder int
+	TransactionHandler *rewardTx.RewardTx
+	ExecutionOrder     int
 }
 
 // ReceiptWithOrder defines a wrapper over receipt
 type ReceiptWithOrder struct {
-	receipt.Receipt
-	ExecutionOrder int
+	TransactionHandler *receipt.Receipt
+	ExecutionOrder     int
 }

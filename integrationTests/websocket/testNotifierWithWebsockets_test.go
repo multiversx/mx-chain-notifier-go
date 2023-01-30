@@ -7,12 +7,20 @@ import (
 	"testing"
 	"time"
 
+<<<<<<< HEAD
 	"github.com/ElrondNetwork/elrond-go-core/data/block"
 	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
 	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/integrationTests"
+=======
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
+>>>>>>> main
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,10 +53,10 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	events := []data.Event{
 		{
 			Address: hex.EncodeToString(addr),
-			TxHash:  hex.EncodeToString([]byte("txHash1")),
+			TxHash:  "txHash1",
 		},
 	}
-	blockEvents := &data.ArgsSaveBlockData{
+	saveBlockData := data.ArgsSaveBlockData{
 		HeaderHash: []byte("hash1"),
 		TransactionsPool: &data.TransactionsPool{
 			Logs: []*data.LogData{
@@ -73,6 +81,10 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				TimeStamp: 1234,
 			},
 		},
+	}
+	blockEvents := &data.ArgsSaveBlock{
+		HeaderType:        "HeaderV2",
+		ArgsSaveBlockData: saveBlockData,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -308,12 +320,12 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	blockHash := []byte("hash1")
 	txs := map[string]data.TransactionWithOrder{
 		"hash1": {
-			Transaction: transaction.Transaction{
+			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	blockEvents := &data.ArgsSaveBlockData{
+	saveBlockData := data.ArgsSaveBlockData{
 		HeaderHash: blockHash,
 		TransactionsPool: &data.TransactionsPool{
 			Txs: txs,
@@ -328,8 +340,12 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 			},
 		},
 	}
+	blockEvents := &data.ArgsSaveBlock{
+		HeaderType:        "HeaderV2",
+		ArgsSaveBlockData: saveBlockData,
+	}
 
-	expTxs := map[string]transaction.Transaction{
+	expTxs := map[string]*transaction.Transaction{
 		"hash1": {
 			Nonce: 1,
 		},
@@ -386,12 +402,12 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	blockHash := []byte("hash1")
 	scrs := map[string]data.SmartContractResultWithOrder{
 		"hash2": {
-			SmartContractResult: smartContractResult.SmartContractResult{
+			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
 		},
 	}
-	blockEvents := &data.ArgsSaveBlockData{
+	saveBlockData := data.ArgsSaveBlockData{
 		HeaderHash: blockHash,
 		TransactionsPool: &data.TransactionsPool{
 			Scrs: scrs,
@@ -406,8 +422,12 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 			},
 		},
 	}
+	blockEvents := &data.ArgsSaveBlock{
+		HeaderType:        "HeaderV2",
+		ArgsSaveBlockData: saveBlockData,
+	}
 
-	expScrs := map[string]smartContractResult.SmartContractResult{
+	expScrs := map[string]*smartContractResult.SmartContractResult{
 		"hash2": {
 			Nonce: 2,
 		},
@@ -495,21 +515,21 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 	txs := map[string]data.TransactionWithOrder{
 		"hash1": {
-			Transaction: transaction.Transaction{
+			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
 	scrs := map[string]data.SmartContractResultWithOrder{
 		"hash2": {
-			SmartContractResult: smartContractResult.SmartContractResult{
+			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
 		},
 	}
 	blockHash := []byte("hash1")
 
-	expTxs := map[string]transaction.Transaction{
+	expTxs := map[string]*transaction.Transaction{
 		"hash1": {
 			Nonce: 1,
 		},
@@ -519,7 +539,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Txs:  expTxs,
 	}
 
-	expScrs := map[string]smartContractResult.SmartContractResult{
+	expScrs := map[string]*smartContractResult.SmartContractResult{
 		"hash2": {
 			Nonce: 2,
 		},
@@ -529,6 +549,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs: expScrs,
 	}
 
+<<<<<<< HEAD
 	expBlockEvents := data.BlockEvents{
 		Hash:      hex.EncodeToString(blockHash),
 		ShardID:   1,
@@ -537,6 +558,9 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	}
 
 	blockEvents := &data.ArgsSaveBlockData{
+=======
+	saveBlockData := data.ArgsSaveBlockData{
+>>>>>>> main
 		HeaderHash: []byte(blockHash),
 		TransactionsPool: &data.TransactionsPool{
 			Txs:  txs,
@@ -562,6 +586,10 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				TimeStamp: 1234,
 			},
 		},
+	}
+	blockEvents := &data.ArgsSaveBlock{
+		HeaderType:        "HeaderV2",
+		ArgsSaveBlockData: saveBlockData,
 	}
 
 	numEvents := 6

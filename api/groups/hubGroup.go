@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/notifier-go/api/errors"
-	"github.com/ElrondNetwork/notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-notifier-go/api/errors"
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/gin-gonic/gin"
 )
 

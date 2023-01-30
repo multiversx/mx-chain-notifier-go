@@ -9,12 +9,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/ElrondNetwork/notifier-go/api/groups"
-	"github.com/ElrondNetwork/notifier-go/api/shared"
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-notifier-go/api/groups"
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,7 +77,7 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 }
 
 // PushEventsRequest will send a http request for push events
-func (w *TestWebServer) PushEventsRequest(events *data.ArgsSaveBlockData) *httptest.ResponseRecorder {
+func (w *TestWebServer) PushEventsRequest(events *data.ArgsSaveBlock) *httptest.ResponseRecorder {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))

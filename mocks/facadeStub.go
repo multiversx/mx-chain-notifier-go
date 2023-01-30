@@ -3,7 +3,7 @@ package mocks
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // FacadeStub implements FacadeHandler interface

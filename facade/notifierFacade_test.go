@@ -6,13 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/facade"
-	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/facade"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,14 +105,14 @@ func TestHandlePushEvents(t *testing.T) {
 		blockHash := "blockHash1"
 		txs := map[string]data.TransactionWithOrder{
 			"hash1": {
-				Transaction: transaction.Transaction{
+				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
 				},
 			},
 		}
 		scrs := map[string]data.SmartContractResultWithOrder{
 			"hash2": {
-				SmartContractResult: smartContractResult.SmartContractResult{
+				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,
 				},
 			},
@@ -142,12 +142,12 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
-		expTxs := map[string]transaction.Transaction{
+		expTxs := map[string]*transaction.Transaction{
 			"hash1": {
 				Nonce: 1,
 			},
 		}
-		expScrs := map[string]smartContractResult.SmartContractResult{
+		expScrs := map[string]*smartContractResult.SmartContractResult{
 			"hash2": {
 				Nonce: 2,
 			},

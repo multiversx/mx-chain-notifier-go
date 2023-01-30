@@ -5,11 +5,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/notifier-go/common/logging"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/notifier"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/common/logging"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/notifier"
 	"github.com/urfave/cli"
 )
 
@@ -70,7 +70,7 @@ VERSION:
 func main() {
 	app := cli.NewApp()
 	cli.AppHelpTemplate = cliHelpTemplate
-	app.Name = "Elrond event "
+	app.Name = "MultiversX event "
 	app.Flags = []cli.Flag{
 		logLevel,
 		logSaveFile,
@@ -80,8 +80,8 @@ func main() {
 	}
 	app.Authors = []cli.Author{
 		{
-			Name:  "The Elrond Team",
-			Email: "contact@elrond.com",
+			Name:  "The MultiversX Team",
+			Email: "contact@multiversx.com",
 		},
 	}
 	app.Action = startEventNotifierProxy

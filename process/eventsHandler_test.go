@@ -5,13 +5,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/mocks"
-	"github.com/ElrondNetwork/notifier-go/process"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/stretchr/testify/require"
 )
 
@@ -270,7 +270,7 @@ func TestHandleTxsEvents(t *testing.T) {
 
 		blockTxs := data.BlockTxs{
 			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
+			Txs: map[string]*transaction.Transaction{
 				"hash1": {
 					Nonce: 1,
 				},
@@ -295,7 +295,20 @@ func TestHandleTxsEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
+<<<<<<< HEAD
 		eventsHandler.HandleBlockTxs(blockTxs)
+=======
+		events := data.BlockTxs{
+			Hash: "hash1",
+			Txs: map[string]*transaction.Transaction{
+				"hash1": {
+					Nonce: 1,
+				},
+			},
+		}
+
+		eventsHandler.HandleBlockTxs(events)
+>>>>>>> main
 		require.False(t, wasCalled)
 	})
 }
@@ -327,7 +340,20 @@ func TestHandleScrsEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
+<<<<<<< HEAD
 		eventsHandler.HandleBlockScrs(blockScrs)
+=======
+		events := data.BlockScrs{
+			Hash: "hash1",
+			Scrs: map[string]*smartContractResult.SmartContractResult{
+				"hash2": {
+					Nonce: 2,
+				},
+			},
+		}
+
+		eventsHandler.HandleBlockScrs(events)
+>>>>>>> main
 		require.True(t, wasCalled)
 	})
 
@@ -353,7 +379,7 @@ func TestHandleScrsEvents(t *testing.T) {
 
 		events := data.BlockScrs{
 			Hash: "hash1",
-			Scrs: map[string]smartContractResult.SmartContractResult{
+			Scrs: map[string]*smartContractResult.SmartContractResult{
 				"hash2": {
 					Nonce: 2,
 				},
