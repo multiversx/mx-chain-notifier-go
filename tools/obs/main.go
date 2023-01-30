@@ -3,26 +3,37 @@ package main
 import (
 	"fmt"
 
-	"github.com/ElrondNetwork/elrond-go-core/data"
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
-	"github.com/ElrondNetwork/elrond-go-core/data/outport"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/elrond-go/outport/notifier"
+	"github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
 
 func main() {
-	args := notifier.HTTPClientWrapperArgs{
+	args := HTTPClientWrapperArgs{
 		UseAuthorization:  false,
 		BaseUrl:           "http://localhost:5000",
 		RequestTimeoutSec: 10,
 	}
-	httpClient, err := notifier.NewHTTPWrapperClient(args)
+	httpClient, err := NewHTTPWrapperClient(args)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	data := &outport.ArgsSaveBlockData{
+	data := getShardV1Data()
+
+	err = httpClient.Post("/events/push", data)
+	if err != nil {
+		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
+		return
+	}
+
+	fmt.Println(data)
+}
+
+func getShardV1Data() *outport.ArgsSaveBlockData {
+	return &outport.ArgsSaveBlockData{
 		HeaderHash: []byte("hash2"),
 		Body: &block.Body{
 			MiniBlocks: []*block.MiniBlock{
@@ -34,11 +45,9 @@ func main() {
 				},
 			},
 		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
 		},
 		SignersIndexes:         []uint64{},
 		NotarizedHeadersHashes: []string{},
@@ -70,12 +79,4 @@ func main() {
 		},
 		NumberOfShards: 2,
 	}
-
-	err = httpClient.Post("/events/push", data)
-	if err != nil {
-		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
-		return
-	}
-
-	fmt.Println(data)
 }
