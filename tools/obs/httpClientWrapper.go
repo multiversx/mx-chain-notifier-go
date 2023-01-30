@@ -15,6 +15,9 @@ import (
 var log = logger.GetOrCreate("main")
 
 var errInvalidValue = errors.New("invalid value")
+var errEmptyUsername = errors.New("empty username provided")
+var errEmptyBaseUrl = errors.New("empty url provided")
+var errEmptyPassword = errors.New("empty password provided")
 
 const (
 	minRequestTimeoutSec = 1
@@ -59,8 +62,19 @@ func NewHTTPWrapperClient(args HTTPClientWrapperArgs) (*httpClientWrapper, error
 }
 
 func checkArgs(args HTTPClientWrapperArgs) error {
+	if args.BaseUrl == "" {
+		return errEmptyBaseUrl
+	}
 	if args.RequestTimeoutSec < minRequestTimeoutSec {
 		return fmt.Errorf("%w, provided: %v, minimum: %v", errInvalidValue, args.RequestTimeoutSec, minRequestTimeoutSec)
+	}
+	if args.UseAuthorization {
+		if args.Username == "" {
+			return errEmptyUsername
+		}
+		if args.Password == "" {
+			return errEmptyPassword
+		}
 	}
 
 	return nil
