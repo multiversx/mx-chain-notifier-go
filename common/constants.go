@@ -23,8 +23,8 @@ const (
 	// PushLogsAndEvents defines the subscription event type for pushing block events
 	PushLogsAndEvents string = "all_events"
 
-	// PushBlockEvents defines the subscription event type for block info with logs and events
-	PushBlockEvents string = "block_events"
+	// BlockEvents defines the subscription event type for block info with logs and events
+	BlockEvents string = "block_events"
 
 	// RevertBlockEvents defines the subscription event type for revert block
 	RevertBlockEvents string = "revert_events"
@@ -34,9 +34,6 @@ const (
 
 	// BlockTxs defines the subscription event type for block txs
 	BlockTxs string = "block_txs"
-
-	// BlockEventsWithOrder defines the subscription event type for block events with order
-	BlockEventsWithOrder string = "block_events_with_order"
 
 	// BlockScrs defines the subscription event type for block scrs
 	BlockScrs string = "block_scrs"

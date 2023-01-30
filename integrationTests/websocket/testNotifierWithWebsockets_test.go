@@ -117,7 +117,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.BlockEvents,
 			},
 		},
 	}
@@ -132,7 +132,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			TxHash:  "txHash1",
 		},
 	}
-	expBlockEvents := &data.BlockEvents{
+	expBlockEvents := &data.BlockEventsWithOrder{
 		Hash:      hex.EncodeToString(headerHash),
 		ShardID:   1,
 		TimeStamp: 1234,
@@ -474,7 +474,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				EventType: common.PushLogsAndEvents,
 			},
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.BlockEvents,
 			},
 			{
 				EventType: common.RevertBlockEvents,
@@ -545,11 +545,13 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs: expScrs,
 	}
 
-	expBlockEvents := data.BlockEvents{
+	expBlockEvents := data.BlockEventsWithOrder{
 		Hash:      hex.EncodeToString(blockHash),
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
+		Txs:       txs,
+		Scrs:      scrs,
 	}
 
 	saveBlockData := data.ArgsSaveBlockData{
@@ -608,8 +610,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, revertBlock, event)
 				wg.Done()
-			case common.PushBlockEvents:
-				var event data.BlockEvents
+			case common.BlockEvents:
+				var event data.BlockEventsWithOrder
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, expBlockEvents, event)
 				wg.Done()

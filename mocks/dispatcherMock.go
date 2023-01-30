@@ -1,9 +1,9 @@
 package mocks
 
 import (
+	"github.com/google/uuid"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
-	"github.com/google/uuid"
 )
 
 // DispatcherMock -
@@ -33,7 +33,7 @@ func (d *DispatcherMock) PushEvents(events []data.Event) {
 }
 
 // BlockEvents -
-func (d *DispatcherMock) BlockEvents(event data.BlockEvents) {
+func (d *DispatcherMock) BlockEvents(event data.BlockEventsWithOrder) {
 }
 
 // RevertEvent -
@@ -46,10 +46,6 @@ func (d *DispatcherMock) FinalizedEvent(event data.FinalizedBlock) {
 
 // TxsEvent -
 func (d *DispatcherMock) TxsEvent(event data.BlockTxs) {
-}
-
-// BlockEventsWithOrder -
-func (d *DispatcherMock) BlockEventsWithOrder(event data.BlockEventsWithOrder) {
 }
 
 // ScrsEvent -

@@ -5,10 +5,17 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
+
+// logEvent defines a log event associated with corresponding tx hash
+type logEvent struct {
+	EventHandler nodeData.EventHandler
+	TxHash       string
+}
 
 // ArgsEventsInterceptor defines the arguments needed for creating an events interceptor instance
 type ArgsEventsInterceptor struct {
@@ -70,7 +77,7 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogData) []data.Event {
-	var logEvents []*data.LogEvent
+	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {
 			continue
@@ -80,7 +87,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogDa
 		}
 
 		for _, eventHandler := range logData.LogHandler.GetLogEvents() {
-			le := &data.LogEvent{
+			le := &logEvent{
 				EventHandler: eventHandler,
 				TxHash:       logData.TxHash,
 			}

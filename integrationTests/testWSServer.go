@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gorilla/websocket"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
-	"github.com/gorilla/websocket"
 )
 
 type wsClient struct {
@@ -83,7 +83,7 @@ func (ws *wsClient) ReceiveEvents() ([]data.Event, error) {
 }
 
 // ReceiveEvents will try to receive events
-func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEvents, error) {
+func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEventsWithOrder, error) {
 	m, err := ws.ReadMessage()
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEvents, error) {
 		return nil, err
 	}
 
-	var blockData data.BlockEvents
+	var blockData data.BlockEventsWithOrder
 	err = json.Unmarshal(reply.Data, &blockData)
 	if err != nil {
 		return nil, err

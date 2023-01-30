@@ -4,13 +4,13 @@ import (
 	"context"
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/filters"
-	"github.com/google/uuid"
 )
 
 var log = logger.GetOrCreate("hub")
@@ -193,38 +193,12 @@ func (ch *commonHub) handleBroadcast(blockEvents data.BlockEvents) {
 	subscriptions := ch.subscriptionMapper.Subscriptions()
 
 	for _, subscription := range subscriptions {
-		switch subscription.EventType {
-		case common.PushLogsAndEvents:
-			ch.handlePushBlockEvents(blockEvents, subscription)
-		case common.PushBlockEvents:
-			ch.handlePushBlockEventsFull(blockEvents, subscription)
-		default:
+		if subscription.EventType != common.PushLogsAndEvents {
 			continue
 		}
-	}
-}
 
-func (ch *commonHub) handlePushBlockEventsFull(blockEvents data.BlockEvents, subscription data.Subscription) {
-	events := make([]data.Event, 0)
-	for _, event := range blockEvents.Events {
-		if ch.filter.MatchEvent(subscription, event) {
-			events = append(events, event)
-		}
+		ch.handlePushBlockEvents(blockEvents, subscription)
 	}
-
-	blockEventsData := data.BlockEvents{
-		Hash:      blockEvents.Hash,
-		ShardID:   blockEvents.ShardID,
-		TimeStamp: blockEvents.TimeStamp,
-		Events:    events,
-	}
-
-	ch.mutDispatchers.RLock()
-	d, ok := ch.dispatchers[subscription.DispatcherID]
-	if ok {
-		d.BlockEvents(blockEventsData)
-	}
-	ch.mutDispatchers.RUnlock()
 }
 
 func (ch *commonHub) handlePushBlockEvents(blockEvents data.BlockEvents, subscription data.Subscription) {
@@ -315,7 +289,7 @@ func (ch *commonHub) handleBlockEventsWithOrderBroadcast(blockTxs data.BlockEven
 	dispatchersMap := make(map[uuid.UUID]data.BlockEventsWithOrder)
 
 	for _, subscription := range subscriptions {
-		if subscription.EventType != common.BlockEventsWithOrder {
+		if subscription.EventType != common.BlockEvents {
 			continue
 		}
 
@@ -326,7 +300,7 @@ func (ch *commonHub) handleBlockEventsWithOrderBroadcast(blockTxs data.BlockEven
 	defer ch.mutDispatchers.RUnlock()
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
-			d.BlockEventsWithOrder(event)
+			d.BlockEvents(event)
 		}
 	}
 }

@@ -166,41 +166,6 @@ func TestPushEvents(t *testing.T) {
 	require.Equal(t, expectedEventBytes, eventsData)
 }
 
-func TestBlockEvents(t *testing.T) {
-	t.Parallel()
-
-	args := createMockWSDispatcherArgs()
-	wd, err := ws.NewTestWSDispatcher(args)
-	require.Nil(t, err)
-
-	events := []data.Event{
-		{
-			Address:    "addr1",
-			Identifier: "id1",
-		},
-	}
-	blockData := data.BlockEvents{
-		Hash:      "hash1",
-		ShardID:   1,
-		TimeStamp: 1234,
-		Events:    events,
-	}
-	blockDataBytes, err := json.Marshal(blockData)
-	require.Nil(t, err)
-
-	wd.BlockEvents(blockData)
-
-	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEvents,
-		Data: blockDataBytes,
-	}
-	expectedEventBytes, _ := json.Marshal(wsEvent)
-
-	eventsData := wd.ReadSendChannel()
-
-	require.Equal(t, expectedEventBytes, eventsData)
-}
-
 func TestBlockEventsWithOrder(t *testing.T) {
 	t.Parallel()
 
@@ -225,10 +190,10 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	blockDataBytes, err := json.Marshal(blockData)
 	require.Nil(t, err)
 
-	wd.BlockEventsWithOrder(blockData)
+	wd.BlockEvents(blockData)
 
 	wsEvent := &data.WSEvent{
-		Type: common.BlockEventsWithOrder,
+		Type: common.BlockEvents,
 		Data: blockDataBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)
