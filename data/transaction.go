@@ -82,21 +82,17 @@ type SaveBlockData struct {
 	LogEvents []Event                                             `json:"events"`
 }
 
-<<<<<<< HEAD
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
 	Hash      string
-	Body      *block.Body
-	Header    *block.HeaderV2
-	Txs       map[string]transaction.Transaction
-	Scrs      map[string]smartContractResult.SmartContractResult
+	Body      nodeData.BodyHandler
+	Header    nodeData.HeaderHandler
+	Txs       map[string]*transaction.Transaction
+	Scrs      map[string]*smartContractResult.SmartContractResult
 	LogEvents []Event
 }
 
-// ArgsSaveBlockData will contain all information that are needed to save block data
-=======
 // ArgsSaveBlockData holds the block data that will be received on push events
->>>>>>> main
 type ArgsSaveBlockData struct {
 	HeaderHash             []byte
 	Body                   nodeData.BodyHandler

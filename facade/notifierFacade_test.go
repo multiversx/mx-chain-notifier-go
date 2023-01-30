@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -92,6 +93,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte("blockHash"),
+			Header:     &block.HeaderV2{},
 		}
 		err = facade.HandlePushEventsV2(blockData)
 		require.Equal(t, expectedErr, err)
@@ -133,6 +135,11 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
+		header := &block.HeaderV2{
+			Header: &block.Header{
+				ShardID: 2,
+			},
+		}
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte(blockHash),
 			TransactionsPool: &data.TransactionsPool{
@@ -140,6 +147,7 @@ func TestHandlePushEvents(t *testing.T) {
 				Scrs: scrs,
 				Logs: logData,
 			},
+			Header: &block.HeaderV2{},
 		}
 
 		expTxs := map[string]*transaction.Transaction{
@@ -162,8 +170,9 @@ func TestHandlePushEvents(t *testing.T) {
 			Scrs: expScrs,
 		}
 		expLogEvents := data.BlockEvents{
-			Hash:   blockHash,
-			Events: logEvents,
+			Hash:    blockHash,
+			Events:  logEvents,
+			ShardID: 2,
 		}
 
 		pushWasCalled := false
@@ -188,6 +197,7 @@ func TestHandlePushEvents(t *testing.T) {
 			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return &data.InterceptorBlockData{
 					Hash:      blockHash,
+					Header:    header,
 					Txs:       expTxs,
 					Scrs:      expScrs,
 					LogEvents: logEvents,

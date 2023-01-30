@@ -6,21 +6,12 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/integrationTests"
-=======
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
->>>>>>> main
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -94,12 +85,6 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 		},
 		Body: &block.Body{
 			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
 		},
 	}
 	saveBlockData := &data.ArgsSaveBlock{

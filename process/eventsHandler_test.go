@@ -242,7 +242,7 @@ func TestHandleTxsEvents(t *testing.T) {
 
 		blockTxs := data.BlockTxs{
 			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
+			Txs: map[string]*transaction.Transaction{
 				"hash1": {
 					Nonce: 1,
 				},
@@ -295,20 +295,7 @@ func TestHandleTxsEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-<<<<<<< HEAD
 		eventsHandler.HandleBlockTxs(blockTxs)
-=======
-		events := data.BlockTxs{
-			Hash: "hash1",
-			Txs: map[string]*transaction.Transaction{
-				"hash1": {
-					Nonce: 1,
-				},
-			},
-		}
-
-		eventsHandler.HandleBlockTxs(events)
->>>>>>> main
 		require.False(t, wasCalled)
 	})
 }
@@ -321,7 +308,7 @@ func TestHandleScrsEvents(t *testing.T) {
 
 		blockScrs := data.BlockScrs{
 			Hash: "hash1",
-			Scrs: map[string]smartContractResult.SmartContractResult{
+			Scrs: map[string]*smartContractResult.SmartContractResult{
 				"hash2": {
 					Nonce: 2,
 				},
@@ -340,20 +327,7 @@ func TestHandleScrsEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-<<<<<<< HEAD
 		eventsHandler.HandleBlockScrs(blockScrs)
-=======
-		events := data.BlockScrs{
-			Hash: "hash1",
-			Scrs: map[string]*smartContractResult.SmartContractResult{
-				"hash2": {
-					Nonce: 2,
-				},
-			},
-		}
-
-		eventsHandler.HandleBlockScrs(events)
->>>>>>> main
 		require.True(t, wasCalled)
 	})
 
