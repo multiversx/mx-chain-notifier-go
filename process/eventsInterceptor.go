@@ -41,14 +41,14 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
-	txs := make(map[string]transaction.Transaction)
+	txs := make(map[string]*transaction.Transaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
-		txs[hash] = tx.Transaction
+		txs[hash] = tx.TransactionHandler
 	}
 
-	scrs := make(map[string]smartContractResult.SmartContractResult)
+	scrs := make(map[string]*smartContractResult.SmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
-		scrs[hash] = scr.SmartContractResult
+		scrs[hash] = scr.TransactionHandler
 	}
 
 	return &data.SaveBlockData{
@@ -72,7 +72,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogDa
 		for _, eventHandler := range logData.LogHandler.GetLogEvents() {
 			le := &data.LogEvent{
 				EventHandler: eventHandler,
-				TxHash:       hex.EncodeToString([]byte(logData.TxHash)),
+				TxHash:       logData.TxHash,
 			}
 
 			logEvents = append(logEvents, le)

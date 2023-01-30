@@ -245,7 +245,7 @@ func TestHandleTxsEvents(t *testing.T) {
 
 		events := data.BlockTxs{
 			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
+			Txs: map[string]*transaction.Transaction{
 				"hash1": {
 					Nonce: 1,
 				},
@@ -278,7 +278,7 @@ func TestHandleTxsEvents(t *testing.T) {
 
 		events := data.BlockTxs{
 			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
+			Txs: map[string]*transaction.Transaction{
 				"hash1": {
 					Nonce: 1,
 				},
@@ -309,7 +309,7 @@ func TestHandleScrsEvents(t *testing.T) {
 
 		events := data.BlockScrs{
 			Hash: "hash1",
-			Scrs: map[string]smartContractResult.SmartContractResult{
+			Scrs: map[string]*smartContractResult.SmartContractResult{
 				"hash2": {
 					Nonce: 2,
 				},
@@ -342,7 +342,7 @@ func TestHandleScrsEvents(t *testing.T) {
 
 		events := data.BlockScrs{
 			Hash: "hash1",
-			Scrs: map[string]smartContractResult.SmartContractResult{
+			Scrs: map[string]*smartContractResult.SmartContractResult{
 				"hash2": {
 					Nonce: 2,
 				},

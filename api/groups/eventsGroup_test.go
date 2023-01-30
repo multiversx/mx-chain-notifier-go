@@ -85,12 +85,12 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		blockEvents := &data.SaveBlockData{
 			Hash: "hash1",
-			Txs: map[string]transaction.Transaction{
+			Txs: map[string]*transaction.Transaction{
 				"hash2": {
 					Nonce: 2,
 				},
 			},
-			Scrs: map[string]smartContractResult.SmartContractResult{
+			Scrs: map[string]*smartContractResult.SmartContractResult{
 				"hash3": {
 					Nonce: 3,
 				},
@@ -133,7 +133,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 			TransactionsPool: &data.TransactionsPool{
 				Txs: map[string]data.TransactionWithOrder{
 					"hash2": {
-						Transaction: transaction.Transaction{
+						TransactionHandler: &transaction.Transaction{
 							Nonce: 2,
 						},
 						ExecutionOrder: 1,
@@ -141,7 +141,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 				},
 				Scrs: map[string]data.SmartContractResultWithOrder{
 					"hash3": {
-						SmartContractResult: smartContractResult.SmartContractResult{
+						TransactionHandler: &smartContractResult.SmartContractResult{
 							Nonce: 3,
 						},
 						ExecutionOrder: 1,
