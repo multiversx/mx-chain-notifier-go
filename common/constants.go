@@ -35,6 +35,9 @@ const (
 	// BlockTxs defines the subscription event type for block txs
 	BlockTxs string = "block_txs"
 
+	// BlockEventsWithOrder defines the subscription event type for block events with order
+	BlockEventsWithOrder string = "block_events_with_order"
+
 	// BlockScrs defines the subscription event type for block scrs
 	BlockScrs string = "block_scrs"
 )

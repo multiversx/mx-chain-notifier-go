@@ -52,7 +52,7 @@ func TestNewCommonHub(t *testing.T) {
 		args := createMockCommonHubArgs()
 		hub, err := NewCommonHub(args)
 		require.Nil(t, err)
-		require.NotNil(t, hub)
+		require.False(t, hub.IsInterfaceNil())
 	})
 }
 
@@ -329,6 +329,42 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 	}
 
 	hub.BroadcastTxs(blockEvents)
+
+	time.Sleep(time.Millisecond * 100)
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestCommonHub_HandleBlockEventsWithOrderBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.NoError(t, err)
+
+	numCalls := uint32(0)
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		BlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
+			atomic.AddUint32(&numCalls, 1)
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.BlockEventsWithOrder,
+			},
+		},
+	})
+
+	hub.Run()
+	defer hub.Close()
+
+	blockEvents := data.BlockEventsWithOrder{
+		Hash: "hash1",
+	}
+
+	hub.handleBlockEventsWithOrderBroadcast(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 

@@ -168,6 +168,26 @@ func (wd *websocketDispatcher) TxsEvent(event data.BlockTxs) {
 	wd.send <- wsEventBytes
 }
 
+// BlockEventsWithOrder receives a block txs with order event and process it before pushing to socket
+func (wd *websocketDispatcher) BlockEventsWithOrder(event data.BlockEventsWithOrder) {
+	eventBytes, err := json.Marshal(event)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+	wsEvent := &data.WSEvent{
+		Type: common.BlockEventsWithOrder,
+		Data: eventBytes,
+	}
+	wsEventBytes, err := json.Marshal(wsEvent)
+	if err != nil {
+		log.Error("failure marshalling events", "err", err.Error())
+		return
+	}
+
+	wd.send <- wsEventBytes
+}
+
 // ScrsEvent receives a block scrs event and process it before pushing to socket
 func (wd *websocketDispatcher) ScrsEvent(event data.BlockScrs) {
 	eventBytes, err := json.Marshal(event)

@@ -22,19 +22,20 @@ type ArgsCommonHub struct {
 }
 
 type commonHub struct {
-	filter             filters.EventFilter
-	subscriptionMapper dispatcher.SubscriptionMapperHandler
-	mutDispatchers     sync.RWMutex
-	dispatchers        map[uuid.UUID]dispatcher.EventDispatcher
-	register           chan dispatcher.EventDispatcher
-	unregister         chan dispatcher.EventDispatcher
-	broadcast          chan data.BlockEvents
-	broadcastRevert    chan data.RevertBlock
-	broadcastFinalized chan data.FinalizedBlock
-	broadcastTxs       chan data.BlockTxs
-	broadcastScrs      chan data.BlockScrs
-	closeChan          chan struct{}
-	cancelFunc         func()
+	filter                        filters.EventFilter
+	subscriptionMapper            dispatcher.SubscriptionMapperHandler
+	mutDispatchers                sync.RWMutex
+	dispatchers                   map[uuid.UUID]dispatcher.EventDispatcher
+	register                      chan dispatcher.EventDispatcher
+	unregister                    chan dispatcher.EventDispatcher
+	broadcast                     chan data.BlockEvents
+	broadcastRevert               chan data.RevertBlock
+	broadcastFinalized            chan data.FinalizedBlock
+	broadcastTxs                  chan data.BlockTxs
+	broadcastBlockEventsWithOrder chan data.BlockEventsWithOrder
+	broadcastScrs                 chan data.BlockScrs
+	closeChan                     chan struct{}
+	cancelFunc                    func()
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -45,18 +46,19 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 	}
 
 	return &commonHub{
-		mutDispatchers:     sync.RWMutex{},
-		filter:             args.Filter,
-		subscriptionMapper: args.SubscriptionMapper,
-		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
-		register:           make(chan dispatcher.EventDispatcher),
-		unregister:         make(chan dispatcher.EventDispatcher),
-		broadcast:          make(chan data.BlockEvents),
-		broadcastRevert:    make(chan data.RevertBlock),
-		broadcastFinalized: make(chan data.FinalizedBlock),
-		broadcastTxs:       make(chan data.BlockTxs),
-		broadcastScrs:      make(chan data.BlockScrs),
-		closeChan:          make(chan struct{}),
+		mutDispatchers:                sync.RWMutex{},
+		filter:                        args.Filter,
+		subscriptionMapper:            args.SubscriptionMapper,
+		dispatchers:                   make(map[uuid.UUID]dispatcher.EventDispatcher),
+		register:                      make(chan dispatcher.EventDispatcher),
+		unregister:                    make(chan dispatcher.EventDispatcher),
+		broadcast:                     make(chan data.BlockEvents),
+		broadcastRevert:               make(chan data.RevertBlock),
+		broadcastFinalized:            make(chan data.FinalizedBlock),
+		broadcastTxs:                  make(chan data.BlockTxs),
+		broadcastBlockEventsWithOrder: make(chan data.BlockEventsWithOrder),
+		broadcastScrs:                 make(chan data.BlockScrs),
+		closeChan:                     make(chan struct{}),
 	}, nil
 }
 
@@ -97,6 +99,9 @@ func (ch *commonHub) run(ctx context.Context) {
 
 		case txsEvent := <-ch.broadcastTxs:
 			ch.handleTxsBroadcast(txsEvent)
+
+		case txsEvent := <-ch.broadcastBlockEventsWithOrder:
+			ch.handleBlockEventsWithOrderBroadcast(txsEvent)
 
 		case scrsEvent := <-ch.broadcastScrs:
 			ch.handleScrsBroadcast(scrsEvent)
@@ -156,6 +161,14 @@ func (ch *commonHub) BroadcastTxs(event data.BlockTxs) {
 func (ch *commonHub) BroadcastScrs(event data.BlockScrs) {
 	select {
 	case ch.broadcastScrs <- event:
+	case <-ch.closeChan:
+	}
+}
+
+// BroadcastBlockEventsWithOrder handles full block events pushed by producers into the channel
+func (ch *commonHub) BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) {
+	select {
+	case ch.broadcastBlockEventsWithOrder <- event:
 	case <-ch.closeChan:
 	}
 }
@@ -292,6 +305,28 @@ func (ch *commonHub) handleTxsBroadcast(blockTxs data.BlockTxs) {
 	for id, event := range dispatchersMap {
 		if d, ok := ch.dispatchers[id]; ok {
 			d.TxsEvent(event)
+		}
+	}
+}
+
+func (ch *commonHub) handleBlockEventsWithOrderBroadcast(blockTxs data.BlockEventsWithOrder) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockEventsWithOrder)
+
+	for _, subscription := range subscriptions {
+		if subscription.EventType != common.BlockEventsWithOrder {
+			continue
+		}
+
+		dispatchersMap[subscription.DispatcherID] = blockTxs
+	}
+
+	ch.mutDispatchers.RLock()
+	defer ch.mutDispatchers.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.BlockEventsWithOrder(event)
 		}
 	}
 }

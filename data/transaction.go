@@ -63,8 +63,24 @@ type FinalizedBlock struct {
 // BlockTxs holds the block transactions
 // TODO: set transaction with order here also
 type BlockTxs struct {
+<<<<<<< HEAD
 	Hash string                              `json:"hash"`
 	Txs  map[string]*transaction.Transaction `json:"txs"`
+=======
+	Hash   string                             `json:"hash"`
+	Txs    map[string]transaction.Transaction `json:"txs"`
+	Events []Event                            `json:"events"`
+}
+
+// BlockEventsWithOrder holds the block transactions with order
+type BlockEventsWithOrder struct {
+	Hash      string                                  `json:"hash"`
+	ShardID   uint32                                  `json:"shardID"`
+	TimeStamp uint64                                  `json:"timestamp"`
+	Txs       map[string]TransactionWithOrder         `json:"txs"`
+	Scrs      map[string]SmartContractResultWithOrder `json:"scrs"`
+	Events    []Event                                 `json:"events"`
+>>>>>>> feat/save-block-data-improvements
 }
 
 // BlockScrs holds the block smart contract results
@@ -84,12 +100,23 @@ type SaveBlockData struct {
 
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
+<<<<<<< HEAD
 	Hash      string
 	Body      nodeData.BodyHandler
 	Header    nodeData.HeaderHandler
 	Txs       map[string]*transaction.Transaction
 	Scrs      map[string]*smartContractResult.SmartContractResult
 	LogEvents []Event
+=======
+	Hash          string
+	Body          *block.Body
+	Header        *block.HeaderV2
+	Txs           map[string]transaction.Transaction
+	TxsWithOrder  map[string]TransactionWithOrder
+	Scrs          map[string]smartContractResult.SmartContractResult
+	ScrsWithOrder map[string]SmartContractResultWithOrder
+	LogEvents     []Event
+>>>>>>> feat/save-block-data-improvements
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events
