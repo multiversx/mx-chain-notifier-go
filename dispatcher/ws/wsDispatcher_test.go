@@ -6,18 +6,11 @@ import (
 	"io"
 	"testing"
 
-<<<<<<< HEAD
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher/ws"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
-=======
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
-	"github.com/ElrondNetwork/notifier-go/mocks"
->>>>>>> feat/save-block-data-improvements
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -217,7 +210,7 @@ func TestBlockEventsWithOrder(t *testing.T) {
 
 	txs := map[string]data.TransactionWithOrder{
 		"txHash1": {
-			Transaction: transaction.Transaction{
+			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},
 			ExecutionOrder: 1,

@@ -176,10 +176,11 @@ func TestHandlePushEvents(t *testing.T) {
 			ShardID: 2,
 		}
 		expTxsWithOrderData := data.BlockEventsWithOrder{
-			Hash:   blockHash,
-			Txs:    txs,
-			Scrs:   scrs,
-			Events: logEvents,
+			Hash:    blockHash,
+			ShardID: 2,
+			Txs:     txs,
+			Scrs:    scrs,
+			Events:  logEvents,
 		}
 
 		pushWasCalled := false
@@ -208,20 +209,13 @@ func TestHandlePushEvents(t *testing.T) {
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
 			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return &data.InterceptorBlockData{
-<<<<<<< HEAD
-					Hash:      blockHash,
-					Header:    header,
-					Txs:       expTxs,
-					Scrs:      expScrs,
-					LogEvents: logEvents,
-=======
 					Hash:          blockHash,
+					Header:        header,
 					Txs:           expTxs,
 					Scrs:          expScrs,
 					LogEvents:     logEvents,
 					TxsWithOrder:  txs,
 					ScrsWithOrder: scrs,
->>>>>>> feat/save-block-data-improvements
 				}, nil
 			},
 		}
