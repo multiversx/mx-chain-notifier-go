@@ -365,6 +365,66 @@ func TestHandleScrsEvents(t *testing.T) {
 	})
 }
 
+func TestHandleBlockEventsWithOrderEvents(t *testing.T) {
+	t.Parallel()
+
+	events := data.BlockEventsWithOrder{
+		Hash: "hash1",
+		Txs: map[string]data.TransactionWithOrder{
+			"hash1": {
+				Transaction: transaction.Transaction{
+					Nonce: 1,
+				},
+				ExecutionOrder: 2,
+			},
+		},
+	}
+
+	t.Run("broadcast block events with order event was called", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
+				require.Equal(t, events, events)
+				wasCalled = true
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		eventsHandler.HandleBlockEventsWithOrder(events)
+		require.True(t, wasCalled)
+	})
+
+	t.Run("check duplicates enabled, should not process event", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockEventsHandlerArgs()
+		args.Config.CheckDuplicates = true
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
+				require.Equal(t, events, events)
+				wasCalled = true
+			},
+		}
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return false, nil
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		eventsHandler.HandleBlockEventsWithOrder(events)
+		require.False(t, wasCalled)
+	})
+}
+
 func TestTryCheckProcessedWithRetry(t *testing.T) {
 	t.Parallel()
 

@@ -36,6 +36,7 @@ type RabbitMQConfig struct {
 	FinalizedEventsExchange RabbitMQExchangeConfig
 	BlockTxsExchange        RabbitMQExchangeConfig
 	BlockScrsExchange       RabbitMQExchangeConfig
+	BlockEventsExchange     RabbitMQExchangeConfig
 }
 
 // RabbitMQExchangeConfig holds the configuration for a rabbitMQ exchange

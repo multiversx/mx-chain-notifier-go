@@ -167,11 +167,13 @@ func TestProcessBlockEvents(t *testing.T) {
 		}
 
 		expEvents := &data.InterceptorBlockData{
-			Hash:   hex.EncodeToString(blockHash),
-			Body:   blockBody,
-			Header: blockHeader,
-			Txs:    expTxs,
-			Scrs:   expScrs,
+			Hash:          hex.EncodeToString(blockHash),
+			Body:          blockBody,
+			Header:        blockHeader,
+			Txs:           expTxs,
+			TxsWithOrder:  txs,
+			Scrs:          expScrs,
+			ScrsWithOrder: scrs,
 			LogEvents: []data.Event{
 				{
 					Address: hex.EncodeToString(addr),

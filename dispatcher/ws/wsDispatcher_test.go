@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
 	"github.com/ElrondNetwork/notifier-go/common"
 	"github.com/ElrondNetwork/notifier-go/data"
 	"github.com/ElrondNetwork/notifier-go/dispatcher/ws"
@@ -191,6 +192,43 @@ func TestBlockEvents(t *testing.T) {
 
 	wsEvent := &data.WSEvent{
 		Type: common.PushBlockEvents,
+		Data: blockDataBytes,
+	}
+	expectedEventBytes, _ := json.Marshal(wsEvent)
+
+	eventsData := wd.ReadSendChannel()
+
+	require.Equal(t, expectedEventBytes, eventsData)
+}
+
+func TestBlockEventsWithOrder(t *testing.T) {
+	t.Parallel()
+
+	args := createMockWSDispatcherArgs()
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	txs := map[string]data.TransactionWithOrder{
+		"txHash1": {
+			Transaction: transaction.Transaction{
+				Nonce: 1,
+			},
+			ExecutionOrder: 1,
+		},
+	}
+	blockData := data.BlockEventsWithOrder{
+		Hash:      "hash1",
+		ShardID:   1,
+		TimeStamp: 1234,
+		Txs:       txs,
+	}
+	blockDataBytes, err := json.Marshal(blockData)
+	require.Nil(t, err)
+
+	wd.BlockEventsWithOrder(blockData)
+
+	wsEvent := &data.WSEvent{
+		Type: common.BlockEventsWithOrder,
 		Data: blockDataBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)

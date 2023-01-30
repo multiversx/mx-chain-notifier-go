@@ -27,11 +27,12 @@ type rabbitMqPublisher struct {
 	client RabbitMqClient
 	cfg    config.RabbitMQConfig
 
-	broadcast          chan data.BlockEvents
-	broadcastRevert    chan data.RevertBlock
-	broadcastFinalized chan data.FinalizedBlock
-	broadcastTxs       chan data.BlockTxs
-	broadcastScrs      chan data.BlockScrs
+	broadcast                     chan data.BlockEvents
+	broadcastRevert               chan data.RevertBlock
+	broadcastFinalized            chan data.FinalizedBlock
+	broadcastTxs                  chan data.BlockTxs
+	broadcastBlockEventsWithOrder chan data.BlockEventsWithOrder
+	broadcastScrs                 chan data.BlockScrs
 
 	cancelFunc func()
 	closeChan  chan struct{}
@@ -45,14 +46,15 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 	}
 
 	rp := &rabbitMqPublisher{
-		broadcast:          make(chan data.BlockEvents),
-		broadcastRevert:    make(chan data.RevertBlock),
-		broadcastFinalized: make(chan data.FinalizedBlock),
-		broadcastTxs:       make(chan data.BlockTxs),
-		broadcastScrs:      make(chan data.BlockScrs),
-		cfg:                args.Config,
-		client:             args.Client,
-		closeChan:          make(chan struct{}),
+		broadcast:                     make(chan data.BlockEvents),
+		broadcastRevert:               make(chan data.RevertBlock),
+		broadcastFinalized:            make(chan data.FinalizedBlock),
+		broadcastTxs:                  make(chan data.BlockTxs),
+		broadcastScrs:                 make(chan data.BlockScrs),
+		broadcastBlockEventsWithOrder: make(chan data.BlockEventsWithOrder),
+		cfg:                           args.Config,
+		client:                        args.Client,
+		closeChan:                     make(chan struct{}),
 	}
 
 	err = rp.createExchanges()
@@ -98,6 +100,12 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 	if args.Config.BlockScrsExchange.Type == "" {
 		return ErrInvalidRabbitMqExchangeType
 	}
+	if args.Config.BlockEventsExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.BlockEventsExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
 
 	return nil
 }
@@ -121,6 +129,10 @@ func (rp *rabbitMqPublisher) createExchanges() error {
 		return err
 	}
 	err = rp.createExchange(rp.cfg.BlockScrsExchange)
+	if err != nil {
+		return err
+	}
+	err = rp.createExchange(rp.cfg.BlockEventsExchange)
 	if err != nil {
 		return err
 	}
@@ -163,6 +175,8 @@ func (rp *rabbitMqPublisher) run(ctx context.Context) {
 			rp.publishTxsToExchange(blockTxs)
 		case blockScrs := <-rp.broadcastScrs:
 			rp.publishScrsToExchange(blockScrs)
+		case blockEvents := <-rp.broadcastBlockEventsWithOrder:
+			rp.publishBlockEventsWithOrderToExchange(blockEvents)
 		case err := <-rp.client.ConnErrChan():
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())
@@ -213,6 +227,14 @@ func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
 func (rp *rabbitMqPublisher) BroadcastScrs(events data.BlockScrs) {
 	select {
 	case rp.broadcastScrs <- events:
+	case <-rp.closeChan:
+	}
+}
+
+// BroadcastBlockEventsWithOrder will handle the full block events pushed by producers and sends them to rabbitMQ channel
+func (rp *rabbitMqPublisher) BroadcastBlockEventsWithOrder(events data.BlockEventsWithOrder) {
+	select {
+	case rp.broadcastBlockEventsWithOrder <- events:
 	case <-rp.closeChan:
 	}
 }
@@ -279,6 +301,19 @@ func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
 	err = rp.publishFanout(rp.cfg.BlockScrsExchange.Name, scrsBlockBytes)
 	if err != nil {
 		log.Error("failed to publish block scrs event to rabbitMQ", "err", err.Error())
+	}
+}
+
+func (rp *rabbitMqPublisher) publishBlockEventsWithOrderToExchange(blockTxs data.BlockEventsWithOrder) {
+	txsBlockBytes, err := json.Marshal(blockTxs)
+	if err != nil {
+		log.Error("could not marshal block txs event", "err", err.Error())
+		return
+	}
+
+	err = rp.publishFanout(rp.cfg.BlockEventsExchange.Name, txsBlockBytes)
+	if err != nil {
+		log.Error("failed to publish full block events to rabbitMQ", "err", err.Error())
 	}
 }
 
