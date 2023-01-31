@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	logger "github.com/ElrondNetwork/elrond-go-logger"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/streadway/amqp"
 )
 

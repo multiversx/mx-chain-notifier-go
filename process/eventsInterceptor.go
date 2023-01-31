@@ -3,11 +3,11 @@ package process
 import (
 	"encoding/hex"
 
-	"github.com/ElrondNetwork/elrond-go-core/core"
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // ArgsEventsInterceptor defines the arguments needed for creating an events interceptor instance
@@ -47,14 +47,14 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
-	txs := make(map[string]transaction.Transaction)
+	txs := make(map[string]*transaction.Transaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
-		txs[hash] = tx.Transaction
+		txs[hash] = tx.TransactionHandler
 	}
 
-	scrs := make(map[string]smartContractResult.SmartContractResult)
+	scrs := make(map[string]*smartContractResult.SmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
-		scrs[hash] = scr.SmartContractResult
+		scrs[hash] = scr.TransactionHandler
 	}
 
 	return &data.InterceptorBlockData{
@@ -82,7 +82,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogDa
 		for _, eventHandler := range logData.LogHandler.GetLogEvents() {
 			le := &data.LogEvent{
 				EventHandler: eventHandler,
-				TxHash:       hex.EncodeToString([]byte(logData.TxHash)),
+				TxHash:       logData.TxHash,
 			}
 
 			logEvents = append(logEvents, le)

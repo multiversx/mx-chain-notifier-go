@@ -6,12 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/integrationTests"
+	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -49,12 +49,19 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.ArgsSaveBlockData{
+	blockEvents := data.ArgsSaveBlockData{
 		HeaderHash: []byte("hash1"),
+		Header: &block.HeaderV2{
+			Header: &block.Header{
+				Nonce:     1,
+				ShardID:   2,
+				TimeStamp: 1234,
+			},
+		},
 		TransactionsPool: &data.TransactionsPool{
 			Txs: map[string]data.TransactionWithOrder{
 				"txHash1": {
-					Transaction: transaction.Transaction{
+					TransactionHandler: &transaction.Transaction{
 						Nonce: 1,
 					},
 					ExecutionOrder: 1,
@@ -62,7 +69,7 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 			},
 			Scrs: map[string]data.SmartContractResultWithOrder{
 				"scrHash1": {
-					SmartContractResult: smartContractResult.SmartContractResult{
+					TransactionHandler: &smartContractResult.SmartContractResult{
 						Nonce: 2,
 					},
 				},
@@ -80,15 +87,13 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 		Body: &block.Body{
 			MiniBlocks: make([]*block.MiniBlock, 1),
 		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
-		},
+	}
+	saveBlockData := &data.ArgsSaveBlock{
+		HeaderType:        "HeaderV2",
+		ArgsSaveBlockData: blockEvents,
 	}
 
-	resp := webServer.PushEventsRequest(blockEvents)
+	resp := webServer.PushEventsRequest(saveBlockData)
 
 	mutResponses.Lock()
 	responses[resp.Code]++

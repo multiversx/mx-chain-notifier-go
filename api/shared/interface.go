@@ -3,7 +3,7 @@ package shared
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/gin-gonic/gin"
 )
 

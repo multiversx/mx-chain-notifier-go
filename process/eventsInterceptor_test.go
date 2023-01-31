@@ -4,13 +4,13 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/block"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/mocks"
-	"github.com/ElrondNetwork/notifier-go/process"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/stretchr/testify/require"
 )
 
@@ -107,7 +107,7 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		txs := map[string]data.TransactionWithOrder{
 			"hash2": {
-				Transaction: transaction.Transaction{
+				TransactionHandler: &transaction.Transaction{
 					Nonce: 2,
 				},
 				ExecutionOrder: 1,
@@ -115,7 +115,7 @@ func TestProcessBlockEvents(t *testing.T) {
 		}
 		scrs := map[string]data.SmartContractResultWithOrder{
 			"hash3": {
-				SmartContractResult: smartContractResult.SmartContractResult{
+				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 3,
 				},
 				ExecutionOrder: 1,
@@ -155,12 +155,12 @@ func TestProcessBlockEvents(t *testing.T) {
 			},
 		}
 
-		expTxs := map[string]transaction.Transaction{
+		expTxs := map[string]*transaction.Transaction{
 			"hash2": {
 				Nonce: 2,
 			},
 		}
-		expScrs := map[string]smartContractResult.SmartContractResult{
+		expScrs := map[string]*smartContractResult.SmartContractResult{
 			"hash3": {
 				Nonce: 3,
 			},
@@ -239,7 +239,7 @@ func TestGetLogEventsFromTransactionsPool(t *testing.T) {
 	}
 
 	require.Equal(t, len(events), len(receivedEvents))
-	require.Equal(t, hex.EncodeToString([]byte(txHash1)), receivedEvents[0].TxHash)
-	require.Equal(t, hex.EncodeToString([]byte(txHash1)), receivedEvents[1].TxHash)
-	require.Equal(t, hex.EncodeToString([]byte(txHash2)), receivedEvents[2].TxHash)
+	require.Equal(t, txHash1, receivedEvents[0].TxHash)
+	require.Equal(t, txHash1, receivedEvents[1].TxHash)
+	require.Equal(t, txHash2, receivedEvents[2].TxHash)
 }

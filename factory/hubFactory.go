@@ -1,11 +1,11 @@
 package factory
 
 import (
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/disabled"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
-	"github.com/ElrondNetwork/notifier-go/dispatcher/hub"
-	"github.com/ElrondNetwork/notifier-go/filters"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/disabled"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher/hub"
+	"github.com/multiversx/mx-chain-notifier-go/filters"
 )
 
 // CreateHub creates a common hub component

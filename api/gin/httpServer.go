@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	apiErrors "github.com/ElrondNetwork/notifier-go/api/errors"
+	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 )
 
 const contextTimeout = 5 * time.Second

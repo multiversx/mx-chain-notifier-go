@@ -3,7 +3,7 @@ package process
 import (
 	"context"
 
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // LockService defines the behaviour of a lock service component.

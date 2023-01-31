@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
 	"github.com/gorilla/websocket"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 )
 
 const (

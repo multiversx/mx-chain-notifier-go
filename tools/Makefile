@@ -4,7 +4,7 @@ SHELL := $(shell which bash)
 
 obs-run:
 	cd obs && \
-		go run main.go
+		go run main.go httpClientWrapper.go
 
 ws-run:
 	cd wsClient && \

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/google/uuid"
 )
 

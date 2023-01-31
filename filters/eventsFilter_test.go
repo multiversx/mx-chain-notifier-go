@@ -3,8 +3,8 @@ package filters
 import (
 	"testing"
 
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/stretchr/testify/require"
 )
 

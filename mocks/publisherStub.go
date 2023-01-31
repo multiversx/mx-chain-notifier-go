@@ -1,6 +1,6 @@
 package mocks
 
-import "github.com/ElrondNetwork/notifier-go/data"
+import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // PublisherStub implements PublisherService interface
 type PublisherStub struct {

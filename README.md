@@ -1,18 +1,18 @@
-# Elrond events notifier
+# MultiversX events notifier
 
 The notifier service is a component that receives block events synchronously
-from elrond observer nodes, and it forwards them to a subscribing component
+from multiversx observer nodes, and it forwards them to a subscribing component
 (via message queuing service or websockets)
   
 ## Prerequisites
 
 In order to be able to run the notifier proxy and receive data, one 
 has to setup one or multiple observers. For running an observing squad,
-these [docs](https://docs.elrond.com/integrators/observing-squad/) 
+these [docs](https://docs.multiversx.com/integrators/observing-squad/) 
 cover the whole process. 
 
 The required configs for launching an observer/s with a driver attached,
-can be found [here](https://github.com/ElrondNetwork/elrond-go/blob/master/cmd/node/config/external.toml).
+can be found [here](https://github.com/multiversx/mx-chain-go/blob/master/cmd/node/config/external.toml).
 
 The supported config variables are as follows:
 
@@ -79,7 +79,7 @@ The supported config variables are:
 - `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false`.
 - `CheckDuplicates`: if true, it will check (based on a locker service using redis) if the event have been already pushed to clients
   
-The [config](https://github.com/ElrondNetwork/notifier-go/blob/main/cmd/notifier/config/config.toml) file:
+The [config](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml) file:
 
 ```toml
 [ConnectorApi]

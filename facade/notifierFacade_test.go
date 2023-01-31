@@ -6,13 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ElrondNetwork/elrond-go-core/core/check"
-	"github.com/ElrondNetwork/elrond-go-core/data/smartContractResult"
-	"github.com/ElrondNetwork/elrond-go-core/data/transaction"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/data"
-	"github.com/ElrondNetwork/notifier-go/facade"
-	"github.com/ElrondNetwork/notifier-go/mocks"
+	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/facade"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -92,6 +93,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte("blockHash"),
+			Header:     &block.HeaderV2{},
 		}
 		err = facade.HandlePushEventsV2(blockData)
 		require.Equal(t, expectedErr, err)
@@ -105,7 +107,7 @@ func TestHandlePushEvents(t *testing.T) {
 		blockHash := "blockHash1"
 		txs := map[string]data.TransactionWithOrder{
 			"hash1": {
-				Transaction: transaction.Transaction{
+				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
 				},
 				ExecutionOrder: 1,
@@ -113,7 +115,7 @@ func TestHandlePushEvents(t *testing.T) {
 		}
 		scrs := map[string]data.SmartContractResultWithOrder{
 			"hash2": {
-				SmartContractResult: smartContractResult.SmartContractResult{
+				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,
 				},
 			},
@@ -134,6 +136,11 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
+		header := &block.HeaderV2{
+			Header: &block.Header{
+				ShardID: 2,
+			},
+		}
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte(blockHash),
 			TransactionsPool: &data.TransactionsPool{
@@ -141,14 +148,15 @@ func TestHandlePushEvents(t *testing.T) {
 				Scrs: scrs,
 				Logs: logData,
 			},
+			Header: &block.HeaderV2{},
 		}
 
-		expTxs := map[string]transaction.Transaction{
+		expTxs := map[string]*transaction.Transaction{
 			"hash1": {
 				Nonce: 1,
 			},
 		}
-		expScrs := map[string]smartContractResult.SmartContractResult{
+		expScrs := map[string]*smartContractResult.SmartContractResult{
 			"hash2": {
 				Nonce: 2,
 			},
@@ -163,14 +171,16 @@ func TestHandlePushEvents(t *testing.T) {
 			Scrs: expScrs,
 		}
 		expLogEvents := data.BlockEvents{
-			Hash:   blockHash,
-			Events: logEvents,
+			Hash:    blockHash,
+			Events:  logEvents,
+			ShardID: 2,
 		}
 		expTxsWithOrderData := data.BlockEventsWithOrder{
-			Hash:   blockHash,
-			Txs:    txs,
-			Scrs:   scrs,
-			Events: logEvents,
+			Hash:    blockHash,
+			ShardID: 2,
+			Txs:     txs,
+			Scrs:    scrs,
+			Events:  logEvents,
 		}
 
 		pushWasCalled := false
@@ -200,6 +210,7 @@ func TestHandlePushEvents(t *testing.T) {
 			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return &data.InterceptorBlockData{
 					Hash:          blockHash,
+					Header:        header,
 					Txs:           expTxs,
 					Scrs:          expScrs,
 					LogEvents:     logEvents,

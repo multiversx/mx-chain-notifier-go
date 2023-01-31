@@ -1,10 +1,10 @@
 package factory
 
 import (
-	"github.com/ElrondNetwork/notifier-go/common"
-	"github.com/ElrondNetwork/notifier-go/config"
-	"github.com/ElrondNetwork/notifier-go/disabled"
-	"github.com/ElrondNetwork/notifier-go/rabbitmq"
+	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/disabled"
+	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
 
 // CreatePublisher creates publisher component

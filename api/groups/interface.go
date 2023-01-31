@@ -3,7 +3,7 @@ package groups
 import (
 	"net/http"
 
-	"github.com/ElrondNetwork/notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // EventsFacadeHandler defines the behavior of a facade handler needed for events group
