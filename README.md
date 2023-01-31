@@ -175,6 +175,10 @@ If `--api-type` command line parameter is set to `rabbit-api`, the notifier inst
 will try to publish events to `RabbitMQ`. Check `RabbitMQ` section for config in order to
 set up the url and exchanges properly.
 
+There are multiple exchanges that can be used, they can be found in the main config file
+in the `RabbitMQ` section. The data structures corresponding to these exchanges are defined
+in code in `data/outport.go` file.
+
 ## Subscribing
 
 Once the proxy is launched together with the observer/s, the driver's methods
