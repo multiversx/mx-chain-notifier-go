@@ -28,7 +28,7 @@ func main() {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.BlockEvents,
 			},
 			{
 				EventType: common.BlockScrs,
@@ -56,8 +56,8 @@ func main() {
 		}
 
 		switch reply.Type {
-		case common.PushBlockEvents:
-			var event []data.Event
+		case common.BlockEvents:
+			var event data.BlockEventsWithOrder
 			_ = json.Unmarshal(reply.Data, &event)
 			fmt.Println(event)
 		case common.RevertBlockEvents:
