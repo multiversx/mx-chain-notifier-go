@@ -155,7 +155,7 @@ func TestPushEvents(t *testing.T) {
 
 	wd.PushEvents(events)
 
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.PushLogsAndEvents,
 		Data: eventBytes,
 	}
@@ -173,7 +173,7 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	wd, err := ws.NewTestWSDispatcher(args)
 	require.Nil(t, err)
 
-	txs := map[string]data.TransactionWrapped{
+	txs := map[string]*data.TransactionWrapped{
 		"txHash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
@@ -192,7 +192,7 @@ func TestBlockEventsWithOrder(t *testing.T) {
 
 	wd.BlockEvents(blockData)
 
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.BlockEvents,
 		Data: blockDataBytes,
 	}

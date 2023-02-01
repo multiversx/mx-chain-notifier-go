@@ -105,7 +105,7 @@ func TestHandlePushEvents(t *testing.T) {
 		args := createMockFacadeArgs()
 
 		blockHash := "blockHash1"
-		txs := map[string]data.TransactionWrapped{
+		txs := map[string]*data.TransactionWrapped{
 			"hash1": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
@@ -113,7 +113,7 @@ func TestHandlePushEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]data.SmartContractResultWrapped{
+		scrs := map[string]*data.SmartContractResultWrapped{
 			"hash2": {
 				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,

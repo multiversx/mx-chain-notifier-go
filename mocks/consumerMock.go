@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/google/uuid"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // ConsumerMock -

@@ -24,9 +24,9 @@ type InterceptorBlockData struct {
 	Body          nodeData.BodyHandler
 	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]TransactionWrapped
+	TxsWithOrder  map[string]*TransactionWrapped
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]SmartContractResultWrapped
+	ScrsWithOrder map[string]*SmartContractResultWrapped
 	LogEvents     []Event
 }
 
@@ -58,11 +58,11 @@ type LogData struct {
 
 // TransactionsPool holds all types of transaction
 type TransactionsPool struct {
-	Txs      map[string]TransactionWrapped
-	Scrs     map[string]SmartContractResultWrapped
-	Rewards  map[string]RewardTxWrapped
-	Invalid  map[string]TransactionWrapped
-	Receipts map[string]ReceiptWrapped
+	Txs      map[string]*TransactionWrapped
+	Scrs     map[string]*SmartContractResultWrapped
+	Rewards  map[string]*RewardTxWrapped
+	Invalid  map[string]*TransactionWrapped
+	Receipts map[string]*ReceiptWrapped
 	Logs     []*LogData
 }
 

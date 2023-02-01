@@ -48,7 +48,7 @@ func main() {
 			continue
 		}
 
-		var reply data.WSEvent
+		var reply data.WebSocketEvent
 		err = json.Unmarshal(m, &reply)
 		if err != nil {
 			fmt.Println(err.Error())

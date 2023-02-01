@@ -7,8 +7,8 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
 
-// WSEvent defines a websocket event
-type WSEvent struct {
+// WebSocketEvent defines a websocket event
+type WebSocketEvent struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
@@ -57,10 +57,10 @@ type BlockScrs struct {
 
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
-	Hash      string                                `json:"hash"`
-	ShardID   uint32                                `json:"shardID"`
-	TimeStamp uint64                                `json:"timestamp"`
-	Txs       map[string]TransactionWrapped         `json:"txs"`
-	Scrs      map[string]SmartContractResultWrapped `json:"scrs"`
-	Events    []Event                               `json:"events"`
+	Hash      string                                 `json:"hash"`
+	ShardID   uint32                                 `json:"shardID"`
+	TimeStamp uint64                                 `json:"timestamp"`
+	Txs       map[string]*TransactionWrapped         `json:"txs"`
+	Scrs      map[string]*SmartContractResultWrapped `json:"scrs"`
+	Events    []Event                                `json:"events"`
 }

@@ -47,7 +47,7 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 		Body:       &block.Body{},
 		Header:     &block.HeaderV2{},
 		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]data.TransactionWrapped{
+			Txs: map[string]*data.TransactionWrapped{
 				"hash2": {
 					TransactionHandler: &transaction.Transaction{
 						Nonce: 2,
@@ -55,7 +55,7 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 					ExecutionOrder: 1,
 				},
 			},
-			Scrs: map[string]data.SmartContractResultWrapped{
+			Scrs: map[string]*data.SmartContractResultWrapped{
 				"hash3": {
 					TransactionHandler: &smartContractResult.SmartContractResult{
 						Nonce: 3,

@@ -105,7 +105,7 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
 
-		txs := map[string]data.TransactionWrapped{
+		txs := map[string]*data.TransactionWrapped{
 			"hash2": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 2,
@@ -113,7 +113,7 @@ func TestProcessBlockEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]data.SmartContractResultWrapped{
+		scrs := map[string]*data.SmartContractResultWrapped{
 			"hash3": {
 				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 3,

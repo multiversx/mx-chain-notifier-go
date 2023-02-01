@@ -314,7 +314,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	txs := map[string]data.TransactionWrapped{
+	txs := map[string]*data.TransactionWrapped{
 		"hash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
@@ -396,7 +396,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	scrs := map[string]data.SmartContractResultWrapped{
+	scrs := map[string]*data.SmartContractResultWrapped{
 		"hash2": {
 			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
@@ -509,14 +509,14 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 	}
 
-	txs := map[string]data.TransactionWrapped{
+	txs := map[string]*data.TransactionWrapped{
 		"hash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	scrs := map[string]data.SmartContractResultWrapped{
+	scrs := map[string]*data.SmartContractResultWrapped{
 		"hash2": {
 			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
@@ -595,7 +595,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			m, err := ws.ReadMessage()
 			require.Nil(t, err)
 
-			var reply data.WSEvent
+			var reply data.WebSocketEvent
 			err = json.Unmarshal(m, &reply)
 			require.Nil(t, err)
 

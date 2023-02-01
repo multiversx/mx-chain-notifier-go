@@ -67,7 +67,7 @@ func (ws *wsClient) ReceiveEvents() ([]data.Event, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEventsWithOrder, error)
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (ws *wsClient) ReceiveRevertBlock() (*data.RevertBlock, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (ws *wsClient) ReceiveFinalized() (*data.FinalizedBlock, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (ws *wsClient) ReceiveTxs() (*data.BlockTxs, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (ws *wsClient) ReceiveScrs() (*data.BlockScrs, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
