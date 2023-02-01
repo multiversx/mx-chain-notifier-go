@@ -2,8 +2,7 @@ package data
 
 import (
 	"github.com/multiversx/mx-chain-core-go/core"
-	"github.com/multiversx/mx-chain-core-go/data"
-	coreData "github.com/multiversx/mx-chain-core-go/data"
+	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -22,20 +21,20 @@ type SaveBlockData struct {
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
 	Hash          string
-	Body          coreData.BodyHandler
-	Header        coreData.HeaderHandler
+	Body          nodeData.BodyHandler
+	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]data.TransactionHandlerWithGasUsedAndFee
+	TxsWithOrder  map[string]*TransactionWrapped
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]data.TransactionHandlerWithGasUsedAndFee
+	ScrsWithOrder map[string]*SmartContractResultWrapped
 	LogEvents     []Event
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events
 type ArgsSaveBlockData struct {
 	HeaderHash             []byte
-	Body                   coreData.BodyHandler
-	Header                 coreData.HeaderHandler
+	Body                   nodeData.BodyHandler
+	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
 	HeaderGasConsumption   outport.HeaderGasConsumption

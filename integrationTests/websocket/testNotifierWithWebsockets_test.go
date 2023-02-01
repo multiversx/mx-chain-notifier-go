@@ -7,9 +7,7 @@ import (
 	"testing"
 	"time"
 
-	coreData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
-	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -138,8 +136,6 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		Hash:      hex.EncodeToString(headerHash),
 		ShardID:   1,
 		TimeStamp: 1234,
-		Txs:       make(map[string]coreData.TransactionHandlerWithGasUsedAndFee),
-		Scrs:      make(map[string]coreData.TransactionHandlerWithGasUsedAndFee),
 		Events:    events,
 	}
 
@@ -513,15 +509,15 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 	}
 
-	txs := map[string]coreData.TransactionHandlerWithGasUsedAndFee{
-		"hash1": &outport.TransactionHandlerWithGasAndFee{
+	txs := map[string]*data.TransactionWrapped{
+		"hash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	scrs := map[string]coreData.TransactionHandlerWithGasUsedAndFee{
-		"hash2": &outport.TransactionHandlerWithGasAndFee{
+	scrs := map[string]*data.SmartContractResultWrapped{
+		"hash2": {
 			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
@@ -561,20 +557,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	saveBlockData := data.ArgsSaveBlockData{
 		HeaderHash: []byte(blockHash),
 		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]*data.TransactionWrapped{
-				"hash1": {
-					TransactionHandler: &transaction.Transaction{
-						Nonce: 1,
-					},
-				},
-			},
-			Scrs: map[string]*data.SmartContractResultWrapped{
-				"hash2": {
-					TransactionHandler: &smartContractResult.SmartContractResult{
-						Nonce: 2,
-					},
-				},
-			},
+			Txs:  txs,
+			Scrs: scrs,
 			Logs: []*data.LogData{
 				{
 					LogHandler: &transaction.Log{

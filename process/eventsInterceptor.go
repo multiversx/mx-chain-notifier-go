@@ -5,8 +5,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	coreData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/outport"
+	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -14,7 +13,7 @@ import (
 
 // logEvent defines a log event associated with corresponding tx hash
 type logEvent struct {
-	EventHandler coreData.EventHandler
+	EventHandler nodeData.EventHandler
 	TxHash       string
 }
 
@@ -55,30 +54,14 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
-	txsWithOrder := make(map[string]coreData.TransactionHandlerWithGasUsedAndFee)
 	txs := make(map[string]*transaction.Transaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
 		txs[hash] = tx.TransactionHandler
-		txWithOrder := &outport.TransactionHandlerWithGasAndFee{
-			TransactionHandler: tx.TransactionHandler,
-			FeeInfo:            tx.FeeInfo,
-			ExecutionOrder:     tx.ExecutionOrder,
-		}
-		log.Debug("eventsInterceptor", "txHash", hash, "execition order", txWithOrder.ExecutionOrder)
-		txsWithOrder[hash] = txWithOrder
 	}
 
-	scrsWithOrder := make(map[string]coreData.TransactionHandlerWithGasUsedAndFee)
 	scrs := make(map[string]*smartContractResult.SmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
 		scrs[hash] = scr.TransactionHandler
-		scrWithOrder := &outport.TransactionHandlerWithGasAndFee{
-			TransactionHandler: scr.TransactionHandler,
-			FeeInfo:            scr.FeeInfo,
-			ExecutionOrder:     scr.ExecutionOrder,
-		}
-		log.Debug("eventsInterceptor", "scrHash", hash, "execition order", scrWithOrder.ExecutionOrder)
-		scrsWithOrder[hash] = scrWithOrder
 	}
 
 	return &data.InterceptorBlockData{
@@ -86,9 +69,9 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		Body:          eventsData.Body,
 		Header:        eventsData.Header,
 		Txs:           txs,
-		TxsWithOrder:  txsWithOrder,
+		TxsWithOrder:  eventsData.TransactionsPool.Txs,
 		Scrs:          scrs,
-		ScrsWithOrder: scrsWithOrder,
+		ScrsWithOrder: eventsData.TransactionsPool.Scrs,
 		LogEvents:     events,
 	}, nil
 }

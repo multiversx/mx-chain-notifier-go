@@ -6,8 +6,6 @@ import (
 	"io"
 	"testing"
 
-	coreData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -175,8 +173,8 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	wd, err := ws.NewTestWSDispatcher(args)
 	require.Nil(t, err)
 
-	txs := map[string]coreData.TransactionHandlerWithGasUsedAndFee{
-		"txHash1": &outport.TransactionHandlerWithGasAndFee{
+	txs := map[string]*data.TransactionWrapped{
+		"txHash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},

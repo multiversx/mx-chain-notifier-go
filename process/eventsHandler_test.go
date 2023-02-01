@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	coreData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -372,8 +370,8 @@ func TestHandleBlockEventsWithOrderEvents(t *testing.T) {
 
 	events := data.BlockEventsWithOrder{
 		Hash: "hash1",
-		Txs: map[string]coreData.TransactionHandlerWithGasUsedAndFee{
-			"hash1": &outport.TransactionHandlerWithGasAndFee{
+		Txs: map[string]*data.TransactionWrapped{
+			"hash1": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
 				},

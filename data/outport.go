@@ -3,7 +3,6 @@ package data
 import (
 	"encoding/json"
 
-	"github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
@@ -58,10 +57,10 @@ type BlockScrs struct {
 
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
-	Hash      string                                              `json:"hash"`
-	ShardID   uint32                                              `json:"shardID"`
-	TimeStamp uint64                                              `json:"timestamp"`
-	Txs       map[string]data.TransactionHandlerWithGasUsedAndFee `json:"txs"`
-	Scrs      map[string]data.TransactionHandlerWithGasUsedAndFee `json:"scrs"`
-	Events    []Event                                             `json:"events"`
+	Hash      string                                 `json:"hash"`
+	ShardID   uint32                                 `json:"shardID"`
+	TimeStamp uint64                                 `json:"timestamp"`
+	Txs       map[string]*TransactionWrapped         `json:"txs"`
+	Scrs      map[string]*SmartContractResultWrapped `json:"scrs"`
+	Events    []Event                                `json:"events"`
 }

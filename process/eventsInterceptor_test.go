@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	coreData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
-	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -107,16 +105,16 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
 
-		txs := map[string]coreData.TransactionHandlerWithGasUsedAndFee{
-			"hash2": &outport.TransactionHandlerWithGasAndFee{
+		txs := map[string]*data.TransactionWrapped{
+			"hash2": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 2,
 				},
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]coreData.TransactionHandlerWithGasUsedAndFee{
-			"hash3": &outport.TransactionHandlerWithGasAndFee{
+		scrs := map[string]*data.SmartContractResultWrapped{
+			"hash3": {
 				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 3,
 				},
@@ -140,22 +138,8 @@ func TestProcessBlockEvents(t *testing.T) {
 			Body:       blockBody,
 			Header:     blockHeader,
 			TransactionsPool: &data.TransactionsPool{
-				Txs: map[string]*data.TransactionWrapped{
-					"hash2": {
-						TransactionHandler: &transaction.Transaction{
-							Nonce: 2,
-						},
-						ExecutionOrder: 1,
-					},
-				},
-				Scrs: map[string]*data.SmartContractResultWrapped{
-					"hash3": {
-						TransactionHandler: &smartContractResult.SmartContractResult{
-							Nonce: 3,
-						},
-						ExecutionOrder: 1,
-					},
-				},
+				Txs:  txs,
+				Scrs: scrs,
 				Logs: []*data.LogData{
 					{
 						LogHandler: &transaction.Log{
