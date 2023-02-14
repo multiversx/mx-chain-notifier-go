@@ -3,6 +3,9 @@ package data
 import (
 	"encoding/json"
 
+	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/receipt"
+	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
@@ -57,10 +60,38 @@ type BlockScrs struct {
 
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
-	Hash      string                                 `json:"hash"`
-	ShardID   uint32                                 `json:"shardID"`
-	TimeStamp uint64                                 `json:"timestamp"`
-	Txs       map[string]*TransactionWrapped         `json:"txs"`
-	Scrs      map[string]*SmartContractResultWrapped `json:"scrs"`
-	Events    []Event                                `json:"events"`
+	Hash      string                                     `json:"hash"`
+	ShardID   uint32                                     `json:"shardID"`
+	TimeStamp uint64                                     `json:"timestamp"`
+	Txs       map[string]*InterceptorTransaction         `json:"txs"`
+	Scrs      map[string]*InterceptorSmartContractResult `json:"scrs"`
+	Events    []Event                                    `json:"events"`
+}
+
+// InterceptorTransaction defines a wrapper over transaction
+type InterceptorTransaction struct {
+	*transaction.Transaction
+	outport.FeeInfo
+	ExecutionOrder int
+}
+
+// InterceptorSmartContractResult defines a wrapper over scr
+type InterceptorSmartContractResult struct {
+	*smartContractResult.SmartContractResult
+	outport.FeeInfo
+	ExecutionOrder int
+}
+
+// InterceptorRewardTx defines a wrapper over rewardTx
+type InterceptorRewardTx struct {
+	*rewardTx.RewardTx
+	outport.FeeInfo
+	ExecutionOrder int
+}
+
+// InterceptorReceipt defines a wrapper over receipt
+type InterceptorReceipt struct {
+	*receipt.Receipt
+	outport.FeeInfo
+	ExecutionOrder int
 }

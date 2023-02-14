@@ -24,9 +24,9 @@ type InterceptorBlockData struct {
 	Body          nodeData.BodyHandler
 	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*TransactionWrapped
+	TxsWithOrder  map[string]*InterceptorTransaction
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*SmartContractResultWrapped
+	ScrsWithOrder map[string]*InterceptorSmartContractResult
 	LogEvents     []Event
 }
 

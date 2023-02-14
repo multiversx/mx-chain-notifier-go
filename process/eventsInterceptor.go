@@ -55,13 +55,25 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
 	txs := make(map[string]*transaction.Transaction)
+	txsWithOrder := make(map[string]*data.InterceptorTransaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
 		txs[hash] = tx.TransactionHandler
+		txsWithOrder[hash] = &data.InterceptorTransaction{
+			Transaction:    tx.TransactionHandler,
+			FeeInfo:        tx.FeeInfo,
+			ExecutionOrder: tx.ExecutionOrder,
+		}
 	}
 
 	scrs := make(map[string]*smartContractResult.SmartContractResult)
+	scrsWithOrder := make(map[string]*data.InterceptorSmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
 		scrs[hash] = scr.TransactionHandler
+		scrsWithOrder[hash] = &data.InterceptorSmartContractResult{
+			SmartContractResult: scr.TransactionHandler,
+			FeeInfo:             scr.FeeInfo,
+			ExecutionOrder:      scr.ExecutionOrder,
+		}
 	}
 
 	return &data.InterceptorBlockData{
@@ -69,9 +81,9 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		Body:          eventsData.Body,
 		Header:        eventsData.Header,
 		Txs:           txs,
-		TxsWithOrder:  eventsData.TransactionsPool.Txs,
+		TxsWithOrder:  txsWithOrder,
 		Scrs:          scrs,
-		ScrsWithOrder: eventsData.TransactionsPool.Scrs,
+		ScrsWithOrder: scrsWithOrder,
 		LogEvents:     events,
 	}, nil
 }

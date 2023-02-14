@@ -137,6 +137,8 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
+		Txs:       make(map[string]*data.InterceptorTransaction),
+		Scrs:      make(map[string]*data.InterceptorSmartContractResult),
 	}
 
 	saveBlockData := data.ArgsSaveBlockData{
@@ -545,13 +547,27 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs: expScrs,
 	}
 
+	expTxsWithOrder := map[string]*data.InterceptorTransaction{
+		"hash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
+			},
+		},
+	}
+	expScrsWithOrder := map[string]*data.InterceptorSmartContractResult{
+		"hash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
+				Nonce: 2,
+			},
+		},
+	}
 	expBlockEvents := data.BlockEventsWithOrder{
 		Hash:      hex.EncodeToString(blockHash),
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
-		Txs:       txs,
-		Scrs:      scrs,
+		Txs:       expTxsWithOrder,
+		Scrs:      expScrsWithOrder,
 	}
 
 	saveBlockData := data.ArgsSaveBlockData{

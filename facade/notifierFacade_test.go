@@ -175,11 +175,27 @@ func TestHandlePushEvents(t *testing.T) {
 			Events:  logEvents,
 			ShardID: 2,
 		}
+
+		expTxsWithOrder := map[string]*data.InterceptorTransaction{
+			"hash1": {
+				Transaction: &transaction.Transaction{
+					Nonce: 1,
+				},
+				ExecutionOrder: 1,
+			},
+		}
+		expScrsWithOrder := map[string]*data.InterceptorSmartContractResult{
+			"hash2": {
+				SmartContractResult: &smartContractResult.SmartContractResult{
+					Nonce: 2,
+				},
+			},
+		}
 		expTxsWithOrderData := data.BlockEventsWithOrder{
 			Hash:    blockHash,
 			ShardID: 2,
-			Txs:     txs,
-			Scrs:    scrs,
+			Txs:     expTxsWithOrder,
+			Scrs:    expScrsWithOrder,
 			Events:  logEvents,
 		}
 
@@ -214,8 +230,8 @@ func TestHandlePushEvents(t *testing.T) {
 					Txs:           expTxs,
 					Scrs:          expScrs,
 					LogEvents:     logEvents,
-					TxsWithOrder:  txs,
-					ScrsWithOrder: scrs,
+					TxsWithOrder:  expTxsWithOrder,
+					ScrsWithOrder: expScrsWithOrder,
 				}, nil
 			},
 		}
