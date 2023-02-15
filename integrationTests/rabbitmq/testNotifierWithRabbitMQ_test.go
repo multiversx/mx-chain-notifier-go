@@ -59,7 +59,7 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 			},
 		},
 		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]*data.TransactionWrapped{
+			Txs: map[string]*data.NodeTransaction{
 				"txHash1": {
 					TransactionHandler: &transaction.Transaction{
 						Nonce: 1,
@@ -67,7 +67,7 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 					ExecutionOrder: 1,
 				},
 			},
-			Scrs: map[string]*data.SmartContractResultWrapped{
+			Scrs: map[string]*data.NodeSmartContractResult{
 				"scrHash1": {
 					TransactionHandler: &smartContractResult.SmartContractResult{
 						Nonce: 2,

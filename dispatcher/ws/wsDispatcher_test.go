@@ -173,7 +173,7 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	wd, err := ws.NewTestWSDispatcher(args)
 	require.Nil(t, err)
 
-	txs := map[string]*data.InterceptorTransaction{
+	txs := map[string]*data.NotifierTransaction{
 		"txHash1": {
 			Transaction: &transaction.Transaction{
 				Nonce: 1,

@@ -102,7 +102,7 @@ func getShardV2Data() *notifierData.ArgsSaveBlock {
 				TimeStamp: 1234,
 			},
 			TransactionsPool: &notifierData.TransactionsPool{
-				Txs: map[string]*notifierData.TransactionWrapped{
+				Txs: map[string]*notifierData.NodeTransaction{
 					"txHash1": {
 						TransactionHandler: &transaction.Transaction{
 							Nonce:    1,
@@ -115,7 +115,7 @@ func getShardV2Data() *notifierData.ArgsSaveBlock {
 						ExecutionOrder: 2,
 					},
 				},
-				Scrs: map[string]*notifierData.SmartContractResultWrapped{
+				Scrs: map[string]*notifierData.NodeSmartContractResult{
 					"scrHash1": {
 						TransactionHandler: &smartContractResult.SmartContractResult{
 							Nonce:    2,

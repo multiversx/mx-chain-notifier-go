@@ -105,7 +105,7 @@ func TestHandlePushEvents(t *testing.T) {
 		args := createMockFacadeArgs()
 
 		blockHash := "blockHash1"
-		txs := map[string]*data.TransactionWrapped{
+		txs := map[string]*data.NodeTransaction{
 			"hash1": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
@@ -113,7 +113,7 @@ func TestHandlePushEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]*data.SmartContractResultWrapped{
+		scrs := map[string]*data.NodeSmartContractResult{
 			"hash2": {
 				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,
@@ -176,7 +176,7 @@ func TestHandlePushEvents(t *testing.T) {
 			ShardID: 2,
 		}
 
-		expTxsWithOrder := map[string]*data.InterceptorTransaction{
+		expTxsWithOrder := map[string]*data.NotifierTransaction{
 			"hash1": {
 				Transaction: &transaction.Transaction{
 					Nonce: 1,
@@ -184,7 +184,7 @@ func TestHandlePushEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		expScrsWithOrder := map[string]*data.InterceptorSmartContractResult{
+		expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
 			"hash2": {
 				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 2,

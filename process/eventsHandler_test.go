@@ -370,7 +370,7 @@ func TestHandleBlockEventsWithOrderEvents(t *testing.T) {
 
 	events := data.BlockEventsWithOrder{
 		Hash: "hash1",
-		Txs: map[string]*data.InterceptorTransaction{
+		Txs: map[string]*data.NotifierTransaction{
 			"hash1": {
 				Transaction: &transaction.Transaction{
 					Nonce: 1,

@@ -60,37 +60,37 @@ type BlockScrs struct {
 
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
-	Hash      string                                     `json:"hash"`
-	ShardID   uint32                                     `json:"shardID"`
-	TimeStamp uint64                                     `json:"timestamp"`
-	Txs       map[string]*InterceptorTransaction         `json:"txs"`
-	Scrs      map[string]*InterceptorSmartContractResult `json:"scrs"`
-	Events    []Event                                    `json:"events"`
+	Hash      string                                  `json:"hash"`
+	ShardID   uint32                                  `json:"shardID"`
+	TimeStamp uint64                                  `json:"timestamp"`
+	Txs       map[string]*NotifierTransaction         `json:"txs"`
+	Scrs      map[string]*NotifierSmartContractResult `json:"scrs"`
+	Events    []Event                                 `json:"events"`
 }
 
-// InterceptorTransaction defines a wrapper over transaction
-type InterceptorTransaction struct {
+// NotifierTransaction defines a wrapper over transaction
+type NotifierTransaction struct {
 	*transaction.Transaction
 	outport.FeeInfo
 	ExecutionOrder int
 }
 
-// InterceptorSmartContractResult defines a wrapper over scr
-type InterceptorSmartContractResult struct {
+// NotifierSmartContractResult defines a wrapper over scr
+type NotifierSmartContractResult struct {
 	*smartContractResult.SmartContractResult
 	outport.FeeInfo
 	ExecutionOrder int
 }
 
-// InterceptorRewardTx defines a wrapper over rewardTx
-type InterceptorRewardTx struct {
+// NotifierRewardTx defines a wrapper over rewardTx
+type NotifierRewardTx struct {
 	*rewardTx.RewardTx
 	outport.FeeInfo
 	ExecutionOrder int
 }
 
-// InterceptorReceipt defines a wrapper over receipt
-type InterceptorReceipt struct {
+// NotifierReceipt defines a wrapper over receipt
+type NotifierReceipt struct {
 	*receipt.Receipt
 	outport.FeeInfo
 	ExecutionOrder int

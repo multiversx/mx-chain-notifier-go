@@ -24,9 +24,9 @@ type InterceptorBlockData struct {
 	Body          nodeData.BodyHandler
 	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*InterceptorTransaction
+	TxsWithOrder  map[string]*NotifierTransaction
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*InterceptorSmartContractResult
+	ScrsWithOrder map[string]*NotifierSmartContractResult
 	LogEvents     []Event
 }
 
@@ -58,37 +58,37 @@ type LogData struct {
 
 // TransactionsPool holds all types of transaction
 type TransactionsPool struct {
-	Txs      map[string]*TransactionWrapped
-	Scrs     map[string]*SmartContractResultWrapped
-	Rewards  map[string]*RewardTxWrapped
-	Invalid  map[string]*TransactionWrapped
-	Receipts map[string]*ReceiptWrapped
+	Txs      map[string]*NodeTransaction
+	Scrs     map[string]*NodeSmartContractResult
+	Rewards  map[string]*NodeRewardTx
+	Invalid  map[string]*NodeTransaction
+	Receipts map[string]*NodeReceipt
 	Logs     []*LogData
 }
 
-// TransactionWrapped defines a wrapper over transaction
-type TransactionWrapped struct {
+// NodeTransaction defines a wrapper over transaction
+type NodeTransaction struct {
 	TransactionHandler *transaction.Transaction
 	outport.FeeInfo
 	ExecutionOrder int
 }
 
-// SmartContractResultWrapped defines a wrapper over scr
-type SmartContractResultWrapped struct {
+// NodeSmartContractResult defines a wrapper over scr
+type NodeSmartContractResult struct {
 	TransactionHandler *smartContractResult.SmartContractResult
 	outport.FeeInfo
 	ExecutionOrder int
 }
 
-// RewardTxWrapped defines a wrapper over rewardTx
-type RewardTxWrapped struct {
+// NodeRewardTx defines a wrapper over rewardTx
+type NodeRewardTx struct {
 	TransactionHandler *rewardTx.RewardTx
 	outport.FeeInfo
 	ExecutionOrder int
 }
 
-// ReceiptWrapped defines a wrapper over receipt
-type ReceiptWrapped struct {
+// NodeReceipt defines a wrapper over receipt
+type NodeReceipt struct {
 	TransactionHandler *receipt.Receipt
 	outport.FeeInfo
 	ExecutionOrder int
