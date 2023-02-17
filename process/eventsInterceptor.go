@@ -5,10 +5,17 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
+
+// logEvent defines a log event associated with corresponding tx hash
+type logEvent struct {
+	EventHandler nodeData.EventHandler
+	TxHash       string
+}
 
 // ArgsEventsInterceptor defines the arguments needed for creating an events interceptor instance
 type ArgsEventsInterceptor struct {
@@ -48,13 +55,25 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
 	txs := make(map[string]*transaction.Transaction)
+	txsWithOrder := make(map[string]*data.NotifierTransaction)
 	for hash, tx := range eventsData.TransactionsPool.Txs {
 		txs[hash] = tx.TransactionHandler
+		txsWithOrder[hash] = &data.NotifierTransaction{
+			Transaction:    tx.TransactionHandler,
+			FeeInfo:        tx.FeeInfo,
+			ExecutionOrder: tx.ExecutionOrder,
+		}
 	}
 
 	scrs := make(map[string]*smartContractResult.SmartContractResult)
+	scrsWithOrder := make(map[string]*data.NotifierSmartContractResult)
 	for hash, scr := range eventsData.TransactionsPool.Scrs {
 		scrs[hash] = scr.TransactionHandler
+		scrsWithOrder[hash] = &data.NotifierSmartContractResult{
+			SmartContractResult: scr.TransactionHandler,
+			FeeInfo:             scr.FeeInfo,
+			ExecutionOrder:      scr.ExecutionOrder,
+		}
 	}
 
 	return &data.InterceptorBlockData{
@@ -62,15 +81,15 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		Body:          eventsData.Body,
 		Header:        eventsData.Header,
 		Txs:           txs,
-		TxsWithOrder:  eventsData.TransactionsPool.Txs,
+		TxsWithOrder:  txsWithOrder,
 		Scrs:          scrs,
-		ScrsWithOrder: eventsData.TransactionsPool.Scrs,
+		ScrsWithOrder: scrsWithOrder,
 		LogEvents:     events,
 	}, nil
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogData) []data.Event {
-	var logEvents []*data.LogEvent
+	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {
 			continue
@@ -80,7 +99,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogDa
 		}
 
 		for _, eventHandler := range logData.LogHandler.GetLogEvents() {
-			le := &data.LogEvent{
+			le := &logEvent{
 				EventHandler: eventHandler,
 				TxHash:       logData.TxHash,
 			}

@@ -4,10 +4,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/uuid"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
-	"github.com/google/uuid"
 )
 
 var log = logger.GetOrCreate("subscription")
@@ -142,9 +142,8 @@ func getEventType(subEntry data.SubscriptionEntry) string {
 	if subEntry.EventType == common.FinalizedBlockEvents ||
 		subEntry.EventType == common.RevertBlockEvents ||
 		subEntry.EventType == common.BlockTxs ||
-		subEntry.EventType == common.BlockEventsWithOrder ||
 		subEntry.EventType == common.BlockScrs ||
-		subEntry.EventType == common.PushBlockEvents {
+		subEntry.EventType == common.BlockEvents {
 		return subEntry.EventType
 	}
 

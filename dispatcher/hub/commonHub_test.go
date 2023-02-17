@@ -190,42 +190,6 @@ func TestCommonHubRun(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
-	t.Parallel()
-
-	args := createMockCommonHubArgs()
-	hub, err := NewCommonHub(args)
-	require.Nil(t, err)
-
-	numCalls := uint32(0)
-	hub.registerDispatcher(&mocks.DispatcherStub{
-		BlockEventsCalled: func(event data.BlockEvents) {
-			atomic.AddUint32(&numCalls, 1)
-		},
-	})
-
-	hub.Subscribe(data.SubscribeEvent{
-		SubscriptionEntries: []data.SubscriptionEntry{
-			{
-				EventType: common.PushBlockEvents,
-			},
-		},
-	})
-
-	hub.Run()
-	defer hub.Close()
-
-	blockEvents := data.BlockEvents{
-		Hash: "hash1",
-	}
-
-	hub.Broadcast(blockEvents)
-
-	time.Sleep(time.Millisecond * 100)
-
-	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
-}
-
 func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 	t.Parallel()
 
@@ -335,7 +299,7 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
 
-func TestCommonHub_HandleBlockEventsWithOrderBroadcast(t *testing.T) {
+func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
 	t.Parallel()
 
 	args := createMockCommonHubArgs()
@@ -344,7 +308,7 @@ func TestCommonHub_HandleBlockEventsWithOrderBroadcast(t *testing.T) {
 
 	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
-		BlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
+		BlockEventsCalled: func(event data.BlockEventsWithOrder) {
 			atomic.AddUint32(&numCalls, 1)
 		},
 	})
@@ -352,7 +316,7 @@ func TestCommonHub_HandleBlockEventsWithOrderBroadcast(t *testing.T) {
 	hub.Subscribe(data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.BlockEventsWithOrder,
+				EventType: common.BlockEvents,
 			},
 		},
 	})

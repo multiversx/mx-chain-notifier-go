@@ -117,7 +117,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	subscribeEvent := &data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.BlockEvents,
 			},
 		},
 	}
@@ -132,14 +132,16 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			TxHash:  "txHash1",
 		},
 	}
-	expBlockEvents := &data.BlockEvents{
+	expBlockEvents := &data.BlockEventsWithOrder{
 		Hash:      hex.EncodeToString(headerHash),
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
+		Txs:       make(map[string]*data.NotifierTransaction),
+		Scrs:      make(map[string]*data.NotifierSmartContractResult),
 	}
 
-	blockEvents := data.ArgsSaveBlockData{
+	saveBlockData := data.ArgsSaveBlockData{
 		HeaderHash: headerHash,
 		TransactionsPool: &data.TransactionsPool{
 			Logs: []*data.LogData{
@@ -165,9 +167,9 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			},
 		},
 	}
-	saveBlockData := &data.ArgsSaveBlock{
+	blockEvents := &data.ArgsSaveBlock{
 		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: blockEvents,
+		ArgsSaveBlockData: saveBlockData,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -183,7 +185,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(saveBlockData)
+	resp := webServer.PushEventsRequest(blockEvents)
 	require.NotNil(t, resp)
 
 	if waitTimeout(t, wg, time.Second*2) {
@@ -314,7 +316,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	txs := map[string]data.TransactionWithOrder{
+	txs := map[string]*data.NodeTransaction{
 		"hash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
@@ -396,7 +398,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	scrs := map[string]data.SmartContractResultWithOrder{
+	scrs := map[string]*data.NodeSmartContractResult{
 		"hash2": {
 			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
@@ -474,7 +476,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				EventType: common.PushLogsAndEvents,
 			},
 			{
-				EventType: common.PushBlockEvents,
+				EventType: common.BlockEvents,
 			},
 			{
 				EventType: common.RevertBlockEvents,
@@ -509,14 +511,14 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 	}
 
-	txs := map[string]data.TransactionWithOrder{
+	txs := map[string]*data.NodeTransaction{
 		"hash1": {
 			TransactionHandler: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	scrs := map[string]data.SmartContractResultWithOrder{
+	scrs := map[string]*data.NodeSmartContractResult{
 		"hash2": {
 			TransactionHandler: &smartContractResult.SmartContractResult{
 				Nonce: 2,
@@ -545,14 +547,30 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs: expScrs,
 	}
 
-	expBlockEvents := data.BlockEvents{
+	expTxsWithOrder := map[string]*data.NotifierTransaction{
+		"hash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
+			},
+		},
+	}
+	expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+		"hash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
+				Nonce: 2,
+			},
+		},
+	}
+	expBlockEvents := data.BlockEventsWithOrder{
 		Hash:      hex.EncodeToString(blockHash),
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
+		Txs:       expTxsWithOrder,
+		Scrs:      expScrsWithOrder,
 	}
 
-	blockEvents := &data.ArgsSaveBlockData{
+	saveBlockData := data.ArgsSaveBlockData{
 		HeaderHash: []byte(blockHash),
 		TransactionsPool: &data.TransactionsPool{
 			Txs:  txs,
@@ -579,9 +597,9 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			},
 		},
 	}
-	saveBlockData := &data.ArgsSaveBlock{
+	blockEvents := &data.ArgsSaveBlock{
 		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: *blockEvents,
+		ArgsSaveBlockData: saveBlockData,
 	}
 
 	numEvents := 6
@@ -593,7 +611,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			m, err := ws.ReadMessage()
 			require.Nil(t, err)
 
-			var reply data.WSEvent
+			var reply data.WebSocketEvent
 			err = json.Unmarshal(m, &reply)
 			require.Nil(t, err)
 
@@ -608,8 +626,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, revertBlock, event)
 				wg.Done()
-			case common.PushBlockEvents:
-				var event data.BlockEvents
+			case common.BlockEvents:
+				var event data.BlockEventsWithOrder
 				_ = json.Unmarshal(reply.Data, &event)
 				assert.Equal(t, expBlockEvents, event)
 				wg.Done()
@@ -636,7 +654,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	go webServer.PushEventsRequest(saveBlockData)
+	go webServer.PushEventsRequest(blockEvents)
 	go webServer.FinalizedEventsRequest(finalizedBlock)
 	go webServer.RevertEventsRequest(revertBlock)
 

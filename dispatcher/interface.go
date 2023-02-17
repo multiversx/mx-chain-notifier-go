@@ -5,19 +5,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/google/uuid"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // EventDispatcher defines the behaviour of a event dispatcher component
 type EventDispatcher interface {
 	GetID() uuid.UUID
 	PushEvents(events []data.Event)
-	BlockEvents(blockEvents data.BlockEvents)
 	RevertEvent(event data.RevertBlock)
 	FinalizedEvent(event data.FinalizedBlock)
 	TxsEvent(event data.BlockTxs)
-	BlockEventsWithOrder(event data.BlockEventsWithOrder)
+	BlockEvents(event data.BlockEventsWithOrder)
 	ScrsEvent(event data.BlockScrs)
 }
 

@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
-	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
 )
 
 var log = logger.GetOrCreate("websocket")
@@ -66,27 +66,6 @@ func (wd *websocketDispatcher) GetID() uuid.UUID {
 	return wd.id
 }
 
-// BlockEvents receives block events and processes it before pushing to socket
-func (wd *websocketDispatcher) BlockEvents(events data.BlockEvents) {
-	eventBytes, err := json.Marshal(events)
-	if err != nil {
-		log.Error("failure marshalling events", "err", err.Error())
-		return
-	}
-
-	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEvents,
-		Data: eventBytes,
-	}
-	wsEventBytes, err := json.Marshal(wsEvent)
-	if err != nil {
-		log.Error("failure marshalling events", "err", err.Error())
-		return
-	}
-
-	wd.send <- wsEventBytes
-}
-
 // PushEvents receives an events slice and processes it before pushing to socket
 func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 	eventBytes, err := json.Marshal(events)
@@ -95,7 +74,7 @@ func (wd *websocketDispatcher) PushEvents(events []data.Event) {
 		return
 	}
 
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.PushLogsAndEvents,
 		Data: eventBytes,
 	}
@@ -115,7 +94,7 @@ func (wd *websocketDispatcher) RevertEvent(event data.RevertBlock) {
 		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.RevertBlockEvents,
 		Data: eventBytes,
 	}
@@ -135,7 +114,7 @@ func (wd *websocketDispatcher) FinalizedEvent(event data.FinalizedBlock) {
 		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.FinalizedBlockEvents,
 		Data: eventBytes,
 	}
@@ -155,7 +134,7 @@ func (wd *websocketDispatcher) TxsEvent(event data.BlockTxs) {
 		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.BlockTxs,
 		Data: eventBytes,
 	}
@@ -168,15 +147,15 @@ func (wd *websocketDispatcher) TxsEvent(event data.BlockTxs) {
 	wd.send <- wsEventBytes
 }
 
-// BlockEventsWithOrder receives a block txs with order event and process it before pushing to socket
-func (wd *websocketDispatcher) BlockEventsWithOrder(event data.BlockEventsWithOrder) {
+// BlockEvents receives block events with data and processes it before pushing to socket
+func (wd *websocketDispatcher) BlockEvents(event data.BlockEventsWithOrder) {
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
 		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
-	wsEvent := &data.WSEvent{
-		Type: common.BlockEventsWithOrder,
+	wsEvent := &data.WebSocketEvent{
+		Type: common.BlockEvents,
 		Data: eventBytes,
 	}
 	wsEventBytes, err := json.Marshal(wsEvent)
@@ -195,7 +174,7 @@ func (wd *websocketDispatcher) ScrsEvent(event data.BlockScrs) {
 		log.Error("failure marshalling events", "err", err.Error())
 		return
 	}
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.BlockScrs,
 		Data: eventBytes,
 	}

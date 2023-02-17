@@ -105,7 +105,7 @@ func TestHandlePushEvents(t *testing.T) {
 		args := createMockFacadeArgs()
 
 		blockHash := "blockHash1"
-		txs := map[string]data.TransactionWithOrder{
+		txs := map[string]*data.NodeTransaction{
 			"hash1": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
@@ -113,7 +113,7 @@ func TestHandlePushEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]data.SmartContractResultWithOrder{
+		scrs := map[string]*data.NodeSmartContractResult{
 			"hash2": {
 				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,
@@ -175,11 +175,27 @@ func TestHandlePushEvents(t *testing.T) {
 			Events:  logEvents,
 			ShardID: 2,
 		}
+
+		expTxsWithOrder := map[string]*data.NotifierTransaction{
+			"hash1": {
+				Transaction: &transaction.Transaction{
+					Nonce: 1,
+				},
+				ExecutionOrder: 1,
+			},
+		}
+		expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+			"hash2": {
+				SmartContractResult: &smartContractResult.SmartContractResult{
+					Nonce: 2,
+				},
+			},
+		}
 		expTxsWithOrderData := data.BlockEventsWithOrder{
 			Hash:    blockHash,
 			ShardID: 2,
-			Txs:     txs,
-			Scrs:    scrs,
+			Txs:     expTxsWithOrder,
+			Scrs:    expScrsWithOrder,
 			Events:  logEvents,
 		}
 
@@ -214,8 +230,8 @@ func TestHandlePushEvents(t *testing.T) {
 					Txs:           expTxs,
 					Scrs:          expScrs,
 					LogEvents:     logEvents,
-					TxsWithOrder:  txs,
-					ScrsWithOrder: scrs,
+					TxsWithOrder:  expTxsWithOrder,
+					ScrsWithOrder: expScrsWithOrder,
 				}, nil
 			},
 		}

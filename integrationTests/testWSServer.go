@@ -7,9 +7,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gorilla/websocket"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
-	"github.com/gorilla/websocket"
 )
 
 type wsClient struct {
@@ -67,7 +67,7 @@ func (ws *wsClient) ReceiveEvents() ([]data.Event, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -83,19 +83,19 @@ func (ws *wsClient) ReceiveEvents() ([]data.Event, error) {
 }
 
 // ReceiveEvents will try to receive events
-func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEvents, error) {
+func (ws *wsClient) ReceiveBlockEventsData() (*data.BlockEventsWithOrder, error) {
 	m, err := ws.ReadMessage()
 	if err != nil {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
 	}
 
-	var blockData data.BlockEvents
+	var blockData data.BlockEventsWithOrder
 	err = json.Unmarshal(reply.Data, &blockData)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (ws *wsClient) ReceiveRevertBlock() (*data.RevertBlock, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (ws *wsClient) ReceiveFinalized() (*data.FinalizedBlock, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (ws *wsClient) ReceiveTxs() (*data.BlockTxs, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (ws *wsClient) ReceiveScrs() (*data.BlockScrs, error) {
 		return nil, err
 	}
 
-	var reply data.WSEvent
+	var reply data.WebSocketEvent
 	err = json.Unmarshal(m, &reply)
 	if err != nil {
 		return nil, err

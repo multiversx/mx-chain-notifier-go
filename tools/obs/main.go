@@ -6,7 +6,9 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	notifierData "github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 func main() {
@@ -21,7 +23,7 @@ func main() {
 		return
 	}
 
-	data := getShardV1Data()
+	data := getShardV2Data()
 
 	err = httpClient.Post("/events/push", data)
 	if err != nil {
@@ -78,5 +80,66 @@ func getShardV1Data() *outport.ArgsSaveBlockData {
 			},
 		},
 		NumberOfShards: 2,
+	}
+}
+
+func getShardV2Data() *notifierData.ArgsSaveBlock {
+	return &notifierData.ArgsSaveBlock{
+		HeaderType: "Header",
+		ArgsSaveBlockData: notifierData.ArgsSaveBlockData{
+			HeaderHash: []byte("headerHash2"),
+			Body: &block.Body{
+				MiniBlocks: []*block.MiniBlock{
+					{
+						TxHashes:        [][]byte{},
+						ReceiverShardID: 1,
+						SenderShardID:   1,
+					},
+				},
+			},
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+			TransactionsPool: &notifierData.TransactionsPool{
+				Txs: map[string]*notifierData.NodeTransaction{
+					"txHash1": {
+						TransactionHandler: &transaction.Transaction{
+							Nonce:    1,
+							GasPrice: 1,
+							GasLimit: 1,
+						},
+						FeeInfo: outport.FeeInfo{
+							GasUsed: 1,
+						},
+						ExecutionOrder: 2,
+					},
+				},
+				Scrs: map[string]*notifierData.NodeSmartContractResult{
+					"scrHash1": {
+						TransactionHandler: &smartContractResult.SmartContractResult{
+							Nonce:    2,
+							GasLimit: 2,
+							GasPrice: 2,
+							CallType: 2,
+						},
+						FeeInfo: outport.FeeInfo{
+							GasUsed: 2,
+						},
+						ExecutionOrder: 0,
+					},
+				},
+				Logs: []*notifierData.LogData{
+					{
+						LogHandler: &transaction.Log{
+							Address: []byte("logaddr1"),
+							Events:  []*transaction.Event{},
+						},
+						TxHash: "logHash1",
+					},
+				},
+			},
+			NumberOfShards: 2,
+		},
 	}
 }

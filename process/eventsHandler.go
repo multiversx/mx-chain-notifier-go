@@ -257,17 +257,10 @@ func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 		return
 	}
 
-	if len(blockTxs.Txs) == 0 {
-		log.Info("received empty txs with order event for block",
-			"block hash", blockTxs.Hash,
-			"will process", shouldProcessTxs,
-		)
-	} else {
-		log.Info("received txs events for block",
-			"block hash", blockTxs.Hash,
-			"will process", shouldProcessTxs,
-		)
-	}
+	log.Info("received full block events for block",
+		"block hash", blockTxs.Hash,
+		"will process", shouldProcessTxs,
+	)
 
 	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
 }

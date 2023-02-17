@@ -155,44 +155,9 @@ func TestPushEvents(t *testing.T) {
 
 	wd.PushEvents(events)
 
-	wsEvent := &data.WSEvent{
+	wsEvent := &data.WebSocketEvent{
 		Type: common.PushLogsAndEvents,
 		Data: eventBytes,
-	}
-	expectedEventBytes, _ := json.Marshal(wsEvent)
-
-	eventsData := wd.ReadSendChannel()
-
-	require.Equal(t, expectedEventBytes, eventsData)
-}
-
-func TestBlockEvents(t *testing.T) {
-	t.Parallel()
-
-	args := createMockWSDispatcherArgs()
-	wd, err := ws.NewTestWSDispatcher(args)
-	require.Nil(t, err)
-
-	events := []data.Event{
-		{
-			Address:    "addr1",
-			Identifier: "id1",
-		},
-	}
-	blockData := data.BlockEvents{
-		Hash:      "hash1",
-		ShardID:   1,
-		TimeStamp: 1234,
-		Events:    events,
-	}
-	blockDataBytes, err := json.Marshal(blockData)
-	require.Nil(t, err)
-
-	wd.BlockEvents(blockData)
-
-	wsEvent := &data.WSEvent{
-		Type: common.PushBlockEvents,
-		Data: blockDataBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)
 
@@ -208,9 +173,9 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	wd, err := ws.NewTestWSDispatcher(args)
 	require.Nil(t, err)
 
-	txs := map[string]data.TransactionWithOrder{
+	txs := map[string]*data.NotifierTransaction{
 		"txHash1": {
-			TransactionHandler: &transaction.Transaction{
+			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 			ExecutionOrder: 1,
@@ -225,10 +190,10 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	blockDataBytes, err := json.Marshal(blockData)
 	require.Nil(t, err)
 
-	wd.BlockEventsWithOrder(blockData)
+	wd.BlockEvents(blockData)
 
-	wsEvent := &data.WSEvent{
-		Type: common.BlockEventsWithOrder,
+	wsEvent := &data.WebSocketEvent{
+		Type: common.BlockEvents,
 		Data: blockDataBytes,
 	}
 	expectedEventBytes, _ := json.Marshal(wsEvent)
