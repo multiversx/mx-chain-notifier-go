@@ -1,6 +1,6 @@
 # Elrond events notifier
 
-The notifier service is a component that receives block events synchronously
+The events notifier service is a component that receives block events synchronously
 from elrond observer nodes, and it forwards them to a subscribing component
 (via message queuing service or websockets)
   
