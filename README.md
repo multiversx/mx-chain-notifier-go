@@ -175,6 +175,10 @@ If `--api-type` command line parameter is set to `rabbit-api`, the notifier inst
 will try to publish events to `RabbitMQ`. Check `RabbitMQ` section for config in order to
 set up the url and exchanges properly.
 
+There are multiple exchanges that can be used, they can be found in the main config file
+in the `RabbitMQ` section. The data structures corresponding to these exchanges are defined
+in code in `data/outport.go` file.
+
 ## Subscribing
 
 Once the proxy is launched together with the observer/s, the driver's methods
@@ -299,3 +303,73 @@ A subscription example with `eventType` will be like this:
 
 Note: if eventType type is not specified, it will be set to `all_events` by
 default.
+
+The payload data will consist of a marshalled object containing the event type and the
+inner marshalled data like:
+```json
+{
+  "type": "all_events",
+  "data": "<< marshalled object here >>",
+}
+```
+
+There are multiple event types available, they can be found as constants in common package,
+[constants](https://github.com/multiversx/mx-chain-notifier-go/blob/main/common/constants.go). Below there is the event type together with the associated marshalled data type.
+- `all_events`
+```json
+{
+  "hash": "blockHash1",
+  "events": [
+    {
+      "address": "addr1",
+      "identifier": "identifier",
+      ...
+    }
+  ]
+}
+```
+
+- `revert_events`
+```json
+{
+    "hash": "blockHash1",
+    "nonce": 11,
+    "round": 2,
+    "epoch": 1,
+}
+```
+
+- `finalized_events`
+```json
+{
+    "hash": "blockHash"
+}
+```
+
+- `block_txs`:
+```json
+{
+  "hash": "blockHash1",
+  "txs": {
+    "txHash1": {      
+        "Nonce": 123,
+        "Round": 1,
+        "Epoch": 1,
+        ...
+    }
+  }
+}
+```
+
+- `block_scrs`
+```json
+{
+  "hash": "blockHash1",
+  "scrs": {
+    "scrHash1": {      
+        "Nonce": 123,
+        ...
+    }
+  }
+}
+```
