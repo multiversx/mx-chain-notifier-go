@@ -24,3 +24,9 @@ func (wd *websocketDispatcher) WritePump() {
 func (wd *websocketDispatcher) ReadPump() {
 	wd.readPump()
 }
+
+// ReadSendChannel -
+func (wd *websocketDispatcher) ReadSendChannel() []byte {
+	d := <-wd.send
+	return d
+}

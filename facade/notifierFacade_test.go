@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -82,7 +83,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 		expectedErr := errors.New("expected error")
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
-			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return nil, expectedErr
 			},
 		}
@@ -92,6 +93,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte("blockHash"),
+			Header:     &block.HeaderV2{},
 		}
 		err = facade.HandlePushEventsV2(blockData)
 		require.Equal(t, expectedErr, err)
@@ -103,14 +105,15 @@ func TestHandlePushEvents(t *testing.T) {
 		args := createMockFacadeArgs()
 
 		blockHash := "blockHash1"
-		txs := map[string]data.TransactionWithOrder{
+		txs := map[string]*data.NodeTransaction{
 			"hash1": {
 				TransactionHandler: &transaction.Transaction{
 					Nonce: 1,
 				},
+				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]data.SmartContractResultWithOrder{
+		scrs := map[string]*data.NodeSmartContractResult{
 			"hash2": {
 				TransactionHandler: &smartContractResult.SmartContractResult{
 					Nonce: 2,
@@ -133,6 +136,11 @@ func TestHandlePushEvents(t *testing.T) {
 			},
 		}
 
+		header := &block.HeaderV2{
+			Header: &block.Header{
+				ShardID: 2,
+			},
+		}
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte(blockHash),
 			TransactionsPool: &data.TransactionsPool{
@@ -140,6 +148,7 @@ func TestHandlePushEvents(t *testing.T) {
 				Scrs: scrs,
 				Logs: logData,
 			},
+			Header: &block.HeaderV2{},
 		}
 
 		expTxs := map[string]*transaction.Transaction{
@@ -162,13 +171,38 @@ func TestHandlePushEvents(t *testing.T) {
 			Scrs: expScrs,
 		}
 		expLogEvents := data.BlockEvents{
-			Hash:   blockHash,
-			Events: logEvents,
+			Hash:    blockHash,
+			Events:  logEvents,
+			ShardID: 2,
+		}
+
+		expTxsWithOrder := map[string]*data.NotifierTransaction{
+			"hash1": {
+				Transaction: &transaction.Transaction{
+					Nonce: 1,
+				},
+				ExecutionOrder: 1,
+			},
+		}
+		expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+			"hash2": {
+				SmartContractResult: &smartContractResult.SmartContractResult{
+					Nonce: 2,
+				},
+			},
+		}
+		expTxsWithOrderData := data.BlockEventsWithOrder{
+			Hash:    blockHash,
+			ShardID: 2,
+			Txs:     expTxsWithOrder,
+			Scrs:    expScrsWithOrder,
+			Events:  logEvents,
 		}
 
 		pushWasCalled := false
 		txsWasCalled := false
 		scrsWasCalled := false
+		blockEventsWithOrderWasCalled := false
 		args.EventsHandler = &mocks.EventsHandlerStub{
 			HandlePushEventsCalled: func(events data.BlockEvents) error {
 				pushWasCalled = true
@@ -183,14 +217,21 @@ func TestHandlePushEvents(t *testing.T) {
 				scrsWasCalled = true
 				assert.Equal(t, expScrsData, blockScrs)
 			},
+			HandleBlockEventsWithOrderCalled: func(blockTxs data.BlockEventsWithOrder) {
+				blockEventsWithOrderWasCalled = true
+				assert.Equal(t, expTxsWithOrderData, blockTxs)
+			},
 		}
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
-			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
-				return &data.SaveBlockData{
-					Hash:      blockHash,
-					Txs:       expTxs,
-					Scrs:      expScrs,
-					LogEvents: logEvents,
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				return &data.InterceptorBlockData{
+					Hash:          blockHash,
+					Header:        header,
+					Txs:           expTxs,
+					Scrs:          expScrs,
+					LogEvents:     logEvents,
+					TxsWithOrder:  expTxsWithOrder,
+					ScrsWithOrder: expScrsWithOrder,
 				}, nil
 			},
 		}
@@ -203,6 +244,7 @@ func TestHandlePushEvents(t *testing.T) {
 		assert.True(t, pushWasCalled)
 		assert.True(t, txsWasCalled)
 		assert.True(t, scrsWasCalled)
+		assert.True(t, blockEventsWithOrderWasCalled)
 	})
 }
 

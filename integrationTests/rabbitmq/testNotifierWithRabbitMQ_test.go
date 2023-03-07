@@ -44,8 +44,8 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	assert.Equal(t, 5, responses[http.StatusOK])
 	mutResponses.Unlock()
 
-	assert.Equal(t, 5, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 5, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
@@ -59,14 +59,15 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 			},
 		},
 		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]data.TransactionWithOrder{
+			Txs: map[string]*data.NodeTransaction{
 				"txHash1": {
 					TransactionHandler: &transaction.Transaction{
 						Nonce: 1,
 					},
+					ExecutionOrder: 1,
 				},
 			},
-			Scrs: map[string]data.SmartContractResultWithOrder{
+			Scrs: map[string]*data.NodeSmartContractResult{
 				"scrHash1": {
 					TransactionHandler: &smartContractResult.SmartContractResult{
 						Nonce: 2,
@@ -82,6 +83,9 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 					TxHash: "txHash1",
 				},
 			},
+		},
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
 		},
 	}
 	saveBlockData := &data.ArgsSaveBlock{

@@ -4,11 +4,11 @@ import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // EventsInterceptorStub -
 type EventsInterceptorStub struct {
-	ProcessBlockEventsCalled func(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error)
+	ProcessBlockEventsCalled func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error)
 }
 
 // ProcessBlockEvents -
-func (stub *EventsInterceptorStub) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error) {
+func (stub *EventsInterceptorStub) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 	if stub.ProcessBlockEventsCalled != nil {
 		return stub.ProcessBlockEventsCalled(eventsData)
 	}

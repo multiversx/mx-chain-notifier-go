@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/google/uuid"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // EventDispatcher defines the behaviour of a event dispatcher component
@@ -16,6 +16,7 @@ type EventDispatcher interface {
 	RevertEvent(event data.RevertBlock)
 	FinalizedEvent(event data.FinalizedBlock)
 	TxsEvent(event data.BlockTxs)
+	BlockEvents(event data.BlockEventsWithOrder)
 	ScrsEvent(event data.BlockScrs)
 }
 
@@ -28,6 +29,7 @@ type Hub interface {
 	BroadcastFinalized(event data.FinalizedBlock)
 	BroadcastTxs(event data.BlockTxs)
 	BroadcastScrs(event data.BlockScrs)
+	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
 	Subscribe(event data.SubscribeEvent)

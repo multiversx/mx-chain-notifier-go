@@ -4,10 +4,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/google/uuid"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
-	"github.com/google/uuid"
 )
 
 var log = logger.GetOrCreate("subscription")
@@ -54,7 +54,7 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 		sm.appendSubscription(data.Subscription{
 			DispatcherID: event.DispatcherID,
 			MatchLevel:   MatchAll,
-			EventType:    common.PushBlockEvents,
+			EventType:    common.PushLogsAndEvents,
 		})
 		log.Info("subscribed dispatcher",
 			"dispatcherID", event.DispatcherID,
@@ -142,11 +142,12 @@ func getEventType(subEntry data.SubscriptionEntry) string {
 	if subEntry.EventType == common.FinalizedBlockEvents ||
 		subEntry.EventType == common.RevertBlockEvents ||
 		subEntry.EventType == common.BlockTxs ||
-		subEntry.EventType == common.BlockScrs {
+		subEntry.EventType == common.BlockScrs ||
+		subEntry.EventType == common.BlockEvents {
 		return subEntry.EventType
 	}
 
-	return common.PushBlockEvents
+	return common.PushLogsAndEvents
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -1,10 +1,13 @@
 package ws_test
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher/ws"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -133,4 +136,69 @@ func TestReadPump(t *testing.T) {
 	wd.ReadPump()
 
 	assert.True(t, wasCalled)
+}
+
+func TestPushEvents(t *testing.T) {
+	t.Parallel()
+
+	args := createMockWSDispatcherArgs()
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	events := []data.Event{
+		{
+			Address:    "addr1",
+			Identifier: "id1",
+		},
+	}
+	eventBytes, _ := json.Marshal(events)
+
+	wd.PushEvents(events)
+
+	wsEvent := &data.WebSocketEvent{
+		Type: common.PushLogsAndEvents,
+		Data: eventBytes,
+	}
+	expectedEventBytes, _ := json.Marshal(wsEvent)
+
+	eventsData := wd.ReadSendChannel()
+
+	require.Equal(t, expectedEventBytes, eventsData)
+}
+
+func TestBlockEventsWithOrder(t *testing.T) {
+	t.Parallel()
+
+	args := createMockWSDispatcherArgs()
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	txs := map[string]*data.NotifierTransaction{
+		"txHash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
+			},
+			ExecutionOrder: 1,
+		},
+	}
+	blockData := data.BlockEventsWithOrder{
+		Hash:      "hash1",
+		ShardID:   1,
+		TimeStamp: 1234,
+		Txs:       txs,
+	}
+	blockDataBytes, err := json.Marshal(blockData)
+	require.Nil(t, err)
+
+	wd.BlockEvents(blockData)
+
+	wsEvent := &data.WebSocketEvent{
+		Type: common.BlockEvents,
+		Data: blockDataBytes,
+	}
+	expectedEventBytes, _ := json.Marshal(wsEvent)
+
+	eventsData := wd.ReadSendChannel()
+
+	require.Equal(t, expectedEventBytes, eventsData)
 }

@@ -1,9 +1,9 @@
 package mocks
 
 import (
+	"github.com/google/uuid"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
-	"github.com/google/uuid"
 )
 
 // DispatcherMock -
@@ -30,6 +30,10 @@ func (d *DispatcherMock) GetID() uuid.UUID {
 // PushEvents -
 func (d *DispatcherMock) PushEvents(events []data.Event) {
 	d.consumer.Receive(events)
+}
+
+// BlockEvents -
+func (d *DispatcherMock) BlockEvents(event data.BlockEventsWithOrder) {
 }
 
 // RevertEvent -

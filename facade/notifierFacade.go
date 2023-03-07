@@ -65,8 +65,10 @@ func (nf *notifierFacade) HandlePushEventsV2(allEvents data.ArgsSaveBlockData) e
 	}
 
 	pushEvents := data.BlockEvents{
-		Hash:   eventsData.Hash,
-		Events: eventsData.LogEvents,
+		Hash:      eventsData.Hash,
+		ShardID:   eventsData.Header.GetShardID(),
+		TimeStamp: eventsData.Header.GetTimeStamp(),
+		Events:    eventsData.LogEvents,
 	}
 	err = nf.eventsHandler.HandlePushEvents(pushEvents)
 	if err != nil {
@@ -84,6 +86,16 @@ func (nf *notifierFacade) HandlePushEventsV2(allEvents data.ArgsSaveBlockData) e
 		Scrs: eventsData.Scrs,
 	}
 	nf.eventsHandler.HandleBlockScrs(scrs)
+
+	txsWithOrder := data.BlockEventsWithOrder{
+		Hash:      eventsData.Hash,
+		ShardID:   eventsData.Header.GetShardID(),
+		TimeStamp: eventsData.Header.GetTimeStamp(),
+		Txs:       eventsData.TxsWithOrder,
+		Scrs:      eventsData.ScrsWithOrder,
+		Events:    eventsData.LogEvents,
+	}
+	nf.eventsHandler.HandleBlockEventsWithOrder(txsWithOrder)
 
 	return nil
 }

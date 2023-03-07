@@ -1,7 +1,6 @@
 package hub
 
 import (
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -53,7 +52,7 @@ func TestNewCommonHub(t *testing.T) {
 		args := createMockCommonHubArgs()
 		hub, err := NewCommonHub(args)
 		require.Nil(t, err)
-		require.NotNil(t, hub)
+		require.False(t, hub.IsInterfaceNil())
 	})
 }
 
@@ -198,12 +197,10 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 	hub, err := NewCommonHub(args)
 	require.Nil(t, err)
 
-	wg := sync.WaitGroup{}
 	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
 		RevertEventCalled: func(event data.RevertBlock) {
 			atomic.AddUint32(&numCalls, 1)
-			wg.Done()
 		},
 	})
 
@@ -217,7 +214,6 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 
 	hub.Run()
 	defer hub.Close()
-	wg.Add(1)
 
 	blockEvents := data.RevertBlock{
 		Hash:  "hash1",
@@ -226,7 +222,7 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 
 	hub.BroadcastRevert(blockEvents)
 
-	wg.Wait()
+	time.Sleep(time.Millisecond * 100)
 
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
@@ -238,12 +234,10 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 	hub, err := NewCommonHub(args)
 	require.Nil(t, err)
 
-	wg := sync.WaitGroup{}
 	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
 		FinalizedEventCalled: func(event data.FinalizedBlock) {
 			atomic.AddUint32(&numCalls, 1)
-			wg.Done()
 		},
 	})
 
@@ -257,7 +251,6 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 
 	hub.Run()
 	defer hub.Close()
-	wg.Add(1)
 
 	blockEvents := data.FinalizedBlock{
 		Hash: "hash1",
@@ -265,7 +258,7 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 
 	hub.BroadcastFinalized(blockEvents)
 
-	wg.Wait()
+	time.Sleep(time.Millisecond * 100)
 
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
@@ -277,12 +270,10 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 	hub, err := NewCommonHub(args)
 	require.NoError(t, err)
 
-	wg := sync.WaitGroup{}
 	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
 		TxsEventCalled: func(event data.BlockTxs) {
 			atomic.AddUint32(&numCalls, 1)
-			wg.Done()
 		},
 	})
 
@@ -296,7 +287,6 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 
 	hub.Run()
 	defer hub.Close()
-	wg.Add(1)
 
 	blockEvents := data.BlockTxs{
 		Hash: "hash1",
@@ -304,7 +294,43 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 
 	hub.BroadcastTxs(blockEvents)
 
-	wg.Wait()
+	time.Sleep(time.Millisecond * 100)
+
+	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.NoError(t, err)
+
+	numCalls := uint32(0)
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		BlockEventsCalled: func(event data.BlockEventsWithOrder) {
+			atomic.AddUint32(&numCalls, 1)
+		},
+	})
+
+	hub.Subscribe(data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.BlockEvents,
+			},
+		},
+	})
+
+	hub.Run()
+	defer hub.Close()
+
+	blockEvents := data.BlockEventsWithOrder{
+		Hash: "hash1",
+	}
+
+	hub.handleBlockEventsWithOrderBroadcast(blockEvents)
+
+	time.Sleep(time.Millisecond * 100)
 
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }
@@ -316,12 +342,10 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 	hub, err := NewCommonHub(args)
 	require.Nil(t, err)
 
-	wg := sync.WaitGroup{}
 	numCalls := uint32(0)
 	hub.registerDispatcher(&mocks.DispatcherStub{
 		ScrsEventCalled: func(event data.BlockScrs) {
 			atomic.AddUint32(&numCalls, 1)
-			wg.Done()
 		},
 	})
 
@@ -335,7 +359,6 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 
 	hub.Run()
 	defer hub.Close()
-	wg.Add(1)
 
 	blockEvents := data.BlockScrs{
 		Hash: "hash1",
@@ -343,7 +366,7 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 
 	hub.BroadcastScrs(blockEvents)
 
-	wg.Wait()
+	time.Sleep(time.Millisecond * 100)
 
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
 }

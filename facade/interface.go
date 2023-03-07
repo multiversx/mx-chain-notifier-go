@@ -13,6 +13,7 @@ type EventsHandler interface {
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	HandleBlockTxs(blockTxs data.BlockTxs)
 	HandleBlockScrs(blockScrs data.BlockScrs)
+	HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
 	IsInterfaceNil() bool
 }
 
@@ -39,6 +40,6 @@ type Publisher interface {
 
 // EventsInterceptor defines the behaviour of an events interceptor component
 type EventsInterceptor interface {
-	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.SaveBlockData, error)
+	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error)
 	IsInterfaceNil() bool
 }

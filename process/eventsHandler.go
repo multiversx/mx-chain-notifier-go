@@ -20,6 +20,7 @@ const (
 	revertKeyPrefix        = "revert_"
 	finalizedKeyPrefix     = "finalized_"
 	txsKeyPrefix           = "txs_"
+	txsWithOrderKeyPrefix  = "txsWithOrder_"
 	scrsKeyPrefix          = "scrs_"
 )
 
@@ -232,6 +233,36 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	}
 
 	eh.publisher.BroadcastScrs(blockScrs)
+}
+
+// HandleBlockEventsWithOrder will handle full block events received from observer
+func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+	if blockTxs.Hash == "" {
+		log.Warn("received full block events with empty block hash",
+			"will process", false,
+		)
+		return
+	}
+	shouldProcessTxs := true
+	if eh.config.CheckDuplicates {
+		txsKey := txsWithOrderKeyPrefix + blockTxs.Hash
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
+	}
+
+	if !shouldProcessTxs {
+		log.Info("received duplicated full block events for block",
+			"block hash", blockTxs.Hash,
+			"processed", false,
+		)
+		return
+	}
+
+	log.Info("received full block events for block",
+		"block hash", blockTxs.Hash,
+		"will process", shouldProcessTxs,
+	)
+
+	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
 }
 
 func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
