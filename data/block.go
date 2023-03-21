@@ -3,6 +3,7 @@ package data
 import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/alteredAccount"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -37,9 +38,9 @@ type ArgsSaveBlockData struct {
 	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
-	HeaderGasConsumption   outport.HeaderGasConsumption
+	HeaderGasConsumption   *outport.HeaderGasConsumption
 	TransactionsPool       *TransactionsPool
-	AlteredAccounts        map[string]*outport.AlteredAccount
+	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
 }

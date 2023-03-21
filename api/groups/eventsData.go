@@ -5,9 +5,12 @@ import (
 	"errors"
 
 	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/unmarshal"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/alteredAccount"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -26,13 +29,12 @@ func UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
 // UnmarshallBlockDataV2 will try to unmarshal block data v2
 func UnmarshallBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	argsBlockS := struct {
-		HeaderHash             []byte
-		Body                   *block.Body
+		BlockData              *outport.BlockData
 		TransactionsPool       *data.TransactionsPool
 		SignersIndexes         []uint64
 		NotarizedHeadersHashes []string
-		HeaderGasConsumption   outport.HeaderGasConsumption
-		AlteredAccounts        map[string]*outport.AlteredAccount
+		HeaderGasConsumption   *outport.HeaderGasConsumption
+		AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 		NumberOfShards         uint32
 		IsImportDB             bool
 	}{}
@@ -41,14 +43,14 @@ func UnmarshallBlockDataV2(marshalledData []byte) (*data.ArgsSaveBlockData, erro
 		return nil, err
 	}
 
-	header, err := getHeader(marshalledData)
+	header, err := unmarshal.GetHeaderFromBytes(&marshal.GogoProtoMarshalizer{}, core.HeaderType(argsBlockS.BlockData.HeaderType), argsBlockS.BlockData.HeaderBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	return &data.ArgsSaveBlockData{
-		HeaderHash:             argsBlockS.HeaderHash,
-		Body:                   argsBlockS.Body,
+		HeaderHash:             argsBlockS.BlockData.HeaderHash,
+		Body:                   argsBlockS.BlockData.Body,
 		SignersIndexes:         argsBlockS.SignersIndexes,
 		NotarizedHeadersHashes: argsBlockS.NotarizedHeadersHashes,
 		HeaderGasConsumption:   argsBlockS.HeaderGasConsumption,
