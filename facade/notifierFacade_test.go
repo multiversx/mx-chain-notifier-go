@@ -8,6 +8,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -105,24 +106,24 @@ func TestHandlePushEvents(t *testing.T) {
 		args := createMockFacadeArgs()
 
 		blockHash := "blockHash1"
-		txs := map[string]*data.NodeTransaction{
+		txs := map[string]*outport.TxInfo{
 			"hash1": {
-				TransactionHandler: &transaction.Transaction{
+				Transaction: &transaction.Transaction{
 					Nonce: 1,
 				},
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]*data.NodeSmartContractResult{
+		scrs := map[string]*outport.SCRInfo{
 			"hash2": {
-				TransactionHandler: &smartContractResult.SmartContractResult{
+				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 2,
 				},
 			},
 		}
-		logData := []*data.LogData{
+		logData := []*outport.LogData{
 			{
-				LogHandler: &transaction.Log{
+				Log: &transaction.Log{
 					Address: []byte("logaddr1"),
 					Events:  []*transaction.Event{},
 				},
@@ -143,10 +144,10 @@ func TestHandlePushEvents(t *testing.T) {
 		}
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte(blockHash),
-			TransactionsPool: &data.TransactionsPool{
-				Txs:  txs,
-				Scrs: scrs,
-				Logs: logData,
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				Logs:                 logData,
 			},
 			Header: &block.HeaderV2{},
 		}
@@ -176,7 +177,7 @@ func TestHandlePushEvents(t *testing.T) {
 			ShardID: 2,
 		}
 
-		expTxsWithOrder := map[string]*data.NotifierTransaction{
+		expTxsWithOrder := map[string]*outport.TxInfo{
 			"hash1": {
 				Transaction: &transaction.Transaction{
 					Nonce: 1,
@@ -184,7 +185,7 @@ func TestHandlePushEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+		expScrsWithOrder := map[string]*outport.SCRInfo{
 			"hash2": {
 				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 2,

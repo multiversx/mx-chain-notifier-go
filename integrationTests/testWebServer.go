@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -77,7 +78,7 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 }
 
 // PushEventsRequest will send a http request for push events
-func (w *TestWebServer) PushEventsRequest(events *data.ArgsSaveBlock) *httptest.ResponseRecorder {
+func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) *httptest.ResponseRecorder {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))

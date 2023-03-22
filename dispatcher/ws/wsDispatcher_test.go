@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -173,7 +174,7 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	wd, err := ws.NewTestWSDispatcher(args)
 	require.Nil(t, err)
 
-	txs := map[string]*data.NotifierTransaction{
+	txs := map[string]*outport.TxInfo{
 		"txHash1": {
 			Transaction: &transaction.Transaction{
 				Nonce: 1,

@@ -10,6 +10,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
@@ -83,22 +84,24 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("facade error, will try push events v2, should fail", func(t *testing.T) {
 		t.Parallel()
 
-		blockEvents := &data.SaveBlockData{
-			Hash: "hash1",
-			Txs: map[string]*transaction.Transaction{
-				"hash2": {
-					Nonce: 2,
+		argsSaveBlockData := outport.OutportBlock{
+			BlockData: &outport.BlockData{
+				HeaderType: "HeaderV2",
+				HeaderHash: []byte("headerHash"),
+			},
+			TransactionPool: &outport.TransactionPool{
+				Transactions: map[string]*outport.TxInfo{
+					"hash2": {
+						Transaction: &transaction.Transaction{
+							Nonce: 2,
+						},
+						ExecutionOrder: 1,
+					},
 				},
 			},
-			Scrs: map[string]*smartContractResult.SmartContractResult{
-				"hash3": {
-					Nonce: 3,
-				},
-			},
-			LogEvents: []data.Event{},
 		}
 
-		jsonBytes, _ := json.Marshal(blockEvents)
+		jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
@@ -126,30 +129,44 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		argsSaveBlockData := data.ArgsSaveBlockData{
-			HeaderHash: []byte{},
-			Body:       &block.Body{},
-			Header:     &block.HeaderV2{},
-			TransactionsPool: &data.TransactionsPool{
-				Txs: map[string]*data.NodeTransaction{
+		header := &block.HeaderV2{
+			Header: &block.Header{
+				Nonce: 1,
+			},
+		}
+		headerBytes, _ := json.Marshal(header)
+
+		argsSaveBlockData := outport.OutportBlock{
+			BlockData: &outport.BlockData{
+				HeaderBytes: headerBytes,
+				HeaderType:  "HeaderV2",
+				HeaderHash:  []byte("headerHash"),
+				Body: &block.Body{
+					MiniBlocks: []*block.MiniBlock{
+						{SenderShardID: 1},
+					},
+				},
+			},
+			TransactionPool: &outport.TransactionPool{
+				Transactions: map[string]*outport.TxInfo{
 					"hash2": {
-						TransactionHandler: &transaction.Transaction{
+						Transaction: &transaction.Transaction{
 							Nonce: 2,
 						},
 						ExecutionOrder: 1,
 					},
 				},
-				Scrs: map[string]*data.NodeSmartContractResult{
+				SmartContractResults: map[string]*outport.SCRInfo{
 					"hash3": {
-						TransactionHandler: &smartContractResult.SmartContractResult{
+						SmartContractResult: &smartContractResult.SmartContractResult{
 							Nonce: 3,
 						},
 						ExecutionOrder: 1,
 					},
 				},
-				Logs: []*data.LogData{
+				Logs: []*outport.LogData{
 					{
-						LogHandler: &transaction.Log{
+						Log: &transaction.Log{
 							Address: []byte("logaddr1"),
 							Events:  []*transaction.Event{},
 						},
@@ -158,12 +175,8 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 				},
 			},
 		}
-		blockEvents := data.ArgsSaveBlock{
-			HeaderType:        "HeaderV2",
-			ArgsSaveBlockData: argsSaveBlockData,
-		}
 
-		jsonBytes, _ := json.Marshal(blockEvents)
+		jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 		wasCalled := false
 		facade := &mocks.FacadeStub{
@@ -172,7 +185,6 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 			},
 			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
 				wasCalled = true
-				assert.Equal(t, argsSaveBlockData, events)
 				return nil
 			},
 		}

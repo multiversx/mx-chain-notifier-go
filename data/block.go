@@ -25,9 +25,9 @@ type InterceptorBlockData struct {
 	Body          nodeData.BodyHandler
 	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*NotifierTransaction
+	TxsWithOrder  map[string]*outport.TxInfo
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*NotifierSmartContractResult
+	ScrsWithOrder map[string]*outport.SCRInfo
 	LogEvents     []Event
 }
 
@@ -39,7 +39,7 @@ type ArgsSaveBlockData struct {
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
 	HeaderGasConsumption   *outport.HeaderGasConsumption
-	TransactionsPool       *TransactionsPool
+	TransactionsPool       *outport.TransactionPool
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool

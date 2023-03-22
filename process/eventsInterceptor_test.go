@@ -6,6 +6,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -76,7 +77,7 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		eventsData := &data.ArgsSaveBlockData{
 			HeaderHash:       []byte("headerHash"),
-			TransactionsPool: &data.TransactionsPool{},
+			TransactionsPool: &outport.TransactionPool{},
 			Body:             nil,
 		}
 		events, err := eventsInterceptor.ProcessBlockEvents(eventsData)
@@ -91,7 +92,7 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		eventsData := &data.ArgsSaveBlockData{
 			HeaderHash:       []byte("headerHash"),
-			TransactionsPool: &data.TransactionsPool{},
+			TransactionsPool: &outport.TransactionPool{},
 			Body:             &block.Body{},
 			Header:           nil,
 		}
@@ -105,17 +106,17 @@ func TestProcessBlockEvents(t *testing.T) {
 
 		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
 
-		txs := map[string]*data.NodeTransaction{
+		txs := map[string]*outport.TxInfo{
 			"hash2": {
-				TransactionHandler: &transaction.Transaction{
+				Transaction: &transaction.Transaction{
 					Nonce: 2,
 				},
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]*data.NodeSmartContractResult{
+		scrs := map[string]*outport.SCRInfo{
 			"hash3": {
-				TransactionHandler: &smartContractResult.SmartContractResult{
+				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 3,
 				},
 				ExecutionOrder: 1,
@@ -132,26 +133,29 @@ func TestProcessBlockEvents(t *testing.T) {
 				TimeStamp: 1234,
 			},
 		}
+
+		logs := []*outport.LogData{
+			{
+				Log: &transaction.Log{
+					Address: addr,
+					Events: []*transaction.Event{
+						{
+							Address: addr,
+						},
+					},
+				},
+			},
+		}
+
 		blockHash := []byte("blockHash")
 		blockEvents := data.ArgsSaveBlockData{
 			HeaderHash: blockHash,
 			Body:       blockBody,
 			Header:     blockHeader,
-			TransactionsPool: &data.TransactionsPool{
-				Txs:  txs,
-				Scrs: scrs,
-				Logs: []*data.LogData{
-					{
-						LogHandler: &transaction.Log{
-							Address: addr,
-							Events: []*transaction.Event{
-								{
-									Address: addr,
-								},
-							},
-						},
-					},
-				},
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				Logs:                 logs,
 			},
 		}
 
@@ -160,7 +164,7 @@ func TestProcessBlockEvents(t *testing.T) {
 				Nonce: 2,
 			},
 		}
-		expTxsWithOrder := map[string]*data.NotifierTransaction{
+		expTxsWithOrder := map[string]*outport.TxInfo{
 			"hash2": {
 				Transaction: &transaction.Transaction{
 					Nonce: 2,
@@ -173,7 +177,7 @@ func TestProcessBlockEvents(t *testing.T) {
 				Nonce: 3,
 			},
 		}
-		expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+		expScrsWithOrder := map[string]*outport.SCRInfo{
 			"hash3": {
 				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 3,
@@ -224,9 +228,9 @@ func TestGetLogEventsFromTransactionsPool(t *testing.T) {
 		},
 	}
 
-	logs := []*data.LogData{
+	logs := []*outport.LogData{
 		{
-			LogHandler: &transaction.Log{
+			Log: &transaction.Log{
 				Events: []*transaction.Event{
 					events[0],
 					events[1],
@@ -235,7 +239,7 @@ func TestGetLogEventsFromTransactionsPool(t *testing.T) {
 			TxHash: txHash1,
 		},
 		{
-			LogHandler: &transaction.Log{
+			Log: &transaction.Log{
 				Events: []*transaction.Event{
 					events[2],
 				},

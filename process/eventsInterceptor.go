@@ -6,6 +6,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -55,26 +56,16 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
 	txs := make(map[string]*transaction.Transaction)
-	txsWithOrder := make(map[string]*data.NotifierTransaction)
-	for hash, tx := range eventsData.TransactionsPool.Txs {
-		txs[hash] = tx.TransactionHandler
-		txsWithOrder[hash] = &data.NotifierTransaction{
-			Transaction:    tx.TransactionHandler,
-			FeeInfo:        tx.FeeInfo,
-			ExecutionOrder: tx.ExecutionOrder,
-		}
+	for hash, tx := range eventsData.TransactionsPool.Transactions {
+		txs[hash] = tx.Transaction
 	}
+	txsWithOrder := eventsData.TransactionsPool.Transactions
 
 	scrs := make(map[string]*smartContractResult.SmartContractResult)
-	scrsWithOrder := make(map[string]*data.NotifierSmartContractResult)
-	for hash, scr := range eventsData.TransactionsPool.Scrs {
-		scrs[hash] = scr.TransactionHandler
-		scrsWithOrder[hash] = &data.NotifierSmartContractResult{
-			SmartContractResult: scr.TransactionHandler,
-			FeeInfo:             scr.FeeInfo,
-			ExecutionOrder:      scr.ExecutionOrder,
-		}
+	for hash, scr := range eventsData.TransactionsPool.SmartContractResults {
+		scrs[hash] = scr.SmartContractResult
 	}
+	scrsWithOrder := eventsData.TransactionsPool.SmartContractResults
 
 	return &data.InterceptorBlockData{
 		Hash:          hex.EncodeToString(eventsData.HeaderHash),
@@ -88,19 +79,16 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	}, nil
 }
 
-func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*data.LogData) []data.Event {
+func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
 	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {
 			continue
 		}
-		if check.IfNil(logData.LogHandler) {
-			continue
-		}
 
-		for _, eventHandler := range logData.LogHandler.GetLogEvents() {
+		for _, event := range logData.Log.Events {
 			le := &logEvent{
-				EventHandler: eventHandler,
+				EventHandler: event,
 				TxHash:       logData.TxHash,
 			}
 
