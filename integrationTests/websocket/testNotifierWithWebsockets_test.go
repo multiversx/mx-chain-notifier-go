@@ -74,6 +74,8 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
+			HeaderType:  "HeaderV2",
+			HeaderHash:  []byte("headerHash"),
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
@@ -138,8 +140,6 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
-		Txs:       make(map[string]*outport.TxInfo),
-		Scrs:      make(map[string]*outport.SCRInfo),
 	}
 
 	header := &block.HeaderV2{
@@ -166,6 +166,8 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
+			HeaderType:  "HeaderV2",
+			HeaderHash:  headerHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
@@ -337,6 +339,8 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
+			HeaderType:  "HeaderV2",
+			HeaderHash:  blockHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
@@ -418,6 +422,8 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
+			HeaderType:  "HeaderV2",
+			HeaderHash:  blockHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
@@ -594,6 +600,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
+			HeaderType:  "HeaderV2",
+			HeaderHash:  blockHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
