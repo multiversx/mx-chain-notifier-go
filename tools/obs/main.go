@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 
-	data := getShardV2Data()
+	data := getBlockDataV2()
 
 	err = httpClient.Post("/events/push", data)
 	if err != nil {
@@ -34,7 +34,7 @@ func main() {
 	fmt.Println(data)
 }
 
-func getShardV1Data() *notifierData.SaveBlockData {
+func getBlockDataV1() *notifierData.SaveBlockData {
 	return &notifierData.SaveBlockData{
 		Hash: "blockHash",
 		Txs: map[string]*transaction.Transaction{
@@ -55,7 +55,7 @@ func getShardV1Data() *notifierData.SaveBlockData {
 	}
 }
 
-func getShardV2Data() *outport.OutportBlock {
+func getBlockDataV2() *outport.OutportBlock {
 	header := &block.Header{
 		ShardID:   1,
 		TimeStamp: 1234,

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -86,7 +87,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		argsSaveBlockData := outport.OutportBlock{
 			BlockData: &outport.BlockData{
-				HeaderType: "HeaderV2",
+				HeaderType: string(core.ShardHeaderV2),
 				HeaderHash: []byte("headerHash"),
 			},
 			TransactionPool: &outport.TransactionPool{
@@ -139,7 +140,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		argsSaveBlockData := outport.OutportBlock{
 			BlockData: &outport.BlockData{
 				HeaderBytes: headerBytes,
-				HeaderType:  "HeaderV2",
+				HeaderType:  string(core.ShardHeaderV2),
 				HeaderHash:  []byte("headerHash"),
 				Body: &block.Body{
 					MiniBlocks: []*block.MiniBlock{

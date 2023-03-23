@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
@@ -74,7 +75,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
-			HeaderType:  "HeaderV2",
+			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  []byte("headerHash"),
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
@@ -166,7 +167,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
-			HeaderType:  "HeaderV2",
+			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  headerHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
@@ -339,7 +340,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
-			HeaderType:  "HeaderV2",
+			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  blockHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
@@ -422,7 +423,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
-			HeaderType:  "HeaderV2",
+			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  blockHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
@@ -600,7 +601,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
-			HeaderType:  "HeaderV2",
+			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  blockHash,
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
