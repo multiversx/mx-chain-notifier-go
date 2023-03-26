@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/require"
 )
 
@@ -109,7 +110,8 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 		},
 	}
 
-	retBlockEvents, err := groups.UnmarshallBlockData(jsonBytes)
+	marshaller := &mocks.MarshalizerMock{}
+	retBlockEvents, err := groups.UnmarshallBlockData(marshaller, jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, expArgsSaveBlockData, retBlockEvents)
 }

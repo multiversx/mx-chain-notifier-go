@@ -23,14 +23,14 @@ func UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
 }
 
 // UnmarshallBlockData will try to unmarshal block data v2
-func UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
+func UnmarshallBlockData(marshaller marshal.Marshalizer, marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	var argsBlockS *outport.OutportBlock
 	err := json.Unmarshal(marshalledData, &argsBlockS)
 	if err != nil {
 		return nil, err
 	}
 
-	header, err := unmarshal.GetHeaderFromBytes(&marshal.JsonMarshalizer{}, core.HeaderType(argsBlockS.BlockData.HeaderType), argsBlockS.BlockData.HeaderBytes)
+	header, err := unmarshal.GetHeaderFromBytes(marshaller, core.HeaderType(argsBlockS.BlockData.HeaderType), argsBlockS.BlockData.HeaderBytes)
 	if err != nil {
 		return nil, err
 	}

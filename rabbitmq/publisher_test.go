@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -46,6 +47,7 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 				Type: "fanout",
 			},
 		},
+		Marshaller: &mocks.MarshalizerMock{},
 	}
 }
 
@@ -61,6 +63,17 @@ func TestRabbitMqPublisher(t *testing.T) {
 		client, err := rabbitmq.NewRabbitMqPublisher(args)
 		require.True(t, check.IfNil(client))
 		require.Equal(t, rabbitmq.ErrNilRabbitMqClient, err)
+	})
+
+	t.Run("nil marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Marshaller = nil
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.Equal(t, common.ErrNilMarshaller, err)
 	})
 
 	t.Run("invalid events exchange name", func(t *testing.T) {

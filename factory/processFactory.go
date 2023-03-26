@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -10,8 +11,7 @@ import (
 
 var log = logger.GetOrCreate("factory")
 
-const addrPubKeyConverterLength = 32
-const addrPubKeyConverterPrefix = "erd"
+const bech32PubkeyConverterType = "bech32"
 
 // ArgsEventsHandlerFactory defines the arguments needed for events handler creation
 type ArgsEventsHandlerFactory struct {
@@ -58,8 +58,8 @@ func getPublisher(
 }
 
 // CreateEventsInterceptor will create the events interceptor
-func CreateEventsInterceptor() (process.EventsInterceptor, error) {
-	pubKeyConverter, err := pubkeyConverter.NewBech32PubkeyConverter(addrPubKeyConverterLength, addrPubKeyConverterPrefix)
+func CreateEventsInterceptor(cfg config.GeneralConfig) (process.EventsInterceptor, error) {
+	pubKeyConverter, err := pubkeyConverter.NewBech32PubkeyConverter(cfg.AddressConverter.Length, cfg.AddressConverter.Prefix)
 	if err != nil {
 		return nil, err
 	}
@@ -69,4 +69,13 @@ func CreateEventsInterceptor() (process.EventsInterceptor, error) {
 	}
 
 	return process.NewEventsInterceptor(argsEventsInterceptor)
+}
+
+func getPubKeyConverter(cfg *config.GeneralConfig) (core.PubkeyConverter, error) {
+	switch cfg.AddressConverter.Type {
+	case bech32PubkeyConverterType:
+		return pubkeyConverter.NewBech32PubkeyConverter(cfg.AddressConverter.Length, cfg.AddressConverter.Prefix)
+	default:
+		return nil, common.ErrInvalidPubKeyConverterType
+	}
 }

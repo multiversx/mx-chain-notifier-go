@@ -18,7 +18,8 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 		Config: config.ConnectorApiConfig{
 			Port: "8080",
 		},
-		Type: "notifier",
+		Type:       "notifier",
+		Marshaller: &mocks.MarshalizerMock{},
 	}
 }
 
@@ -34,6 +35,17 @@ func TestNewWebServerHandler(t *testing.T) {
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))
 		require.Equal(t, apiErrors.ErrNilFacadeHandler, err)
+	})
+
+	t.Run("nil marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsWebServerHandler()
+		args.Marshaller = nil
+
+		ws, err := gin.NewWebServerHandler(args)
+		require.True(t, check.IfNil(ws))
+		require.Equal(t, common.ErrNilMarshaller, err)
 	})
 
 	t.Run("invalid api type", func(t *testing.T) {

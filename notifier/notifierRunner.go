@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 
+	marshalFactory "github.com/multiversx/mx-chain-core-go/marshal/factory"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/api/gin"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
@@ -17,11 +18,11 @@ import (
 var log = logger.GetOrCreate("notifierRunner")
 
 type notifierRunner struct {
-	configs *config.GeneralConfig
+	configs *config.Config
 }
 
 // NewNotifierRunner create a new notifierRunner instance
-func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
+func NewNotifierRunner(cfgs *config.Config) (*notifierRunner, error) {
 	if cfgs == nil {
 		return nil, ErrNilConfigs
 	}
@@ -33,12 +34,17 @@ func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
+	marshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.Marshaller.Type)
+	if err != nil {
+		return err
+	}
+
 	lockService, err := factory.CreateLockService(nr.configs.ConnectorApi.CheckDuplicates, nr.configs.Redis)
 	if err != nil {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs)
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs, marshaller)
 	if err != nil {
 		return err
 	}
@@ -48,7 +54,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.APIType, hub)
+	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.APIType, hub, marshaller)
 	if err != nil {
 		return err
 	}
@@ -65,7 +71,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	eventsInterceptor, err := factory.CreateEventsInterceptor()
+	eventsInterceptor, err := factory.CreateEventsInterceptor(nr.configs.General)
 	if err != nil {
 		return err
 	}
@@ -82,9 +88,10 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade: facade,
-		Config: nr.configs.ConnectorApi,
-		Type:   nr.configs.Flags.APIType,
+		Facade:     facade,
+		Config:     nr.configs.ConnectorApi,
+		Type:       nr.configs.Flags.APIType,
+		Marshaller: marshaller,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {

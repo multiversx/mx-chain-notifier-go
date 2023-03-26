@@ -1,6 +1,7 @@
 package integrationTests
 
 import (
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/disabled"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
@@ -23,7 +24,9 @@ type testNotifier struct {
 }
 
 // NewTestNotifierWithWS will create a notifier instance for websockets flow
-func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
+func NewTestNotifierWithWS(cfg *config.Config) (*testNotifier, error) {
+	marshaller := &marshal.JsonMarshalizer{}
+
 	redisClient := mocks.NewRedisClientMock()
 	redlockArgs := redis.ArgsRedlockWrapper{
 		Client:       redisClient,
@@ -58,8 +61,9 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 		return nil, err
 	}
 	wsHandlerArgs := ws.ArgsWebSocketProcessor{
-		Hub:      publisher,
-		Upgrader: upgrader,
+		Hub:        publisher,
+		Upgrader:   upgrader,
+		Marshaller: marshaller,
 	}
 	wsHandler, err := ws.NewWebSocketProcessor(wsHandlerArgs)
 	if err != nil {
@@ -95,7 +99,9 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 }
 
 // NewTestNotifierWithRabbitMq will create a notifier instance with rabbitmq
-func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, error) {
+func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
+	marshaller := &marshal.JsonMarshalizer{}
+
 	redisClient := mocks.NewRedisClientMock()
 	redlockArgs := redis.ArgsRedlockWrapper{
 		Client:       redisClient,
@@ -108,8 +114,9 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 
 	rabbitmqMock := mocks.NewRabbitClientMock()
 	publisherArgs := rabbitmq.ArgsRabbitMqPublisher{
-		Client: rabbitmqMock,
-		Config: cfg.RabbitMQ,
+		Client:     rabbitmqMock,
+		Config:     cfg.RabbitMQ,
+		Marshaller: marshaller,
 	}
 	publisher, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
 	if err != nil {
@@ -155,8 +162,18 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 	}, nil
 }
 
-func GetDefaultConfigs() *config.GeneralConfig {
-	return &config.GeneralConfig{
+func GetDefaultConfigs() *config.Config {
+	return &config.Config{
+		General: config.GeneralConfig{
+			Marshaller: config.MarshallerConfig{
+				Type: "json",
+			},
+			AddressConverter: config.AddressConverterConfig{
+				Type:   "bech32",
+				Prefix: "erd",
+				Length: 32,
+			},
+		},
 		ConnectorApi: config.ConnectorApiConfig{
 			Port:            "8081",
 			Username:        "user",

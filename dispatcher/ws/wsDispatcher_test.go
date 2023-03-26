@@ -34,6 +34,7 @@ func createMockWSDispatcherArgs() ws.ArgsWSDispatcher {
 
 	args.Hub = &mocks.HubStub{}
 	args.Conn = &mocks.WSConnStub{}
+	args.Marshaller = &mocks.MarshalizerMock{}
 	return args
 }
 
@@ -60,6 +61,17 @@ func TestNewWebSocketDispatcher(t *testing.T) {
 		wd, err := ws.NewTestWSDispatcher(args)
 		require.Nil(t, wd)
 		assert.Equal(t, ws.ErrNilWSConn, err)
+	})
+
+	t.Run("nil marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockWSDispatcherArgs()
+		args.Marshaller = nil
+
+		wd, err := ws.NewTestWSDispatcher(args)
+		require.Nil(t, wd)
+		assert.Equal(t, common.ErrNilMarshaller, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {
