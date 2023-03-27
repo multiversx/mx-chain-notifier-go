@@ -85,8 +85,12 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.Lo
 		if logData == nil {
 			continue
 		}
+		if check.IfNilReflect(logData.Log) {
+			continue
+		}
 
 		for _, event := range logData.Log.Events {
+
 			le := &logEvent{
 				EventHandler: event,
 				TxHash:       logData.TxHash,
