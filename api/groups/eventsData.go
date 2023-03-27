@@ -22,7 +22,7 @@ func UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
 	return &saveBlockData, nil
 }
 
-// UnmarshallBlockData will try to unmarshal block data v2
+// UnmarshallBlockData will try to unmarshal block data
 func UnmarshallBlockData(marshaller marshal.Marshalizer, marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	var argsBlockS *outport.OutportBlock
 	err := json.Unmarshal(marshalledData, &argsBlockS)
