@@ -73,7 +73,7 @@ type FlagsConfig struct {
 	APIType           string
 }
 
-// LoadConfig return a General instance by reading the provided toml file
+// LoadConfig return a Config instance by reading the provided toml file
 func LoadConfig(filePath string) (*Config, error) {
 	cfg := &Config{}
 	err := core.LoadTomlFile(cfg, filePath)
