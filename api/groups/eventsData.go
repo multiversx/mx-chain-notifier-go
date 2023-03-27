@@ -30,6 +30,7 @@ func UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error)
 		return nil, err
 	}
 
+	// TODO: initiate marshaller in factory
 	header, err := unmarshal.GetHeaderFromBytes(&marshal.JsonMarshalizer{}, core.HeaderType(argsBlockS.BlockData.HeaderType), argsBlockS.BlockData.HeaderBytes)
 	if err != nil {
 		return nil, err
