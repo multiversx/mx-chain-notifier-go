@@ -1,12 +1,15 @@
 package rabbitmq
 
 import (
+	"encoding/json"
 	"net/http"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -49,48 +52,58 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 }
 
 func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := data.ArgsSaveBlockData{
-		HeaderHash: []byte("hash1"),
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				Nonce:     1,
-				ShardID:   2,
-				TimeStamp: 1234,
-			},
-		},
-		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]*data.NodeTransaction{
-				"txHash1": {
-					TransactionHandler: &transaction.Transaction{
-						Nonce: 1,
-					},
-					ExecutionOrder: 1,
-				},
-			},
-			Scrs: map[string]*data.NodeSmartContractResult{
-				"scrHash1": {
-					TransactionHandler: &smartContractResult.SmartContractResult{
-						Nonce: 2,
-					},
-				},
-			},
-			Logs: []*data.LogData{
-				{
-					LogHandler: &transaction.Log{
-						Address: []byte("addr1"),
-						Events:  []*transaction.Event{},
-					},
-					TxHash: "txHash1",
-				},
-			},
-		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
+
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
 		},
 	}
-	saveBlockData := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: blockEvents,
+	headerBytes, _ := json.Marshal(header)
+
+	txPool := &outport.TransactionPool{
+		Transactions: map[string]*outport.TxInfo{
+			"hash1": {
+				Transaction: &transaction.Transaction{
+					Nonce: 1,
+				},
+				FeeInfo: &outport.FeeInfo{
+					GasUsed: 1,
+				},
+				ExecutionOrder: 1,
+			},
+		},
+		SmartContractResults: map[string]*outport.SCRInfo{
+			"hash2": {
+				SmartContractResult: &smartContractResult.SmartContractResult{
+					Nonce: 2,
+				},
+				FeeInfo: &outport.FeeInfo{
+					GasUsed: 2,
+				},
+				ExecutionOrder: 3,
+			},
+		},
+		Logs: []*outport.LogData{
+			{
+				Log: &transaction.Log{
+					Address: []byte("logaddr1"),
+					Events:  []*transaction.Event{},
+				},
+				TxHash: "logHash1",
+			},
+		},
+	}
+
+	saveBlockData := &outport.OutportBlock{
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  []byte("headerHash"),
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
+			},
+		},
+		TransactionPool: txPool,
 	}
 
 	resp := webServer.PushEventsRequest(saveBlockData)

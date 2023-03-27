@@ -91,7 +91,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 }
 
 func (h *eventsGroup) pushEventsV2(pushEventsRawData []byte) error {
-	saveBlockData, err := UnmarshallBlockDataV2(pushEventsRawData)
+	saveBlockData, err := UnmarshallBlockData(pushEventsRawData)
 	if err != nil {
 		return err
 	}

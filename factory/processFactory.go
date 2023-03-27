@@ -11,6 +11,7 @@ import (
 var log = logger.GetOrCreate("factory")
 
 const addrPubKeyConverterLength = 32
+const addrPubKeyConverterPrefix = "erd"
 
 // ArgsEventsHandlerFactory defines the arguments needed for events handler creation
 type ArgsEventsHandlerFactory struct {
@@ -58,7 +59,7 @@ func getPublisher(
 
 // CreateEventsInterceptor will create the events interceptor
 func CreateEventsInterceptor() (process.EventsInterceptor, error) {
-	pubKeyConverter, err := pubkeyConverter.NewBech32PubkeyConverter(addrPubKeyConverterLength, log)
+	pubKeyConverter, err := pubkeyConverter.NewBech32PubkeyConverter(addrPubKeyConverterLength, addrPubKeyConverterPrefix)
 	if err != nil {
 		return nil, err
 	}

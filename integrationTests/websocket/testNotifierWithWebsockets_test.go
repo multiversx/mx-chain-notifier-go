@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -48,12 +50,19 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 			TxHash:  "txHash1",
 		},
 	}
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: []byte("hash1"),
-		TransactionsPool: &data.TransactionsPool{
-			Logs: []*data.LogData{
+
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	saveBlockData := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Logs: []*outport.LogData{
 				{
-					LogHandler: &transaction.Log{
+					Log: &transaction.Log{
 						Events: []*transaction.Event{
 							{
 								Address: addr,
@@ -64,19 +73,14 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				},
 			},
 		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  []byte("headerHash"),
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
-	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -92,7 +96,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(blockEvents)
+	resp := webServer.PushEventsRequest(saveBlockData)
 	require.NotNil(t, resp)
 
 	if waitTimeout(t, wg, time.Second*2) {
@@ -137,16 +141,20 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
-		Txs:       make(map[string]*data.NotifierTransaction),
-		Scrs:      make(map[string]*data.NotifierSmartContractResult),
 	}
 
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: headerHash,
-		TransactionsPool: &data.TransactionsPool{
-			Logs: []*data.LogData{
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	saveBlockData := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Logs: []*outport.LogData{
 				{
-					LogHandler: &transaction.Log{
+					Log: &transaction.Log{
 						Events: []*transaction.Event{
 							{
 								Address: addr,
@@ -157,19 +165,14 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 				},
 			},
 		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  headerHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
-	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -185,7 +188,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(blockEvents)
+	resp := webServer.PushEventsRequest(saveBlockData)
 	require.NotNil(t, resp)
 
 	if waitTimeout(t, wg, time.Second*2) {
@@ -316,31 +319,33 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	txs := map[string]*data.NodeTransaction{
+	txs := map[string]*outport.TxInfo{
 		"hash1": {
-			TransactionHandler: &transaction.Transaction{
+			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: blockHash,
-		TransactionsPool: &data.TransactionsPool{
-			Txs: txs,
-		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
+
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
 		},
 	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+	headerBytes, _ := json.Marshal(header)
+	saveBlockData := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Transactions: txs,
+		},
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  blockHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
+			},
+		},
 	}
 
 	expTxs := map[string]*transaction.Transaction{
@@ -366,7 +371,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	webServer.PushEventsRequest(blockEvents)
+	webServer.PushEventsRequest(saveBlockData)
 
 	if waitTimeout(t, wg, time.Second*2) {
 		assert.Fail(t, "timeout when handling websocket events")
@@ -398,31 +403,32 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	scrs := map[string]*data.NodeSmartContractResult{
+	scrs := map[string]*outport.SCRInfo{
 		"hash2": {
-			TransactionHandler: &smartContractResult.SmartContractResult{
+			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
 		},
 	}
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: blockHash,
-		TransactionsPool: &data.TransactionsPool{
-			Scrs: scrs,
-		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
 		},
 	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			SmartContractResults: scrs,
+		},
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  blockHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
+			},
+		},
 	}
 
 	expScrs := map[string]*smartContractResult.SmartContractResult{
@@ -511,16 +517,16 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 	}
 
-	txs := map[string]*data.NodeTransaction{
+	txs := map[string]*outport.TxInfo{
 		"hash1": {
-			TransactionHandler: &transaction.Transaction{
+			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	scrs := map[string]*data.NodeSmartContractResult{
+	scrs := map[string]*outport.SCRInfo{
 		"hash2": {
-			TransactionHandler: &smartContractResult.SmartContractResult{
+			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
 		},
@@ -547,14 +553,14 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs: expScrs,
 	}
 
-	expTxsWithOrder := map[string]*data.NotifierTransaction{
+	expTxsWithOrder := map[string]*outport.TxInfo{
 		"hash1": {
 			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+	expScrsWithOrder := map[string]*outport.SCRInfo{
 		"hash2": {
 			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
@@ -570,14 +576,20 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs:      expScrsWithOrder,
 	}
 
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: []byte(blockHash),
-		TransactionsPool: &data.TransactionsPool{
-			Txs:  txs,
-			Scrs: scrs,
-			Logs: []*data.LogData{
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Transactions:         txs,
+			SmartContractResults: scrs,
+			Logs: []*outport.LogData{
 				{
-					LogHandler: &transaction.Log{
+					Log: &transaction.Log{
 						Events: []*transaction.Event{
 							{
 								Address: addr,
@@ -587,19 +599,14 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				},
 			},
 		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  blockHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
-	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
 	}
 
 	numEvents := 6
