@@ -59,7 +59,7 @@ func getPublisher(
 
 // CreateEventsInterceptor will create the events interceptor
 func CreateEventsInterceptor(cfg config.GeneralConfig) (process.EventsInterceptor, error) {
-	pubKeyConverter, err := pubkeyConverter.NewBech32PubkeyConverter(cfg.AddressConverter.Length, cfg.AddressConverter.Prefix)
+	pubKeyConverter, err := getPubKeyConverter(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func CreateEventsInterceptor(cfg config.GeneralConfig) (process.EventsIntercepto
 	return process.NewEventsInterceptor(argsEventsInterceptor)
 }
 
-func getPubKeyConverter(cfg *config.GeneralConfig) (core.PubkeyConverter, error) {
+func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) {
 	switch cfg.AddressConverter.Type {
 	case bech32PubkeyConverterType:
 		return pubkeyConverter.NewBech32PubkeyConverter(cfg.AddressConverter.Length, cfg.AddressConverter.Prefix)
