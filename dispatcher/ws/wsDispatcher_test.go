@@ -6,6 +6,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -34,7 +35,7 @@ func createMockWSDispatcherArgs() ws.ArgsWSDispatcher {
 
 	args.Hub = &mocks.HubStub{}
 	args.Conn = &mocks.WSConnStub{}
-	args.Marshaller = &mocks.MarshalizerMock{}
+	args.Marshaller = &mock.MarshalizerMock{}
 	return args
 }
 

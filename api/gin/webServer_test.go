@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/gin"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -19,7 +20,7 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 			Port: "8080",
 		},
 		Type:       "notifier",
-		Marshaller: &mocks.MarshalizerMock{},
+		Marshaller: &mock.MarshalizerMock{},
 	}
 }
 

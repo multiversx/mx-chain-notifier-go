@@ -10,6 +10,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
@@ -31,7 +32,7 @@ func TestNewEventsGroup(t *testing.T) {
 	t.Run("nil facade", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(nil, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(nil, &mock.MarshalizerMock{})
 		require.True(t, errors.Is(err, apiErrors.ErrNilFacadeHandler))
 		require.True(t, check.IfNil(eg))
 	})
@@ -47,7 +48,7 @@ func TestNewEventsGroup(t *testing.T) {
 	t.Run("without basic auth middleware, should work", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
 		require.NoError(t, err)
 		require.NotNil(t, eg)
 
@@ -62,7 +63,7 @@ func TestNewEventsGroup(t *testing.T) {
 				return "user", "pass"
 			},
 		}
-		eg, err := groups.NewEventsGroup(facade, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		require.Equal(t, 1, len(eg.GetAdditionalMiddlewares()))
@@ -76,7 +77,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -120,7 +121,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -198,7 +199,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -220,7 +221,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -251,7 +252,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -273,7 +274,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -303,7 +304,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mocks.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)

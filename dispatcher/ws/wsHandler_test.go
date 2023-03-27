@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher/ws"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -15,7 +16,7 @@ func createMockArgsWSHandler() ws.ArgsWebSocketProcessor {
 	return ws.ArgsWebSocketProcessor{
 		Hub:        &mocks.HubStub{},
 		Upgrader:   &mocks.WSUpgraderStub{},
-		Marshaller: &mocks.MarshalizerMock{},
+		Marshaller: &mock.MarshalizerMock{},
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -47,7 +48,7 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 				Type: "fanout",
 			},
 		},
-		Marshaller: &mocks.MarshalizerMock{},
+		Marshaller: &mock.MarshalizerMock{},
 	}
 }
 
