@@ -5,6 +5,9 @@ import "errors"
 // ErrInvalidAPIType signals that an invalid api type has been provided
 var ErrInvalidAPIType = errors.New("invalid api type provided")
 
+// ErrInvalidPubKeyConverterType signals that an invalid pubkey converter type has been provided
+var ErrInvalidPubKeyConverterType = errors.New("invalid pubkey converter type provided")
+
 // ErrInvalidDispatchType signals that an invalid dispatch type has been provided
 var ErrInvalidDispatchType = errors.New("invalid dispatch type")
 
@@ -13,3 +16,6 @@ var ErrInvalidRedisConnType = errors.New("invalid redis connection type")
 
 // ErrReceivedEmptyEvents signals that empty events have been received
 var ErrReceivedEmptyEvents = errors.New("received empty events")
+
+// ErrNilMarshaller signals that a nil marshaller has been provided
+var ErrNilMarshaller = errors.New("nil marshaller provided")

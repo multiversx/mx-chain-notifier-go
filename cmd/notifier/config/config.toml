@@ -1,3 +1,14 @@
+[General]
+    # Marshaller configuration
+    [General.Marshaller]
+        Type = "json"
+
+    # Address pubkey converter config options
+    [General.AddressConverter]
+        Type = "bech32"
+        Prefix = "erd"
+        Length = 32
+
 [ConnectorApi]
     # The port on which the Hub listens for subscriptions
     Port = "5000"

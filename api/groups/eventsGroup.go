@@ -6,8 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -20,18 +22,23 @@ const (
 type eventsGroup struct {
 	*baseGroup
 	facade                EventsFacadeHandler
+	marshaller            marshal.Marshalizer
 	additionalMiddlewares []gin.HandlerFunc
 }
 
 // NewEventsGroup registers handlers for the /events group
-func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
+func NewEventsGroup(facade EventsFacadeHandler, marshaller marshal.Marshalizer) (*eventsGroup, error) {
 	if check.IfNil(facade) {
 		return nil, fmt.Errorf("%w for events group", errors.ErrNilFacadeHandler)
+	}
+	if check.IfNil(marshaller) {
+		return nil, fmt.Errorf("%w for events group", common.ErrNilMarshaller)
 	}
 
 	h := &eventsGroup{
 		baseGroup:             &baseGroup{},
 		facade:                facade,
+		marshaller:            marshaller,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
@@ -91,7 +98,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 }
 
 func (h *eventsGroup) pushEventsV2(pushEventsRawData []byte) error {
-	saveBlockData, err := UnmarshallBlockData(pushEventsRawData)
+	saveBlockData, err := UnmarshallBlockData(h.marshaller, pushEventsRawData)
 	if err != nil {
 		return err
 	}

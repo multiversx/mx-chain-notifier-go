@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
@@ -109,7 +110,8 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 		},
 	}
 
-	retBlockEvents, err := groups.UnmarshallBlockData(jsonBytes)
+	marshaller := &mock.MarshalizerMock{}
+	retBlockEvents, err := groups.UnmarshallBlockData(marshaller, jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, expArgsSaveBlockData, retBlockEvents)
 }

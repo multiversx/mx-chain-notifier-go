@@ -12,6 +12,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -21,17 +22,19 @@ import (
 
 // TestWebServer defines a test web server instance
 type TestWebServer struct {
-	facade  shared.FacadeHandler
-	apiType string
-	ws      *gin.Engine
-	mutWs   sync.Mutex
+	facade     shared.FacadeHandler
+	apiType    string
+	marshaller marshal.Marshalizer
+	ws         *gin.Engine
+	mutWs      sync.Mutex
 }
 
 // NewTestWebServer creates a new test web server
 func NewTestWebServer(facade shared.FacadeHandler, apiType string) *TestWebServer {
 	webServer := &TestWebServer{
-		facade:  facade,
-		apiType: apiType,
+		facade:     facade,
+		apiType:    apiType,
+		marshaller: &marshal.JsonMarshalizer{},
 	}
 
 	ws := gin.New()
@@ -62,7 +65,7 @@ func (w *TestWebServer) DoRequest(request *http.Request) *httptest.ResponseRecor
 func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsGroup, err := groups.NewEventsGroup(w.facade)
+	eventsGroup, err := groups.NewEventsGroup(w.facade, w.marshaller)
 	if err == nil {
 		groupsMap["events"] = eventsGroup
 	}
