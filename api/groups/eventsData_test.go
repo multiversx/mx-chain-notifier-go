@@ -95,14 +95,16 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 				},
 			},
 		},
-		TransactionPool: txPool,
+		TransactionPool:      txPool,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 	jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 	expArgsSaveBlockData := &data.ArgsSaveBlockData{
-		HeaderHash:       []byte("headerHash"),
-		Header:           header,
-		TransactionsPool: txPool,
+		HeaderHash:           []byte("headerHash"),
+		Header:               header,
+		TransactionsPool:     txPool,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		Body: &block.Body{
 			MiniBlocks: []*block.MiniBlock{
 				{SenderShardID: 1},

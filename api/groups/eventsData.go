@@ -30,6 +30,11 @@ func UnmarshallBlockData(marshaller marshal.Marshalizer, marshalledData []byte) 
 		return nil, err
 	}
 
+	err = checkBlockDataValid(argsBlockS)
+	if err != nil {
+		return nil, err
+	}
+
 	headerCreator, err := getHeaderCreator(argsBlockS.BlockData.HeaderType)
 	if err != nil {
 		return nil, err
@@ -52,6 +57,20 @@ func UnmarshallBlockData(marshaller marshal.Marshalizer, marshalledData []byte) 
 		TransactionsPool:       argsBlockS.TransactionPool,
 		Header:                 header,
 	}, nil
+}
+
+func checkBlockDataValid(block *outport.OutportBlock) error {
+	if block.BlockData == nil {
+		return errNilBlockData
+	}
+	if block.TransactionPool == nil {
+		return errNilTransactionPool
+	}
+	if block.HeaderGasConsumption == nil {
+		return errNilHeaderGasConsumption
+	}
+
+	return nil
 }
 
 func getHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {

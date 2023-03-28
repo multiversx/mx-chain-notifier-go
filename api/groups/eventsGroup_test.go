@@ -184,6 +184,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 					},
 				},
 			},
+			HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		}
 
 		jsonBytes, _ := json.Marshal(argsSaveBlockData)

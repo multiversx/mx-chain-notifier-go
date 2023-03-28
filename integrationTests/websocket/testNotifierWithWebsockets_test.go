@@ -81,6 +81,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -173,6 +174,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -346,6 +348,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	expTxs := map[string]*transaction.Transaction{
@@ -429,6 +432,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	expScrs := map[string]*smartContractResult.SmartContractResult{
@@ -607,6 +611,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	numEvents := 6

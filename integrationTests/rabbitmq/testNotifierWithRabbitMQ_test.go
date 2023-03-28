@@ -103,7 +103,8 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
-		TransactionPool: txPool,
+		TransactionPool:      txPool,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	resp := webServer.PushEventsRequest(saveBlockData)
