@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/multiversx/mx-chain-core-go/core"
-	"github.com/multiversx/mx-chain-core-go/core/unmarshal"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -30,7 +30,12 @@ func UnmarshallBlockData(marshaller marshal.Marshalizer, marshalledData []byte) 
 		return nil, err
 	}
 
-	header, err := unmarshal.GetHeaderFromBytes(marshaller, core.HeaderType(argsBlockS.BlockData.HeaderType), argsBlockS.BlockData.HeaderBytes)
+	headerCreator, err := getHeaderCreator(argsBlockS.BlockData.HeaderType)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := block.GetHeaderFromBytes(marshaller, headerCreator, argsBlockS.BlockData.HeaderBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -47,4 +52,25 @@ func UnmarshallBlockData(marshaller marshal.Marshalizer, marshalledData []byte) 
 		TransactionsPool:       argsBlockS.TransactionPool,
 		Header:                 header,
 	}, nil
+}
+
+func getHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {
+	container := block.NewEmptyBlockCreatorsContainer()
+
+	err := container.Add(core.ShardHeaderV1, block.NewEmptyHeaderCreator())
+	if err != nil {
+		return nil, err
+	}
+
+	err = container.Add(core.ShardHeaderV2, block.NewEmptyHeaderV2Creator())
+	if err != nil {
+		return nil, err
+	}
+
+	err = container.Add(core.MetaHeader, block.NewEmptyMetaBlockCreator())
+	if err != nil {
+		return nil, err
+	}
+
+	return container.Get(core.HeaderType(headerType))
 }
