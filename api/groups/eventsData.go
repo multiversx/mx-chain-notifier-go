@@ -51,37 +51,37 @@ func (edh *eventsDataHandler) UnmarshallBlockDataV1(marshalledData []byte) (*dat
 
 // UnmarshallBlockData will try to unmarshal block data
 func (edh *eventsDataHandler) UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
-	var argsBlockS *outport.OutportBlock
-	err := json.Unmarshal(marshalledData, &argsBlockS)
+	var outportBlock *outport.OutportBlock
+	err := json.Unmarshal(marshalledData, &outportBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	err = checkBlockDataValid(argsBlockS)
+	err = checkBlockDataValid(outportBlock)
 	if err != nil {
 		return nil, err
 	}
 
-	headerCreator, err := edh.getEmptyHeader(argsBlockS.BlockData.HeaderType)
+	headerCreator, err := edh.getEmptyHeader(outportBlock.BlockData.HeaderType)
 	if err != nil {
 		return nil, err
 	}
 
-	header, err := block.GetHeaderFromBytes(edh.marshaller, headerCreator, argsBlockS.BlockData.HeaderBytes)
+	header, err := block.GetHeaderFromBytes(edh.marshaller, headerCreator, outportBlock.BlockData.HeaderBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	return &data.ArgsSaveBlockData{
-		HeaderHash:             argsBlockS.BlockData.HeaderHash,
-		Body:                   argsBlockS.BlockData.Body,
-		SignersIndexes:         argsBlockS.SignersIndexes,
-		NotarizedHeadersHashes: argsBlockS.NotarizedHeadersHashes,
-		HeaderGasConsumption:   argsBlockS.HeaderGasConsumption,
-		AlteredAccounts:        argsBlockS.AlteredAccounts,
-		NumberOfShards:         argsBlockS.NumberOfShards,
-		IsImportDB:             argsBlockS.IsImportDB,
-		TransactionsPool:       argsBlockS.TransactionPool,
+		HeaderHash:             outportBlock.BlockData.HeaderHash,
+		Body:                   outportBlock.BlockData.Body,
+		SignersIndexes:         outportBlock.SignersIndexes,
+		NotarizedHeadersHashes: outportBlock.NotarizedHeadersHashes,
+		HeaderGasConsumption:   outportBlock.HeaderGasConsumption,
+		AlteredAccounts:        outportBlock.AlteredAccounts,
+		NumberOfShards:         outportBlock.NumberOfShards,
+		IsImportDB:             outportBlock.IsImportDB,
+		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
 	}, nil
 }
