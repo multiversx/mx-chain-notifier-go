@@ -34,7 +34,11 @@ func NewNotifierRunner(cfgs *config.Config) (*notifierRunner, error) {
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
-	marshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.Marshaller.Type)
+	externalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.ExternalMarshaller.Type)
+	if err != nil {
+		return err
+	}
+	internalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.InternalMarshaller.Type)
 	if err != nil {
 		return err
 	}
@@ -44,7 +48,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs, marshaller)
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs, externalMarshaller)
 	if err != nil {
 		return err
 	}
@@ -54,7 +58,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.APIType, hub, marshaller)
+	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.APIType, hub, externalMarshaller)
 	if err != nil {
 		return err
 	}
@@ -88,10 +92,11 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade:     facade,
-		Config:     nr.configs.ConnectorApi,
-		Type:       nr.configs.Flags.APIType,
-		Marshaller: marshaller,
+		Facade:             facade,
+		Config:             nr.configs.ConnectorApi,
+		Type:               nr.configs.Flags.APIType,
+		Marshaller:         externalMarshaller,
+		InternalMarshaller: internalMarshaller,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {

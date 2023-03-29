@@ -2,6 +2,7 @@ package groups_test
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core"
@@ -22,24 +23,32 @@ func TestNewEventsDataHandler(t *testing.T) {
 	t.Run("nil marshaller", func(t *testing.T) {
 		t.Parallel()
 
-		edh, err := groups.NewEventsDataHandler(nil)
+		edh, err := groups.NewEventsDataHandler(nil, &mock.MarshalizerMock{})
 		require.Nil(t, edh)
 		require.Equal(t, common.ErrNilMarshaller, err)
+	})
+
+	t.Run("nil internal marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		edh, err := groups.NewEventsDataHandler(nil, &mock.MarshalizerMock{})
+		require.Nil(t, edh)
+		require.True(t, errors.Is(common.ErrNilMarshaller, err))
 	})
 
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{})
+		edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{}, &mock.MarshalizerMock{})
 		require.Nil(t, err)
 		require.False(t, edh.IsInterfaceNil())
 	})
 }
 
-func TestEventsDataHandler_UnmarshallBlockDataV1(t *testing.T) {
+func TestEventsDataHandler_UnmarshallBlockDataOld(t *testing.T) {
 	t.Parallel()
 
-	edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{})
+	edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{}, &mock.MarshalizerMock{})
 	require.Nil(t, err)
 
 	blockEvents := &data.SaveBlockData{
@@ -67,7 +76,7 @@ func TestEventsDataHandler_UnmarshallBlockDataV1(t *testing.T) {
 func TestEventsDataHandler_UnmarshallBlockData(t *testing.T) {
 	t.Parallel()
 
-	edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{})
+	edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{}, &mock.MarshalizerMock{})
 	require.Nil(t, err)
 
 	header := &block.HeaderV2{

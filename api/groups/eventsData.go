@@ -1,7 +1,7 @@
 package groups
 
 import (
-	"encoding/json"
+	"fmt"
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -13,18 +13,23 @@ import (
 )
 
 type eventsDataHandler struct {
-	marshaller        marshal.Marshalizer
-	emptyBlockCreator EmptyBlockCreatorContainer
+	marshaller         marshal.Marshalizer
+	internalMarshaller marshal.Marshalizer
+	emptyBlockCreator  EmptyBlockCreatorContainer
 }
 
 // NewEventsDataHandler will create a new data handler component
-func NewEventsDataHandler(marshaller marshal.Marshalizer) (*eventsDataHandler, error) {
+func NewEventsDataHandler(marshaller marshal.Marshalizer, internalMarshaller marshal.Marshalizer) (*eventsDataHandler, error) {
 	if check.IfNil(marshaller) {
 		return nil, common.ErrNilMarshaller
 	}
+	if check.IfNil(internalMarshaller) {
+		return nil, fmt.Errorf("%w (internal)", common.ErrNilMarshaller)
+	}
 
 	edh := &eventsDataHandler{
-		marshaller: marshaller,
+		marshaller:         marshaller,
+		internalMarshaller: internalMarshaller,
 	}
 
 	emptyBlockContainer, err := createEmptyBlockCreatorContainer()
@@ -37,11 +42,11 @@ func NewEventsDataHandler(marshaller marshal.Marshalizer) (*eventsDataHandler, e
 	return edh, nil
 }
 
-// UnmarshallBlockDataV1 will try to unmarshal block data with old format
+// UnmarshallBlockDataOld will try to unmarshal block data with old format
 func (edh *eventsDataHandler) UnmarshallBlockDataOld(marshalledData []byte) (*data.SaveBlockData, error) {
 	var saveBlockData data.SaveBlockData
 
-	err := json.Unmarshal(marshalledData, &saveBlockData)
+	err := edh.marshaller.Unmarshal(&saveBlockData, marshalledData)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +57,7 @@ func (edh *eventsDataHandler) UnmarshallBlockDataOld(marshalledData []byte) (*da
 // UnmarshallBlockData will try to unmarshal block data
 func (edh *eventsDataHandler) UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error) {
 	var outportBlock *outport.OutportBlock
-	err := json.Unmarshal(marshalledData, &outportBlock)
+	err := edh.marshaller.Unmarshal(&outportBlock, marshalledData)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +72,7 @@ func (edh *eventsDataHandler) UnmarshallBlockData(marshalledData []byte) (*data.
 		return nil, err
 	}
 
-	header, err := block.GetHeaderFromBytes(edh.marshaller, headerCreator, outportBlock.BlockData.HeaderBytes)
+	header, err := block.GetHeaderFromBytes(edh.internalMarshaller, headerCreator, outportBlock.BlockData.HeaderBytes)
 	if err != nil {
 		return nil, err
 	}

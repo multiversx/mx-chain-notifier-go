@@ -22,19 +22,21 @@ import (
 
 // TestWebServer defines a test web server instance
 type TestWebServer struct {
-	facade     shared.FacadeHandler
-	apiType    string
-	marshaller marshal.Marshalizer
-	ws         *gin.Engine
-	mutWs      sync.Mutex
+	facade             shared.FacadeHandler
+	apiType            string
+	marshaller         marshal.Marshalizer
+	internalMarshaller marshal.Marshalizer
+	ws                 *gin.Engine
+	mutWs              sync.Mutex
 }
 
 // NewTestWebServer creates a new test web server
 func NewTestWebServer(facade shared.FacadeHandler, apiType string) *TestWebServer {
 	webServer := &TestWebServer{
-		facade:     facade,
-		apiType:    apiType,
-		marshaller: &marshal.JsonMarshalizer{},
+		facade:             facade,
+		apiType:            apiType,
+		marshaller:         &marshal.JsonMarshalizer{},
+		internalMarshaller: &marshal.JsonMarshalizer{},
 	}
 
 	ws := gin.New()
@@ -65,7 +67,7 @@ func (w *TestWebServer) DoRequest(request *http.Request) *httptest.ResponseRecor
 func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsDataHandler, _ := groups.NewEventsDataHandler(w.marshaller)
+	eventsDataHandler, _ := groups.NewEventsDataHandler(w.marshaller, w.internalMarshaller)
 	eventsGroupArgs := groups.ArgsEventsGroup{
 		Facade:            w.facade,
 		EventsDataHandler: eventsDataHandler,

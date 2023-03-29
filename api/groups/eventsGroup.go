@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -27,7 +26,6 @@ type ArgsEventsGroup struct {
 type eventsGroup struct {
 	*baseGroup
 	facade                EventsFacadeHandler
-	marshaller            marshal.Marshalizer
 	eventsDataHandler     EventsDataHandler
 	additionalMiddlewares []gin.HandlerFunc
 }

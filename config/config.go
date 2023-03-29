@@ -13,8 +13,9 @@ type Config struct {
 
 // GeneralConfig maps the general config section
 type GeneralConfig struct {
-	Marshaller       MarshallerConfig
-	AddressConverter AddressConverterConfig
+	ExternalMarshaller MarshallerConfig
+	InternalMarshaller MarshallerConfig
+	AddressConverter   AddressConverterConfig
 }
 
 // MarshallerConfig maps the marshaller configuration
