@@ -94,7 +94,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	blockEvents, err := h.eventsDataHandler.UnmarshallBlockDataV1(pushEventsRawData)
+	blockEvents, err := h.eventsDataHandler.UnmarshallBlockDataOld(pushEventsRawData)
 	if err == nil {
 		err = h.facade.HandlePushEventsV1(*blockEvents)
 		if err == nil {

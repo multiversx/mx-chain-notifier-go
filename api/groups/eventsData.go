@@ -38,7 +38,7 @@ func NewEventsDataHandler(marshaller marshal.Marshalizer) (*eventsDataHandler, e
 }
 
 // UnmarshallBlockDataV1 will try to unmarshal block data with old format
-func (edh *eventsDataHandler) UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
+func (edh *eventsDataHandler) UnmarshallBlockDataOld(marshalledData []byte) (*data.SaveBlockData, error) {
 	var saveBlockData data.SaveBlockData
 
 	err := json.Unmarshal(marshalledData, &saveBlockData)
@@ -62,7 +62,7 @@ func (edh *eventsDataHandler) UnmarshallBlockData(marshalledData []byte) (*data.
 		return nil, err
 	}
 
-	headerCreator, err := edh.getEmptyHeader(outportBlock.BlockData.HeaderType)
+	headerCreator, err := edh.getEmptyHeaderCreator(outportBlock.BlockData.HeaderType)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func checkBlockDataValid(block *outport.OutportBlock) error {
 	return nil
 }
 
-func (edh *eventsDataHandler) getEmptyHeader(headerType string) (block.EmptyBlockCreator, error) {
+func (edh *eventsDataHandler) getEmptyHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {
 	return edh.emptyBlockCreator.Get(core.HeaderType(headerType))
 }
 

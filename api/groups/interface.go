@@ -33,7 +33,7 @@ type EmptyBlockCreatorContainer interface {
 
 // EventsDataHandler defines the behaviour of an events data handler component
 type EventsDataHandler interface {
-	UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error)
+	UnmarshallBlockDataOld(marshalledData []byte) (*data.SaveBlockData, error)
 	UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error)
 	IsInterfaceNil() bool
 }

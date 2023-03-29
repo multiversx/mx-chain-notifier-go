@@ -4,14 +4,14 @@ import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // EventsDataHandlerStub -
 type EventsDataHandlerStub struct {
-	UnmarshallBlockDataV1Called func(marshalledData []byte) (*data.SaveBlockData, error)
-	UnmarshallBlockDataCalled   func(marshalledData []byte) (*data.ArgsSaveBlockData, error)
+	UnmarshallBlockDataOldCalled func(marshalledData []byte) (*data.SaveBlockData, error)
+	UnmarshallBlockDataCalled    func(marshalledData []byte) (*data.ArgsSaveBlockData, error)
 }
 
-// UnmarshallBlockDataV1 -
-func (stub *EventsDataHandlerStub) UnmarshallBlockDataV1(marshalledData []byte) (*data.SaveBlockData, error) {
-	if stub.UnmarshallBlockDataV1Called != nil {
-		return stub.UnmarshallBlockDataV1Called(marshalledData)
+// UnmarshallBlockDataOld -
+func (stub *EventsDataHandlerStub) UnmarshallBlockDataOld(marshalledData []byte) (*data.SaveBlockData, error) {
+	if stub.UnmarshallBlockDataOldCalled != nil {
+		return stub.UnmarshallBlockDataOldCalled(marshalledData)
 	}
 
 	return &data.SaveBlockData{}, nil

@@ -59,7 +59,7 @@ func TestEventsDataHandler_UnmarshallBlockDataV1(t *testing.T) {
 
 	jsonBytes, _ := json.Marshal(blockEvents)
 
-	retBlockEvents, err := edh.UnmarshallBlockDataV1(jsonBytes)
+	retBlockEvents, err := edh.UnmarshallBlockDataOld(jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, blockEvents, retBlockEvents)
 }
