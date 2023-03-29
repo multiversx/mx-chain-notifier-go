@@ -120,7 +120,16 @@ func (w *webServer) Run() error {
 func (w *webServer) createGroups() error {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsGroup, err := groups.NewEventsGroup(w.facade, w.marshaller)
+	eventsDataHandler, err := groups.NewEventsDataHandler(w.marshaller)
+	if err != nil {
+		return err
+	}
+
+	eventsGroupArgs := groups.ArgsEventsGroup{
+		Facade:            w.facade,
+		EventsDataHandler: eventsDataHandler,
+	}
+	eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
 	if err != nil {
 		return err
 	}
