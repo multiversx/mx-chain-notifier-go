@@ -3,6 +3,8 @@ package groups
 import (
 	"net/http"
 
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -19,5 +21,19 @@ type EventsFacadeHandler interface {
 // HubFacadeHandler defines the behavior of a facade handler needed for hub group
 type HubFacadeHandler interface {
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	IsInterfaceNil() bool
+}
+
+// EmptyBlockCreatorContainer defines the behavior of a empty block creator container
+type EmptyBlockCreatorContainer interface {
+	Add(headerType core.HeaderType, creator block.EmptyBlockCreator) error
+	Get(headerType core.HeaderType) (block.EmptyBlockCreator, error)
+	IsInterfaceNil() bool
+}
+
+// EventsDataHandler defines the behaviour of an events data handler component
+type EventsDataHandler interface {
+	UnmarshallBlockDataOld(marshalledData []byte) (*data.SaveBlockData, error)
+	UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error)
 	IsInterfaceNil() bool
 }

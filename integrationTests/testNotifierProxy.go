@@ -165,7 +165,10 @@ func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
 func GetDefaultConfigs() *config.Config {
 	return &config.Config{
 		General: config.GeneralConfig{
-			Marshaller: config.MarshallerConfig{
+			ExternalMarshaller: config.MarshallerConfig{
+				Type: "json",
+			},
+			InternalMarshaller: config.MarshallerConfig{
 				Type: "json",
 			},
 			AddressConverter: config.AddressConverterConfig{

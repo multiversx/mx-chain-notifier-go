@@ -19,3 +19,6 @@ var ErrReceivedEmptyEvents = errors.New("received empty events")
 
 // ErrNilMarshaller signals that a nil marshaller has been provided
 var ErrNilMarshaller = errors.New("nil marshaller provided")
+
+// ErrNilInternalMarshaller signals that a nil internal marshaller has been provided
+var ErrNilInternalMarshaller = errors.New("nil external marshaller provided")

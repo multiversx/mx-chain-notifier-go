@@ -6,10 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -19,26 +17,30 @@ const (
 	finalizedEventsEndpoint = "/finalized"
 )
 
+// ArgsEventsGroup defines the arguments needed to create a new events group component
+type ArgsEventsGroup struct {
+	Facade            EventsFacadeHandler
+	EventsDataHandler EventsDataHandler
+}
+
 type eventsGroup struct {
 	*baseGroup
 	facade                EventsFacadeHandler
-	marshaller            marshal.Marshalizer
+	eventsDataHandler     EventsDataHandler
 	additionalMiddlewares []gin.HandlerFunc
 }
 
 // NewEventsGroup registers handlers for the /events group
-func NewEventsGroup(facade EventsFacadeHandler, marshaller marshal.Marshalizer) (*eventsGroup, error) {
-	if check.IfNil(facade) {
-		return nil, fmt.Errorf("%w for events group", errors.ErrNilFacadeHandler)
-	}
-	if check.IfNil(marshaller) {
-		return nil, fmt.Errorf("%w for events group", common.ErrNilMarshaller)
+func NewEventsGroup(args ArgsEventsGroup) (*eventsGroup, error) {
+	err := checkEventsGroupArgs(args)
+	if err != nil {
+		return nil, err
 	}
 
 	h := &eventsGroup{
 		baseGroup:             &baseGroup{},
-		facade:                facade,
-		marshaller:            marshaller,
+		facade:                args.Facade,
+		eventsDataHandler:     args.EventsDataHandler,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
@@ -67,6 +69,17 @@ func NewEventsGroup(facade EventsFacadeHandler, marshaller marshal.Marshalizer) 
 	return h, nil
 }
 
+func checkEventsGroupArgs(args ArgsEventsGroup) error {
+	if check.IfNil(args.Facade) {
+		return fmt.Errorf("%w for events group", errors.ErrNilFacadeHandler)
+	}
+	if check.IfNil(args.EventsDataHandler) {
+		return fmt.Errorf("%w for events group", ErrNilEventsDataHandler)
+	}
+
+	return nil
+}
+
 // GetAdditionalMiddlewares return additional middlewares for this group
 func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 	return h.additionalMiddlewares
@@ -79,7 +92,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	blockEvents, err := UnmarshallBlockDataV1(pushEventsRawData)
+	blockEvents, err := h.eventsDataHandler.UnmarshallBlockDataOld(pushEventsRawData)
 	if err == nil {
 		err = h.facade.HandlePushEventsV1(*blockEvents)
 		if err == nil {
@@ -98,7 +111,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 }
 
 func (h *eventsGroup) pushEventsV2(pushEventsRawData []byte) error {
-	saveBlockData, err := UnmarshallBlockData(h.marshaller, pushEventsRawData)
+	saveBlockData, err := h.eventsDataHandler.UnmarshallBlockData(pushEventsRawData)
 	if err != nil {
 		return err
 	}

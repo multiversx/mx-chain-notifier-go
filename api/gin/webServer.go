@@ -22,23 +22,25 @@ var log = logger.GetOrCreate("api/gin")
 
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
-	Facade     shared.FacadeHandler
-	Config     config.ConnectorApiConfig
-	Type       string
-	Marshaller marshal.Marshalizer
+	Facade             shared.FacadeHandler
+	Config             config.ConnectorApiConfig
+	Type               string
+	Marshaller         marshal.Marshalizer
+	InternalMarshaller marshal.Marshalizer
 }
 
 // webServer is a wrapper for gin.Engine, holding additional components
 type webServer struct {
 	sync.RWMutex
-	facade       shared.FacadeHandler
-	marshaller   marshal.Marshalizer
-	httpServer   shared.HTTPServerCloser
-	config       config.ConnectorApiConfig
-	groups       map[string]shared.GroupHandler
-	apiType      string
-	wasTriggered bool
-	cancelFunc   func()
+	facade             shared.FacadeHandler
+	marshaller         marshal.Marshalizer
+	internalMarshaller marshal.Marshalizer
+	httpServer         shared.HTTPServerCloser
+	config             config.ConnectorApiConfig
+	groups             map[string]shared.GroupHandler
+	apiType            string
+	wasTriggered       bool
+	cancelFunc         func()
 }
 
 // NewWebServerHandler creates and configures an instance of webServer
@@ -49,12 +51,13 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 	}
 
 	return &webServer{
-		facade:       args.Facade,
-		marshaller:   args.Marshaller,
-		config:       args.Config,
-		apiType:      args.Type,
-		groups:       make(map[string]shared.GroupHandler),
-		wasTriggered: false,
+		facade:             args.Facade,
+		marshaller:         args.Marshaller,
+		internalMarshaller: args.InternalMarshaller,
+		config:             args.Config,
+		apiType:            args.Type,
+		groups:             make(map[string]shared.GroupHandler),
+		wasTriggered:       false,
 	}, nil
 }
 
@@ -67,6 +70,9 @@ func checkArgs(args ArgsWebServerHandler) error {
 	}
 	if check.IfNil(args.Marshaller) {
 		return common.ErrNilMarshaller
+	}
+	if check.IfNil(args.InternalMarshaller) {
+		return common.ErrNilInternalMarshaller
 	}
 
 	return nil
@@ -120,7 +126,16 @@ func (w *webServer) Run() error {
 func (w *webServer) createGroups() error {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsGroup, err := groups.NewEventsGroup(w.facade, w.marshaller)
+	eventsDataHandler, err := groups.NewEventsDataHandler(w.marshaller, w.internalMarshaller)
+	if err != nil {
+		return err
+	}
+
+	eventsGroupArgs := groups.ArgsEventsGroup{
+		Facade:            w.facade,
+		EventsDataHandler: eventsDataHandler,
+	}
+	eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
 	if err != nil {
 		return err
 	}

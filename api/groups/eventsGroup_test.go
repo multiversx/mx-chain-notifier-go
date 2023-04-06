@@ -10,7 +10,6 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
@@ -26,29 +25,42 @@ import (
 
 const eventsPath = "/events"
 
+func createMockEventsGroupArgs() groups.ArgsEventsGroup {
+	return groups.ArgsEventsGroup{
+		Facade:            &mocks.FacadeStub{},
+		EventsDataHandler: &mocks.EventsDataHandlerStub{},
+	}
+}
+
 func TestNewEventsGroup(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil facade", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(nil, &mock.MarshalizerMock{})
+		args := createMockEventsGroupArgs()
+		args.Facade = nil
+
+		eg, err := groups.NewEventsGroup(args)
 		require.True(t, errors.Is(err, apiErrors.ErrNilFacadeHandler))
 		require.True(t, check.IfNil(eg))
 	})
 
-	t.Run("nil marshaller", func(t *testing.T) {
+	t.Run("nil events data handler", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, nil)
-		require.True(t, errors.Is(err, common.ErrNilMarshaller))
+		args := createMockEventsGroupArgs()
+		args.EventsDataHandler = nil
+
+		eg, err := groups.NewEventsGroup(args)
+		require.True(t, errors.Is(err, groups.ErrNilEventsDataHandler))
 		require.True(t, check.IfNil(eg))
 	})
 
 	t.Run("without basic auth middleware, should work", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
 		require.NoError(t, err)
 		require.NotNil(t, eg)
 
@@ -58,12 +70,13 @@ func TestNewEventsGroup(t *testing.T) {
 	t.Run("with basic auth middleware, should work", func(t *testing.T) {
 		t.Parallel()
 
-		facade := &mocks.FacadeStub{
+		args := createMockEventsGroupArgs()
+		args.Facade = &mocks.FacadeStub{
 			GetConnectorUserAndPassCalled: func() (string, string) {
 				return "user", "pass"
 			},
 		}
-		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		require.Equal(t, 1, len(eg.GetAdditionalMiddlewares()))
@@ -73,23 +86,6 @@ func TestNewEventsGroup(t *testing.T) {
 
 func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Parallel()
-
-	t.Run("invalid data, bad request", func(t *testing.T) {
-		t.Parallel()
-
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
-		require.Nil(t, err)
-
-		ws := startWebServer(eg, eventsPath)
-
-		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer([]byte("invalid data")))
-		req.Header.Set("Content-Type", "application/json")
-		resp := httptest.NewRecorder()
-
-		ws.ServeHTTP(resp, req)
-
-		assert.Equal(t, http.StatusBadRequest, resp.Code)
-	})
 
 	t.Run("facade error, will try push events v2, should fail", func(t *testing.T) {
 		t.Parallel()
@@ -114,14 +110,21 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 		wasCalled := false
-		facade := &mocks.FacadeStub{
+		wasCalledV2 := false
+
+		args := createMockEventsGroupArgs()
+		args.Facade = &mocks.FacadeStub{
 			HandlePushEventsV1Called: func(events data.SaveBlockData) error {
 				wasCalled = true
 				return errors.New("facade error")
 			},
+			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
+				wasCalledV2 = true
+				return errors.New("facade error")
+			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -133,6 +136,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		ws.ServeHTTP(resp, req)
 
 		assert.True(t, wasCalled)
+		assert.True(t, wasCalledV2)
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
@@ -184,12 +188,14 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 					},
 				},
 			},
+			HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		}
 
 		jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 		wasCalled := false
-		facade := &mocks.FacadeStub{
+		args := createMockEventsGroupArgs()
+		args.Facade = &mocks.FacadeStub{
 			HandlePushEventsV1Called: func(eventsData data.SaveBlockData) error {
 				return common.ErrReceivedEmptyEvents
 			},
@@ -199,7 +205,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -221,7 +227,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -245,14 +251,15 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		jsonBytes, _ := json.Marshal(revertBlockEvents)
 
 		wasCalled := false
-		facade := &mocks.FacadeStub{
+		args := createMockEventsGroupArgs()
+		args.Facade = &mocks.FacadeStub{
 			HandleRevertEventsCalled: func(events data.RevertBlock) {
 				wasCalled = true
 				assert.Equal(t, revertBlockEvents, events)
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -274,7 +281,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(&mocks.FacadeStub{}, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -297,14 +304,15 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		jsonBytes, _ := json.Marshal(finalizedBlockEvents)
 
 		wasCalled := false
-		facade := &mocks.FacadeStub{
+		args := createMockEventsGroupArgs()
+		args.Facade = &mocks.FacadeStub{
 			HandleFinalizedEventsCalled: func(events data.FinalizedBlock) {
 				wasCalled = true
 				assert.Equal(t, finalizedBlockEvents, events)
 			},
 		}
 
-		eg, err := groups.NewEventsGroup(facade, &mock.MarshalizerMock{})
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)

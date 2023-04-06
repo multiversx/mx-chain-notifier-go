@@ -2,6 +2,7 @@ package groups_test
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core"
@@ -11,12 +12,44 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/stretchr/testify/require"
 )
 
-func TestUnmarshallBlockDataV1(t *testing.T) {
+func TestNewEventsDataHandler(t *testing.T) {
 	t.Parallel()
+
+	t.Run("nil marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		edh, err := groups.NewEventsDataHandler(nil, &mock.MarshalizerMock{})
+		require.Nil(t, edh)
+		require.Equal(t, common.ErrNilMarshaller, err)
+	})
+
+	t.Run("nil internal marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		edh, err := groups.NewEventsDataHandler(nil, &mock.MarshalizerMock{})
+		require.Nil(t, edh)
+		require.True(t, errors.Is(common.ErrNilMarshaller, err))
+	})
+
+	t.Run("should work", func(t *testing.T) {
+		t.Parallel()
+
+		edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{}, &mock.MarshalizerMock{})
+		require.Nil(t, err)
+		require.False(t, edh.IsInterfaceNil())
+	})
+}
+
+func TestEventsDataHandler_UnmarshallBlockDataOld(t *testing.T) {
+	t.Parallel()
+
+	edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{}, &mock.MarshalizerMock{})
+	require.Nil(t, err)
 
 	blockEvents := &data.SaveBlockData{
 		Hash: "hash1",
@@ -35,13 +68,16 @@ func TestUnmarshallBlockDataV1(t *testing.T) {
 
 	jsonBytes, _ := json.Marshal(blockEvents)
 
-	retBlockEvents, err := groups.UnmarshallBlockDataV1(jsonBytes)
+	retBlockEvents, err := edh.UnmarshallBlockDataOld(jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, blockEvents, retBlockEvents)
 }
 
-func TestUnmarshallBlockDataV2(t *testing.T) {
+func TestEventsDataHandler_UnmarshallBlockData(t *testing.T) {
 	t.Parallel()
+
+	edh, err := groups.NewEventsDataHandler(&mock.MarshalizerMock{}, &mock.MarshalizerMock{})
+	require.Nil(t, err)
 
 	header := &block.HeaderV2{
 		Header: &block.Header{
@@ -95,14 +131,16 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 				},
 			},
 		},
-		TransactionPool: txPool,
+		TransactionPool:      txPool,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 	jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 	expArgsSaveBlockData := &data.ArgsSaveBlockData{
-		HeaderHash:       []byte("headerHash"),
-		Header:           header,
-		TransactionsPool: txPool,
+		HeaderHash:           []byte("headerHash"),
+		Header:               header,
+		TransactionsPool:     txPool,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		Body: &block.Body{
 			MiniBlocks: []*block.MiniBlock{
 				{SenderShardID: 1},
@@ -110,8 +148,7 @@ func TestUnmarshallBlockDataV2(t *testing.T) {
 		},
 	}
 
-	marshaller := &mock.MarshalizerMock{}
-	retBlockEvents, err := groups.UnmarshallBlockData(marshaller, jsonBytes)
+	retBlockEvents, err := edh.UnmarshallBlockData(jsonBytes)
 	require.Nil(t, err)
 	require.Equal(t, expArgsSaveBlockData, retBlockEvents)
 }
