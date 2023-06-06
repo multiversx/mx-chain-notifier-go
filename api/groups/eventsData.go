@@ -85,7 +85,6 @@ func (edh *eventsDataHandler) UnmarshallBlockData(marshalledData []byte) (*data.
 		HeaderGasConsumption:   outportBlock.HeaderGasConsumption,
 		AlteredAccounts:        outportBlock.AlteredAccounts,
 		NumberOfShards:         outportBlock.NumberOfShards,
-		IsImportDB:             outportBlock.IsImportDB,
 		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
 	}, nil

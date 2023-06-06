@@ -42,7 +42,6 @@ type ArgsSaveBlockData struct {
 	TransactionsPool       *outport.TransactionPool
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
-	IsImportDB             bool
 }
 
 // ArgsSaveBlock holds block data with header type
