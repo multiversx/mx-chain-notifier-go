@@ -3,6 +3,9 @@ package process
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/core"
+	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -40,5 +43,34 @@ type EventsHandler interface {
 // EventsInterceptor defines the behaviour of an events interceptor component
 type EventsInterceptor interface {
 	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error)
+	IsInterfaceNil() bool
+}
+
+// WSClient defines what a websocket client should do
+type WSClient interface {
+	Close() error
+}
+
+// DataIndexer dines what a data indexer should do
+type DataIndexer interface {
+	SaveBlock(outportBlock *outport.OutportBlock) error
+	RevertIndexedBlock(blockData *outport.BlockData) error
+	FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error
+	Close() error
+	IsInterfaceNil() bool
+}
+
+// EmptyBlockCreatorContainer defines the behavior of a empty block creator container
+type EmptyBlockCreatorContainer interface {
+	Add(headerType core.HeaderType, creator block.EmptyBlockCreator) error
+	Get(headerType core.HeaderType) (block.EmptyBlockCreator, error)
+	IsInterfaceNil() bool
+}
+
+// EventsFacadeHandler defines the behavior of a facade handler needed for events group
+type EventsFacadeHandler interface {
+	HandlePushEventsV2(events data.ArgsSaveBlockData) error
+	HandleRevertEvents(revertBlock data.RevertBlock)
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	IsInterfaceNil() bool
 }
