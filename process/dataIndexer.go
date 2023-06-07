@@ -40,6 +40,7 @@ func NewDataIndexerHandler(args ArgsDataIndexer) (*dataIndexer, error) {
 	di := &dataIndexer{
 		marshaller:         args.Marshaller,
 		internalMarshaller: args.InternalMarshaller,
+		facade:             args.Facade,
 	}
 
 	emptyBlockContainer, err := createEmptyBlockCreatorContainer()
@@ -100,7 +101,7 @@ func (d *dataIndexer) getHeaderFromBytes(headerType core.HeaderType, headerBytes
 		return nil, err
 	}
 
-	return block.GetHeaderFromBytes(d.marshaller, creator, headerBytes)
+	return block.GetHeaderFromBytes(d.internalMarshaller, creator, headerBytes)
 }
 
 func (d *dataIndexer) getEmptyHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {

@@ -12,6 +12,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
 
@@ -103,6 +104,11 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	wsConnector, err := factory.CreateWSIndexer(nr.configs.WebSocketConnector, externalMarshaller, facade)
+	if err != nil {
+		return err
+	}
+
 	startHandlers(hub, publisher)
 
 	err = webServer.Run()
@@ -110,7 +116,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	err = waitForGracefulShutdown(webServer, publisher, hub)
+	err = waitForGracefulShutdown(webServer, publisher, hub, wsConnector)
 	if err != nil {
 		return err
 	}
@@ -128,6 +134,7 @@ func waitForGracefulShutdown(
 	server shared.WebServerHandler,
 	publisher rabbitmq.PublisherService,
 	hub dispatcher.Hub,
+	wsConnector process.WSClient,
 ) error {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Kill)
@@ -144,6 +151,11 @@ func waitForGracefulShutdown(
 	}
 
 	err = hub.Close()
+	if err != nil {
+		return err
+	}
+
+	err = wsConnector.Close()
 	if err != nil {
 		return err
 	}

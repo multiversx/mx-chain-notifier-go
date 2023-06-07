@@ -55,8 +55,14 @@ func CreateWSIndexer(config config.WebSocketConfig, marshaller marshal.Marshaliz
 		Facade:             facade,
 	}
 	dataIndexer, err := process.NewDataIndexerHandler(dataIndexerArgs)
+	if err != nil {
+		return nil, err
+	}
 
 	indexer, err := process.NewNotifierIndexer(marshaller, dataIndexer)
+	if err != nil {
+		return nil, err
+	}
 
 	err = host.SetPayloadHandler(indexer)
 	if err != nil {
