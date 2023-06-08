@@ -1,6 +1,7 @@
 package process
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -14,14 +15,16 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-// ErrNilBlockData signals that a nil block data has been provided
-var ErrNilBlockData = errors.New("nil block data")
+var (
+	// ErrNilBlockData signals that a nil block data has been provided
+	ErrNilBlockData = errors.New("nil block data")
 
-// ErrNilTransactionPool signals that a nil transaction pool has been provided
-var ErrNilTransactionPool = errors.New("nil transaction pool")
+	// ErrNilTransactionPool signals that a nil transaction pool has been provided
+	ErrNilTransactionPool = errors.New("nil transaction pool")
 
-// ErrNilHeaderGasConsumption signals that a nil header gas consumption has been provided
-var ErrNilHeaderGasConsumption = errors.New("nil header gas consumption")
+	// ErrNilHeaderGasConsumption signals that a nil header gas consumption has been provided
+	ErrNilHeaderGasConsumption = errors.New("nil header gas consumption")
+)
 
 // ArgsEventsDataPreProcessor defines the arguments needed to create a new events data preprocessor
 type ArgsEventsDataPreProcessor struct {
@@ -138,7 +141,7 @@ func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData
 	}
 
 	revertData := &data.RevertBlock{
-		Hash:  string(header.GetRootHash()),
+		Hash:  hex.EncodeToString(header.GetRootHash()),
 		Nonce: header.GetNonce(),
 		Round: header.GetRound(),
 		Epoch: header.GetEpoch(),
@@ -152,7 +155,7 @@ func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData
 // FinalizedBlock will handler the finalized block event
 func (d *eventsDataPreProcessor) FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error {
 	finalizedData := data.FinalizedBlock{
-		Hash: string(finalizedBlock.GetHeaderHash()),
+		Hash: hex.EncodeToString(finalizedBlock.GetHeaderHash()),
 	}
 
 	d.facade.HandleFinalizedEvents(finalizedData)
