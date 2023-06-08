@@ -98,6 +98,7 @@ func (d *eventsDataPreProcessor) SaveBlock(outportBlock *outport.OutportBlock) e
 		Header:                 header,
 	}
 
+	// TODO: refactor to remove facade versioning
 	err = d.facade.HandlePushEventsV2(*saveBlockData)
 	if err != nil {
 		return err
