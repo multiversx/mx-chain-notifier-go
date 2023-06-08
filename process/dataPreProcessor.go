@@ -18,26 +18,28 @@ var errNilBlockData = errors.New("nil block data")
 var errNilTransactionPool = errors.New("nil transaction pool")
 var errNilHeaderGasConsumption = errors.New("nil header gas consumption")
 
-type ArgsDataIndexer struct {
+// ArgsEventsDataPreProcessor defines the arguments needed to create a new events data preprocessor
+type ArgsEventsDataPreProcessor struct {
 	Marshaller         marshal.Marshalizer
 	InternalMarshaller marshal.Marshalizer
 	Facade             EventsFacadeHandler
 }
 
-type dataIndexer struct {
+type eventsDataPreProcessor struct {
 	marshaller         marshal.Marshalizer
 	internalMarshaller marshal.Marshalizer
 	emptyBlockCreator  EmptyBlockCreatorContainer
 	facade             EventsFacadeHandler
 }
 
-func NewDataIndexerHandler(args ArgsDataIndexer) (*dataIndexer, error) {
+// NewEventsDataPreProcessor will create a new events data preprocessor instance
+func NewEventsDataPreProcessor(args ArgsEventsDataPreProcessor) (*eventsDataPreProcessor, error) {
 	err := checkDataIndexerArgs(args)
 	if err != nil {
 		return nil, err
 	}
 
-	di := &dataIndexer{
+	di := &eventsDataPreProcessor{
 		marshaller:         args.Marshaller,
 		internalMarshaller: args.InternalMarshaller,
 		facade:             args.Facade,
@@ -53,7 +55,7 @@ func NewDataIndexerHandler(args ArgsDataIndexer) (*dataIndexer, error) {
 	return di, nil
 }
 
-func checkDataIndexerArgs(args ArgsDataIndexer) error {
+func checkDataIndexerArgs(args ArgsEventsDataPreProcessor) error {
 	if check.IfNil(args.Marshaller) {
 		return common.ErrNilMarshaller
 	}
@@ -64,7 +66,8 @@ func checkDataIndexerArgs(args ArgsDataIndexer) error {
 	return nil
 }
 
-func (d *dataIndexer) SaveBlock(outportBlock *outport.OutportBlock) error {
+// SaveBlock will handle the block info data
+func (d *eventsDataPreProcessor) SaveBlock(outportBlock *outport.OutportBlock) error {
 	err := checkBlockDataValid(outportBlock)
 	if err != nil {
 		return err
@@ -95,7 +98,7 @@ func (d *dataIndexer) SaveBlock(outportBlock *outport.OutportBlock) error {
 	return nil
 }
 
-func (d *dataIndexer) getHeaderFromBytes(headerType core.HeaderType, headerBytes []byte) (header coreData.HeaderHandler, err error) {
+func (d *eventsDataPreProcessor) getHeaderFromBytes(headerType core.HeaderType, headerBytes []byte) (header coreData.HeaderHandler, err error) {
 	creator, err := d.emptyBlockCreator.Get(headerType)
 	if err != nil {
 		return nil, err
@@ -104,7 +107,7 @@ func (d *dataIndexer) getHeaderFromBytes(headerType core.HeaderType, headerBytes
 	return block.GetHeaderFromBytes(d.internalMarshaller, creator, headerBytes)
 }
 
-func (d *dataIndexer) getEmptyHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {
+func (d *eventsDataPreProcessor) getEmptyHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {
 	return d.emptyBlockCreator.Get(core.HeaderType(headerType))
 }
 
@@ -122,7 +125,8 @@ func checkBlockDataValid(block *outport.OutportBlock) error {
 	return nil
 }
 
-func (d *dataIndexer) RevertIndexedBlock(blockData *outport.BlockData) error {
+// RevertIndexedBlock will handle the revert block event
+func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData) error {
 	header, err := d.getHeaderFromBytes(core.HeaderType(blockData.HeaderType), blockData.HeaderBytes)
 	if err != nil {
 		return err
@@ -140,17 +144,14 @@ func (d *dataIndexer) RevertIndexedBlock(blockData *outport.BlockData) error {
 	return nil
 }
 
-func (d *dataIndexer) FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error {
+// FinalizedBlock will handler the finalized block event
+func (d *eventsDataPreProcessor) FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error {
 	finalizedData := data.FinalizedBlock{
 		Hash: string(finalizedBlock.GetHeaderHash()),
 	}
 
 	d.facade.HandleFinalizedEvents(finalizedData)
 
-	return nil
-}
-
-func (d *dataIndexer) Close() error {
 	return nil
 }
 
@@ -175,6 +176,10 @@ func createEmptyBlockCreatorContainer() (EmptyBlockCreatorContainer, error) {
 	return container, nil
 }
 
-func (d *dataIndexer) IsInterfaceNil() bool {
+func (d *eventsDataPreProcessor) Close() error {
+	return nil
+}
+
+func (d *eventsDataPreProcessor) IsInterfaceNil() bool {
 	return d == nil
 }

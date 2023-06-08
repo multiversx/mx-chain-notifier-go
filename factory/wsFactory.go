@@ -49,17 +49,17 @@ func CreateWSIndexer(config config.WebSocketConfig, marshaller marshal.Marshaliz
 		return nil, err
 	}
 
-	dataIndexerArgs := process.ArgsDataIndexer{
+	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
 		Marshaller:         marshaller,
 		InternalMarshaller: marshaller,
 		Facade:             facade,
 	}
-	dataIndexer, err := process.NewDataIndexerHandler(dataIndexerArgs)
+	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	indexer, err := process.NewNotifierIndexer(marshaller, dataIndexer)
+	indexer, err := process.NewNotifierIndexer(marshaller, dataPreProcessor)
 	if err != nil {
 		return nil, err
 	}

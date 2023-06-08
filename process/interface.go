@@ -51,8 +51,8 @@ type WSClient interface {
 	Close() error
 }
 
-// DataIndexer dines what a data indexer should do
-type DataIndexer interface {
+// DataProcessor dines what a data indexer should do
+type DataProcessor interface {
 	SaveBlock(outportBlock *outport.OutportBlock) error
 	RevertIndexedBlock(blockData *outport.BlockData) error
 	FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error
