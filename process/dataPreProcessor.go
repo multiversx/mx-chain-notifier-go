@@ -14,9 +14,14 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-var errNilBlockData = errors.New("nil block data")
-var errNilTransactionPool = errors.New("nil transaction pool")
-var errNilHeaderGasConsumption = errors.New("nil header gas consumption")
+// ErrNilBlockData signals that a nil block data has been provided
+var ErrNilBlockData = errors.New("nil block data")
+
+// ErrNilTransactionPool signals that a nil transaction pool has been provided
+var ErrNilTransactionPool = errors.New("nil transaction pool")
+
+// ErrNilHeaderGasConsumption signals that a nil header gas consumption has been provided
+var ErrNilHeaderGasConsumption = errors.New("nil header gas consumption")
 
 // ArgsEventsDataPreProcessor defines the arguments needed to create a new events data preprocessor
 type ArgsEventsDataPreProcessor struct {
@@ -61,6 +66,9 @@ func checkDataIndexerArgs(args ArgsEventsDataPreProcessor) error {
 	}
 	if check.IfNil(args.InternalMarshaller) {
 		return fmt.Errorf("%w (internal)", common.ErrNilMarshaller)
+	}
+	if check.IfNil(args.Facade) {
+		return common.ErrNilFacadeHandler
 	}
 
 	return nil
@@ -107,19 +115,15 @@ func (d *eventsDataPreProcessor) getHeaderFromBytes(headerType core.HeaderType, 
 	return block.GetHeaderFromBytes(d.internalMarshaller, creator, headerBytes)
 }
 
-func (d *eventsDataPreProcessor) getEmptyHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {
-	return d.emptyBlockCreator.Get(core.HeaderType(headerType))
-}
-
 func checkBlockDataValid(block *outport.OutportBlock) error {
 	if block.BlockData == nil {
-		return errNilBlockData
+		return ErrNilBlockData
 	}
 	if block.TransactionPool == nil {
-		return errNilTransactionPool
+		return ErrNilTransactionPool
 	}
 	if block.HeaderGasConsumption == nil {
-		return errNilHeaderGasConsumption
+		return ErrNilHeaderGasConsumption
 	}
 
 	return nil

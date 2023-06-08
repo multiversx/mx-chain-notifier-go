@@ -22,3 +22,6 @@ var ErrNilMarshaller = errors.New("nil marshaller provided")
 
 // ErrNilInternalMarshaller signals that a nil internal marshaller has been provided
 var ErrNilInternalMarshaller = errors.New("nil external marshaller provided")
+
+// ErrNilFacadeHandler signals that a nil facade handler has been provided
+var ErrNilFacadeHandler = errors.New("nil facade handler")
