@@ -68,12 +68,12 @@ type RabbitMQExchangeConfig struct {
 
 // WebSocketConfig holds the configuration for websocket observer interaction config
 type WebSocketConfig struct {
-	URL                string `toml:"url"`
-	Mode               string `toml:"mode"`
-	DataMarshallerType string `toml:"data-marshaller-type"`
-	RetryDurationInSec uint32 `toml:"retry-duration-in-seconds"`
-	BlockingAckOnError bool   `toml:"blocking-ack-on-error"`
-	WithAcknowledge    bool   `toml:"with-acknowledge"`
+	URL                string
+	Mode               string
+	DataMarshallerType string
+	RetryDurationInSec uint32
+	BlockingAckOnError bool
+	WithAcknowledge    bool
 }
 
 // FlagsConfig holds the values for CLI flags
