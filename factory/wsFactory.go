@@ -43,7 +43,8 @@ func createWSHandler(hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispat
 	return ws.NewWebSocketProcessor(args)
 }
 
-func CreateWSIndexer(config config.WebSocketConfig, marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (process.WSClient, error) {
+// CreateWSObserverConnector will create the web socket connector for observer node communication
+func CreateWSObserverConnector(config config.WebSocketConfig, marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (process.WSClient, error) {
 	host, err := createWsHost(config, marshaller)
 	if err != nil {
 		return nil, err

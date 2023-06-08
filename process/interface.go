@@ -56,7 +56,6 @@ type DataProcessor interface {
 	SaveBlock(outportBlock *outport.OutportBlock) error
 	RevertIndexedBlock(blockData *outport.BlockData) error
 	FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error
-	Close() error
 	IsInterfaceNil() bool
 }
 

@@ -180,10 +180,6 @@ func createEmptyBlockCreatorContainer() (EmptyBlockCreatorContainer, error) {
 	return container, nil
 }
 
-func (d *eventsDataPreProcessor) Close() error {
-	return nil
-}
-
 func (d *eventsDataPreProcessor) IsInterfaceNil() bool {
 	return d == nil
 }

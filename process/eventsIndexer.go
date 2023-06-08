@@ -9,7 +9,11 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/common"
 )
 
-var errNilDataProcessor = errors.New("nil data processor")
+// ErrNilDataProcessor signals that a nil data processor has been provided
+var ErrNilDataProcessor = errors.New("nil data processor")
+
+// ErrInvalidPayloadType signals that an invalid payload type has been provided
+var ErrInvalidPayloadType = errors.New("invalid payload type")
 
 type eventsIndexer struct {
 	marshaller marshal.Marshalizer
@@ -23,7 +27,7 @@ func NewEventsIndexer(marshaller marshal.Marshalizer, dataProcessor DataProcesso
 		return nil, common.ErrNilMarshaller
 	}
 	if check.IfNil(dataProcessor) {
-		return nil, errNilDataProcessor
+		return nil, ErrNilDataProcessor
 	}
 
 	payloadIndexer := &eventsIndexer{
@@ -53,7 +57,7 @@ func (ei *eventsIndexer) ProcessPayload(payload []byte, topic string) error {
 	payloadTypeAction, ok := ei.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)
-		return nil
+		return ErrInvalidPayloadType
 	}
 
 	return payloadTypeAction(payload)
@@ -107,7 +111,7 @@ func (ei *eventsIndexer) saveAccounts(marshalledData []byte) error {
 
 // Close will close the indexer
 func (ei *eventsIndexer) Close() error {
-	return ei.dp.Close()
+	return nil
 }
 
 // IsInterfaceNil returns true if underlying object is nil

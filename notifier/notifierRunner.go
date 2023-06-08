@@ -104,7 +104,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSIndexer(nr.configs.WebSocketConnector, externalMarshaller, facade)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.WebSocketConnector, externalMarshaller, facade)
 	if err != nil {
 		return err
 	}
