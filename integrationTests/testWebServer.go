@@ -3,6 +3,7 @@ package integrationTests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -88,36 +89,49 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 }
 
 // PushEventsRequest will send a http request for push events
-func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) *httptest.ResponseRecorder {
+func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) error {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp := w.DoRequest(req)
-	return resp
+	if resp.Code != http.StatusOK {
+		return fmt.Errorf("respo code: %d", resp.Code)
+	}
+
+	return nil
 }
 
 // RevertEventsRequest will send a http request for revert event
-func (w *TestWebServer) RevertEventsRequest(events *data.RevertBlock) *httptest.ResponseRecorder {
+func (w *TestWebServer) RevertEventsRequest(events *data.RevertBlock) error {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp := w.DoRequest(req)
-	return resp
+	if resp.Code != http.StatusOK {
+		return fmt.Errorf("respo code: %d", resp.Code)
+	}
+
+	return nil
 }
 
 // FinalizedEventsRequest will send a http request for finalized event
-func (w *TestWebServer) FinalizedEventsRequest(events *data.FinalizedBlock) *httptest.ResponseRecorder {
+func (w *TestWebServer) FinalizedEventsRequest(events *data.FinalizedBlock) error {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
 
 	resp := w.DoRequest(req)
-	return resp
+
+	if resp.Code != http.StatusOK {
+		return fmt.Errorf("respo code: %d", resp.Code)
+	}
+
+	return nil
 }
 
 func loadResponse(t *testing.T, rsp io.Reader, destination interface{}) {

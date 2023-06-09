@@ -25,7 +25,8 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, "http", common.MessageQueueAPIType)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -51,7 +52,7 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
 }
 
-func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
+func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
 
 	header := &block.HeaderV2{
 		Header: &block.Header{
@@ -107,32 +108,38 @@ func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
-	resp := webServer.PushEventsRequest(saveBlockData)
+	err := webServer.PushEventsRequest(saveBlockData)
 
 	mutResponses.Lock()
-	responses[resp.Code]++
+	if err == nil {
+		responses[200]++
+	}
 	mutResponses.Unlock()
 }
 
-func pushRevertRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
+func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
 	blockEvents := &data.RevertBlock{
 		Hash:  "hash2",
 		Nonce: 1,
 	}
-	resp := webServer.RevertEventsRequest(blockEvents)
+	err := webServer.RevertEventsRequest(blockEvents)
 
 	mutResponses.Lock()
-	responses[resp.Code]++
+	if err == nil {
+		responses[200]++
+	}
 	mutResponses.Unlock()
 }
 
-func pushFinalizedRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
+func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
 	blockEvents := &data.FinalizedBlock{
 		Hash: "hash3",
 	}
-	resp := webServer.FinalizedEventsRequest(blockEvents)
+	err := webServer.FinalizedEventsRequest(blockEvents)
 
 	mutResponses.Lock()
-	responses[resp.Code]++
+	if err == nil {
+		responses[200]++
+	}
 	mutResponses.Unlock()
 }

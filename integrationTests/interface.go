@@ -3,6 +3,7 @@ package integrationTests
 import (
 	"net/http"
 
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -25,4 +26,11 @@ type PublisherHandler interface {
 	BroadcastFinalized(event data.FinalizedBlock)
 	Close() error
 	IsInterfaceNil() bool
+}
+
+// ObserverConnector defines the observer connector behaviour
+type ObserverConnector interface {
+	PushEventsRequest(events *outport.OutportBlock) error
+	RevertEventsRequest(events *data.RevertBlock) error
+	FinalizedEventsRequest(events *data.FinalizedBlock) error
 }
