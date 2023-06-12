@@ -18,12 +18,22 @@ import (
 )
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
+	t.Run("with http observer connnector", func(t *testing.T) {
+		testNotifierWithRabbitMQ(t, "http")
+	})
+
+	t.Run("with ws observer connnector", func(t *testing.T) {
+		testNotifierWithRabbitMQ(t, "ws")
+	})
+}
+
+func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
 	cfg.ConnectorApi.CheckDuplicates = true
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
 	require.Nil(t, err)
 
-	client, server, err := integrationTests.CreateObserverConnector(notifier.Facade, "http", common.MessageQueueAPIType)
+	client, server, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
 	require.Nil(t, err)
 	defer func() {
 		if server != nil {

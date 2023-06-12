@@ -109,6 +109,7 @@ func (edh *eventsDataHandler) getEmptyHeaderCreator(headerType string) (block.Em
 	return edh.emptyBlockCreator.Get(core.HeaderType(headerType))
 }
 
+// UnmarshallRevertData will try to unmarshall revert data
 func (edh *eventsDataHandler) UnmarshallRevertData(marshalledData []byte) (*data.RevertBlock, error) {
 	var blockData *outport.BlockData
 	err := edh.marshaller.Unmarshal(&blockData, marshalledData)
@@ -136,6 +137,7 @@ func (edh *eventsDataHandler) UnmarshallRevertData(marshalledData []byte) (*data
 	return revertData, nil
 }
 
+// UnmarshallFinalizedData will try to unmarshall finalized data
 func (edh *eventsDataHandler) UnmarshallFinalizedData(marshalledData []byte) (*data.FinalizedBlock, error) {
 	var finalizedBlock *outport.FinalizedBlock
 	err := edh.marshaller.Unmarshal(&finalizedBlock, marshalledData)
