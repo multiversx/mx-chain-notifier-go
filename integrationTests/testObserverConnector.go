@@ -3,6 +3,7 @@ package integrationTests
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	wsData "github.com/multiversx/mx-chain-communication-go/websocket/data"
@@ -29,8 +30,9 @@ func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiTy
 }
 
 func NewTestWSServer(facade process.EventsFacadeHandler, marshaller marshal.Marshalizer) (ObserverConnector, process.WSClient, error) {
+	port := getRandomPort()
 	conf := config.WebSocketConfig{
-		URL:                "localhost:22111",
+		URL:                "localhost:" + fmt.Sprintf("%d", port),
 		WithAcknowledge:    true,
 		Mode:               "server",
 		RetryDurationInSec: 5,
@@ -45,12 +47,21 @@ func NewTestWSServer(facade process.EventsFacadeHandler, marshaller marshal.Mars
 	// wait for ws server to start
 	time.Sleep(2 * time.Second)
 
-	wsClient, err := NewWSObsClient(marshaller)
+	wsClient, err := NewWSObsClient(marshaller, conf.URL)
 	if err != nil {
 		return nil, nil, err
 	}
 
+	// wait for ws client to start
+	time.Sleep(2 * time.Second)
+
 	return wsClient, wsServer, nil
+}
+
+func getRandomPort() int {
+	min := 22111
+	max := 22222
+	return rand.Intn(max-min) + min
 }
 
 type wsObsConnector struct {
@@ -70,12 +81,12 @@ type wsObsClient struct {
 }
 
 // NewWSObsClient will create a new instance of observer websocket client
-func NewWSObsClient(marshaller marshal.Marshalizer) (*wsObsClient, error) {
+func NewWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, error) {
 	var log = logger.GetOrCreate("hostdriver")
 
 	wsHost, err := wsFactory.CreateWebSocketHost(wsFactory.ArgsWebSocketHost{
 		WebSocketConfig: wsData.WebSocketConfig{
-			URL:                "localhost:22111",
+			URL:                url,
 			WithAcknowledge:    true,
 			Mode:               "client",
 			RetryDurationInSec: 5,

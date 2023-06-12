@@ -11,11 +11,14 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
 	t.Run("with http observer connnector", func(t *testing.T) {
@@ -43,6 +46,8 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 			client.Close()
 		}
 	}()
+
+	time.Sleep(time.Second * 2)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -116,7 +121,9 @@ func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponse
 			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  []byte("headerHash1"),
 			Body: &block.Body{
-				MiniBlocks: make([]*block.MiniBlock, 1),
+				MiniBlocks: []*block.MiniBlock{
+					&block.MiniBlock{},
+				},
 			},
 		},
 		TransactionPool:      txPool,
@@ -124,6 +131,7 @@ func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponse
 	}
 
 	err := webServer.PushEventsRequest(saveBlockData)
+	log.LogIfError(err)
 
 	mutResponses.Lock()
 	if err == nil {
@@ -143,11 +151,9 @@ func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponse
 		HeaderBytes: headerBytes,
 		HeaderType:  string(core.ShardHeaderV2),
 		HeaderHash:  []byte("headerHash2"),
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
 	}
 	err := webServer.RevertEventsRequest(blockData)
+	log.LogIfError(err)
 
 	mutResponses.Lock()
 	if err == nil {
@@ -161,6 +167,7 @@ func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutRespo
 		HeaderHash: []byte("headerHash3"),
 	}
 	err := webServer.FinalizedEventsRequest(blockEvents)
+	log.LogIfError(err)
 
 	mutResponses.Lock()
 	if err == nil {

@@ -551,6 +551,11 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 		HeaderBytes: headerBytes,
 		HeaderType:  string(core.ShardHeaderV2),
 		HeaderHash:  []byte("hash1"),
+		Body: &block.Body{
+			MiniBlocks: []*block.MiniBlock{
+				&block.MiniBlock{},
+			},
+		},
 	}
 	expRevertBlock := &data.RevertBlock{
 		Hash:  hex.EncodeToString([]byte("hash1")),
@@ -658,7 +663,9 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 			HeaderType:  string(core.ShardHeaderV2),
 			HeaderHash:  blockHash,
 			Body: &block.Body{
-				MiniBlocks: make([]*block.MiniBlock, 1),
+				MiniBlocks: []*block.MiniBlock{
+					&block.MiniBlock{},
+				},
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
