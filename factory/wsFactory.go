@@ -51,9 +51,8 @@ func CreateWSObserverConnector(config config.WebSocketConfig, marshaller marshal
 	}
 
 	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
-		Marshaller:         marshaller,
-		InternalMarshaller: marshaller,
-		Facade:             facade,
+		Marshaller: marshaller,
+		Facade:     facade,
 	}
 	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)
 	if err != nil {

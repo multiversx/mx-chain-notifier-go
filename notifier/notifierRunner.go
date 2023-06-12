@@ -43,6 +43,10 @@ func (nr *notifierRunner) Start() error {
 	if err != nil {
 		return err
 	}
+	wsConnectorMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.WebSocketConnector.DataMarshallerType)
+	if err != nil {
+		return err
+	}
 
 	lockService, err := factory.CreateLockService(nr.configs.ConnectorApi.CheckDuplicates, nr.configs.Redis)
 	if err != nil {
@@ -104,7 +108,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.WebSocketConnector, externalMarshaller, facade)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.WebSocketConnector, wsConnectorMarshaller, facade)
 	if err != nil {
 		return err
 	}
