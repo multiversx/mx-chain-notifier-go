@@ -144,7 +144,7 @@ func (edh *eventsDataHandler) UnmarshallFinalizedData(marshalledData []byte) (*d
 	}
 
 	finalizedData := &data.FinalizedBlock{
-		Hash: string(finalizedBlock.HeaderHash),
+		Hash: hex.EncodeToString(finalizedBlock.HeaderHash),
 	}
 
 	return finalizedData, nil
