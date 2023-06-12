@@ -17,7 +17,6 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -104,7 +103,7 @@ func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) error {
 }
 
 // RevertEventsRequest will send a http request for revert event
-func (w *TestWebServer) RevertEventsRequest(events *data.RevertBlock) error {
+func (w *TestWebServer) RevertEventsRequest(events *outport.BlockData) error {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
@@ -119,7 +118,7 @@ func (w *TestWebServer) RevertEventsRequest(events *data.RevertBlock) error {
 }
 
 // FinalizedEventsRequest will send a http request for finalized event
-func (w *TestWebServer) FinalizedEventsRequest(events *data.FinalizedBlock) error {
+func (w *TestWebServer) FinalizedEventsRequest(events *outport.FinalizedBlock) error {
 	jsonBytes, _ := json.Marshal(events)
 
 	req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
@@ -131,6 +130,11 @@ func (w *TestWebServer) FinalizedEventsRequest(events *data.FinalizedBlock) erro
 		return fmt.Errorf("respo code: %d", resp.Code)
 	}
 
+	return nil
+}
+
+// Close returns nil
+func (w *TestWebServer) Close() error {
 	return nil
 }
 

@@ -31,6 +31,7 @@ type PublisherHandler interface {
 // ObserverConnector defines the observer connector behaviour
 type ObserverConnector interface {
 	PushEventsRequest(events *outport.OutportBlock) error
-	RevertEventsRequest(events *data.RevertBlock) error
-	FinalizedEventsRequest(events *data.FinalizedBlock) error
+	RevertEventsRequest(events *outport.BlockData) error
+	FinalizedEventsRequest(events *outport.FinalizedBlock) error
+	Close() error
 }

@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"encoding/json"
-	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -13,7 +12,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,8 +23,16 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, "http", common.MessageQueueAPIType)
+	client, server, err := integrationTests.CreateObserverConnector(notifier.Facade, "http", common.MessageQueueAPIType)
 	require.Nil(t, err)
+	defer func() {
+		if server != nil {
+			server.Close()
+		}
+		if client != nil {
+			client.Close()
+		}
+	}()
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -34,18 +40,18 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 	mutResponses := &sync.Mutex{}
 	responses := make(map[int]int)
 
-	go pushEventsRequest(webServer, mutResponses, responses)
-	go pushRevertRequest(webServer, mutResponses, responses)
-	go pushFinalizedRequest(webServer, mutResponses, responses)
+	go pushEventsRequest(client, mutResponses, responses)
+	go pushRevertRequest(client, mutResponses, responses)
+	go pushFinalizedRequest(client, mutResponses, responses)
 
 	// send requests again
-	go pushEventsRequest(webServer, mutResponses, responses)
-	go pushRevertRequest(webServer, mutResponses, responses)
+	go pushEventsRequest(client, mutResponses, responses)
+	go pushRevertRequest(client, mutResponses, responses)
 
 	time.Sleep(time.Second)
 
 	mutResponses.Lock()
-	assert.Equal(t, 5, responses[http.StatusOK])
+	assert.Equal(t, 5, responses[200])
 	mutResponses.Unlock()
 
 	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
@@ -53,7 +59,6 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 }
 
 func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
-
 	header := &block.HeaderV2{
 		Header: &block.Header{
 			Nonce: 1,
@@ -99,7 +104,7 @@ func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponse
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
 			HeaderType:  string(core.ShardHeaderV2),
-			HeaderHash:  []byte("headerHash"),
+			HeaderHash:  []byte("headerHash1"),
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
@@ -118,11 +123,21 @@ func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponse
 }
 
 func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.RevertBlock{
-		Hash:  "hash2",
-		Nonce: 1,
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
+		},
 	}
-	err := webServer.RevertEventsRequest(blockEvents)
+	headerBytes, _ := json.Marshal(header)
+	blockData := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("headerHash2"),
+		Body: &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		},
+	}
+	err := webServer.RevertEventsRequest(blockData)
 
 	mutResponses.Lock()
 	if err == nil {
@@ -132,8 +147,8 @@ func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponse
 }
 
 func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.FinalizedBlock{
-		Hash: "hash3",
+	blockEvents := &outport.FinalizedBlock{
+		HeaderHash: []byte("headerHash3"),
 	}
 	err := webServer.FinalizedEventsRequest(blockEvents)
 

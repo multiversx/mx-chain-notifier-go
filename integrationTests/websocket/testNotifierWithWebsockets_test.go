@@ -97,8 +97,8 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(saveBlockData)
-	require.NotNil(t, resp)
+	err = webServer.PushEventsRequest(saveBlockData)
+	require.Nil(t, err)
 
 	if waitTimeout(t, wg, time.Second*2) {
 		assert.Fail(t, "timeout when handling websocket events")
@@ -190,8 +190,8 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(saveBlockData)
-	require.NotNil(t, resp)
+	err = webServer.PushEventsRequest(saveBlockData)
+	require.Nil(t, err)
 
 	if waitTimeout(t, wg, time.Second*2) {
 		assert.Fail(t, "timeout when handling websocket events")
@@ -222,8 +222,20 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
-	blockEvents := &data.RevertBlock{
-		Hash:  "hash1",
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("hash1"),
+	}
+
+	expReply := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
 		Nonce: 1,
 	}
 
@@ -234,14 +246,14 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 		reply, err := ws.ReceiveRevertBlock()
 		require.Nil(t, err)
 
-		require.Equal(t, blockEvents, reply)
+		require.Equal(t, expReply, reply)
 		wg.Done()
 	}()
 
 	time.Sleep(time.Second)
 
-	resp := webServer.RevertEventsRequest(blockEvents)
-	require.NotNil(t, resp)
+	err = webServer.RevertEventsRequest(blockEvents)
+	require.Nil(t, err)
 
 	if waitTimeout(t, wg, time.Second*2) {
 		assert.Fail(t, "timeout when handling websocket events")
@@ -272,8 +284,12 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
-	blockEvents := &data.FinalizedBlock{
+	expReply := &data.FinalizedBlock{
 		Hash: "hash1",
+	}
+
+	blockEvents := &outport.FinalizedBlock{
+		HeaderHash: []byte("hash1"),
 	}
 
 	wg := &sync.WaitGroup{}
@@ -283,7 +299,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 		reply, err := ws.ReceiveFinalized()
 		require.Nil(t, err)
 
-		require.Equal(t, blockEvents, reply)
+		require.Equal(t, expReply, reply)
 		wg.Done()
 	}()
 
@@ -506,11 +522,26 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	err = ws.SendSubscribeMessage(subscribeEvent)
 	require.Nil(t, err)
 
-	revertBlock := &data.RevertBlock{
-		Hash:  "hash1",
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	revertBlock := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("hash1"),
+	}
+	expRevertBlock := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
 		Nonce: 1,
 	}
-	finalizedBlock := &data.FinalizedBlock{
+
+	finalizedBlock := &outport.FinalizedBlock{
+		HeaderHash: []byte("hash1"),
+	}
+	expFinalizedBlock := &data.FinalizedBlock{
 		Hash: "hash1",
 	}
 
@@ -580,13 +611,13 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs:      expScrsWithOrder,
 	}
 
-	header := &block.HeaderV2{
+	header = &block.HeaderV2{
 		Header: &block.Header{
 			ShardID:   1,
 			TimeStamp: 1234,
 		},
 	}
-	headerBytes, _ := json.Marshal(header)
+	headerBytes, _ = json.Marshal(header)
 	blockEvents := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
 			Transactions:         txs,
@@ -636,7 +667,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			case common.RevertBlockEvents:
 				var event *data.RevertBlock
 				_ = json.Unmarshal(reply.Data, &event)
-				assert.Equal(t, revertBlock, event)
+				assert.Equal(t, expRevertBlock, event)
 				wg.Done()
 			case common.BlockEvents:
 				var event data.BlockEventsWithOrder
@@ -646,7 +677,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			case common.FinalizedBlockEvents:
 				var event *data.FinalizedBlock
 				_ = json.Unmarshal(reply.Data, &event)
-				assert.Equal(t, finalizedBlock, event)
+				assert.Equal(t, expFinalizedBlock, event)
 				wg.Done()
 			case common.BlockTxs:
 				var event *data.BlockTxs
