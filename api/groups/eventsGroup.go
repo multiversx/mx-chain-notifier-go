@@ -8,7 +8,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
-	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 const (
@@ -125,29 +124,37 @@ func (h *eventsGroup) pushEventsV2(pushEventsRawData []byte) error {
 }
 
 func (h *eventsGroup) revertEvents(c *gin.Context) {
-	var revertBlock data.RevertBlock
-
-	err := c.Bind(&revertBlock)
+	revertEventsRawData, err := c.GetRawData()
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	h.facade.HandleRevertEvents(revertBlock)
+	revertEvents, err := h.eventsDataHandler.UnmarshallRevertData(revertEventsRawData)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	h.facade.HandleRevertEvents(*revertEvents)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
 func (h *eventsGroup) finalizedEvents(c *gin.Context) {
-	var finalizedBlock data.FinalizedBlock
-
-	err := c.Bind(&finalizedBlock)
+	finalizedRawData, err := c.GetRawData()
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	h.facade.HandleFinalizedEvents(finalizedBlock)
+	finalizedEvents, err := h.eventsDataHandler.UnmarshallFinalizedData(finalizedRawData)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	h.facade.HandleFinalizedEvents(*finalizedEvents)
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }

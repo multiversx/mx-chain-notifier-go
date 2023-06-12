@@ -1,6 +1,7 @@
 package groups
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/multiversx/mx-chain-core-go/core"
@@ -106,6 +107,47 @@ func checkBlockDataValid(block *outport.OutportBlock) error {
 
 func (edh *eventsDataHandler) getEmptyHeaderCreator(headerType string) (block.EmptyBlockCreator, error) {
 	return edh.emptyBlockCreator.Get(core.HeaderType(headerType))
+}
+
+func (edh *eventsDataHandler) UnmarshallRevertData(marshalledData []byte) (*data.RevertBlock, error) {
+	var blockData *outport.BlockData
+	err := edh.marshaller.Unmarshal(&blockData, marshalledData)
+	if err != nil {
+		return nil, err
+	}
+
+	headerCreator, err := edh.getEmptyHeaderCreator(blockData.HeaderType)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := block.GetHeaderFromBytes(edh.internalMarshaller, headerCreator, blockData.HeaderBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	revertData := &data.RevertBlock{
+		Hash:  hex.EncodeToString(blockData.GetHeaderHash()),
+		Nonce: header.GetNonce(),
+		Round: header.GetRound(),
+		Epoch: header.GetEpoch(),
+	}
+
+	return revertData, nil
+}
+
+func (edh *eventsDataHandler) UnmarshallFinalizedData(marshalledData []byte) (*data.FinalizedBlock, error) {
+	var finalizedBlock *outport.FinalizedBlock
+	err := edh.marshaller.Unmarshal(&finalizedBlock, marshalledData)
+	if err != nil {
+		return nil, err
+	}
+
+	finalizedData := &data.FinalizedBlock{
+		Hash: string(finalizedBlock.HeaderHash),
+	}
+
+	return finalizedData, nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

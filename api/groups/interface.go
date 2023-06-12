@@ -35,5 +35,7 @@ type EmptyBlockCreatorContainer interface {
 type EventsDataHandler interface {
 	UnmarshallBlockDataOld(marshalledData []byte) (*data.SaveBlockData, error)
 	UnmarshallBlockData(marshalledData []byte) (*data.ArgsSaveBlockData, error)
+	UnmarshallRevertData(marshalledData []byte) (*data.RevertBlock, error)
+	UnmarshallFinalizedData(marshalledData []byte) (*data.FinalizedBlock, error)
 	IsInterfaceNil() bool
 }
