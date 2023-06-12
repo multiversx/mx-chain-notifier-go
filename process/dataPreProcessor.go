@@ -3,7 +3,6 @@ package process
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -28,16 +27,14 @@ var (
 
 // ArgsEventsDataPreProcessor defines the arguments needed to create a new events data preprocessor
 type ArgsEventsDataPreProcessor struct {
-	Marshaller         marshal.Marshalizer
-	InternalMarshaller marshal.Marshalizer
-	Facade             EventsFacadeHandler
+	Marshaller marshal.Marshalizer
+	Facade     EventsFacadeHandler
 }
 
 type eventsDataPreProcessor struct {
-	marshaller         marshal.Marshalizer
-	internalMarshaller marshal.Marshalizer
-	emptyBlockCreator  EmptyBlockCreatorContainer
-	facade             EventsFacadeHandler
+	marshaller        marshal.Marshalizer
+	emptyBlockCreator EmptyBlockCreatorContainer
+	facade            EventsFacadeHandler
 }
 
 // NewEventsDataPreProcessor will create a new events data preprocessor instance
@@ -48,9 +45,8 @@ func NewEventsDataPreProcessor(args ArgsEventsDataPreProcessor) (*eventsDataPreP
 	}
 
 	di := &eventsDataPreProcessor{
-		marshaller:         args.Marshaller,
-		internalMarshaller: args.InternalMarshaller,
-		facade:             args.Facade,
+		marshaller: args.Marshaller,
+		facade:     args.Facade,
 	}
 
 	emptyBlockContainer, err := createEmptyBlockCreatorContainer()
@@ -66,9 +62,6 @@ func NewEventsDataPreProcessor(args ArgsEventsDataPreProcessor) (*eventsDataPreP
 func checkDataIndexerArgs(args ArgsEventsDataPreProcessor) error {
 	if check.IfNil(args.Marshaller) {
 		return common.ErrNilMarshaller
-	}
-	if check.IfNil(args.InternalMarshaller) {
-		return fmt.Errorf("%w (internal)", common.ErrNilMarshaller)
 	}
 	if check.IfNil(args.Facade) {
 		return common.ErrNilFacadeHandler
@@ -116,7 +109,7 @@ func (d *eventsDataPreProcessor) getHeaderFromBytes(headerType core.HeaderType, 
 		return nil, err
 	}
 
-	return block.GetHeaderFromBytes(d.internalMarshaller, creator, headerBytes)
+	return block.GetHeaderFromBytes(d.marshaller, creator, headerBytes)
 }
 
 func checkBlockDataValid(block *outport.OutportBlock) error {
@@ -184,6 +177,7 @@ func createEmptyBlockCreatorContainer() (EmptyBlockCreatorContainer, error) {
 	return container, nil
 }
 
+// IsInterfaceNil returns true if there is no value under the interface
 func (d *eventsDataPreProcessor) IsInterfaceNil() bool {
 	return d == nil
 }

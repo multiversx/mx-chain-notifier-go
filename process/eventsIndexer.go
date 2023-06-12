@@ -57,7 +57,7 @@ func (ei *eventsIndexer) ProcessPayload(payload []byte, topic string) error {
 	payloadTypeAction, ok := ei.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)
-		return ErrInvalidPayloadType
+		return nil
 	}
 
 	return payloadTypeAction(payload)

@@ -20,9 +20,8 @@ import (
 
 func createMockEventsDataPreProcessorArgs() process.ArgsEventsDataPreProcessor {
 	return process.ArgsEventsDataPreProcessor{
-		Marshaller:         &mock.MarshalizerMock{},
-		InternalMarshaller: &mock.MarshalizerMock{},
-		Facade:             &mocks.FacadeStub{},
+		Marshaller: &mock.MarshalizerMock{},
+		Facade:     &mocks.FacadeStub{},
 	}
 }
 
@@ -38,17 +37,6 @@ func TestNewEventsDataPreProcessor(t *testing.T) {
 		dp, err := process.NewEventsDataPreProcessor(args)
 		require.Nil(t, dp)
 		require.Equal(t, common.ErrNilMarshaller, err)
-	})
-
-	t.Run("nil internal marshaller", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsDataPreProcessorArgs()
-		args.InternalMarshaller = nil
-
-		dp, err := process.NewEventsDataPreProcessor(args)
-		require.Nil(t, dp)
-		require.True(t, errors.Is(err, common.ErrNilMarshaller))
 	})
 
 	t.Run("nil facade", func(t *testing.T) {

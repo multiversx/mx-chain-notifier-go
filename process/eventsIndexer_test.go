@@ -48,12 +48,12 @@ func TestProcessPayload(t *testing.T) {
 
 	marshaller := &testscommon.MarshallerMock{}
 
-	t.Run("invalid topic, should return error", func(t *testing.T) {
+	t.Run("invalid topic, should return nil", func(t *testing.T) {
 		t.Parallel()
 
 		ei, err := process.NewEventsIndexer(&mock.MarshalizerMock{}, &mocks.EventsDataProcessorStub{})
 		err = ei.ProcessPayload([]byte("payload"), "invalid topic")
-		require.Equal(t, process.ErrInvalidPayloadType, err)
+		require.Nil(t, err)
 	})
 
 	t.Run("save block", func(t *testing.T) {
