@@ -227,7 +227,14 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
+		args := createMockEventsGroupArgs()
+		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
+			UnmarshallRevertDataCalled: func(marshalledData []byte) (*data.RevertBlock, error) {
+				return nil, errors.New("expected err")
+			},
+		}
+
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -252,6 +259,11 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsGroupArgs()
+		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
+			UnmarshallRevertDataCalled: func(marshalledData []byte) (*data.RevertBlock, error) {
+				return &revertBlockEvents, nil
+			},
+		}
 		args.Facade = &mocks.FacadeStub{
 			HandleRevertEventsCalled: func(events data.RevertBlock) {
 				wasCalled = true
@@ -281,7 +293,14 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 	t.Run("invalid data, bad request", func(t *testing.T) {
 		t.Parallel()
 
-		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
+		args := createMockEventsGroupArgs()
+		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
+			UnmarshallFinalizedDataCalled: func(marshalledData []byte) (*data.FinalizedBlock, error) {
+				return nil, errors.New("expected err")
+			},
+		}
+
+		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
 		ws := startWebServer(eg, eventsPath)
@@ -305,6 +324,11 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsGroupArgs()
+		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
+			UnmarshallFinalizedDataCalled: func(marshalledData []byte) (*data.FinalizedBlock, error) {
+				return &finalizedBlockEvents, nil
+			},
+		}
 		args.Facade = &mocks.FacadeStub{
 			HandleFinalizedEventsCalled: func(events data.FinalizedBlock) {
 				wasCalled = true

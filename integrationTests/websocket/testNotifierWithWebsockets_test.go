@@ -285,7 +285,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	expReply := &data.FinalizedBlock{
-		Hash: "hash1",
+		Hash: hex.EncodeToString([]byte("hash1")),
 	}
 
 	blockEvents := &outport.FinalizedBlock{
