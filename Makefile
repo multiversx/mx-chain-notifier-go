@@ -37,7 +37,7 @@ api_type="rabbit-api"
 conn_type="http"
 run: build
 	cd ${cmd_dir} && \
-		./${binary} --api-type=${api_type} --log-level="*:DEBUG" --connector-type=
+		./${binary} --api-type=${api_type} --log-level="*:DEBUG" --connector-type=${conn_type}
 
 runb: build
 	cd ${cmd_dir} && \
