@@ -44,7 +44,27 @@ func createWSHandler(hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispat
 }
 
 // CreateWSObserverConnector will create the web socket connector for observer node communication
-func CreateWSObserverConnector(config config.WebSocketConfig, marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (process.WSClient, error) {
+func CreateWSObserverConnector(
+	connectorType string,
+	config config.WebSocketConfig,
+	marshaller marshal.Marshalizer,
+	facade process.EventsFacadeHandler,
+) (process.WSClient, error) {
+	switch connectorType {
+	case common.WSObsConnectorType:
+		return createWsObsConnector(config, marshaller, facade)
+	case common.HTTPConnectorType:
+		return &disabled.WSHandler{}, nil
+	default:
+		return nil, common.ErrInvalidConnectorType
+	}
+}
+
+func createWsObsConnector(
+	config config.WebSocketConfig,
+	marshaller marshal.Marshalizer,
+	facade process.EventsFacadeHandler,
+) (process.WSClient, error) {
 	host, err := createWsHost(config, marshaller)
 	if err != nil {
 		return nil, err

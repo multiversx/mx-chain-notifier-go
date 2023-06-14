@@ -20,6 +20,7 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 			Port: "8080",
 		},
 		Type:               "notifier",
+		ConnectorType:      "http",
 		Marshaller:         &mock.MarshalizerMock{},
 		InternalMarshaller: &mock.MarshalizerMock{},
 	}
@@ -70,6 +71,17 @@ func TestNewWebServerHandler(t *testing.T) {
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))
 		require.Equal(t, common.ErrInvalidAPIType, err)
+	})
+
+	t.Run("invalid obs connector type", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsWebServerHandler()
+		args.ConnectorType = ""
+
+		ws, err := gin.NewWebServerHandler(args)
+		require.True(t, check.IfNil(ws))
+		require.Equal(t, common.ErrInvalidConnectorType, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {

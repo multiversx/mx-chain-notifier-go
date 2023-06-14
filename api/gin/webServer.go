@@ -25,6 +25,7 @@ type ArgsWebServerHandler struct {
 	Facade             shared.FacadeHandler
 	Config             config.ConnectorApiConfig
 	Type               string
+	ConnectorType      string
 	Marshaller         marshal.Marshalizer
 	InternalMarshaller marshal.Marshalizer
 }
@@ -39,6 +40,7 @@ type webServer struct {
 	config             config.ConnectorApiConfig
 	groups             map[string]shared.GroupHandler
 	apiType            string
+	connectorType      string
 	wasTriggered       bool
 	cancelFunc         func()
 }
@@ -56,6 +58,7 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 		internalMarshaller: args.InternalMarshaller,
 		config:             args.Config,
 		apiType:            args.Type,
+		connectorType:      args.ConnectorType,
 		groups:             make(map[string]shared.GroupHandler),
 		wasTriggered:       false,
 	}, nil
@@ -67,6 +70,9 @@ func checkArgs(args ArgsWebServerHandler) error {
 	}
 	if args.Type == "" {
 		return common.ErrInvalidAPIType
+	}
+	if args.ConnectorType == "" {
+		return common.ErrInvalidConnectorType
 	}
 	if check.IfNil(args.Marshaller) {
 		return common.ErrNilMarshaller
@@ -135,11 +141,14 @@ func (w *webServer) createGroups() error {
 		Facade:            w.facade,
 		EventsDataHandler: eventsDataHandler,
 	}
-	eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
-	if err != nil {
-		return err
+
+	if w.connectorType == common.HTTPConnectorType {
+		eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
+		if err != nil {
+			return err
+		}
+		groupsMap["events"] = eventsGroup
 	}
-	groupsMap["events"] = eventsGroup
 
 	if w.apiType == common.WSAPIType {
 		hubHandler, err := groups.NewHubGroup(w.facade)

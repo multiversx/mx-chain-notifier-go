@@ -100,6 +100,7 @@ func (nr *notifierRunner) Start() error {
 		Facade:             facade,
 		Config:             nr.configs.ConnectorApi,
 		Type:               nr.configs.Flags.APIType,
+		ConnectorType:      nr.configs.Flags.ConnectorType,
 		Marshaller:         externalMarshaller,
 		InternalMarshaller: internalMarshaller,
 	}
@@ -108,7 +109,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.WebSocketConnector, wsConnectorMarshaller, facade)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.WebSocketConnector, wsConnectorMarshaller, facade)
 	if err != nil {
 		return err
 	}
@@ -149,17 +150,17 @@ func waitForGracefulShutdown(
 		return err
 	}
 
+	err = wsConnector.Close()
+	if err != nil {
+		return err
+	}
+
 	err = publisher.Close()
 	if err != nil {
 		return err
 	}
 
 	err = hub.Close()
-	if err != nil {
-		return err
-	}
-
-	err = wsConnector.Close()
 	if err != nil {
 		return err
 	}
