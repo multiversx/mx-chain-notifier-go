@@ -224,6 +224,7 @@ func GetDefaultConfigs() *config.Config {
 			GeneralConfigPath: "./config/config.toml",
 			WorkingDir:        "",
 			APIType:           "notifier",
+			ConnectorType:     "http",
 		},
 	}
 }

@@ -22,11 +22,11 @@ var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
 	t.Run("with http observer connnector", func(t *testing.T) {
-		testNotifierWithRabbitMQ(t, "http")
+		testNotifierWithRabbitMQ(t, common.HTTPConnectorType)
 	})
 
 	t.Run("with ws observer connnector", func(t *testing.T) {
-		testNotifierWithRabbitMQ(t, "ws")
+		testNotifierWithRabbitMQ(t, common.WSObsConnectorType)
 	})
 }
 
@@ -36,16 +36,8 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
 	require.Nil(t, err)
 
-	client, server, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
 	require.Nil(t, err)
-	defer func() {
-		if server != nil {
-			server.Close()
-		}
-		if client != nil {
-			client.Close()
-		}
-	}()
 
 	time.Sleep(time.Second * 2)
 

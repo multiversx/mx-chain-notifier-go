@@ -483,11 +483,11 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	t.Run("with http observer connector", func(t *testing.T) {
-		testNotifierWithWebsockets_AllEvents(t, "http")
+		testNotifierWithWebsockets_AllEvents(t, common.HTTPConnectorType)
 	})
 
 	t.Run("with ws observer connector", func(t *testing.T) {
-		testNotifierWithWebsockets_AllEvents(t, "ws")
+		testNotifierWithWebsockets_AllEvents(t, common.WSObsConnectorType)
 	})
 }
 
@@ -497,16 +497,8 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
 	require.Nil(t, err)
 
-	client, server, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
 	require.Nil(t, err)
-	defer func() {
-		if server != nil {
-			server.Close()
-		}
-		if client != nil {
-			client.Close()
-		}
-	}()
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()

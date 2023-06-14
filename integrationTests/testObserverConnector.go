@@ -12,24 +12,27 @@ import (
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 )
 
-func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string) (ObserverConnector, process.WSClient, error) {
+// CreateObserverConnector will create observer connector component
+func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
 	switch connType {
-	case "http":
-		return NewTestWebServer(facade, apiType), nil, nil
-	case "ws":
-		return NewTestWSServer(facade, marshaller)
+	case common.HTTPConnectorType:
+		return NewTestWebServer(facade, apiType), nil
+	case common.WSObsConnectorType:
+		return NewTestWSServer(connType, facade, marshaller)
 	default:
-		return nil, nil, errors.New("invalid observer connector type")
+		return nil, errors.New("invalid observer connector type")
 	}
 }
 
-func NewTestWSServer(facade process.EventsFacadeHandler, marshaller marshal.Marshalizer) (ObserverConnector, process.WSClient, error) {
+// NewTestWSServer will create a new test ws server
+func NewTestWSServer(connType string, facade process.EventsFacadeHandler, marshaller marshal.Marshalizer) (ObserverConnector, error) {
 	port := getRandomPort()
 	conf := config.WebSocketConfig{
 		URL:                "localhost:" + fmt.Sprintf("%d", port),
@@ -39,9 +42,9 @@ func NewTestWSServer(facade process.EventsFacadeHandler, marshaller marshal.Mars
 		BlockingAckOnError: false,
 	}
 
-	wsServer, err := factory.CreateWSObserverConnector(conf, marshaller, facade)
+	_, err := factory.CreateWSObserverConnector(connType, conf, marshaller, facade)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// wait for ws server to start
@@ -49,13 +52,13 @@ func NewTestWSServer(facade process.EventsFacadeHandler, marshaller marshal.Mars
 
 	wsClient, err := NewWSObsClient(marshaller, conf.URL)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// wait for ws client to start
 	time.Sleep(2 * time.Second)
 
-	return wsClient, wsServer, nil
+	return wsClient, nil
 }
 
 func getRandomPort() int {
