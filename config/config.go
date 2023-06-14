@@ -4,11 +4,12 @@ import "github.com/multiversx/mx-chain-core-go/core"
 
 // Config defines the config setup based on main config file
 type Config struct {
-	General      GeneralConfig
-	ConnectorApi ConnectorApiConfig
-	Redis        RedisConfig
-	RabbitMQ     RabbitMQConfig
-	Flags        *FlagsConfig
+	General            GeneralConfig
+	WebSocketConnector WebSocketConfig
+	ConnectorApi       ConnectorApiConfig
+	Redis              RedisConfig
+	RabbitMQ           RabbitMQConfig
+	Flags              *FlagsConfig
 }
 
 // GeneralConfig maps the general config section
@@ -63,6 +64,16 @@ type RabbitMQConfig struct {
 type RabbitMQExchangeConfig struct {
 	Name string
 	Type string
+}
+
+// WebSocketConfig holds the configuration for websocket observer interaction config
+type WebSocketConfig struct {
+	URL                string
+	Mode               string
+	DataMarshallerType string
+	RetryDurationInSec uint32
+	BlockingAckOnError bool
+	WithAcknowledge    bool
 }
 
 // FlagsConfig holds the values for CLI flags
