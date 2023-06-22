@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"time"
 
 	"github.com/multiversx/mx-chain-communication-go/websocket"
 	wsData "github.com/multiversx/mx-chain-communication-go/websocket/data"
@@ -55,16 +54,10 @@ func newTestWSServer(connType string, payloadHandler websocket.PayloadHandler, m
 		return nil, err
 	}
 
-	// wait for ws server to start
-	time.Sleep(2 * time.Second)
-
 	wsClient, err := newWSObsClient(marshaller, conf.URL)
 	if err != nil {
 		return nil, err
 	}
-
-	// wait for ws client to start
-	time.Sleep(2 * time.Second)
 
 	return wsClient, nil
 }
