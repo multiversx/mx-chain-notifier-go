@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -147,4 +148,24 @@ func loadResponse(t *testing.T, rsp io.Reader, destination interface{}) {
 	err := jsonParser.Decode(destination)
 
 	assert.Nil(t, err)
+}
+
+// WaitTimeout returns true if work group waiting timed out
+func WaitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) bool {
+	ch := make(chan struct{})
+
+	go func() {
+		defer close(ch)
+		wg.Wait()
+	}()
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case <-ch:
+		return false
+	case <-timer.C:
+		return true
+	}
 }

@@ -20,8 +20,6 @@ import (
 
 var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
-const okResponse = 1
-
 func TestNotifierWithRabbitMQ(t *testing.T) {
 	t.Run("with http observer connnector", func(t *testing.T) {
 		testNotifierWithRabbitMQ(t, common.HTTPConnectorType)
@@ -44,28 +42,26 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
-	mutResponses := &sync.Mutex{}
-	responses := make(map[int]int)
+	wg := &sync.WaitGroup{}
+	wg.Add(5)
 
-	go pushEventsRequest(client, mutResponses, responses)
-	go pushRevertRequest(client, mutResponses, responses)
-	go pushFinalizedRequest(client, mutResponses, responses)
+	go pushEventsRequest(wg, client)
+	go pushRevertRequest(wg, client)
+	go pushFinalizedRequest(wg, client)
 
 	// send requests again
-	go pushEventsRequest(client, mutResponses, responses)
-	go pushRevertRequest(client, mutResponses, responses)
+	go pushEventsRequest(wg, client)
+	go pushRevertRequest(wg, client)
 
-	time.Sleep(time.Second)
-
-	mutResponses.Lock()
-	assert.Equal(t, 5, responses[okResponse])
-	mutResponses.Unlock()
+	if integrationTests.WaitTimeout(t, wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling websocket events")
+	}
 
 	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
 }
 
-func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
+func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
 	header := &block.HeaderV2{
 		Header: &block.Header{
 			Nonce: 1,
@@ -126,13 +122,11 @@ func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponse
 	log.LogIfError(err)
 
 	if err == nil {
-		mutResponses.Lock()
-		responses[okResponse]++
-		mutResponses.Unlock()
+		wg.Done()
 	}
 }
 
-func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
+func pushRevertRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
 	header := &block.HeaderV2{
 		Header: &block.Header{
 			Nonce: 1,
@@ -148,13 +142,11 @@ func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponse
 	log.LogIfError(err)
 
 	if err == nil {
-		mutResponses.Lock()
-		responses[okResponse]++
-		mutResponses.Unlock()
+		wg.Done()
 	}
 }
 
-func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
+func pushFinalizedRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
 	blockEvents := &outport.FinalizedBlock{
 		HeaderHash: []byte("headerHash3"),
 	}
@@ -162,8 +154,6 @@ func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutRespo
 	log.LogIfError(err)
 
 	if err == nil {
-		mutResponses.Lock()
-		responses[okResponse]++
-		mutResponses.Unlock()
+		wg.Done()
 	}
 }
