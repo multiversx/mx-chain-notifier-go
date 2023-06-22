@@ -177,6 +177,7 @@ func createEmptyBlockCreatorContainer() (EmptyBlockCreatorContainer, error) {
 	return container, nil
 }
 
+// IsInterfaceNil returns true if there is no value under the interface
 func (d *eventsDataPreProcessor) IsInterfaceNil() bool {
 	return d == nil
 }
