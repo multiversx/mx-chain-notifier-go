@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
@@ -20,9 +21,15 @@ import (
 
 var log = logger.GetOrCreate("api/gin")
 
+const (
+	eventsGroupString = "events"
+	hubGroupString    = "hub"
+)
+
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
 	Facade             shared.FacadeHandler
+	PayloadHandler     websocket.PayloadHandler
 	Config             config.ConnectorApiConfig
 	Type               string
 	ConnectorType      string
@@ -34,6 +41,7 @@ type ArgsWebServerHandler struct {
 type webServer struct {
 	sync.RWMutex
 	facade             shared.FacadeHandler
+	payloadHandler     websocket.PayloadHandler
 	marshaller         marshal.Marshalizer
 	internalMarshaller marshal.Marshalizer
 	httpServer         shared.HTTPServerCloser
@@ -54,6 +62,7 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 
 	return &webServer{
 		facade:             args.Facade,
+		payloadHandler:     args.PayloadHandler,
 		marshaller:         args.Marshaller,
 		internalMarshaller: args.InternalMarshaller,
 		config:             args.Config,
@@ -79,6 +88,9 @@ func checkArgs(args ArgsWebServerHandler) error {
 	}
 	if check.IfNil(args.InternalMarshaller) {
 		return common.ErrNilInternalMarshaller
+	}
+	if check.IfNil(args.PayloadHandler) {
+		return apiErrors.ErrNilPayloadHandler
 	}
 
 	return nil
@@ -139,6 +151,7 @@ func (w *webServer) createGroups() error {
 
 	eventsGroupArgs := groups.ArgsEventsGroup{
 		Facade:            w.facade,
+		PayloadHandler:    w.payloadHandler,
 		EventsDataHandler: eventsDataHandler,
 	}
 
@@ -147,7 +160,7 @@ func (w *webServer) createGroups() error {
 		if err != nil {
 			return err
 		}
-		groupsMap["events"] = eventsGroup
+		groupsMap[eventsGroupString] = eventsGroup
 	}
 
 	if w.apiType == common.WSAPIType {
@@ -155,7 +168,7 @@ func (w *webServer) createGroups() error {
 		if err != nil {
 			return err
 		}
-		groupsMap["hub"] = hubHandler
+		groupsMap[hubGroupString] = hubHandler
 	}
 
 	w.groups = groupsMap

@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	wsData "github.com/multiversx/mx-chain-communication-go/websocket/data"
 	wsFactory "github.com/multiversx/mx-chain-communication-go/websocket/factory"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -21,18 +22,25 @@ import (
 // CreateObserverConnector will create observer connector component
 func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
+	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
+		Marshaller: marshaller,
+		Facade:     facade,
+	}
+	dataPreProcessor, _ := process.NewEventsDataPreProcessor(dataIndexerArgs)
+	payloadHandler, _ := process.NewPayloadHandler(marshaller, dataPreProcessor)
+
 	switch connType {
 	case common.HTTPConnectorType:
-		return NewTestWebServer(facade, apiType), nil
+		return NewTestWebServer(facade, apiType, payloadHandler), nil
 	case common.WSObsConnectorType:
-		return NewTestWSServer(connType, facade, marshaller)
+		return newTestWSServer(connType, payloadHandler, marshaller)
 	default:
 		return nil, errors.New("invalid observer connector type")
 	}
 }
 
-// NewTestWSServer will create a new test ws server
-func NewTestWSServer(connType string, facade process.EventsFacadeHandler, marshaller marshal.Marshalizer) (ObserverConnector, error) {
+// newTestWSServer will create a new test ws server
+func newTestWSServer(connType string, payloadHandler websocket.PayloadHandler, marshaller marshal.Marshalizer) (ObserverConnector, error) {
 	port := getRandomPort()
 	conf := config.WebSocketConfig{
 		URL:                "localhost:" + fmt.Sprintf("%d", port),
@@ -42,7 +50,7 @@ func NewTestWSServer(connType string, facade process.EventsFacadeHandler, marsha
 		BlockingAckOnError: false,
 	}
 
-	_, err := factory.CreateWSObserverConnector(connType, conf, marshaller, facade)
+	_, err := factory.CreateWSObserverConnector(connType, conf, marshaller, payloadHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +58,7 @@ func NewTestWSServer(connType string, facade process.EventsFacadeHandler, marsha
 	// wait for ws server to start
 	time.Sleep(2 * time.Second)
 
-	wsClient, err := NewWSObsClient(marshaller, conf.URL)
+	wsClient, err := newWSObsClient(marshaller, conf.URL)
 	if err != nil {
 		return nil, err
 	}
@@ -67,12 +75,8 @@ func getRandomPort() int {
 	return rand.Intn(max-min) + min
 }
 
-type wsObsConnector struct {
-	wsClient *wsObsClient
-}
-
-// SenderHost defines the actions that a host sender should do
-type SenderHost interface {
+// senderHost defines the actions that a host sender should do
+type senderHost interface {
 	Send(payload []byte, topic string) error
 	Close() error
 	IsInterfaceNil() bool
@@ -80,11 +84,11 @@ type SenderHost interface {
 
 type wsObsClient struct {
 	marshaller marshal.Marshalizer
-	senderHost SenderHost
+	senderHost senderHost
 }
 
-// NewWSObsClient will create a new instance of observer websocket client
-func NewWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, error) {
+// newWSObsClient will create a new instance of observer websocket client
+func newWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, error) {
 	var log = logger.GetOrCreate("hostdriver")
 
 	wsHost, err := wsFactory.CreateWebSocketHost(wsFactory.ArgsWebSocketHost{

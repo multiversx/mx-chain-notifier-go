@@ -15,14 +15,14 @@ var ErrNilDataProcessor = errors.New("nil data processor")
 // ErrInvalidPayloadType signals that an invalid payload type has been provided
 var ErrInvalidPayloadType = errors.New("invalid payload type")
 
-type eventsIndexer struct {
+type payloadHandler struct {
 	marshaller marshal.Marshalizer
 	dp         DataProcessor
 	actions    map[string]func(marshalledData []byte) error
 }
 
-// NewEventsIndexer will create a new instance of events indexer
-func NewEventsIndexer(marshaller marshal.Marshalizer, dataProcessor DataProcessor) (*eventsIndexer, error) {
+// NewPayloadHandler will create a new instance of events indexer
+func NewPayloadHandler(marshaller marshal.Marshalizer, dataProcessor DataProcessor) (*payloadHandler, error) {
 	if check.IfNil(marshaller) {
 		return nil, common.ErrNilMarshaller
 	}
@@ -30,7 +30,7 @@ func NewEventsIndexer(marshaller marshal.Marshalizer, dataProcessor DataProcesso
 		return nil, ErrNilDataProcessor
 	}
 
-	payloadIndexer := &eventsIndexer{
+	payloadIndexer := &payloadHandler{
 		marshaller: marshaller,
 		dp:         dataProcessor,
 	}
@@ -40,21 +40,21 @@ func NewEventsIndexer(marshaller marshal.Marshalizer, dataProcessor DataProcesso
 }
 
 // GetOperationsMap returns the map with all the operations that will index data
-func (ei *eventsIndexer) initActionsMap() {
-	ei.actions = map[string]func(d []byte) error{
-		outport.TopicSaveBlock:             ei.saveBlock,
-		outport.TopicRevertIndexedBlock:    ei.revertIndexedBlock,
-		outport.TopicSaveRoundsInfo:        ei.saveRounds,
-		outport.TopicSaveValidatorsRating:  ei.saveValidatorsRating,
-		outport.TopicSaveValidatorsPubKeys: ei.saveValidatorsPubKeys,
-		outport.TopicSaveAccounts:          ei.saveAccounts,
-		outport.TopicFinalizedBlock:        ei.finalizedBlock,
+func (ph *payloadHandler) initActionsMap() {
+	ph.actions = map[string]func(d []byte) error{
+		outport.TopicSaveBlock:             ph.saveBlock,
+		outport.TopicRevertIndexedBlock:    ph.revertIndexedBlock,
+		outport.TopicSaveRoundsInfo:        ph.saveRounds,
+		outport.TopicSaveValidatorsRating:  ph.saveValidatorsRating,
+		outport.TopicSaveValidatorsPubKeys: ph.saveValidatorsPubKeys,
+		outport.TopicSaveAccounts:          ph.saveAccounts,
+		outport.TopicFinalizedBlock:        ph.finalizedBlock,
 	}
 }
 
 // ProcessPayload will proces the provided payload based on the topic
-func (ei *eventsIndexer) ProcessPayload(payload []byte, topic string) error {
-	payloadTypeAction, ok := ei.actions[topic]
+func (ph *payloadHandler) ProcessPayload(payload []byte, topic string) error {
+	payloadTypeAction, ok := ph.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)
 		return ErrInvalidPayloadType
@@ -63,58 +63,58 @@ func (ei *eventsIndexer) ProcessPayload(payload []byte, topic string) error {
 	return payloadTypeAction(payload)
 }
 
-func (ei *eventsIndexer) saveBlock(marshalledData []byte) error {
+func (ph *payloadHandler) saveBlock(marshalledData []byte) error {
 	outportBlock := &outport.OutportBlock{}
-	err := ei.marshaller.Unmarshal(outportBlock, marshalledData)
+	err := ph.marshaller.Unmarshal(outportBlock, marshalledData)
 	if err != nil {
 		return err
 	}
 
-	return ei.dp.SaveBlock(outportBlock)
+	return ph.dp.SaveBlock(outportBlock)
 }
 
-func (ei *eventsIndexer) revertIndexedBlock(marshalledData []byte) error {
+func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte) error {
 	blockData := &outport.BlockData{}
-	err := ei.marshaller.Unmarshal(blockData, marshalledData)
+	err := ph.marshaller.Unmarshal(blockData, marshalledData)
 	if err != nil {
 		return err
 	}
 
-	return ei.dp.RevertIndexedBlock(blockData)
+	return ph.dp.RevertIndexedBlock(blockData)
 }
 
-func (ei *eventsIndexer) finalizedBlock(marshalledData []byte) error {
+func (ph *payloadHandler) finalizedBlock(marshalledData []byte) error {
 	finalizedBlock := &outport.FinalizedBlock{}
-	err := ei.marshaller.Unmarshal(finalizedBlock, marshalledData)
+	err := ph.marshaller.Unmarshal(finalizedBlock, marshalledData)
 	if err != nil {
 		return err
 	}
 
-	return ei.dp.FinalizedBlock(finalizedBlock)
+	return ph.dp.FinalizedBlock(finalizedBlock)
 }
 
-func (ei *eventsIndexer) saveRounds(marshalledData []byte) error {
+func (ph *payloadHandler) saveRounds(marshalledData []byte) error {
 	return nil
 }
 
-func (ei *eventsIndexer) saveValidatorsRating(marshalledData []byte) error {
+func (ph *payloadHandler) saveValidatorsRating(marshalledData []byte) error {
 	return nil
 }
 
-func (ei *eventsIndexer) saveValidatorsPubKeys(marshalledData []byte) error {
+func (ph *payloadHandler) saveValidatorsPubKeys(marshalledData []byte) error {
 	return nil
 }
 
-func (ei *eventsIndexer) saveAccounts(marshalledData []byte) error {
+func (ph *payloadHandler) saveAccounts(marshalledData []byte) error {
 	return nil
 }
 
 // Close will close the indexer
-func (ei *eventsIndexer) Close() error {
+func (ph *payloadHandler) Close() error {
 	return nil
 }
 
 // IsInterfaceNil returns true if underlying object is nil
-func (ei *eventsIndexer) IsInterfaceNil() bool {
-	return ei == nil
+func (ph *payloadHandler) IsInterfaceNil() bool {
+	return ph == nil
 }

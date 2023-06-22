@@ -20,6 +20,8 @@ import (
 
 var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
+const okResponse = 1
+
 func TestNotifierWithRabbitMQ(t *testing.T) {
 	t.Run("with http observer connnector", func(t *testing.T) {
 		testNotifierWithRabbitMQ(t, common.HTTPConnectorType)
@@ -39,8 +41,6 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
 	require.Nil(t, err)
 
-	time.Sleep(time.Second * 2)
-
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
@@ -58,7 +58,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	time.Sleep(time.Second)
 
 	mutResponses.Lock()
-	assert.Equal(t, 5, responses[200])
+	assert.Equal(t, 5, responses[okResponse])
 	mutResponses.Unlock()
 
 	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
@@ -125,11 +125,11 @@ func pushEventsRequest(webServer integrationTests.ObserverConnector, mutResponse
 	err := webServer.PushEventsRequest(saveBlockData)
 	log.LogIfError(err)
 
-	mutResponses.Lock()
 	if err == nil {
-		responses[200]++
+		mutResponses.Lock()
+		responses[okResponse]++
+		mutResponses.Unlock()
 	}
-	mutResponses.Unlock()
 }
 
 func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
@@ -147,11 +147,11 @@ func pushRevertRequest(webServer integrationTests.ObserverConnector, mutResponse
 	err := webServer.RevertEventsRequest(blockData)
 	log.LogIfError(err)
 
-	mutResponses.Lock()
 	if err == nil {
-		responses[200]++
+		mutResponses.Lock()
+		responses[okResponse]++
+		mutResponses.Unlock()
 	}
-	mutResponses.Unlock()
 }
 
 func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutResponses *sync.Mutex, responses map[int]int) {
@@ -161,9 +161,9 @@ func pushFinalizedRequest(webServer integrationTests.ObserverConnector, mutRespo
 	err := webServer.FinalizedEventsRequest(blockEvents)
 	log.LogIfError(err)
 
-	mutResponses.Lock()
 	if err == nil {
-		responses[200]++
+		mutResponses.Lock()
+		responses[okResponse]++
+		mutResponses.Unlock()
 	}
-	mutResponses.Unlock()
 }

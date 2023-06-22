@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/multiversx/mx-chain-communication-go/testscommon"
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
@@ -16,7 +17,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -28,6 +28,7 @@ const eventsPath = "/events"
 func createMockEventsGroupArgs() groups.ArgsEventsGroup {
 	return groups.ArgsEventsGroup{
 		Facade:            &mocks.FacadeStub{},
+		PayloadHandler:    &testscommon.PayloadHandlerStub{},
 		EventsDataHandler: &mocks.EventsDataHandlerStub{},
 	}
 }
@@ -109,18 +110,10 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
-		wasCalled := false
-		wasCalledV2 := false
-
 		args := createMockEventsGroupArgs()
-		args.Facade = &mocks.FacadeStub{
-			HandlePushEventsV1Called: func(events data.SaveBlockData) error {
-				wasCalled = true
-				return errors.New("facade error")
-			},
-			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
-				wasCalledV2 = true
-				return errors.New("facade error")
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				return errors.New("expected err")
 			},
 		}
 
@@ -135,8 +128,6 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		ws.ServeHTTP(resp, req)
 
-		assert.True(t, wasCalled)
-		assert.True(t, wasCalledV2)
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
@@ -195,11 +186,9 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsGroupArgs()
-		args.Facade = &mocks.FacadeStub{
-			HandlePushEventsV1Called: func(eventsData data.SaveBlockData) error {
-				return common.ErrReceivedEmptyEvents
-			},
-			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				require.Equal(t, topic, outport.TopicSaveBlock)
 				wasCalled = true
 				return nil
 			},
@@ -228,9 +217,9 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		t.Parallel()
 
 		args := createMockEventsGroupArgs()
-		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
-			UnmarshallRevertDataCalled: func(marshalledData []byte) (*data.RevertBlock, error) {
-				return nil, errors.New("expected err")
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				return errors.New("expected err")
 			},
 		}
 
@@ -257,16 +246,18 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		}
 		jsonBytes, _ := json.Marshal(revertBlockEvents)
 
-		wasCalled := false
 		args := createMockEventsGroupArgs()
-		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
-			UnmarshallRevertDataCalled: func(marshalledData []byte) (*data.RevertBlock, error) {
-				return &revertBlockEvents, nil
+
+		wasCalled := false
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				require.Equal(t, topic, outport.TopicRevertIndexedBlock)
+				wasCalled = true
+				return nil
 			},
 		}
 		args.Facade = &mocks.FacadeStub{
 			HandleRevertEventsCalled: func(events data.RevertBlock) {
-				wasCalled = true
 				assert.Equal(t, revertBlockEvents, events)
 			},
 		}
@@ -294,9 +285,9 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		t.Parallel()
 
 		args := createMockEventsGroupArgs()
-		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
-			UnmarshallFinalizedDataCalled: func(marshalledData []byte) (*data.FinalizedBlock, error) {
-				return nil, errors.New("expected err")
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				return errors.New("expected err")
 			},
 		}
 
@@ -324,9 +315,11 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsGroupArgs()
-		args.EventsDataHandler = &mocks.EventsDataHandlerStub{
-			UnmarshallFinalizedDataCalled: func(marshalledData []byte) (*data.FinalizedBlock, error) {
-				return &finalizedBlockEvents, nil
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				require.Equal(t, topic, outport.TopicFinalizedBlock)
+				wasCalled = true
+				return nil
 			},
 		}
 		args.Facade = &mocks.FacadeStub{

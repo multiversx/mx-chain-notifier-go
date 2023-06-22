@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-communication-go/websocket/data"
 	factoryHost "github.com/multiversx/mx-chain-communication-go/websocket/factory"
 	"github.com/multiversx/mx-chain-core-go/marshal"
@@ -48,11 +49,11 @@ func CreateWSObserverConnector(
 	connectorType string,
 	config config.WebSocketConfig,
 	marshaller marshal.Marshalizer,
-	facade process.EventsFacadeHandler,
+	payloadHandler websocket.PayloadHandler,
 ) (process.WSClient, error) {
 	switch connectorType {
 	case common.WSObsConnectorType:
-		return createWsObsConnector(config, marshaller, facade)
+		return createWsObsConnector(config, marshaller, payloadHandler)
 	case common.HTTPConnectorType:
 		return &disabled.WSHandler{}, nil
 	default:
@@ -63,28 +64,14 @@ func CreateWSObserverConnector(
 func createWsObsConnector(
 	config config.WebSocketConfig,
 	marshaller marshal.Marshalizer,
-	facade process.EventsFacadeHandler,
+	payloadHandler websocket.PayloadHandler,
 ) (process.WSClient, error) {
 	host, err := createWsHost(config, marshaller)
 	if err != nil {
 		return nil, err
 	}
 
-	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
-		Marshaller: marshaller,
-		Facade:     facade,
-	}
-	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)
-	if err != nil {
-		return nil, err
-	}
-
-	eventsIndexer, err := process.NewEventsIndexer(marshaller, dataPreProcessor)
-	if err != nil {
-		return nil, err
-	}
-
-	err = host.SetPayloadHandler(eventsIndexer)
+	err = host.SetPayloadHandler(payloadHandler)
 	if err != nil {
 		return nil, err
 	}

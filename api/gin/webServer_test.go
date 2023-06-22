@@ -3,6 +3,7 @@ package gin_test
 import (
 	"testing"
 
+	"github.com/multiversx/mx-chain-communication-go/testscommon"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/core/mock"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
@@ -15,12 +16,13 @@ import (
 
 func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 	return gin.ArgsWebServerHandler{
-		Facade: &mocks.FacadeStub{},
+		Facade:         &mocks.FacadeStub{},
+		PayloadHandler: &testscommon.PayloadHandlerStub{},
 		Config: config.ConnectorApiConfig{
 			Port: "8080",
 		},
 		Type:               "notifier",
-		ConnectorType:      "http",
+		ConnectorType:      common.HTTPConnectorType,
 		Marshaller:         &mock.MarshalizerMock{},
 		InternalMarshaller: &mock.MarshalizerMock{},
 	}
@@ -38,6 +40,17 @@ func TestNewWebServerHandler(t *testing.T) {
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))
 		require.Equal(t, apiErrors.ErrNilFacadeHandler, err)
+	})
+
+	t.Run("nil payload handler", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsWebServerHandler()
+		args.PayloadHandler = nil
+
+		ws, err := gin.NewWebServerHandler(args)
+		require.True(t, check.IfNil(ws))
+		require.Equal(t, apiErrors.ErrNilPayloadHandler, err)
 	})
 
 	t.Run("nil external marshaller", func(t *testing.T) {

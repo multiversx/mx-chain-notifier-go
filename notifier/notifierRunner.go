@@ -96,8 +96,14 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	payloadHandler, err := factory.CreatePayloadHandler(nr.configs.Flags.ConnectorType, externalMarshaller, wsConnectorMarshaller, facade)
+	if err != nil {
+		return err
+	}
+
 	webServerArgs := gin.ArgsWebServerHandler{
 		Facade:             facade,
+		PayloadHandler:     payloadHandler,
 		Config:             nr.configs.ConnectorApi,
 		Type:               nr.configs.Flags.APIType,
 		ConnectorType:      nr.configs.Flags.ConnectorType,
@@ -109,7 +115,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.WebSocketConnector, wsConnectorMarshaller, facade)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.WebSocketConnector, wsConnectorMarshaller, payloadHandler)
 	if err != nil {
 		return err
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
@@ -23,6 +24,7 @@ import (
 // TestWebServer defines a test web server instance
 type TestWebServer struct {
 	facade             shared.FacadeHandler
+	payloadHandler     websocket.PayloadHandler
 	apiType            string
 	marshaller         marshal.Marshalizer
 	internalMarshaller marshal.Marshalizer
@@ -31,9 +33,10 @@ type TestWebServer struct {
 }
 
 // NewTestWebServer creates a new test web server
-func NewTestWebServer(facade shared.FacadeHandler, apiType string) *TestWebServer {
+func NewTestWebServer(facade shared.FacadeHandler, apiType string, payloadHandler websocket.PayloadHandler) *TestWebServer {
 	webServer := &TestWebServer{
 		facade:             facade,
+		payloadHandler:     payloadHandler,
 		apiType:            apiType,
 		marshaller:         &marshal.JsonMarshalizer{},
 		internalMarshaller: &marshal.JsonMarshalizer{},
@@ -70,6 +73,7 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 	eventsDataHandler, _ := groups.NewEventsDataHandler(w.marshaller, w.internalMarshaller)
 	eventsGroupArgs := groups.ArgsEventsGroup{
 		Facade:            w.facade,
+		PayloadHandler:    w.payloadHandler,
 		EventsDataHandler: eventsDataHandler,
 	}
 	eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
@@ -96,7 +100,7 @@ func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) error {
 
 	resp := w.DoRequest(req)
 	if resp.Code != http.StatusOK {
-		return fmt.Errorf("respo code: %d", resp.Code)
+		return fmt.Errorf("response code: %d", resp.Code)
 	}
 
 	return nil
@@ -111,7 +115,7 @@ func (w *TestWebServer) RevertEventsRequest(events *outport.BlockData) error {
 
 	resp := w.DoRequest(req)
 	if resp.Code != http.StatusOK {
-		return fmt.Errorf("respo code: %d", resp.Code)
+		return fmt.Errorf("response code: %d", resp.Code)
 	}
 
 	return nil
@@ -127,7 +131,7 @@ func (w *TestWebServer) FinalizedEventsRequest(events *outport.FinalizedBlock) e
 	resp := w.DoRequest(req)
 
 	if resp.Code != http.StatusOK {
-		return fmt.Errorf("respo code: %d", resp.Code)
+		return fmt.Errorf("response code: %d", resp.Code)
 	}
 
 	return nil

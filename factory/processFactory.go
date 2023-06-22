@@ -1,8 +1,10 @@
 package factory
 
 import (
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -78,4 +80,34 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 	default:
 		return nil, common.ErrInvalidPubKeyConverterType
 	}
+}
+
+// CreatePayloadHandler will create a new instance of payload handler
+func CreatePayloadHandler(connType string, marshaller marshal.Marshalizer, wsMarshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+	switch connType {
+	case common.WSObsConnectorType:
+		return createPayloadHandler(wsMarshaller, facade)
+	case common.HTTPConnectorType:
+		return createPayloadHandler(marshaller, facade)
+	default:
+		return nil, common.ErrInvalidConnectorType
+	}
+}
+
+func createPayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
+		Marshaller: marshaller,
+		Facade:     facade,
+	}
+	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)
+	if err != nil {
+		return nil, err
+	}
+
+	payloadHandler, err := process.NewPayloadHandler(marshaller, dataPreProcessor)
+	if err != nil {
+		return nil, err
+	}
+
+	return payloadHandler, nil
 }
