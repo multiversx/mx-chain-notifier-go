@@ -3,7 +3,7 @@ package integrationTests
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"net"
 	"time"
 
 	"github.com/multiversx/mx-chain-communication-go/websocket"
@@ -70,9 +70,18 @@ func newTestWSServer(connType string, payloadHandler websocket.PayloadHandler, m
 }
 
 func getRandomPort() int {
-	min := 22111
-	max := 22222
-	return rand.Intn(max-min) + min
+	// Listen on port 0 to get a free port
+	l, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		_ = l.Close()
+	}()
+
+	// Get the port number that was assigned
+	addr := l.Addr().(*net.TCPAddr)
+	return addr.Port
 }
 
 // senderHost defines the actions that a host sender should do
