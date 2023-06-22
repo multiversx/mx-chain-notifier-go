@@ -27,9 +27,8 @@ const eventsPath = "/events"
 
 func createMockEventsGroupArgs() groups.ArgsEventsGroup {
 	return groups.ArgsEventsGroup{
-		Facade:            &mocks.FacadeStub{},
-		PayloadHandler:    &testscommon.PayloadHandlerStub{},
-		EventsDataHandler: &mocks.EventsDataHandlerStub{},
+		Facade:         &mocks.FacadeStub{},
+		PayloadHandler: &testscommon.PayloadHandlerStub{},
 	}
 }
 
@@ -44,17 +43,6 @@ func TestNewEventsGroup(t *testing.T) {
 
 		eg, err := groups.NewEventsGroup(args)
 		require.True(t, errors.Is(err, apiErrors.ErrNilFacadeHandler))
-		require.True(t, check.IfNil(eg))
-	})
-
-	t.Run("nil events data handler", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsGroupArgs()
-		args.EventsDataHandler = nil
-
-		eg, err := groups.NewEventsGroup(args)
-		require.True(t, errors.Is(err, groups.ErrNilEventsDataHandler))
 		require.True(t, check.IfNil(eg))
 	})
 

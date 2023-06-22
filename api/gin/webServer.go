@@ -144,15 +144,9 @@ func (w *webServer) Run() error {
 func (w *webServer) createGroups() error {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsDataHandler, err := groups.NewEventsDataHandler(w.marshaller, w.internalMarshaller)
-	if err != nil {
-		return err
-	}
-
 	eventsGroupArgs := groups.ArgsEventsGroup{
-		Facade:            w.facade,
-		PayloadHandler:    w.payloadHandler,
-		EventsDataHandler: eventsDataHandler,
+		Facade:         w.facade,
+		PayloadHandler: w.payloadHandler,
 	}
 
 	if w.connectorType == common.HTTPConnectorType {

@@ -71,11 +71,9 @@ func (w *TestWebServer) DoRequest(request *http.Request) *httptest.ResponseRecor
 func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsDataHandler, _ := groups.NewEventsDataHandler(w.marshaller, w.internalMarshaller)
 	eventsGroupArgs := groups.ArgsEventsGroup{
-		Facade:            w.facade,
-		PayloadHandler:    w.payloadHandler,
-		EventsDataHandler: eventsDataHandler,
+		Facade:         w.facade,
+		PayloadHandler: w.payloadHandler,
 	}
 	eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
 	if err == nil {

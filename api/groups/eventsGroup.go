@@ -20,16 +20,14 @@ const (
 
 // ArgsEventsGroup defines the arguments needed to create a new events group component
 type ArgsEventsGroup struct {
-	Facade            EventsFacadeHandler
-	PayloadHandler    websocket.PayloadHandler
-	EventsDataHandler EventsDataHandler
+	Facade         EventsFacadeHandler
+	PayloadHandler websocket.PayloadHandler
 }
 
 type eventsGroup struct {
 	*baseGroup
 	facade                EventsFacadeHandler
 	payloadHandler        websocket.PayloadHandler
-	eventsDataHandler     EventsDataHandler
 	additionalMiddlewares []gin.HandlerFunc
 }
 
@@ -44,7 +42,6 @@ func NewEventsGroup(args ArgsEventsGroup) (*eventsGroup, error) {
 		baseGroup:             &baseGroup{},
 		facade:                args.Facade,
 		payloadHandler:        args.PayloadHandler,
-		eventsDataHandler:     args.EventsDataHandler,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
@@ -79,9 +76,6 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 	}
 	if check.IfNil(args.PayloadHandler) {
 		return fmt.Errorf("%w for events group", errors.ErrNilPayloadHandler)
-	}
-	if check.IfNil(args.EventsDataHandler) {
-		return fmt.Errorf("%w for events group", ErrNilEventsDataHandler)
 	}
 
 	return nil
