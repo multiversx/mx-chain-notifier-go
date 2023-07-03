@@ -39,10 +39,6 @@ func (nr *notifierRunner) Start() error {
 	if err != nil {
 		return err
 	}
-	internalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.InternalMarshaller.Type)
-	if err != nil {
-		return err
-	}
 	wsConnectorMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.WebSocketConnector.DataMarshallerType)
 	if err != nil {
 		return err
@@ -96,19 +92,17 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	payloadHandler, err := factory.CreatePayloadHandler(nr.configs.Flags.ConnectorType, externalMarshaller, wsConnectorMarshaller, facade)
+	payloadHandler, err := factory.CreatePayloadHandler(*nr.configs, facade)
 	if err != nil {
 		return err
 	}
 
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade:             facade,
-		PayloadHandler:     payloadHandler,
-		Config:             nr.configs.ConnectorApi,
-		Type:               nr.configs.Flags.APIType,
-		ConnectorType:      nr.configs.Flags.ConnectorType,
-		Marshaller:         externalMarshaller,
-		InternalMarshaller: internalMarshaller,
+		Facade:         facade,
+		PayloadHandler: payloadHandler,
+		Config:         nr.configs.ConnectorApi,
+		Type:           nr.configs.Flags.APIType,
+		ConnectorType:  nr.configs.Flags.ConnectorType,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {

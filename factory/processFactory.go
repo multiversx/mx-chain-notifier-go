@@ -5,6 +5,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/pubkeyConverter"
 	"github.com/multiversx/mx-chain-core-go/marshal"
+	marshalFactory "github.com/multiversx/mx-chain-core-go/marshal/factory"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -83,20 +84,45 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 }
 
 // CreatePayloadHandler will create a new instance of payload handler
-func CreatePayloadHandler(connType string, marshaller marshal.Marshalizer, wsMarshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
-	switch connType {
+func CreatePayloadHandler(cfg config.Config, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+	headerMarshaller, err := createHeaderMarshaller(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	connectorMarshaller, err := createConnectorMarshaller(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return createPayloadHandler(connectorMarshaller, headerMarshaller, facade)
+}
+
+func createConnectorMarshaller(cfg config.Config) (marshal.Marshalizer, error) {
+	switch cfg.Flags.ConnectorType {
 	case common.WSObsConnectorType:
-		return createPayloadHandler(wsMarshaller, facade)
+		return marshalFactory.NewMarshalizer(cfg.WebSocketConnector.DataMarshallerType)
 	case common.HTTPConnectorType:
-		return createPayloadHandler(marshaller, facade)
+		return &marshal.JsonMarshalizer{}, nil
 	default:
-		return nil, common.ErrInvalidConnectorType
+		return nil, common.ErrInvalidAPIType
 	}
 }
 
-func createPayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+func createHeaderMarshaller(cfg config.Config) (marshal.Marshalizer, error) {
+	switch cfg.Flags.ConnectorType {
+	case common.WSObsConnectorType:
+		return marshalFactory.NewMarshalizer(cfg.WebSocketConnector.DataMarshallerType)
+	case common.HTTPConnectorType:
+		return marshalFactory.NewMarshalizer(cfg.General.InternalMarshaller.Type)
+	default:
+		return nil, common.ErrInvalidAPIType
+	}
+}
+
+func createPayloadHandler(marshaller, headerMarshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
 	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
-		Marshaller: marshaller,
+		Marshaller: headerMarshaller,
 		Facade:     facade,
 	}
 	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)

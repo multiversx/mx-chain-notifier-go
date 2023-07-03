@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
@@ -22,35 +21,31 @@ import (
 var log = logger.GetOrCreate("api/gin")
 
 const (
-	eventsGroupString = "events"
-	hubGroupString    = "hub"
+	eventsGroupID = "events"
+	hubGroupID    = "hub"
 )
 
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
-	Facade             shared.FacadeHandler
-	PayloadHandler     websocket.PayloadHandler
-	Config             config.ConnectorApiConfig
-	Type               string
-	ConnectorType      string
-	Marshaller         marshal.Marshalizer
-	InternalMarshaller marshal.Marshalizer
+	Facade         shared.FacadeHandler
+	PayloadHandler websocket.PayloadHandler
+	Config         config.ConnectorApiConfig
+	Type           string
+	ConnectorType  string
 }
 
 // webServer is a wrapper for gin.Engine, holding additional components
 type webServer struct {
 	sync.RWMutex
-	facade             shared.FacadeHandler
-	payloadHandler     websocket.PayloadHandler
-	marshaller         marshal.Marshalizer
-	internalMarshaller marshal.Marshalizer
-	httpServer         shared.HTTPServerCloser
-	config             config.ConnectorApiConfig
-	groups             map[string]shared.GroupHandler
-	apiType            string
-	connectorType      string
-	wasTriggered       bool
-	cancelFunc         func()
+	facade         shared.FacadeHandler
+	payloadHandler websocket.PayloadHandler
+	httpServer     shared.HTTPServerCloser
+	config         config.ConnectorApiConfig
+	groups         map[string]shared.GroupHandler
+	apiType        string
+	connectorType  string
+	wasTriggered   bool
+	cancelFunc     func()
 }
 
 // NewWebServerHandler creates and configures an instance of webServer
@@ -61,15 +56,13 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 	}
 
 	return &webServer{
-		facade:             args.Facade,
-		payloadHandler:     args.PayloadHandler,
-		marshaller:         args.Marshaller,
-		internalMarshaller: args.InternalMarshaller,
-		config:             args.Config,
-		apiType:            args.Type,
-		connectorType:      args.ConnectorType,
-		groups:             make(map[string]shared.GroupHandler),
-		wasTriggered:       false,
+		facade:         args.Facade,
+		payloadHandler: args.PayloadHandler,
+		config:         args.Config,
+		apiType:        args.Type,
+		connectorType:  args.ConnectorType,
+		groups:         make(map[string]shared.GroupHandler),
+		wasTriggered:   false,
 	}, nil
 }
 
@@ -82,12 +75,6 @@ func checkArgs(args ArgsWebServerHandler) error {
 	}
 	if args.ConnectorType == "" {
 		return common.ErrInvalidConnectorType
-	}
-	if check.IfNil(args.Marshaller) {
-		return common.ErrNilMarshaller
-	}
-	if check.IfNil(args.InternalMarshaller) {
-		return common.ErrNilInternalMarshaller
 	}
 	if check.IfNil(args.PayloadHandler) {
 		return apiErrors.ErrNilPayloadHandler
@@ -154,7 +141,7 @@ func (w *webServer) createGroups() error {
 		if err != nil {
 			return err
 		}
-		groupsMap[eventsGroupString] = eventsGroup
+		groupsMap[eventsGroupID] = eventsGroup
 	}
 
 	if w.apiType == common.WSAPIType {
@@ -162,7 +149,7 @@ func (w *webServer) createGroups() error {
 		if err != nil {
 			return err
 		}
-		groupsMap[hubGroupString] = hubHandler
+		groupsMap[hubGroupID] = hubHandler
 	}
 
 	w.groups = groupsMap

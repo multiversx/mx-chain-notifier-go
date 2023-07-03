@@ -28,7 +28,7 @@ const eventsPath = "/events"
 func createMockEventsGroupArgs() groups.ArgsEventsGroup {
 	return groups.ArgsEventsGroup{
 		Facade:         &mocks.FacadeStub{},
-		PayloadHandler: &testscommon.PayloadHandlerStub{},
+		PayloadHandler: &mocks.PayloadHandlerStub{},
 	}
 }
 
@@ -99,8 +99,11 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		jsonBytes, _ := json.Marshal(argsSaveBlockData)
 
 		args := createMockEventsGroupArgs()
+
+		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
 			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				wasCalled = true
 				return errors.New("expected err")
 			},
 		}
@@ -117,6 +120,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		ws.ServeHTTP(resp, req)
 
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.True(t, wasCalled)
 	})
 
 	t.Run("should work", func(t *testing.T) {
@@ -176,6 +180,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		args := createMockEventsGroupArgs()
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
 			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				require.Equal(t, jsonBytes, payload)
 				require.Equal(t, topic, outport.TopicSaveBlock)
 				wasCalled = true
 				return nil
@@ -205,8 +210,11 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		t.Parallel()
 
 		args := createMockEventsGroupArgs()
+
+		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
 			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				wasCalled = true
 				return errors.New("expected err")
 			},
 		}
@@ -223,6 +231,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		ws.ServeHTTP(resp, req)
 
 		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.True(t, wasCalled)
 	})
 
 	t.Run("should work", func(t *testing.T) {
@@ -239,6 +248,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
 			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				require.Equal(t, jsonBytes, payload)
 				require.Equal(t, topic, outport.TopicRevertIndexedBlock)
 				wasCalled = true
 				return nil
@@ -305,6 +315,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		args := createMockEventsGroupArgs()
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
 			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				require.Equal(t, jsonBytes, payload)
 				require.Equal(t, topic, outport.TopicFinalizedBlock)
 				wasCalled = true
 				return nil

@@ -149,21 +149,18 @@ func loadResponse(t *testing.T, rsp io.Reader, destination interface{}) {
 }
 
 // WaitTimeout returns true if work group waiting timed out
-func WaitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) bool {
-	ch := make(chan struct{})
+func WaitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	done := make(chan struct{})
 
 	go func() {
-		defer close(ch)
+		defer close(done)
 		wg.Wait()
 	}()
 
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
 	select {
-	case <-ch:
+	case <-done:
 		return false
-	case <-timer.C:
+	case <-time.After(timeout):
 		return true
 	}
 }

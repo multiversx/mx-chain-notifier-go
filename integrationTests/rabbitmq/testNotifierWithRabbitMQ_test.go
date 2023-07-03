@@ -53,8 +53,8 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	go pushEventsRequest(wg, client)
 	go pushRevertRequest(wg, client)
 
-	if integrationTests.WaitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
+	if integrationTests.WaitTimeout(wg, time.Second*2) {
+		assert.Fail(t, "timeout when handling rabbitmq events")
 	}
 
 	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
