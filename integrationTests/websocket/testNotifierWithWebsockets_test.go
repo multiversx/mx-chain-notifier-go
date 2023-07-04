@@ -101,9 +101,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	err = webServer.PushEventsRequest(saveBlockData)
 	require.Nil(t, err)
 
-	if integrationTests.WaitTimeout(wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
@@ -195,9 +193,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	err = webServer.PushEventsRequest(saveBlockData)
 	require.Nil(t, err)
 
-	if integrationTests.WaitTimeout(wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
@@ -258,9 +254,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	err = webServer.RevertEventsRequest(blockEvents)
 	require.Nil(t, err)
 
-	if integrationTests.WaitTimeout(wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
@@ -311,9 +305,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 	webServer.FinalizedEventsRequest(blockEvents)
 
-	if integrationTests.WaitTimeout(wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
@@ -397,9 +389,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 
 	webServer.PushEventsRequest(saveBlockData)
 
-	if integrationTests.WaitTimeout(wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
@@ -482,9 +472,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 
 	webServer.PushEventsRequest(blockEvents)
 
-	if integrationTests.WaitTimeout(wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
@@ -725,9 +713,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	go client.FinalizedEventsRequest(finalizedBlock)
 	go client.RevertEventsRequest(revertBlock)
 
-	if integrationTests.WaitTimeout(wg, time.Second*4) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*4)
 
 	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))

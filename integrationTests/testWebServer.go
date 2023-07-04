@@ -149,7 +149,7 @@ func loadResponse(t *testing.T, rsp io.Reader, destination interface{}) {
 }
 
 // WaitTimeout returns true if work group waiting timed out
-func WaitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+func WaitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) {
 	done := make(chan struct{})
 
 	go func() {
@@ -159,8 +159,8 @@ func WaitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 
 	select {
 	case <-done:
-		return false
+		return
 	case <-time.After(timeout):
-		return true
+		assert.Fail(t, "timeout when handling events")
 	}
 }
