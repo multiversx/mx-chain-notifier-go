@@ -148,7 +148,7 @@ func loadResponse(t *testing.T, rsp io.Reader, destination interface{}) {
 	assert.Nil(t, err)
 }
 
-// WaitTimeout returns true if work group waiting timed out
+// WaitTimeout will wait on sync group with timeout
 func WaitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) {
 	done := make(chan struct{})
 
