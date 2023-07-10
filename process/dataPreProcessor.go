@@ -134,7 +134,7 @@ func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData
 	}
 
 	revertData := &data.RevertBlock{
-		Hash:  hex.EncodeToString(header.GetRootHash()),
+		Hash:  hex.EncodeToString(blockData.GetHeaderHash()),
 		Nonce: header.GetNonce(),
 		Round: header.GetRound(),
 		Epoch: header.GetEpoch(),

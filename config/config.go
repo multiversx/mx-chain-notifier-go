@@ -83,6 +83,7 @@ type FlagsConfig struct {
 	GeneralConfigPath string
 	WorkingDir        string
 	APIType           string
+	ConnectorType     string
 }
 
 // LoadConfig return a Config instance by reading the provided toml file

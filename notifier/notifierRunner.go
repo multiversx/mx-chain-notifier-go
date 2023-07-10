@@ -39,7 +39,7 @@ func (nr *notifierRunner) Start() error {
 	if err != nil {
 		return err
 	}
-	internalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.InternalMarshaller.Type)
+	wsConnectorMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.WebSocketConnector.DataMarshallerType)
 	if err != nil {
 		return err
 	}
@@ -92,19 +92,24 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	payloadHandler, err := factory.CreatePayloadHandler(*nr.configs, facade)
+	if err != nil {
+		return err
+	}
+
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade:             facade,
-		Config:             nr.configs.ConnectorApi,
-		Type:               nr.configs.Flags.APIType,
-		Marshaller:         externalMarshaller,
-		InternalMarshaller: internalMarshaller,
+		Facade:         facade,
+		PayloadHandler: payloadHandler,
+		Config:         nr.configs.ConnectorApi,
+		Type:           nr.configs.Flags.APIType,
+		ConnectorType:  nr.configs.Flags.ConnectorType,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.WebSocketConnector, externalMarshaller, facade)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.WebSocketConnector, wsConnectorMarshaller, payloadHandler)
 	if err != nil {
 		return err
 	}
@@ -145,17 +150,17 @@ func waitForGracefulShutdown(
 		return err
 	}
 
+	err = wsConnector.Close()
+	if err != nil {
+		return err
+	}
+
 	err = publisher.Close()
 	if err != nil {
 		return err
 	}
 
 	err = hub.Close()
-	if err != nil {
-		return err
-	}
-
-	err = wsConnector.Close()
 	if err != nil {
 		return err
 	}

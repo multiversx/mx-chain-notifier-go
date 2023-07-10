@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
@@ -20,27 +20,32 @@ import (
 
 var log = logger.GetOrCreate("api/gin")
 
+const (
+	eventsGroupID = "events"
+	hubGroupID    = "hub"
+)
+
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
-	Facade             shared.FacadeHandler
-	Config             config.ConnectorApiConfig
-	Type               string
-	Marshaller         marshal.Marshalizer
-	InternalMarshaller marshal.Marshalizer
+	Facade         shared.FacadeHandler
+	PayloadHandler websocket.PayloadHandler
+	Config         config.ConnectorApiConfig
+	Type           string
+	ConnectorType  string
 }
 
 // webServer is a wrapper for gin.Engine, holding additional components
 type webServer struct {
 	sync.RWMutex
-	facade             shared.FacadeHandler
-	marshaller         marshal.Marshalizer
-	internalMarshaller marshal.Marshalizer
-	httpServer         shared.HTTPServerCloser
-	config             config.ConnectorApiConfig
-	groups             map[string]shared.GroupHandler
-	apiType            string
-	wasTriggered       bool
-	cancelFunc         func()
+	facade         shared.FacadeHandler
+	payloadHandler websocket.PayloadHandler
+	httpServer     shared.HTTPServerCloser
+	config         config.ConnectorApiConfig
+	groups         map[string]shared.GroupHandler
+	apiType        string
+	connectorType  string
+	wasTriggered   bool
+	cancelFunc     func()
 }
 
 // NewWebServerHandler creates and configures an instance of webServer
@@ -51,13 +56,13 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 	}
 
 	return &webServer{
-		facade:             args.Facade,
-		marshaller:         args.Marshaller,
-		internalMarshaller: args.InternalMarshaller,
-		config:             args.Config,
-		apiType:            args.Type,
-		groups:             make(map[string]shared.GroupHandler),
-		wasTriggered:       false,
+		facade:         args.Facade,
+		payloadHandler: args.PayloadHandler,
+		config:         args.Config,
+		apiType:        args.Type,
+		connectorType:  args.ConnectorType,
+		groups:         make(map[string]shared.GroupHandler),
+		wasTriggered:   false,
 	}, nil
 }
 
@@ -68,11 +73,11 @@ func checkArgs(args ArgsWebServerHandler) error {
 	if args.Type == "" {
 		return common.ErrInvalidAPIType
 	}
-	if check.IfNil(args.Marshaller) {
-		return common.ErrNilMarshaller
+	if args.ConnectorType == "" {
+		return common.ErrInvalidConnectorType
 	}
-	if check.IfNil(args.InternalMarshaller) {
-		return common.ErrNilInternalMarshaller
+	if check.IfNil(args.PayloadHandler) {
+		return apiErrors.ErrNilPayloadHandler
 	}
 
 	return nil
@@ -126,27 +131,25 @@ func (w *webServer) Run() error {
 func (w *webServer) createGroups() error {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsDataHandler, err := groups.NewEventsDataHandler(w.marshaller, w.internalMarshaller)
-	if err != nil {
-		return err
+	eventsGroupArgs := groups.ArgsEventsGroup{
+		Facade:         w.facade,
+		PayloadHandler: w.payloadHandler,
 	}
 
-	eventsGroupArgs := groups.ArgsEventsGroup{
-		Facade:            w.facade,
-		EventsDataHandler: eventsDataHandler,
+	if w.connectorType == common.HTTPConnectorType {
+		eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
+		if err != nil {
+			return err
+		}
+		groupsMap[eventsGroupID] = eventsGroup
 	}
-	eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
-	if err != nil {
-		return err
-	}
-	groupsMap["events"] = eventsGroup
 
 	if w.apiType == common.WSAPIType {
 		hubHandler, err := groups.NewHubGroup(w.facade)
 		if err != nil {
 			return err
 		}
-		groupsMap["hub"] = hubHandler
+		groupsMap[hubGroupID] = hubHandler
 	}
 
 	w.groups = groupsMap

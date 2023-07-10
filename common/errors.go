@@ -5,6 +5,9 @@ import "errors"
 // ErrInvalidAPIType signals that an invalid api type has been provided
 var ErrInvalidAPIType = errors.New("invalid api type provided")
 
+// ErrInvalidConnectorType signals that an invalid observer connector type has been provided
+var ErrInvalidConnectorType = errors.New("invalid observer connector type provided")
+
 // ErrInvalidPubKeyConverterType signals that an invalid pubkey converter type has been provided
 var ErrInvalidPubKeyConverterType = errors.New("invalid pubkey converter type provided")
 

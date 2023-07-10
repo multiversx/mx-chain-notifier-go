@@ -1,6 +1,7 @@
 package factory
 
 import (
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-communication-go/websocket/data"
 	factoryHost "github.com/multiversx/mx-chain-communication-go/websocket/factory"
 	"github.com/multiversx/mx-chain-core-go/marshal"
@@ -44,27 +45,33 @@ func createWSHandler(hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispat
 }
 
 // CreateWSObserverConnector will create the web socket connector for observer node communication
-func CreateWSObserverConnector(config config.WebSocketConfig, marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (process.WSClient, error) {
+func CreateWSObserverConnector(
+	connectorType string,
+	config config.WebSocketConfig,
+	marshaller marshal.Marshalizer,
+	payloadHandler websocket.PayloadHandler,
+) (process.WSClient, error) {
+	switch connectorType {
+	case common.WSObsConnectorType:
+		return createWsObsConnector(config, marshaller, payloadHandler)
+	case common.HTTPConnectorType:
+		return &disabled.WSHandler{}, nil
+	default:
+		return nil, common.ErrInvalidConnectorType
+	}
+}
+
+func createWsObsConnector(
+	config config.WebSocketConfig,
+	marshaller marshal.Marshalizer,
+	payloadHandler websocket.PayloadHandler,
+) (process.WSClient, error) {
 	host, err := createWsHost(config, marshaller)
 	if err != nil {
 		return nil, err
 	}
 
-	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
-		Marshaller: marshaller,
-		Facade:     facade,
-	}
-	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)
-	if err != nil {
-		return nil, err
-	}
-
-	eventsIndexer, err := process.NewEventsIndexer(marshaller, dataPreProcessor)
-	if err != nil {
-		return nil, err
-	}
-
-	err = host.SetPayloadHandler(eventsIndexer)
+	err = host.SetPayloadHandler(payloadHandler)
 	if err != nil {
 		return nil, err
 	}

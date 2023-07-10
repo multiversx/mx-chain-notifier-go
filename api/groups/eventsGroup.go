@@ -5,10 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
-	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 const (
@@ -19,14 +20,14 @@ const (
 
 // ArgsEventsGroup defines the arguments needed to create a new events group component
 type ArgsEventsGroup struct {
-	Facade            EventsFacadeHandler
-	EventsDataHandler EventsDataHandler
+	Facade         EventsFacadeHandler
+	PayloadHandler websocket.PayloadHandler
 }
 
 type eventsGroup struct {
 	*baseGroup
 	facade                EventsFacadeHandler
-	eventsDataHandler     EventsDataHandler
+	payloadHandler        websocket.PayloadHandler
 	additionalMiddlewares []gin.HandlerFunc
 }
 
@@ -40,7 +41,7 @@ func NewEventsGroup(args ArgsEventsGroup) (*eventsGroup, error) {
 	h := &eventsGroup{
 		baseGroup:             &baseGroup{},
 		facade:                args.Facade,
-		eventsDataHandler:     args.EventsDataHandler,
+		payloadHandler:        args.PayloadHandler,
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 	}
 
@@ -73,8 +74,8 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 	if check.IfNil(args.Facade) {
 		return fmt.Errorf("%w for events group", errors.ErrNilFacadeHandler)
 	}
-	if check.IfNil(args.EventsDataHandler) {
-		return fmt.Errorf("%w for events group", ErrNilEventsDataHandler)
+	if check.IfNil(args.PayloadHandler) {
+		return fmt.Errorf("%w for events group", errors.ErrNilPayloadHandler)
 	}
 
 	return nil
@@ -92,16 +93,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	blockEvents, err := h.eventsDataHandler.UnmarshallBlockDataOld(pushEventsRawData)
-	if err == nil {
-		err = h.facade.HandlePushEventsV1(*blockEvents)
-		if err == nil {
-			shared.JSONResponse(c, http.StatusOK, nil, "")
-			return
-		}
-	}
-
-	err = h.pushEventsV2(pushEventsRawData)
+	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -110,44 +102,34 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
-func (h *eventsGroup) pushEventsV2(pushEventsRawData []byte) error {
-	saveBlockData, err := h.eventsDataHandler.UnmarshallBlockData(pushEventsRawData)
-	if err != nil {
-		return err
-	}
-
-	err = h.facade.HandlePushEventsV2(*saveBlockData)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (h *eventsGroup) revertEvents(c *gin.Context) {
-	var revertBlock data.RevertBlock
-
-	err := c.Bind(&revertBlock)
+	revertEventsRawData, err := c.GetRawData()
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	h.facade.HandleRevertEvents(revertBlock)
+	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
 
 func (h *eventsGroup) finalizedEvents(c *gin.Context) {
-	var finalizedBlock data.FinalizedBlock
-
-	err := c.Bind(&finalizedBlock)
+	finalizedRawData, err := c.GetRawData()
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
 
-	h.facade.HandleFinalizedEvents(finalizedBlock)
+	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
 
 	shared.JSONResponse(c, http.StatusOK, nil, "")
 }
