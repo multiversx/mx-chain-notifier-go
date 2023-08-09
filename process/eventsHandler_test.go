@@ -429,6 +429,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 	t.Parallel()
 
 	hash := "hash1"
+	prefix := "prefix_"
 
 	t.Run("event is NOT already processed", func(t *testing.T) {
 		t.Parallel()
@@ -444,7 +445,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
+		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.False(t, ok)
 	})
 
@@ -462,7 +463,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
+		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.True(t, ok)
 	})
 
@@ -493,7 +494,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
+		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.True(t, ok)
 	})
 }

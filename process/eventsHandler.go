@@ -65,32 +65,33 @@ func checkArgs(args ArgsEventsHandler) error {
 // HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 	if events.Hash == "" {
-		log.Debug("received empty events block hash",
+		log.Info("received empty hash", "event", common.PushLogsAndEvents,
 			"will process", false,
 		)
 		return common.ErrReceivedEmptyEvents
 	}
+
 	shouldProcessEvents := true
 	if eh.config.CheckDuplicates {
-		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
+		shouldProcessEvents = eh.tryCheckProcessedWithRetry(common.PushLogsAndEvents, events.Hash)
 	}
 
 	if !shouldProcessEvents {
-		log.Info("received duplicated events for block",
+		log.Info("received duplicated events", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return nil
 	}
 
 	if len(events.Events) == 0 {
-		log.Info("received empty events for block",
+		log.Warn("received empty events", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
 			"will process", shouldProcessEvents,
 		)
 		events.Events = make([]data.Event, 0)
 	} else {
-		log.Info("received events for block",
+		log.Info("received", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
 			"will process", shouldProcessEvents,
 		)
@@ -103,7 +104,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 // HandleRevertEvents will handle revents events received from observer
 func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	if revertBlock.Hash == "" {
-		log.Warn("received empty revert block hash",
+		log.Info("received empty hash", "event", common.RevertBlockEvents,
 			"will process", false,
 		)
 		return
@@ -111,19 +112,18 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 
 	shouldProcessRevert := true
 	if eh.config.CheckDuplicates {
-		revertKey := revertKeyPrefix + revertBlock.Hash
-		shouldProcessRevert = eh.tryCheckProcessedWithRetry(revertKey)
+		shouldProcessRevert = eh.tryCheckProcessedWithRetry(common.RevertBlockEvents, revertBlock.Hash)
 	}
 
 	if !shouldProcessRevert {
-		log.Info("received duplicated revert event for block",
+		log.Info("received duplicated events", "event", common.RevertBlockEvents,
 			"block hash", revertBlock.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received revert event for block",
+	log.Info("received", "event", common.RevertBlockEvents,
 		"block hash", revertBlock.Hash,
 		"will process", shouldProcessRevert,
 	)
@@ -134,26 +134,25 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 // HandleFinalizedEvents will handle finalized events received from observer
 func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
 	if finalizedBlock.Hash == "" {
-		log.Warn("received empty finalized block hash",
+		log.Info("received empty hash", "event", common.FinalizedBlockEvents,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessFinalized := true
 	if eh.config.CheckDuplicates {
-		finalizedKey := finalizedKeyPrefix + finalizedBlock.Hash
-		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(finalizedKey)
+		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(common.FinalizedBlockEvents, finalizedBlock.Hash)
 	}
 
 	if !shouldProcessFinalized {
-		log.Info("received duplicated finalized event for block",
+		log.Info("received duplicated events", "event", common.FinalizedBlockEvents,
 			"block hash", finalizedBlock.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received finalized events for block",
+	log.Info("received", "event", common.FinalizedBlockEvents,
 		"block hash", finalizedBlock.Hash,
 		"will process", shouldProcessFinalized,
 	)
@@ -164,32 +163,31 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 // HandleBlockTxs will handle txs events received from observer
 func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 	if blockTxs.Hash == "" {
-		log.Warn("received empty txs block hash",
+		log.Info("received empty hash", "event", common.BlockTxs,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessTxs := true
 	if eh.config.CheckDuplicates {
-		txsKey := txsKeyPrefix + blockTxs.Hash
-		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockTxs, blockTxs.Hash)
 	}
 
 	if !shouldProcessTxs {
-		log.Info("received duplicated txs event for block",
+		log.Info("received duplicated events", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
 	if len(blockTxs.Txs) == 0 {
-		log.Info("received empty txs event for block",
+		log.Warn("received empty events", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
 			"will process", shouldProcessTxs,
 		)
 	} else {
-		log.Info("received txs events for block",
+		log.Info("received", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
 			"will process", shouldProcessTxs,
 		)
@@ -201,32 +199,31 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 // HandleBlockScrs will handle scrs events received from observer
 func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	if blockScrs.Hash == "" {
-		log.Warn("received empty scrs block hash",
+		log.Info("received empty hash", "event", common.BlockScrs,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessScrs := true
 	if eh.config.CheckDuplicates {
-		scrsKey := scrsKeyPrefix + blockScrs.Hash
-		shouldProcessScrs = eh.tryCheckProcessedWithRetry(scrsKey)
+		shouldProcessScrs = eh.tryCheckProcessedWithRetry(common.BlockScrs, blockScrs.Hash)
 	}
 
 	if !shouldProcessScrs {
-		log.Info("received duplicated scrs event for block",
+		log.Info("received duplicated events", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
 	if len(blockScrs.Scrs) == 0 {
-		log.Info("received empty scrs event for block",
+		log.Warn("received empty events", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
 			"will process", shouldProcessScrs,
 		)
 	} else {
-		log.Info("received scrs events for block",
+		log.Info("received", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
 			"will process", shouldProcessScrs,
 		)
@@ -238,26 +235,25 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 // HandleBlockEventsWithOrder will handle full block events received from observer
 func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	if blockTxs.Hash == "" {
-		log.Warn("received full block events with empty block hash",
+		log.Info("received empty hash", "event", common.BlockEvents,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessTxs := true
 	if eh.config.CheckDuplicates {
-		txsKey := txsWithOrderKeyPrefix + blockTxs.Hash
-		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockEvents, blockTxs.Hash)
 	}
 
 	if !shouldProcessTxs {
-		log.Info("received duplicated full block events for block",
+		log.Info("received duplicated events", "event", common.BlockEvents,
 			"block hash", blockTxs.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received full block events for block",
+	log.Info("received", "event", common.BlockEvents,
 		"block hash", blockTxs.Hash,
 		"will process", shouldProcessTxs,
 	)
@@ -265,12 +261,15 @@ func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
 }
 
-func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
+func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	var err error
 	var setSuccessful bool
 
+	prefix := getPrefixLockerKey(id)
+	key := prefix + blockHash
+
 	for {
-		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), blockHash)
+		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), key)
 
 		if err == nil {
 			break
@@ -286,12 +285,29 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 		}
 	}
 
-	if !setSuccessful {
-		log.Debug("did not succeed to set event in locker")
-		return false
+	log.Debug("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
+
+	return setSuccessful
+}
+
+func getPrefixLockerKey(id string) string {
+	// keep this matching for backwards compatibility
+	switch id {
+	case common.PushLogsAndEvents:
+		return ""
+	case common.RevertBlockEvents:
+		return revertKeyPrefix
+	case common.FinalizedBlockEvents:
+		return finalizedKeyPrefix
+	case common.BlockTxs:
+		return txsKeyPrefix
+	case common.BlockScrs:
+		return scrsKeyPrefix
+	case common.BlockEvents:
+		return txsWithOrderKeyPrefix
 	}
 
-	return true
+	return ""
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
