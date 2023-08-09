@@ -14,11 +14,12 @@ const addrPubKeyConverterLength = 32
 
 // ArgsEventsHandlerFactory defines the arguments needed for events handler creation
 type ArgsEventsHandlerFactory struct {
-	APIConfig    config.ConnectorApiConfig
-	Locker       process.LockService
-	MqPublisher  process.Publisher
-	HubPublisher process.Publisher
-	APIType      string
+	APIConfig            config.ConnectorApiConfig
+	Locker               process.LockService
+	MqPublisher          process.Publisher
+	HubPublisher         process.Publisher
+	APIType              string
+	StatusMetricsHandler common.StatusMetricsHandler
 }
 
 // CreateEventsHandler will create an events handler processor
@@ -29,9 +30,10 @@ func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, 
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:    args.APIConfig,
-		Locker:    args.Locker,
-		Publisher: publisher,
+		Config:               args.APIConfig,
+		Locker:               args.Locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: args.StatusMetricsHandler,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {

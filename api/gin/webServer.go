@@ -6,15 +6,15 @@ import (
 	"strings"
 	"sync"
 
-	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	logger "github.com/multiversx/mx-chain-logger-go"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
 var log = logger.GetOrCreate("api/gin")
@@ -118,6 +118,12 @@ func (w *webServer) createGroups() error {
 		return err
 	}
 	groupsMap["events"] = eventsGroup
+
+	statusGroup, err := groups.NewStatusGroup(w.facade)
+	if err != nil {
+		return err
+	}
+	groupsMap["status"] = statusGroup
 
 	if w.apiType == common.WSAPIType {
 		hubHandler, err := groups.NewHubGroup(w.facade)

@@ -3,8 +3,8 @@ package shared
 import (
 	"net/http"
 
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // HTTPServerCloser defines the basic actions of starting and closing that a web server should be able to do
@@ -29,6 +29,8 @@ type FacadeHandler interface {
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	GetMetrics() map[string]*data.EndpointMetricsResponse
+	GetMetricsForPrometheus() string
 	IsInterfaceNil() bool
 }
 
