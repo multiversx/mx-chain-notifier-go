@@ -65,7 +65,7 @@ func checkArgs(args ArgsEventsHandler) error {
 // HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 	if events.Hash == "" {
-		log.Info("received empty hash", "event", common.PushLogsAndEvents,
+		log.Debug("received empty hash", "event", common.PushLogsAndEvents,
 			"will process", false,
 		)
 		return common.ErrReceivedEmptyEvents
@@ -104,7 +104,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 // HandleRevertEvents will handle revents events received from observer
 func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	if revertBlock.Hash == "" {
-		log.Info("received empty hash", "event", common.RevertBlockEvents,
+		log.Warn("received empty hash", "event", common.RevertBlockEvents,
 			"will process", false,
 		)
 		return
@@ -134,7 +134,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 // HandleFinalizedEvents will handle finalized events received from observer
 func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
 	if finalizedBlock.Hash == "" {
-		log.Info("received empty hash", "event", common.FinalizedBlockEvents,
+		log.Warn("received empty hash", "event", common.FinalizedBlockEvents,
 			"will process", false,
 		)
 		return
@@ -163,7 +163,7 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 // HandleBlockTxs will handle txs events received from observer
 func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 	if blockTxs.Hash == "" {
-		log.Info("received empty hash", "event", common.BlockTxs,
+		log.Warn("received empty hash", "event", common.BlockTxs,
 			"will process", false,
 		)
 		return
@@ -199,7 +199,7 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 // HandleBlockScrs will handle scrs events received from observer
 func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	if blockScrs.Hash == "" {
-		log.Info("received empty hash", "event", common.BlockScrs,
+		log.Warn("received empty hash", "event", common.BlockScrs,
 			"will process", false,
 		)
 		return
@@ -235,7 +235,7 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 // HandleBlockEventsWithOrder will handle full block events received from observer
 func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	if blockTxs.Hash == "" {
-		log.Info("received empty hash", "event", common.BlockEvents,
+		log.Warn("received empty hash", "event", common.BlockEvents,
 			"will process", false,
 		)
 		return
