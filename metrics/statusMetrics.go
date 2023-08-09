@@ -8,9 +8,6 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-// NonErrorCode defines the non error value
-const NonErrorCode = 0
-
 const (
 	numRequestsPromMetric       = "num_requests"
 	totalResponseTimePromMetric = "total_response_time"
