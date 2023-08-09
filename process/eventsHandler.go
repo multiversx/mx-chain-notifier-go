@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -22,19 +23,24 @@ const (
 	txsKeyPrefix           = "txs_"
 	txsWithOrderKeyPrefix  = "txsWithOrder_"
 	scrsKeyPrefix          = "scrs_"
+
+	rabbitmqMetricPrefix = "RabbitMQ"
+	redisMetricPrefix    = "Redis"
 )
 
 // ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
-	Config    config.ConnectorApiConfig
-	Locker    LockService
-	Publisher Publisher
+	Config               config.ConnectorApiConfig
+	Locker               LockService
+	Publisher            Publisher
+	StatusMetricsHandler common.StatusMetricsHandler
 }
 
 type eventsHandler struct {
-	config    config.ConnectorApiConfig
-	locker    LockService
-	publisher Publisher
+	config         config.ConnectorApiConfig
+	locker         LockService
+	publisher      Publisher
+	metricsHandler common.StatusMetricsHandler
 }
 
 // NewEventsHandler creates a new events handler component
@@ -45,9 +51,10 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:    args.Locker,
-		publisher: args.Publisher,
-		config:    args.Config,
+		locker:         args.Locker,
+		publisher:      args.Publisher,
+		config:         args.Config,
+		metricsHandler: args.StatusMetricsHandler,
 	}, nil
 }
 
@@ -57,6 +64,9 @@ func checkArgs(args ArgsEventsHandler) error {
 	}
 	if check.IfNil(args.Publisher) {
 		return ErrNilPublisherService
+	}
+	if check.IfNil(args.StatusMetricsHandler) {
+		return common.ErrNilStatusMetricsHandler
 	}
 
 	return nil
@@ -97,7 +107,9 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 		)
 	}
 
+	t := time.Now()
 	eh.publisher.Broadcast(events)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.PushLogsAndEvents), time.Since(t))
 	return nil
 }
 
@@ -128,7 +140,9 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 		"will process", shouldProcessRevert,
 	)
 
+	t := time.Now()
 	eh.publisher.BroadcastRevert(revertBlock)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.RevertBlockEvents), time.Since(t))
 }
 
 // HandleFinalizedEvents will handle finalized events received from observer
@@ -157,7 +171,9 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 		"will process", shouldProcessFinalized,
 	)
 
+	t := time.Now()
 	eh.publisher.BroadcastFinalized(finalizedBlock)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.FinalizedBlockEvents), time.Since(t))
 }
 
 // HandleBlockTxs will handle txs events received from observer
@@ -193,7 +209,9 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 		)
 	}
 
+	t := time.Now()
 	eh.publisher.BroadcastTxs(blockTxs)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockTxs), time.Since(t))
 }
 
 // HandleBlockScrs will handle scrs events received from observer
@@ -229,7 +247,9 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 		)
 	}
 
+	t := time.Now()
 	eh.publisher.BroadcastScrs(blockScrs)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockScrs), time.Since(t))
 }
 
 // HandleBlockEventsWithOrder will handle full block events received from observer
@@ -258,7 +278,9 @@ func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 		"will process", shouldProcessTxs,
 	)
 
+	t := time.Now()
 	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockEvents), time.Since(t))
 }
 
 func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
@@ -269,7 +291,9 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	key := prefix + blockHash
 
 	for {
+		t := time.Now()
 		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), key)
+		eh.metricsHandler.AddRequest(getRedisOpID(id), time.Since(t))
 
 		if err == nil {
 			break
@@ -308,6 +332,14 @@ func getPrefixLockerKey(id string) string {
 	}
 
 	return ""
+}
+
+func getRabbitOpID(operation string) string {
+	return fmt.Sprintf("%s-%s", rabbitmqMetricPrefix, operation)
+}
+
+func getRedisOpID(operation string) string {
+	return fmt.Sprintf("%s-%s", redisMetricPrefix, operation)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface
