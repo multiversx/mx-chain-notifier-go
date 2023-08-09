@@ -52,21 +52,21 @@ func NewStatusGroup(facade shared.FacadeHandler) (*statusGroup, error) {
 	return sg, nil
 }
 
-// getMetrics will expose endpoints statistics in json format
+// getMetrics will expose the notifier's metrics statistics in json format
 func (sg *statusGroup) getMetrics(c *gin.Context) {
 	metricsResults := sg.facade.GetMetrics()
 
 	shared.JSONResponse(c, http.StatusOK, gin.H{"metrics": metricsResults}, "")
 }
 
-// getPrometheusMetrics will expose proxy metrics in prometheus format
+// getPrometheusMetrics will expose notifier's metrics in prometheus format
 func (sg *statusGroup) getPrometheusMetrics(c *gin.Context) {
 	metricsResults := sg.facade.GetMetricsForPrometheus()
 
 	c.String(http.StatusOK, metricsResults)
 }
 
-// GetAdditionalMiddlewares return additional middlewares for this group
+// GetAdditionalMiddlewares returns additional middlewares for this group
 func (sg *statusGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
 	return sg.additionalMiddlewares
 }

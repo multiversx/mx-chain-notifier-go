@@ -135,8 +135,7 @@ func TestStatusMetrics_ConcurrentOperations(t *testing.T) {
 			case 0:
 				sm.AddRequest(fmt.Sprintf("op_%d", index%5), time.Hour*time.Duration(index))
 			case 1:
-				res := sm.GetAll()
-				delete(res, "op_0")
+				_ = sm.GetAll()
 			case 2:
 				_ = sm.GetMetricsForPrometheus()
 			}
