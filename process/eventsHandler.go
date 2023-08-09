@@ -287,7 +287,7 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 	}
 
 	if !setSuccessful {
-		log.Debug("did not succeed to set event in locker")
+		log.Debug("did not succeed to set event in locker", "block hash", blockHash)
 		return false
 	}
 
