@@ -1,7 +1,7 @@
 [ConnectorApi]
     # The address on which the events notifier listens for subscriptions
     # It can be specified as "localhost:5000" or only as "5000"
-    URL = "5000"
+    Host = "5000"
 
     # Username and Password needed to authorize the connector
     # BasicAuth is enabled only for the endpoints with "Auth" flag enabled

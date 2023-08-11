@@ -170,7 +170,7 @@ func GetDefaultConfigs() *config.Configs {
 	return &config.Configs{
 		GeneralConfig: config.GeneralConfig{
 			ConnectorApi: config.ConnectorApiConfig{
-				URL:             "8081",
+				Host:            "8081",
 				Username:        "user",
 				Password:        "pass",
 				CheckDuplicates: false,

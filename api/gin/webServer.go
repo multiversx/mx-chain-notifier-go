@@ -67,7 +67,7 @@ func checkArgs(args ArgsWebServerHandler) error {
 }
 
 func (w *webServer) getWSAddr() string {
-	addr := w.configs.GeneralConfig.ConnectorApi.URL
+	addr := w.configs.GeneralConfig.ConnectorApi.Host
 	if addr == "" {
 		return defaultRestInterface
 	}

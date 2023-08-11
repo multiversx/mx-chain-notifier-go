@@ -73,8 +73,8 @@ Before launching the proxy (notifier) service, it has to be configured so that i
 correct environment variables.
 
 The supported config variables are:
-- `Port`: the port on which the http server listens on. Should be the same 
-  as the port in the `ProxyUrl` described above.
+- `Host`: the host and port on which the http server listens on. Should be the same port
+  as the one specified in the `ProxyUrl` described above.
 - `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
 - `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
 - `CheckDuplicates`: if true, it will check (based on a locker service using redis) if the event have been already pushed to clients

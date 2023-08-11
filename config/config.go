@@ -18,7 +18,7 @@ type GeneralConfig struct {
 
 // ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
-	URL             string
+	Host            string
 	Username        string
 	Password        string
 	CheckDuplicates bool
