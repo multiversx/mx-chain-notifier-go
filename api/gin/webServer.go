@@ -17,6 +17,10 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/config"
 )
 
+const (
+	defaultRestInterface = "localhost:8080"
+)
+
 var log = logger.GetOrCreate("api/gin")
 
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
@@ -62,6 +66,19 @@ func checkArgs(args ArgsWebServerHandler) error {
 	return nil
 }
 
+func (w *webServer) getWSAddr() string {
+	addr := w.configs.GeneralConfig.ConnectorApi.Port
+	if addr == "" {
+		return defaultRestInterface
+	}
+
+	if !strings.Contains(addr, ":") {
+		return fmt.Sprintf(":%s", addr)
+	}
+
+	return addr
+}
+
 // Run starts the server and the Hub as goroutines
 // It returns an instance of http.Server
 func (w *webServer) Run() error {
@@ -75,11 +92,6 @@ func (w *webServer) Run() error {
 		return nil
 	}
 
-	port := w.configs.GeneralConfig.ConnectorApi.Port
-	if !strings.Contains(port, ":") {
-		port = fmt.Sprintf(":%s", port)
-	}
-
 	engine := gin.Default()
 	engine.Use(cors.Default())
 
@@ -90,8 +102,10 @@ func (w *webServer) Run() error {
 
 	w.registerRoutes(engine)
 
+	addr := w.getWSAddr()
+
 	server := &http.Server{
-		Addr:    port,
+		Addr:    addr,
 		Handler: engine,
 	}
 

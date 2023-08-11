@@ -1,16 +1,18 @@
 [ConnectorApi]
-    # The port on which the Hub listens for subscriptions
+    # The address on which the events notifier listens for subscriptions
+    # It can be specified as "localhost:5000"
+    # Keeping field name as Port for backwards compatibility
     Port = "5000"
 
-    # Username is the username needed to authorize an observer to push data
+    # Username and Password needed to authorize the connector
+    # BasicAuth is enabled only for the endpoints with "Auth" flag enabled
+    # in api.toml config file 
     Username = ""
-
-    # Password is the password needed to authorize an observer to push event data
     Password = ""
 
     # CheckDuplicates signals if the events received from observers have been already pushed to clients
     # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
-    CheckDuplicates = true
+    CheckDuplicates = false
 
 [Redis]
     # The url used to connect to a pubsub server

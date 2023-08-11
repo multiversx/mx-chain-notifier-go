@@ -72,13 +72,6 @@ VERSION:
 		Usage: "This flag specifies the api type, it defines the way in which it will expose the events. Options: rabbit-api | notifier",
 		Value: "notifier",
 	}
-
-	restAPIInterface = cli.StringFlag{
-		Name: "rest-api-interface",
-		Usage: "The interface `address and port` to which the REST API will attempt to bind. " +
-			"To bind to all available interfaces, set this flag to :8080",
-		Value: defaultRestInterface,
-	}
 )
 
 func main() {
@@ -92,7 +85,6 @@ func main() {
 		apiConfigFile,
 		workingDirectory,
 		apiType,
-		restAPIInterface,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -179,7 +171,6 @@ func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
 	flagsConfig.GeneralConfigPath = ctx.GlobalString(generalConfigFile.Name)
 	flagsConfig.APIConfigPath = ctx.GlobalString(apiConfigFile.Name)
 	flagsConfig.APIType = ctx.GlobalString(apiType.Name)
-	flagsConfig.RestApiInterface = ctx.GlobalString(restAPIInterface.Name)
 
 	return flagsConfig, nil
 }
