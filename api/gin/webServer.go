@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultRestInterface = "localhost:8080"
+	defaultRestInterface = "localhost:5000"
 )
 
 var log = logger.GetOrCreate("api/gin")
