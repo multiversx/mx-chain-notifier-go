@@ -36,7 +36,7 @@ func main() {
 
 func getShardV1Data() *outport.ArgsSaveBlockData {
 	return &outport.ArgsSaveBlockData{
-		HeaderHash: []byte("hash2"),
+		HeaderHash: []byte("hash3"),
 		Body: &block.Body{
 			MiniBlocks: []*block.MiniBlock{
 				{
@@ -87,7 +87,7 @@ func getShardV2Data() *notifierData.ArgsSaveBlock {
 	return &notifierData.ArgsSaveBlock{
 		HeaderType: "Header",
 		ArgsSaveBlockData: notifierData.ArgsSaveBlockData{
-			HeaderHash: []byte("headerHash2"),
+			HeaderHash: []byte("headerHash93"),
 			Body: &block.Body{
 				MiniBlocks: []*block.MiniBlock{
 					{

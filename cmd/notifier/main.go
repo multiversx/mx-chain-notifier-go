@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	defaultLogsPath    = "logs"
-	logFilePrefix      = "event-notifier"
-	logFileLifeSpanSec = 86400
+	defaultLogsPath      = "logs"
+	logFilePrefix        = "event-notifier"
+	logFileLifeSpanSec   = 86400
+	defaultRestInterface = "localhost:8080"
 )
 
 var (
@@ -54,6 +55,12 @@ VERSION:
 		Value: "./config/config.toml",
 	}
 
+	apiConfigFile = cli.StringFlag{
+		Name:  "api-config",
+		Usage: "The path for the api config",
+		Value: "./config/api.toml",
+	}
+
 	workingDirectory = cli.StringFlag{
 		Name:  "working-directory",
 		Usage: "This flag specifies the directory where the eventNotifier proxy will store logs.",
@@ -65,6 +72,13 @@ VERSION:
 		Usage: "This flag specifies the api type, it defines the way in which it will expose the events. Options: rabbit-api | notifier",
 		Value: "notifier",
 	}
+
+	restAPIInterface = cli.StringFlag{
+		Name: "rest-api-interface",
+		Usage: "The interface `address and port` to which the REST API will attempt to bind. " +
+			"To bind to all available interfaces, set this flag to :8080",
+		Value: defaultRestInterface,
+	}
 )
 
 func main() {
@@ -75,8 +89,10 @@ func main() {
 		logLevel,
 		logSaveFile,
 		generalConfigFile,
+		apiConfigFile,
 		workingDirectory,
 		apiType,
+		restAPIInterface,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -96,23 +112,17 @@ func main() {
 func startEventNotifierProxy(ctx *cli.Context) error {
 	log.Info("starting eventNotifier proxy...")
 
-	flagsConfig, err := getFlagsConfig(ctx)
+	cfgs, err := readConfigs(ctx)
 	if err != nil {
 		return err
 	}
 
-	fileLogging, err := initLogger(flagsConfig)
+	fileLogging, err := initLogger(&cfgs.Flags)
 	if err != nil {
 		return err
 	}
 
-	cfg, err := config.LoadConfig(flagsConfig.GeneralConfigPath)
-	if err != nil {
-		return err
-	}
-	cfg.Flags = flagsConfig
-
-	notifierRunner, err := notifier.NewNotifierRunner(cfg)
+	notifierRunner, err := notifier.NewNotifierRunner(cfgs)
 	if err != nil {
 		return err
 	}
@@ -132,6 +142,29 @@ func startEventNotifierProxy(ctx *cli.Context) error {
 	return nil
 }
 
+func readConfigs(ctx *cli.Context) (*config.Configs, error) {
+	flagsConfig, err := getFlagsConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	generalConfig, err := config.LoadGeneralConfig(flagsConfig.GeneralConfigPath)
+	if err != nil {
+		return nil, err
+	}
+
+	apiConfig, err := config.LoadAPIConfig(flagsConfig.APIConfigPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &config.Configs{
+		GeneralConfig:   *generalConfig,
+		ApiRoutesConfig: *apiConfig,
+		Flags:           *flagsConfig,
+	}, nil
+}
+
 func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
 	flagsConfig := &config.FlagsConfig{}
 
@@ -144,7 +177,9 @@ func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
 	flagsConfig.LogLevel = ctx.GlobalString(logLevel.Name)
 	flagsConfig.SaveLogFile = ctx.GlobalBool(logSaveFile.Name)
 	flagsConfig.GeneralConfigPath = ctx.GlobalString(generalConfigFile.Name)
+	flagsConfig.APIConfigPath = ctx.GlobalString(apiConfigFile.Name)
 	flagsConfig.APIType = ctx.GlobalString(apiType.Name)
+	flagsConfig.RestApiInterface = ctx.GlobalString(restAPIInterface.Name)
 
 	return flagsConfig, nil
 }

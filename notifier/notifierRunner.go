@@ -18,28 +18,28 @@ import (
 var log = logger.GetOrCreate("notifierRunner")
 
 type notifierRunner struct {
-	configs *config.GeneralConfig
+	configs config.Configs
 }
 
 // NewNotifierRunner create a new notifierRunner instance
-func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
+func NewNotifierRunner(cfgs *config.Configs) (*notifierRunner, error) {
 	if cfgs == nil {
 		return nil, ErrNilConfigs
 	}
 
 	return &notifierRunner{
-		configs: cfgs,
+		configs: *cfgs,
 	}, nil
 }
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
-	lockService, err := factory.CreateLockService(nr.configs.ConnectorApi.CheckDuplicates, nr.configs.Redis)
+	lockService, err := factory.CreateLockService(nr.configs.GeneralConfig.ConnectorApi.CheckDuplicates, nr.configs.GeneralConfig.Redis)
 	if err != nil {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs)
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs.GeneralConfig)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (nr *notifierRunner) Start() error {
 	statusMetricsHandler := metrics.NewStatusMetrics()
 
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		APIConfig:            nr.configs.ConnectorApi,
+		APIConfig:            nr.configs.GeneralConfig.ConnectorApi,
 		Locker:               lockService,
 		MqPublisher:          publisher,
 		HubPublisher:         hub,
@@ -76,7 +76,7 @@ func (nr *notifierRunner) Start() error {
 
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler:        eventsHandler,
-		APIConfig:            nr.configs.ConnectorApi,
+		APIConfig:            nr.configs.GeneralConfig.ConnectorApi,
 		WSHandler:            wsHandler,
 		EventsInterceptor:    eventsInterceptor,
 		StatusMetricsHandler: statusMetricsHandler,
@@ -87,9 +87,8 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade: facade,
-		Config: nr.configs.ConnectorApi,
-		Type:   nr.configs.Flags.APIType,
+		Facade:  facade,
+		Configs: nr.configs,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {

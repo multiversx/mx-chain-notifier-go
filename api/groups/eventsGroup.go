@@ -19,8 +19,7 @@ const (
 
 type eventsGroup struct {
 	*baseGroup
-	facade                EventsFacadeHandler
-	additionalMiddlewares []gin.HandlerFunc
+	facade EventsFacadeHandler
 }
 
 // NewEventsGroup registers handlers for the /events group
@@ -30,9 +29,10 @@ func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
 	}
 
 	h := &eventsGroup{
-		baseGroup:             &baseGroup{},
-		facade:                facade,
-		additionalMiddlewares: make([]gin.HandlerFunc, 0),
+		facade: facade,
+		baseGroup: &baseGroup{
+			additionalMiddlewares: make([]gin.HandlerFunc, 0),
+		},
 	}
 
 	h.createMiddlewares()
@@ -58,11 +58,6 @@ func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
 	h.endpoints = endpoints
 
 	return h, nil
-}
-
-// GetAdditionalMiddlewares return additional middlewares for this group
-func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
-	return h.additionalMiddlewares
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {

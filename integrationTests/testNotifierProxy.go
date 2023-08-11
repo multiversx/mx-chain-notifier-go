@@ -25,7 +25,7 @@ type testNotifier struct {
 }
 
 // NewTestNotifierWithWS will create a notifier instance for websockets flow
-func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
+func NewTestNotifierWithWS(cfg config.GeneralConfig) (*testNotifier, error) {
 	redisClient := mocks.NewRedisClientMock()
 	redlockArgs := redis.ArgsRedlockWrapper{
 		Client:       redisClient,
@@ -101,7 +101,7 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 }
 
 // NewTestNotifierWithRabbitMq will create a notifier instance with rabbitmq
-func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, error) {
+func NewTestNotifierWithRabbitMq(cfg config.GeneralConfig) (*testNotifier, error) {
 	redisClient := mocks.NewRedisClientMock()
 	redlockArgs := redis.ArgsRedlockWrapper{
 		Client:       redisClient,
@@ -165,50 +165,53 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 	}, nil
 }
 
-func GetDefaultConfigs() *config.GeneralConfig {
-	return &config.GeneralConfig{
-		ConnectorApi: config.ConnectorApiConfig{
-			Port:            "8081",
-			Username:        "user",
-			Password:        "pass",
-			CheckDuplicates: false,
+// GetDefaultConfigs default configs
+func GetDefaultConfigs() *config.Configs {
+	return &config.Configs{
+		GeneralConfig: config.GeneralConfig{
+			ConnectorApi: config.ConnectorApiConfig{
+				Port:            "8081",
+				Username:        "user",
+				Password:        "pass",
+				CheckDuplicates: false,
+			},
+			Redis: config.RedisConfig{
+				Url:            "redis://localhost:6379",
+				Channel:        "pub-sub",
+				MasterName:     "mymaster",
+				SentinelUrl:    "localhost:26379",
+				ConnectionType: "sentinel",
+				TTL:            30,
+			},
+			RabbitMQ: config.RabbitMQConfig{
+				Url: "amqp://guest:guest@localhost:5672",
+				EventsExchange: config.RabbitMQExchangeConfig{
+					Name: "allevents",
+					Type: "fanout",
+				},
+				RevertEventsExchange: config.RabbitMQExchangeConfig{
+					Name: "revert",
+					Type: "fanout",
+				},
+				FinalizedEventsExchange: config.RabbitMQExchangeConfig{
+					Name: "finalized",
+					Type: "fanout",
+				},
+				BlockTxsExchange: config.RabbitMQExchangeConfig{
+					Name: "blocktxs",
+					Type: "fanout",
+				},
+				BlockScrsExchange: config.RabbitMQExchangeConfig{
+					Name: "blockscrs",
+					Type: "fanout",
+				},
+				BlockEventsExchange: config.RabbitMQExchangeConfig{
+					Name: "blockevents",
+					Type: "fanout",
+				},
+			},
 		},
-		Redis: config.RedisConfig{
-			Url:            "redis://localhost:6379",
-			Channel:        "pub-sub",
-			MasterName:     "mymaster",
-			SentinelUrl:    "localhost:26379",
-			ConnectionType: "sentinel",
-			TTL:            30,
-		},
-		RabbitMQ: config.RabbitMQConfig{
-			Url: "amqp://guest:guest@localhost:5672",
-			EventsExchange: config.RabbitMQExchangeConfig{
-				Name: "allevents",
-				Type: "fanout",
-			},
-			RevertEventsExchange: config.RabbitMQExchangeConfig{
-				Name: "revert",
-				Type: "fanout",
-			},
-			FinalizedEventsExchange: config.RabbitMQExchangeConfig{
-				Name: "finalized",
-				Type: "fanout",
-			},
-			BlockTxsExchange: config.RabbitMQExchangeConfig{
-				Name: "blocktxs",
-				Type: "fanout",
-			},
-			BlockScrsExchange: config.RabbitMQExchangeConfig{
-				Name: "blockscrs",
-				Type: "fanout",
-			},
-			BlockEventsExchange: config.RabbitMQExchangeConfig{
-				Name: "blockevents",
-				Type: "fanout",
-			},
-		},
-		Flags: &config.FlagsConfig{
+		Flags: config.FlagsConfig{
 			LogLevel:          "*:INFO",
 			SaveLogFile:       false,
 			GeneralConfigPath: "./config/config.toml",

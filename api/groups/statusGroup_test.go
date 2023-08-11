@@ -10,6 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -65,7 +66,7 @@ func TestGetMetrics_ShouldWork(t *testing.T) {
 	statusGroup, err := groups.NewStatusGroup(facade)
 	require.Nil(t, err)
 
-	ws := startWebServer(statusGroup, statusPath)
+	ws := startWebServer(statusGroup, statusPath, getStatusRoutesConfig())
 
 	req, _ := http.NewRequest("GET", "/status/metrics", nil)
 	resp := httptest.NewRecorder()
@@ -91,7 +92,7 @@ func TestGetPrometheusMetrics_ShouldWork(t *testing.T) {
 	statusGroup, err := groups.NewStatusGroup(facade)
 	require.NoError(t, err)
 
-	ws := startWebServer(statusGroup, statusPath)
+	ws := startWebServer(statusGroup, statusPath, getStatusRoutesConfig())
 
 	req, _ := http.NewRequest("GET", "/status/prometheus-metrics", nil)
 	resp := httptest.NewRecorder()
@@ -112,4 +113,17 @@ func TestStatusGroup_IsInterfaceNil(t *testing.T) {
 
 	sg, _ = groups.NewStatusGroup(&mocks.FacadeStub{})
 	assert.False(t, sg.IsInterfaceNil())
+}
+
+func getStatusRoutesConfig() config.APIRoutesConfig {
+	return config.APIRoutesConfig{
+		APIPackages: map[string]config.APIPackageConfig{
+			"status": {
+				Routes: []config.RouteConfig{
+					{Name: "/metrics", Open: true},
+					{Name: "/prometheus-metrics", Open: true},
+				},
+			},
+		},
+	}
 }
