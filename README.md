@@ -81,7 +81,7 @@ The supported config variables are:
 
 If observer connector is set to use BasicAuth with `UseAuthorization = true`, `Username` and `Password` has to be
 set here on events notifier, and `Auth` flag has to be enabled in
-[`api.toml`](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml) config file for events path.
+[`api.toml`](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/api.toml) config file for events path.
 For example:
 ```toml
 [APIPackages.events]
