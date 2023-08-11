@@ -78,13 +78,16 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			immediate,
 			msg,
 		)
+		if err != nil {
+			log.Error("failed to publish message", "exchange", exchange, "error", err.Error())
+		}
 
 		select {
-		case <-rc.ackCh:
-			log.Debug("Publish: published message ack")
+		case deliveryTag := <-rc.ackCh:
+			log.Debug("Publish: published message ack", "deliveryTag", deliveryTag)
 			return err
-		case <-rc.nackCh:
-			log.Debug("Publish: published message nack, will retry to publish message", "error", err)
+		case deliveryTag := <-rc.nackCh:
+			log.Debug("Publish: published message nack, will retry to publish message", "deliveryTag", deliveryTag)
 		case err := <-rc.connErrCh:
 			if err != nil {
 				log.Error("rabbitMQ connection failure", "err", err.Error())

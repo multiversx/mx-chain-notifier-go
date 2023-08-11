@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -22,19 +23,24 @@ const (
 	txsKeyPrefix           = "txs_"
 	txsWithOrderKeyPrefix  = "txsWithOrder_"
 	scrsKeyPrefix          = "scrs_"
+
+	rabbitmqMetricPrefix = "RabbitMQ"
+	redisMetricPrefix    = "Redis"
 )
 
 // ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
-	Config    config.ConnectorApiConfig
-	Locker    LockService
-	Publisher Publisher
+	Config               config.ConnectorApiConfig
+	Locker               LockService
+	Publisher            Publisher
+	StatusMetricsHandler common.StatusMetricsHandler
 }
 
 type eventsHandler struct {
-	config    config.ConnectorApiConfig
-	locker    LockService
-	publisher Publisher
+	config         config.ConnectorApiConfig
+	locker         LockService
+	publisher      Publisher
+	metricsHandler common.StatusMetricsHandler
 }
 
 // NewEventsHandler creates a new events handler component
@@ -45,9 +51,10 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:    args.Locker,
-		publisher: args.Publisher,
-		config:    args.Config,
+		locker:         args.Locker,
+		publisher:      args.Publisher,
+		config:         args.Config,
+		metricsHandler: args.StatusMetricsHandler,
 	}, nil
 }
 
@@ -58,6 +65,9 @@ func checkArgs(args ArgsEventsHandler) error {
 	if check.IfNil(args.Publisher) {
 		return ErrNilPublisherService
 	}
+	if check.IfNil(args.StatusMetricsHandler) {
+		return common.ErrNilStatusMetricsHandler
+	}
 
 	return nil
 }
@@ -65,45 +75,48 @@ func checkArgs(args ArgsEventsHandler) error {
 // HandlePushEvents will handle push events received from observer
 func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 	if events.Hash == "" {
-		log.Debug("received empty events block hash",
+		log.Debug("received empty hash", "event", common.PushLogsAndEvents,
 			"will process", false,
 		)
 		return common.ErrReceivedEmptyEvents
 	}
+
 	shouldProcessEvents := true
 	if eh.config.CheckDuplicates {
-		shouldProcessEvents = eh.tryCheckProcessedWithRetry(events.Hash)
+		shouldProcessEvents = eh.tryCheckProcessedWithRetry(common.PushLogsAndEvents, events.Hash)
 	}
 
 	if !shouldProcessEvents {
-		log.Info("received duplicated events for block",
+		log.Info("received duplicated events", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return nil
 	}
 
 	if len(events.Events) == 0 {
-		log.Info("received empty events for block",
+		log.Warn("received empty events", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
 			"will process", shouldProcessEvents,
 		)
 		events.Events = make([]data.Event, 0)
 	} else {
-		log.Info("received events for block",
+		log.Info("received", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
 			"will process", shouldProcessEvents,
 		)
 	}
 
+	t := time.Now()
 	eh.publisher.Broadcast(events)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.PushLogsAndEvents), time.Since(t))
 	return nil
 }
 
 // HandleRevertEvents will handle revents events received from observer
 func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	if revertBlock.Hash == "" {
-		log.Warn("received empty revert block hash",
+		log.Warn("received empty hash", "event", common.RevertBlockEvents,
 			"will process", false,
 		)
 		return
@@ -111,166 +124,176 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 
 	shouldProcessRevert := true
 	if eh.config.CheckDuplicates {
-		revertKey := revertKeyPrefix + revertBlock.Hash
-		shouldProcessRevert = eh.tryCheckProcessedWithRetry(revertKey)
+		shouldProcessRevert = eh.tryCheckProcessedWithRetry(common.RevertBlockEvents, revertBlock.Hash)
 	}
 
 	if !shouldProcessRevert {
-		log.Info("received duplicated revert event for block",
+		log.Info("received duplicated events", "event", common.RevertBlockEvents,
 			"block hash", revertBlock.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received revert event for block",
+	log.Info("received", "event", common.RevertBlockEvents,
 		"block hash", revertBlock.Hash,
 		"will process", shouldProcessRevert,
 	)
 
+	t := time.Now()
 	eh.publisher.BroadcastRevert(revertBlock)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.RevertBlockEvents), time.Since(t))
 }
 
 // HandleFinalizedEvents will handle finalized events received from observer
 func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
 	if finalizedBlock.Hash == "" {
-		log.Warn("received empty finalized block hash",
+		log.Warn("received empty hash", "event", common.FinalizedBlockEvents,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessFinalized := true
 	if eh.config.CheckDuplicates {
-		finalizedKey := finalizedKeyPrefix + finalizedBlock.Hash
-		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(finalizedKey)
+		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(common.FinalizedBlockEvents, finalizedBlock.Hash)
 	}
 
 	if !shouldProcessFinalized {
-		log.Info("received duplicated finalized event for block",
+		log.Info("received duplicated events", "event", common.FinalizedBlockEvents,
 			"block hash", finalizedBlock.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received finalized events for block",
+	log.Info("received", "event", common.FinalizedBlockEvents,
 		"block hash", finalizedBlock.Hash,
 		"will process", shouldProcessFinalized,
 	)
 
+	t := time.Now()
 	eh.publisher.BroadcastFinalized(finalizedBlock)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.FinalizedBlockEvents), time.Since(t))
 }
 
 // HandleBlockTxs will handle txs events received from observer
 func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 	if blockTxs.Hash == "" {
-		log.Warn("received empty txs block hash",
+		log.Warn("received empty hash", "event", common.BlockTxs,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessTxs := true
 	if eh.config.CheckDuplicates {
-		txsKey := txsKeyPrefix + blockTxs.Hash
-		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockTxs, blockTxs.Hash)
 	}
 
 	if !shouldProcessTxs {
-		log.Info("received duplicated txs event for block",
+		log.Info("received duplicated events", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
 	if len(blockTxs.Txs) == 0 {
-		log.Info("received empty txs event for block",
+		log.Warn("received empty events", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
 			"will process", shouldProcessTxs,
 		)
 	} else {
-		log.Info("received txs events for block",
+		log.Info("received", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
 			"will process", shouldProcessTxs,
 		)
 	}
 
+	t := time.Now()
 	eh.publisher.BroadcastTxs(blockTxs)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockTxs), time.Since(t))
 }
 
 // HandleBlockScrs will handle scrs events received from observer
 func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 	if blockScrs.Hash == "" {
-		log.Warn("received empty scrs block hash",
+		log.Warn("received empty hash", "event", common.BlockScrs,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessScrs := true
 	if eh.config.CheckDuplicates {
-		scrsKey := scrsKeyPrefix + blockScrs.Hash
-		shouldProcessScrs = eh.tryCheckProcessedWithRetry(scrsKey)
+		shouldProcessScrs = eh.tryCheckProcessedWithRetry(common.BlockScrs, blockScrs.Hash)
 	}
 
 	if !shouldProcessScrs {
-		log.Info("received duplicated scrs event for block",
+		log.Info("received duplicated events", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
 	if len(blockScrs.Scrs) == 0 {
-		log.Info("received empty scrs event for block",
+		log.Warn("received empty events", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
 			"will process", shouldProcessScrs,
 		)
 	} else {
-		log.Info("received scrs events for block",
+		log.Info("received", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
 			"will process", shouldProcessScrs,
 		)
 	}
 
+	t := time.Now()
 	eh.publisher.BroadcastScrs(blockScrs)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockScrs), time.Since(t))
 }
 
 // HandleBlockEventsWithOrder will handle full block events received from observer
 func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	if blockTxs.Hash == "" {
-		log.Warn("received full block events with empty block hash",
+		log.Warn("received empty hash", "event", common.BlockEvents,
 			"will process", false,
 		)
 		return
 	}
 	shouldProcessTxs := true
 	if eh.config.CheckDuplicates {
-		txsKey := txsWithOrderKeyPrefix + blockTxs.Hash
-		shouldProcessTxs = eh.tryCheckProcessedWithRetry(txsKey)
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockEvents, blockTxs.Hash)
 	}
 
 	if !shouldProcessTxs {
-		log.Info("received duplicated full block events for block",
+		log.Info("received duplicated events", "event", common.BlockEvents,
 			"block hash", blockTxs.Hash,
-			"processed", false,
+			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received full block events for block",
+	log.Info("received", "event", common.BlockEvents,
 		"block hash", blockTxs.Hash,
 		"will process", shouldProcessTxs,
 	)
 
+	t := time.Now()
 	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockEvents), time.Since(t))
 }
 
-func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
+func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	var err error
 	var setSuccessful bool
 
+	prefix := getPrefixLockerKey(id)
+	key := prefix + blockHash
+
 	for {
-		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), blockHash)
+		t := time.Now()
+		setSuccessful, err = eh.locker.IsEventProcessed(context.Background(), key)
+		eh.metricsHandler.AddRequest(getRedisOpID(id), time.Since(t))
 
 		if err == nil {
 			break
@@ -286,12 +309,37 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(blockHash string) bool {
 		}
 	}
 
-	if !setSuccessful {
-		log.Debug("did not succeed to set event in locker")
-		return false
+	log.Debug("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
+
+	return setSuccessful
+}
+
+func getPrefixLockerKey(id string) string {
+	// keep this matching for backwards compatibility
+	switch id {
+	case common.PushLogsAndEvents:
+		return ""
+	case common.RevertBlockEvents:
+		return revertKeyPrefix
+	case common.FinalizedBlockEvents:
+		return finalizedKeyPrefix
+	case common.BlockTxs:
+		return txsKeyPrefix
+	case common.BlockScrs:
+		return scrsKeyPrefix
+	case common.BlockEvents:
+		return txsWithOrderKeyPrefix
 	}
 
-	return true
+	return ""
+}
+
+func getRabbitOpID(operation string) string {
+	return fmt.Sprintf("%s-%s", rabbitmqMetricPrefix, operation)
+}
+
+func getRedisOpID(operation string) string {
+	return fmt.Sprintf("%s-%s", redisMetricPrefix, operation)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -1,6 +1,7 @@
 package integrationTests
 
 import (
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/disabled"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
@@ -8,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher/ws"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/filters"
+	"github.com/multiversx/mx-chain-notifier-go/metrics"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
@@ -15,7 +17,7 @@ import (
 )
 
 type testNotifier struct {
-	Facade         FacadeHandler
+	Facade         shared.FacadeHandler
 	Publisher      PublisherHandler
 	WSHandler      dispatcher.WSHandler
 	RedisClient    *mocks.RedisClientMock
@@ -43,10 +45,13 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 		return nil, err
 	}
 
+	statusMetricsHandler := metrics.NewStatusMetrics()
+
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:    cfg.ConnectorApi,
-		Locker:    locker,
-		Publisher: publisher,
+		Config:               cfg.ConnectorApi,
+		Locker:               locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -75,10 +80,11 @@ func NewTestNotifierWithWS(cfg *config.GeneralConfig) (*testNotifier, error) {
 	}
 
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         cfg.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            cfg.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
@@ -106,6 +112,8 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 		return nil, err
 	}
 
+	statusMetricsHandler := metrics.NewStatusMetrics()
+
 	rabbitmqMock := mocks.NewRabbitClientMock()
 	publisherArgs := rabbitmq.ArgsRabbitMqPublisher{
 		Client: rabbitmqMock,
@@ -117,9 +125,10 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:    cfg.ConnectorApi,
-		Locker:    locker,
-		Publisher: publisher,
+		Config:               cfg.ConnectorApi,
+		Locker:               locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -136,10 +145,11 @@ func NewTestNotifierWithRabbitMq(cfg *config.GeneralConfig) (*testNotifier, erro
 
 	wsHandler := &disabled.WSHandler{}
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         cfg.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            cfg.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {

@@ -3,8 +3,8 @@ package process
 import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // TryCheckProcessedWithRetry exports internal method for testing
-func (eh *eventsHandler) TryCheckProcessedWithRetry(blockHash string) bool {
-	return eh.tryCheckProcessedWithRetry(blockHash)
+func (eh *eventsHandler) TryCheckProcessedWithRetry(prefix, blockHash string) bool {
+	return eh.tryCheckProcessedWithRetry(prefix, blockHash)
 }
 
 // GetLogEventsFromTransactionsPool exports internal method for testing

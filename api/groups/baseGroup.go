@@ -1,9 +1,9 @@
 package groups
 
 import (
+	"github.com/gin-gonic/gin"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
-	"github.com/gin-gonic/gin"
 )
 
 var log = logger.GetOrCreate("api/groups")

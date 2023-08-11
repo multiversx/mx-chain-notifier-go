@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
+	"github.com/multiversx/mx-chain-notifier-go/metrics"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
 
@@ -53,12 +54,15 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	statusMetricsHandler := metrics.NewStatusMetrics()
+
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		APIConfig:    nr.configs.ConnectorApi,
-		Locker:       lockService,
-		MqPublisher:  publisher,
-		HubPublisher: hub,
-		APIType:      nr.configs.Flags.APIType,
+		APIConfig:            nr.configs.ConnectorApi,
+		Locker:               lockService,
+		MqPublisher:          publisher,
+		HubPublisher:         hub,
+		APIType:              nr.configs.Flags.APIType,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -71,10 +75,11 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         nr.configs.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            nr.configs.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
