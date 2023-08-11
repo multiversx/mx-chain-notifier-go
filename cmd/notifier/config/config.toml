@@ -1,8 +1,7 @@
 [ConnectorApi]
     # The address on which the events notifier listens for subscriptions
-    # It can be specified as "localhost:5000"
-    # Keeping field name as Port for backwards compatibility
-    Port = "5000"
+    # It can be specified as "localhost:5000" or only as "5000"
+    URL = "5000"
 
     # Username and Password needed to authorize the connector
     # BasicAuth is enabled only for the endpoints with "Auth" flag enabled
@@ -12,16 +11,11 @@
 
     # CheckDuplicates signals if the events received from observers have been already pushed to clients
     # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
-    CheckDuplicates = false
+    CheckDuplicates = true
 
 [Redis]
     # The url used to connect to a pubsub server
-    # Note: not required for running in the notifier mode
     Url = "redis://localhost:6379/0"
-
-    # The pubsub channel used for publishing/subscribing
-    # Note: not required for running in the notifier mode
-    Channel = "pub-sub"
 
     # The master name for failover client
     MasterName = "mymaster"

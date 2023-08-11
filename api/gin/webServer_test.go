@@ -18,7 +18,7 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 		Configs: config.Configs{
 			GeneralConfig: config.GeneralConfig{
 				ConnectorApi: config.ConnectorApiConfig{
-					Port: "8080",
+					URL: "8080",
 				},
 			},
 			Flags: config.FlagsConfig{

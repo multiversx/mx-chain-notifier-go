@@ -75,27 +75,22 @@ correct environment variables.
 The supported config variables are:
 - `Port`: the port on which the http server listens on. Should be the same 
   as the port in the `ProxyUrl` described above.
-- `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false`.
-- `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false`.
+- `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
+- `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
 - `CheckDuplicates`: if true, it will check (based on a locker service using redis) if the event have been already pushed to clients
-  
-The [config](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml) file:
 
+If observer connector is set to use BasicAuth with `UseAuthorization = true`, `Username` and `Password` has to be
+set here on events notifier, and `Auth` flag has to be enabled in
+[`api.toml`](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml) config file for events path.
+For example:
 ```toml
-[ConnectorApi]
-    # The port on which the Hub listens for subscriptions
-    Port = "5000"
-
-    # Username is the username needed to authorize an observer to push data
-    Username = ""
-    
-    # Password is the password needed to authorize an observer to push event data
-    Password = ""
-
-    # CheckDuplicates signals if the events received from observers have been already pushed to clients
-    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
-    CheckDuplicates = true
+[APIPackages.events]
+    Routes = [
+        { Name = "/push", Open = true, Auth = true },
+        { Name = "/revert", Open = true, Auth = false },
 ```
+
+The main config file can be found [here](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml).
 
 After the configuration file is set up, the notifier instance can be
 launched.

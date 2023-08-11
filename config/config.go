@@ -18,7 +18,7 @@ type GeneralConfig struct {
 
 // ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
-	Port            string
+	URL             string
 	Username        string
 	Password        string
 	CheckDuplicates bool
@@ -44,7 +44,6 @@ type RouteConfig struct {
 // RedisConfig maps the redis configuration
 type RedisConfig struct {
 	Url            string
-	Channel        string
 	MasterName     string
 	SentinelUrl    string
 	ConnectionType string
