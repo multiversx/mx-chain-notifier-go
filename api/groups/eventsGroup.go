@@ -29,10 +29,8 @@ func NewEventsGroup(facade EventsFacadeHandler) (*eventsGroup, error) {
 	}
 
 	h := &eventsGroup{
-		facade: facade,
-		baseGroup: &baseGroup{
-			additionalMiddlewares: make([]gin.HandlerFunc, 0),
-		},
+		facade:    facade,
+		baseGroup: newBaseGroup(),
 	}
 
 	h.createMiddlewares()
@@ -128,18 +126,14 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 }
 
 func (h *eventsGroup) createMiddlewares() {
-	var middleware []gin.HandlerFunc
-
 	user, pass := h.facade.GetConnectorUserAndPass()
 
 	if user != "" && pass != "" {
 		basicAuth := gin.BasicAuth(gin.Accounts{
 			user: pass,
 		})
-		middleware = append(middleware, basicAuth)
+		h.authMiddleware = basicAuth
 	}
-
-	h.additionalMiddlewares = middleware
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

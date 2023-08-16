@@ -40,7 +40,7 @@ func (r *redlockWrapper) IsEventProcessed(ctx context.Context, blockHash string)
 	return r.client.SetEntry(ctx, blockHash, true, r.ttl)
 }
 
-// HasConnection return true if the redis client is connected
+// HasConnection returns true if the redis client is connected
 func (r *redlockWrapper) HasConnection(ctx context.Context) bool {
 	return r.client.IsConnected(ctx)
 }

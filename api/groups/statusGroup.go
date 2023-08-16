@@ -27,10 +27,8 @@ func NewStatusGroup(facade shared.FacadeHandler) (*statusGroup, error) {
 	}
 
 	sg := &statusGroup{
-		facade: facade,
-		baseGroup: &baseGroup{
-			additionalMiddlewares: make([]gin.HandlerFunc, 0),
-		},
+		facade:    facade,
+		baseGroup: newBaseGroup(),
 	}
 
 	endpoints := []*shared.EndpointHandlerData{

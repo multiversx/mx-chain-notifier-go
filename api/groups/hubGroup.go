@@ -27,10 +27,8 @@ func NewHubGroup(facade HubFacadeHandler) (*hubGroup, error) {
 	}
 
 	h := &hubGroup{
-		facade: facade,
-		baseGroup: &baseGroup{
-			additionalMiddlewares: make([]gin.HandlerFunc, 0),
-		},
+		facade:    facade,
+		baseGroup: newBaseGroup(),
 	}
 
 	endpoints := []*shared.EndpointHandlerData{

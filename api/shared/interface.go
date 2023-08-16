@@ -41,3 +41,9 @@ type WebServerHandler interface {
 	Close() error
 	IsInterfaceNil() bool
 }
+
+// MiddlewareProcessor defines a processor used internally by the web server when processing requests
+type MiddlewareProcessor interface {
+	MiddlewareHandlerFunc() gin.HandlerFunc
+	IsInterfaceNil() bool
+}

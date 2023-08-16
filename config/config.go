@@ -78,7 +78,7 @@ type FlagsConfig struct {
 	RestApiInterface  string
 }
 
-// LoadGeneralConfig return a GeneralConfig instance by reading the provided toml file
+// LoadGeneralConfig returns a GeneralConfig instance by reading the provided toml file
 func LoadGeneralConfig(filePath string) (*GeneralConfig, error) {
 	cfg := &GeneralConfig{}
 	err := core.LoadTomlFile(cfg, filePath)
@@ -88,7 +88,7 @@ func LoadGeneralConfig(filePath string) (*GeneralConfig, error) {
 	return cfg, err
 }
 
-// LoadAPIConfig return a APIRoutesConfig instance by reading the provided toml file
+// LoadAPIConfig returns a APIRoutesConfig instance by reading the provided toml file
 func LoadAPIConfig(filePath string) (*APIRoutesConfig, error) {
 	cfg := &APIRoutesConfig{}
 	err := core.LoadTomlFile(cfg, filePath)

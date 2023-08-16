@@ -56,8 +56,7 @@ func TestNewEventsGroup(t *testing.T) {
 		eg, err := groups.NewEventsGroup(facade)
 		require.Nil(t, err)
 
-		require.Equal(t, 1, len(eg.GetAdditionalMiddlewares()))
-
+		require.NotNil(t, eg.GetAuthMiddleware())
 	})
 }
 
