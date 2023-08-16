@@ -10,11 +10,11 @@
 
 [APIPackages.hub]
     Routes = [
-        { Name = "/ws", Open = true, Auth = false },
+        { Name = "/ws", Open = true },
     ]
 
 [APIPackages.status]
     Routes = [
-        { Name = "/metrics", Open = true, Auth = false },
-        { Name = "/prometheus-metrics", Open = true, Auth = false },
+        { Name = "/metrics", Open = true },
+        { Name = "/prometheus-metrics", Open = true },
     ]
