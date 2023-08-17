@@ -3,7 +3,6 @@ package groups
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -18,9 +17,7 @@ const (
 
 type statusGroup struct {
 	*baseGroup
-	facade                shared.FacadeHandler
-	mutFacade             sync.RWMutex
-	additionalMiddlewares []gin.HandlerFunc
+	facade shared.FacadeHandler
 }
 
 // NewStatusGroup returns a new instance of status group
@@ -30,9 +27,8 @@ func NewStatusGroup(facade shared.FacadeHandler) (*statusGroup, error) {
 	}
 
 	sg := &statusGroup{
-		facade:                facade,
-		baseGroup:             &baseGroup{},
-		additionalMiddlewares: make([]gin.HandlerFunc, 0),
+		facade:    facade,
+		baseGroup: newBaseGroup(),
 	}
 
 	endpoints := []*shared.EndpointHandlerData{
@@ -64,11 +60,6 @@ func (sg *statusGroup) getPrometheusMetrics(c *gin.Context) {
 	metricsResults := sg.facade.GetMetricsForPrometheus()
 
 	c.String(http.StatusOK, metricsResults)
-}
-
-// GetAdditionalMiddlewares returns additional middlewares for this group
-func (sg *statusGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
-	return sg.additionalMiddlewares
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

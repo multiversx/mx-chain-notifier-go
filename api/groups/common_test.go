@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 )
 
-func startWebServer(group shared.GroupHandler, path string) *gin.Engine {
+func startWebServer(group shared.GroupHandler, path string, apiConfig config.APIRoutesConfig) *gin.Engine {
 	ws := gin.New()
 	ws.Use(cors.Default())
 	routes := ws.Group(path)
-	group.RegisterRoutes(routes)
+	group.RegisterRoutes(routes, apiConfig)
 	return ws
 }
 

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -16,7 +17,7 @@ type HTTPServerCloser interface {
 
 // GroupHandler defines the actions needed to be performed by an gin API group
 type GroupHandler interface {
-	RegisterRoutes(ws gin.IRoutes)
+	RegisterRoutes(ws *gin.RouterGroup, apiConfig config.APIRoutesConfig)
 	GetAdditionalMiddlewares() []gin.HandlerFunc
 	IsInterfaceNil() bool
 }
@@ -38,5 +39,11 @@ type FacadeHandler interface {
 type WebServerHandler interface {
 	Run() error
 	Close() error
+	IsInterfaceNil() bool
+}
+
+// MiddlewareProcessor defines a processor used internally by the web server when processing requests
+type MiddlewareProcessor interface {
+	MiddlewareHandlerFunc() gin.HandlerFunc
 	IsInterfaceNil() bool
 }
