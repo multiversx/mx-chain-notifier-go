@@ -9,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestNewHubGroup(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, hg)
 
-		ws := startWebServer(hg, hubPath)
+		ws := startWebServer(hg, hubPath, getHubRoutesConfig())
 
 		req, _ := http.NewRequest("GET", "/hub/ws", nil)
 		resp := httptest.NewRecorder()
@@ -51,4 +52,16 @@ func TestNewHubGroup(t *testing.T) {
 		require.Equal(t, 0, len(hg.GetAdditionalMiddlewares()))
 		assert.True(t, wasCalled)
 	})
+}
+
+func getHubRoutesConfig() config.APIRoutesConfig {
+	return config.APIRoutesConfig{
+		APIPackages: map[string]config.APIPackageConfig{
+			"hub": {
+				Routes: []config.RouteConfig{
+					{Name: "/ws", Open: true},
+				},
+			},
+		},
+	}
 }

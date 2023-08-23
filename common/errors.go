@@ -13,3 +13,6 @@ var ErrInvalidRedisConnType = errors.New("invalid redis connection type")
 
 // ErrReceivedEmptyEvents signals that empty events have been received
 var ErrReceivedEmptyEvents = errors.New("received empty events")
+
+// ErrNilStatusMetricsHandler signals that a nil status metrics handler has been provided
+var ErrNilStatusMetricsHandler = errors.New("nil status metrics handler")

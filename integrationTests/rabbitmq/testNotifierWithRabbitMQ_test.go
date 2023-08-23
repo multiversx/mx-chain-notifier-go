@@ -18,8 +18,8 @@ import (
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.ConnectorApi.CheckDuplicates = true
-	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
+	cfg.GeneralConfig.ConnectorApi.CheckDuplicates = true
+	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.GeneralConfig)
 	require.Nil(t, err)
 
 	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)

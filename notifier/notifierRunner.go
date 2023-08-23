@@ -11,34 +11,35 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
+	"github.com/multiversx/mx-chain-notifier-go/metrics"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
 
 var log = logger.GetOrCreate("notifierRunner")
 
 type notifierRunner struct {
-	configs *config.GeneralConfig
+	configs config.Configs
 }
 
 // NewNotifierRunner create a new notifierRunner instance
-func NewNotifierRunner(cfgs *config.GeneralConfig) (*notifierRunner, error) {
+func NewNotifierRunner(cfgs *config.Configs) (*notifierRunner, error) {
 	if cfgs == nil {
 		return nil, ErrNilConfigs
 	}
 
 	return &notifierRunner{
-		configs: cfgs,
+		configs: *cfgs,
 	}, nil
 }
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
-	lockService, err := factory.CreateLockService(nr.configs.ConnectorApi.CheckDuplicates, nr.configs.Redis)
+	lockService, err := factory.CreateLockService(nr.configs.GeneralConfig.ConnectorApi.CheckDuplicates, nr.configs.GeneralConfig.Redis)
 	if err != nil {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs)
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs.GeneralConfig)
 	if err != nil {
 		return err
 	}
@@ -53,12 +54,15 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	statusMetricsHandler := metrics.NewStatusMetrics()
+
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		APIConfig:    nr.configs.ConnectorApi,
-		Locker:       lockService,
-		MqPublisher:  publisher,
-		HubPublisher: hub,
-		APIType:      nr.configs.Flags.APIType,
+		APIConfig:            nr.configs.GeneralConfig.ConnectorApi,
+		Locker:               lockService,
+		MqPublisher:          publisher,
+		HubPublisher:         hub,
+		APIType:              nr.configs.Flags.APIType,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -71,10 +75,11 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         nr.configs.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            nr.configs.GeneralConfig.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
@@ -82,9 +87,8 @@ func (nr *notifierRunner) Start() error {
 	}
 
 	webServerArgs := gin.ArgsWebServerHandler{
-		Facade: facade,
-		Config: nr.configs.ConnectorApi,
-		Type:   nr.configs.Flags.APIType,
+		Facade:  facade,
+		Configs: nr.configs,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {
