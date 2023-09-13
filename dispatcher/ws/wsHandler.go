@@ -4,18 +4,22 @@ import (
 	"net/http"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/marshal"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 )
 
 // ArgsWebSocketProcessor defines the argument needed to create a websocketHandler
 type ArgsWebSocketProcessor struct {
-	Hub      dispatcher.Hub
-	Upgrader dispatcher.WSUpgrader
+	Hub        dispatcher.Hub
+	Upgrader   dispatcher.WSUpgrader
+	Marshaller marshal.Marshalizer
 }
 
 type websocketProcessor struct {
-	hub      dispatcher.Hub
-	upgrader dispatcher.WSUpgrader
+	hub        dispatcher.Hub
+	upgrader   dispatcher.WSUpgrader
+	marshaller marshal.Marshalizer
 }
 
 // NewWebSocketProcessor creates a new websocketProcessor component
@@ -26,8 +30,9 @@ func NewWebSocketProcessor(args ArgsWebSocketProcessor) (*websocketProcessor, er
 	}
 
 	return &websocketProcessor{
-		hub:      args.Hub,
-		upgrader: args.Upgrader,
+		hub:        args.Hub,
+		upgrader:   args.Upgrader,
+		marshaller: args.Marshaller,
 	}, nil
 }
 
@@ -37,6 +42,9 @@ func checkArgs(args ArgsWebSocketProcessor) error {
 	}
 	if args.Upgrader == nil {
 		return ErrNilWSUpgrader
+	}
+	if check.IfNil(args.Marshaller) {
+		return common.ErrNilMarshaller
 	}
 
 	return nil
@@ -51,8 +59,9 @@ func (wh *websocketProcessor) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	args := argsWebSocketDispatcher{
-		Hub:  wh.hub,
-		Conn: conn,
+		Hub:        wh.hub,
+		Conn:       conn,
+		Marshaller: wh.marshaller,
 	}
 	wsDispatcher, err := newWebSocketDispatcher(args)
 	if err != nil {

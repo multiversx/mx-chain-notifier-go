@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
@@ -23,7 +23,7 @@ func main() {
 		return
 	}
 
-	data := getShardV2Data()
+	data := getBlockDataV2()
 
 	err = httpClient.Post("/events/push", data)
 	if err != nil {
@@ -34,60 +34,39 @@ func main() {
 	fmt.Println(data)
 }
 
-func getShardV1Data() *outport.ArgsSaveBlockData {
-	return &outport.ArgsSaveBlockData{
-		HeaderHash: []byte("hash2"),
-		Body: &block.Body{
-			MiniBlocks: []*block.MiniBlock{
-				{
-					TxHashes:        [][]byte{},
-					ReceiverShardID: 1,
-					SenderShardID:   1,
-					Type:            0,
-				},
+func getBlockDataV1() *notifierData.SaveBlockData {
+	return &notifierData.SaveBlockData{
+		Hash: "blockHash",
+		Txs: map[string]*transaction.Transaction{
+			"hash1": {
+				Nonce: 1,
 			},
 		},
-		Header: &block.Header{
-			ShardID:   1,
-			TimeStamp: 1234,
-		},
-		SignersIndexes:         []uint64{},
-		NotarizedHeadersHashes: []string{},
-		HeaderGasConsumption:   outport.HeaderGasConsumption{},
-		TransactionsPool: &outport.Pool{
-			Txs: map[string]data.TransactionHandlerWithGasUsedAndFee{
-				"txhash1": &outport.TransactionHandlerWithGasAndFee{
-					TransactionHandler: &transaction.Transaction{
-						Nonce: 1,
-					},
-				},
-			},
-			Scrs: map[string]data.TransactionHandlerWithGasUsedAndFee{
-				"scrHash1": &outport.TransactionHandlerWithGasAndFee{
-					TransactionHandler: &transaction.Transaction{
-						Nonce: 1,
-					},
-				},
-			},
-			Logs: []*data.LogData{
-				{
-					LogHandler: &transaction.Log{
-						Address: []byte("logaddr1"),
-						Events:  []*transaction.Event{},
-					},
-					TxHash: "logHash1",
-				},
+		Scrs: map[string]*smartContractResult.SmartContractResult{
+			"hash2": {
+				Nonce: 2,
 			},
 		},
-		NumberOfShards: 2,
+		LogEvents: []notifierData.Event{
+			{
+				Address: "logaddr1",
+			},
+		},
 	}
 }
 
-func getShardV2Data() *notifierData.ArgsSaveBlock {
-	return &notifierData.ArgsSaveBlock{
-		HeaderType: "Header",
-		ArgsSaveBlockData: notifierData.ArgsSaveBlockData{
-			HeaderHash: []byte("headerHash2"),
+func getBlockDataV2() *outport.OutportBlock {
+	header := &block.Header{
+		ShardID:   1,
+		TimeStamp: 1234,
+	}
+	headerBytes, _ := json.Marshal(header)
+
+	return &outport.OutportBlock{
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  "Header",
+			HeaderHash:  []byte("headerHash"),
 			Body: &block.Body{
 				MiniBlocks: []*block.MiniBlock{
 					{
@@ -97,49 +76,45 @@ func getShardV2Data() *notifierData.ArgsSaveBlock {
 					},
 				},
 			},
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
-			TransactionsPool: &notifierData.TransactionsPool{
-				Txs: map[string]*notifierData.NodeTransaction{
-					"txHash1": {
-						TransactionHandler: &transaction.Transaction{
-							Nonce:    1,
-							GasPrice: 1,
-							GasLimit: 1,
-						},
-						FeeInfo: outport.FeeInfo{
-							GasUsed: 1,
-						},
-						ExecutionOrder: 2,
-					},
-				},
-				Scrs: map[string]*notifierData.NodeSmartContractResult{
-					"scrHash1": {
-						TransactionHandler: &smartContractResult.SmartContractResult{
-							Nonce:    2,
-							GasLimit: 2,
-							GasPrice: 2,
-							CallType: 2,
-						},
-						FeeInfo: outport.FeeInfo{
-							GasUsed: 2,
-						},
-						ExecutionOrder: 0,
-					},
-				},
-				Logs: []*notifierData.LogData{
-					{
-						LogHandler: &transaction.Log{
-							Address: []byte("logaddr1"),
-							Events:  []*transaction.Event{},
-						},
-						TxHash: "logHash1",
-					},
-				},
-			},
-			NumberOfShards: 2,
 		},
+		TransactionPool: &outport.TransactionPool{
+			Transactions: map[string]*outport.TxInfo{
+				"txHash1": {
+					Transaction: &transaction.Transaction{
+						Nonce:    1,
+						GasPrice: 1,
+						GasLimit: 1,
+					},
+					FeeInfo: &outport.FeeInfo{
+						GasUsed: 1,
+					},
+					ExecutionOrder: 2,
+				},
+			},
+			SmartContractResults: map[string]*outport.SCRInfo{
+				"scrHash1": {
+					SmartContractResult: &smartContractResult.SmartContractResult{
+						Nonce:    2,
+						GasLimit: 2,
+						GasPrice: 2,
+						CallType: 2,
+					},
+					FeeInfo: &outport.FeeInfo{
+						GasUsed: 2,
+					},
+					ExecutionOrder: 0,
+				},
+			},
+			Logs: []*outport.LogData{
+				{
+					Log: &transaction.Log{
+						Address: []byte("logaddr1"),
+						Events:  []*transaction.Event{},
+					},
+					TxHash: "logHash1",
+				},
+			},
+		},
+		NumberOfShards: 2,
 	}
 }

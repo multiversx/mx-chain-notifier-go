@@ -3,6 +3,7 @@ package data
 import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/alteredAccount"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -24,9 +25,9 @@ type InterceptorBlockData struct {
 	Body          nodeData.BodyHandler
 	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*NotifierTransaction
+	TxsWithOrder  map[string]*outport.TxInfo
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*NotifierSmartContractResult
+	ScrsWithOrder map[string]*outport.SCRInfo
 	LogEvents     []Event
 }
 
@@ -37,11 +38,10 @@ type ArgsSaveBlockData struct {
 	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
-	HeaderGasConsumption   outport.HeaderGasConsumption
-	TransactionsPool       *TransactionsPool
-	AlteredAccounts        map[string]*outport.AlteredAccount
+	HeaderGasConsumption   *outport.HeaderGasConsumption
+	TransactionsPool       *outport.TransactionPool
+	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
-	IsImportDB             bool
 }
 
 // ArgsSaveBlock holds block data with header type

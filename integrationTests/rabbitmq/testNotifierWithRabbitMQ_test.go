@@ -1,124 +1,157 @@
 package rabbitmq
 
 import (
-	"net/http"
+	"encoding/json"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+var log = logger.GetOrCreate("integrationTests/rabbitmq")
+
 func TestNotifierWithRabbitMQ(t *testing.T) {
+	t.Run("with http observer connnector", func(t *testing.T) {
+		testNotifierWithRabbitMQ(t, common.HTTPConnectorType)
+	})
+
+	t.Run("with ws observer connnector", func(t *testing.T) {
+		testNotifierWithRabbitMQ(t, common.WSObsConnectorType)
+	})
+}
+
+func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
 	cfg.ConnectorApi.CheckDuplicates = true
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.MessageQueueAPIType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
-	mutResponses := &sync.Mutex{}
-	responses := make(map[int]int)
+	wg := &sync.WaitGroup{}
+	wg.Add(5)
 
-	go pushEventsRequest(webServer, mutResponses, responses)
-	go pushRevertRequest(webServer, mutResponses, responses)
-	go pushFinalizedRequest(webServer, mutResponses, responses)
+	go pushEventsRequest(wg, client)
+	go pushRevertRequest(wg, client)
+	go pushFinalizedRequest(wg, client)
 
 	// send requests again
-	go pushEventsRequest(webServer, mutResponses, responses)
-	go pushRevertRequest(webServer, mutResponses, responses)
+	go pushEventsRequest(wg, client)
+	go pushRevertRequest(wg, client)
 
-	time.Sleep(time.Second)
-
-	mutResponses.Lock()
-	assert.Equal(t, 5, responses[http.StatusOK])
-	mutResponses.Unlock()
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 
 	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
 }
 
-func pushEventsRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := data.ArgsSaveBlockData{
-		HeaderHash: []byte("hash1"),
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				Nonce:     1,
-				ShardID:   2,
-				TimeStamp: 1234,
-			},
-		},
-		TransactionsPool: &data.TransactionsPool{
-			Txs: map[string]*data.NodeTransaction{
-				"txHash1": {
-					TransactionHandler: &transaction.Transaction{
-						Nonce: 1,
-					},
-					ExecutionOrder: 1,
-				},
-			},
-			Scrs: map[string]*data.NodeSmartContractResult{
-				"scrHash1": {
-					TransactionHandler: &smartContractResult.SmartContractResult{
-						Nonce: 2,
-					},
-				},
-			},
-			Logs: []*data.LogData{
-				{
-					LogHandler: &transaction.Log{
-						Address: []byte("addr1"),
-						Events:  []*transaction.Event{},
-					},
-					TxHash: "txHash1",
-				},
-			},
-		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
+func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
 		},
 	}
-	saveBlockData := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: blockEvents,
+	headerBytes, _ := json.Marshal(header)
+
+	txPool := &outport.TransactionPool{
+		Transactions: map[string]*outport.TxInfo{
+			"hash1": {
+				Transaction: &transaction.Transaction{
+					Nonce: 1,
+				},
+				FeeInfo: &outport.FeeInfo{
+					GasUsed: 1,
+				},
+				ExecutionOrder: 1,
+			},
+		},
+		SmartContractResults: map[string]*outport.SCRInfo{
+			"hash2": {
+				SmartContractResult: &smartContractResult.SmartContractResult{
+					Nonce: 2,
+				},
+				FeeInfo: &outport.FeeInfo{
+					GasUsed: 2,
+				},
+				ExecutionOrder: 3,
+			},
+		},
+		Logs: []*outport.LogData{
+			{
+				Log: &transaction.Log{
+					Address: []byte("logaddr1"),
+					Events:  []*transaction.Event{},
+				},
+				TxHash: "logHash1",
+			},
+		},
 	}
 
-	resp := webServer.PushEventsRequest(saveBlockData)
+	saveBlockData := &outport.OutportBlock{
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  []byte("headerHash1"),
+			Body: &block.Body{
+				MiniBlocks: []*block.MiniBlock{
+					&block.MiniBlock{},
+				},
+			},
+		},
+		TransactionPool:      txPool,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+	}
 
-	mutResponses.Lock()
-	responses[resp.Code]++
-	mutResponses.Unlock()
+	err := webServer.PushEventsRequest(saveBlockData)
+	log.LogIfError(err)
+
+	if err == nil {
+		wg.Done()
+	}
 }
 
-func pushRevertRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.RevertBlock{
-		Hash:  "hash2",
-		Nonce: 1,
+func pushRevertRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
+		},
 	}
-	resp := webServer.RevertEventsRequest(blockEvents)
+	headerBytes, _ := json.Marshal(header)
+	blockData := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("headerHash2"),
+	}
+	err := webServer.RevertEventsRequest(blockData)
+	log.LogIfError(err)
 
-	mutResponses.Lock()
-	responses[resp.Code]++
-	mutResponses.Unlock()
+	if err == nil {
+		wg.Done()
+	}
 }
 
-func pushFinalizedRequest(webServer *integrationTests.TestWebServer, mutResponses *sync.Mutex, responses map[int]int) {
-	blockEvents := &data.FinalizedBlock{
-		Hash: "hash3",
+func pushFinalizedRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
+	blockEvents := &outport.FinalizedBlock{
+		HeaderHash: []byte("headerHash3"),
 	}
-	resp := webServer.FinalizedEventsRequest(blockEvents)
+	err := webServer.FinalizedEventsRequest(blockEvents)
+	log.LogIfError(err)
 
-	mutResponses.Lock()
-	responses[resp.Code]++
-	mutResponses.Unlock()
+	if err == nil {
+		wg.Done()
+	}
 }

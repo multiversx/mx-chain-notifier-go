@@ -6,6 +6,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/core/mock"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -33,6 +35,7 @@ func createMockWSDispatcherArgs() ws.ArgsWSDispatcher {
 
 	args.Hub = &mocks.HubStub{}
 	args.Conn = &mocks.WSConnStub{}
+	args.Marshaller = &mock.MarshalizerMock{}
 	return args
 }
 
@@ -59,6 +62,17 @@ func TestNewWebSocketDispatcher(t *testing.T) {
 		wd, err := ws.NewTestWSDispatcher(args)
 		require.Nil(t, wd)
 		assert.Equal(t, ws.ErrNilWSConn, err)
+	})
+
+	t.Run("nil marshaller", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockWSDispatcherArgs()
+		args.Marshaller = nil
+
+		wd, err := ws.NewTestWSDispatcher(args)
+		require.Nil(t, wd)
+		assert.Equal(t, common.ErrNilMarshaller, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {
@@ -173,7 +187,7 @@ func TestBlockEventsWithOrder(t *testing.T) {
 	wd, err := ws.NewTestWSDispatcher(args)
 	require.Nil(t, err)
 
-	txs := map[string]*data.NotifierTransaction{
+	txs := map[string]*outport.TxInfo{
 		"txHash1": {
 			Transaction: &transaction.Transaction{
 				Nonce: 1,

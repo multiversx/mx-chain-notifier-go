@@ -60,12 +60,12 @@ type BlockScrs struct {
 
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
-	Hash      string                                  `json:"hash"`
-	ShardID   uint32                                  `json:"shardID"`
-	TimeStamp uint64                                  `json:"timestamp"`
-	Txs       map[string]*NotifierTransaction         `json:"txs"`
-	Scrs      map[string]*NotifierSmartContractResult `json:"scrs"`
-	Events    []Event                                 `json:"events"`
+	Hash      string                      `json:"hash"`
+	ShardID   uint32                      `json:"shardID"`
+	TimeStamp uint64                      `json:"timestamp"`
+	Txs       map[string]*outport.TxInfo  `json:"txs"`
+	Scrs      map[string]*outport.SCRInfo `json:"scrs"`
+	Events    []Event                     `json:"events"`
 }
 
 // NotifierTransaction defines a wrapper over transaction

@@ -38,3 +38,11 @@ const (
 	// BlockScrs defines the subscription event type for block scrs
 	BlockScrs string = "block_scrs"
 )
+
+const (
+	// WSObsConnectorType defines the websocket observer connector type
+	WSObsConnectorType string = "ws"
+
+	// HTTPConnectorType defines the http observer connector type
+	HTTPConnectorType string = "http"
+)
