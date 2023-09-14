@@ -12,6 +12,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
+	"github.com/multiversx/mx-chain-notifier-go/metrics"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
@@ -19,37 +20,37 @@ import (
 var log = logger.GetOrCreate("notifierRunner")
 
 type notifierRunner struct {
-	configs *config.Config
+	configs config.Configs
 }
 
 // NewNotifierRunner create a new notifierRunner instance
-func NewNotifierRunner(cfgs *config.Config) (*notifierRunner, error) {
+func NewNotifierRunner(cfgs *config.Configs) (*notifierRunner, error) {
 	if cfgs == nil {
 		return nil, ErrNilConfigs
 	}
 
 	return &notifierRunner{
-		configs: cfgs,
+		configs: *cfgs,
 	}, nil
 }
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
-	externalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.General.ExternalMarshaller.Type)
+	externalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.MainConfig.General.ExternalMarshaller.Type)
 	if err != nil {
 		return err
 	}
-	wsConnectorMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.WebSocketConnector.DataMarshallerType)
-	if err != nil {
-		return err
-	}
-
-	lockService, err := factory.CreateLockService(nr.configs.ConnectorApi.CheckDuplicates, nr.configs.Redis)
+	wsConnectorMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.MainConfig.WebSocketConnector.DataMarshallerType)
 	if err != nil {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs, externalMarshaller)
+	lockService, err := factory.CreateLockService(nr.configs.MainConfig.ConnectorApi.CheckDuplicates, nr.configs.MainConfig.Redis)
+	if err != nil {
+		return err
+	}
+
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs.MainConfig, externalMarshaller)
 	if err != nil {
 		return err
 	}
@@ -64,35 +65,39 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
+	statusMetricsHandler := metrics.NewStatusMetrics()
+
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		APIConfig:    nr.configs.ConnectorApi,
-		Locker:       lockService,
-		MqPublisher:  publisher,
-		HubPublisher: hub,
-		APIType:      nr.configs.Flags.APIType,
+		APIConfig:            nr.configs.MainConfig.ConnectorApi,
+		Locker:               lockService,
+		MqPublisher:          publisher,
+		HubPublisher:         hub,
+		APIType:              nr.configs.Flags.APIType,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
 	if err != nil {
 		return err
 	}
 
-	eventsInterceptor, err := factory.CreateEventsInterceptor(nr.configs.General)
+	eventsInterceptor, err := factory.CreateEventsInterceptor(nr.configs.MainConfig.General)
 	if err != nil {
 		return err
 	}
 
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         nr.configs.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            nr.configs.MainConfig.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
 		return err
 	}
 
-	payloadHandler, err := factory.CreatePayloadHandler(*nr.configs, facade)
+	payloadHandler, err := factory.CreatePayloadHandler(nr.configs, facade)
 	if err != nil {
 		return err
 	}
@@ -100,16 +105,14 @@ func (nr *notifierRunner) Start() error {
 	webServerArgs := gin.ArgsWebServerHandler{
 		Facade:         facade,
 		PayloadHandler: payloadHandler,
-		Config:         nr.configs.ConnectorApi,
-		Type:           nr.configs.Flags.APIType,
-		ConnectorType:  nr.configs.Flags.ConnectorType,
+		Configs:        nr.configs,
 	}
 	webServer, err := gin.NewWebServerHandler(webServerArgs)
 	if err != nil {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.WebSocketConnector, wsConnectorMarshaller, payloadHandler)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.MainConfig.WebSocketConnector, wsConnectorMarshaller, payloadHandler)
 	if err != nil {
 		return err
 	}

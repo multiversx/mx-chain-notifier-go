@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
@@ -21,10 +22,11 @@ import (
 
 func createMockFacadeArgs() facade.ArgsNotifierFacade {
 	return facade.ArgsNotifierFacade{
-		EventsHandler:     &mocks.EventsHandlerStub{},
-		APIConfig:         config.ConnectorApiConfig{},
-		WSHandler:         &mocks.WSHandlerStub{},
-		EventsInterceptor: &mocks.EventsInterceptorStub{},
+		EventsHandler:        &mocks.EventsHandlerStub{},
+		APIConfig:            config.ConnectorApiConfig{},
+		WSHandler:            &mocks.WSHandlerStub{},
+		EventsInterceptor:    &mocks.EventsInterceptorStub{},
+		StatusMetricsHandler: &mocks.StatusMetricsStub{},
 	}
 }
 
@@ -62,6 +64,17 @@ func TestNewNotifierFacade(t *testing.T) {
 		f, err := facade.NewNotifierFacade(args)
 		require.True(t, check.IfNil(f))
 		require.Equal(t, facade.ErrNilEventsInterceptor, err)
+	})
+
+	t.Run("nil status metrics handler", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockFacadeArgs()
+		args.StatusMetricsHandler = nil
+
+		f, err := facade.NewNotifierFacade(args)
+		require.True(t, check.IfNil(f))
+		require.Equal(t, common.ErrNilStatusMetricsHandler, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {

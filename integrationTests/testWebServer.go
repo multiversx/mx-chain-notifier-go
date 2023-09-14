@@ -19,6 +19,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -49,7 +50,7 @@ func NewTestWebServer(facade shared.FacadeHandler, apiType string, payloadHandle
 	groupsMap := webServer.createGroups()
 	for groupName, groupHandler := range groupsMap {
 		ginGroup := ws.Group(groupName)
-		groupHandler.RegisterRoutes(ginGroup)
+		groupHandler.RegisterRoutes(ginGroup, getDefaultRoutesConfig())
 	}
 
 	webServer.ws = ws
@@ -162,5 +163,30 @@ func WaitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) {
 		return
 	case <-time.After(timeout):
 		assert.Fail(t, "timeout when handling events")
+	}
+}
+
+func getDefaultRoutesConfig() config.APIRoutesConfig {
+	return config.APIRoutesConfig{
+		APIPackages: map[string]config.APIPackageConfig{
+			"events": {
+				Routes: []config.RouteConfig{
+					{Name: "/push", Open: true},
+					{Name: "/revert", Open: true},
+					{Name: "/finalized", Open: true},
+				},
+			},
+			"hub": {
+				Routes: []config.RouteConfig{
+					{Name: "/ws", Open: true},
+				},
+			},
+			"status": {
+				Routes: []config.RouteConfig{
+					{Name: "/metrics", Open: true},
+					{Name: "/prometheus-metrics", Open: true},
+				},
+			},
+		},
 	}
 }

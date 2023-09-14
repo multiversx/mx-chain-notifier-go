@@ -18,11 +18,12 @@ const bech32PubkeyConverterType = "bech32"
 
 // ArgsEventsHandlerFactory defines the arguments needed for events handler creation
 type ArgsEventsHandlerFactory struct {
-	APIConfig    config.ConnectorApiConfig
-	Locker       process.LockService
-	MqPublisher  process.Publisher
-	HubPublisher process.Publisher
-	APIType      string
+	APIConfig            config.ConnectorApiConfig
+	Locker               process.LockService
+	MqPublisher          process.Publisher
+	HubPublisher         process.Publisher
+	APIType              string
+	StatusMetricsHandler common.StatusMetricsHandler
 }
 
 // CreateEventsHandler will create an events handler processor
@@ -33,9 +34,10 @@ func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, 
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:    args.APIConfig,
-		Locker:    args.Locker,
-		Publisher: publisher,
+		Config:               args.APIConfig,
+		Locker:               args.Locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: args.StatusMetricsHandler,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -84,7 +86,7 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 }
 
 // CreatePayloadHandler will create a new instance of payload handler
-func CreatePayloadHandler(cfg config.Config, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+func CreatePayloadHandler(cfg config.Configs, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
 	headerMarshaller, err := createHeaderMarshaller(cfg)
 	if err != nil {
 		return nil, err
@@ -98,10 +100,10 @@ func CreatePayloadHandler(cfg config.Config, facade process.EventsFacadeHandler)
 	return createPayloadHandler(connectorMarshaller, headerMarshaller, facade)
 }
 
-func createConnectorMarshaller(cfg config.Config) (marshal.Marshalizer, error) {
+func createConnectorMarshaller(cfg config.Configs) (marshal.Marshalizer, error) {
 	switch cfg.Flags.ConnectorType {
 	case common.WSObsConnectorType:
-		return marshalFactory.NewMarshalizer(cfg.WebSocketConnector.DataMarshallerType)
+		return marshalFactory.NewMarshalizer(cfg.MainConfig.WebSocketConnector.DataMarshallerType)
 	case common.HTTPConnectorType:
 		return &marshal.JsonMarshalizer{}, nil
 	default:
@@ -109,12 +111,12 @@ func createConnectorMarshaller(cfg config.Config) (marshal.Marshalizer, error) {
 	}
 }
 
-func createHeaderMarshaller(cfg config.Config) (marshal.Marshalizer, error) {
+func createHeaderMarshaller(cfg config.Configs) (marshal.Marshalizer, error) {
 	switch cfg.Flags.ConnectorType {
 	case common.WSObsConnectorType:
-		return marshalFactory.NewMarshalizer(cfg.WebSocketConnector.DataMarshallerType)
+		return marshalFactory.NewMarshalizer(cfg.MainConfig.WebSocketConnector.DataMarshallerType)
 	case common.HTTPConnectorType:
-		return marshalFactory.NewMarshalizer(cfg.General.InternalMarshaller.Type)
+		return marshalFactory.NewMarshalizer(cfg.MainConfig.General.InternalMarshaller.Type)
 	default:
 		return nil, common.ErrInvalidAPIType
 	}
