@@ -31,24 +31,24 @@ help:
 
 build:
 	cd ${cmd_dir} && \
-		go build -o ${binary}
+		go build -v -ldflags="-X main.appVersion=$(git describe --tags --long --dirty)" -o ${binary}
 
-api_type="rabbit-api"
+publisher_type="rabbitmq"
 conn_type="http"
 run: build
 	cd ${cmd_dir} && \
-		./${binary} --api-type=${api_type} --log-level="*:DEBUG" --connector-type=${conn_type}
+		./${binary} --publisher-type=${publisher_type} --log-level="*:DEBUG" --connector-type=${conn_type}
 
 runb: build
 	cd ${cmd_dir} && \
-		(./${binary} --api-type=${api_type} & echo $$! > ./${binary}.pid)
+		(./${binary} --publisher-type=${publisher_type} & echo $$! > ./${binary}.pid)
 
 kill:
 	kill $(shell cat ${cmd_dir}/${binary}.pid)
 
 debug: build
 	cd ${cmd_dir} && \
-		${debugger} exec ./${binary} -- --api-type=${api_type}
+		${debugger} exec ./${binary} -- --publisher-type=${publisher_type}
 
 debug-ath:
 	${debugger} attach $$(cat ${cmd_dir}/${binary}.pid)
@@ -72,7 +72,7 @@ docker-new: docker-build
 		--network "host" \
 		--name ${container_name} \
 		${image}:${image_tag} \
-		--api-type ${api_type} --log-level="*:DEBUG"
+		--publisher-type ${publisher_type} --log-level="*:DEBUG"
 
 docker-start:
 	docker start ${container_name}

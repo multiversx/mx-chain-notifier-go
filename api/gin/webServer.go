@@ -68,7 +68,7 @@ func checkArgs(args ArgsWebServerHandler) error {
 	if check.IfNil(args.Facade) {
 		return apiErrors.ErrNilFacadeHandler
 	}
-	if args.Configs.Flags.APIType == "" {
+	if args.Configs.Flags.PublisherType == "" {
 		return common.ErrInvalidAPIType
 	}
 	if args.Configs.Flags.ConnectorType == "" {
@@ -158,7 +158,7 @@ func (w *webServer) createGroups() error {
 	}
 	groupsMap["status"] = statusGroup
 
-	if w.configs.Flags.APIType == common.WSAPIType {
+	if w.configs.Flags.PublisherType == common.WSPublisherType {
 		hubHandler, err := groups.NewHubGroup(w.facade)
 		if err != nil {
 			return err

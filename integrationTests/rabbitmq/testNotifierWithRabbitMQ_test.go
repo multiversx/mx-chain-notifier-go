@@ -36,7 +36,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
-	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()

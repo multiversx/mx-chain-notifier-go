@@ -81,7 +81,7 @@ func (w *TestWebServer) createGroups() map[string]shared.GroupHandler {
 		groupsMap["events"] = eventsGroup
 	}
 
-	if w.apiType == common.WSAPIType {
+	if w.apiType == common.WSPublisherType {
 		hubHandler, err := groups.NewHubGroup(w.facade)
 		if err == nil {
 			groupsMap["hub"] = hubHandler
