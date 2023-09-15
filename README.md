@@ -55,11 +55,11 @@ Using the `cmd/notifier` package as root, execute the following commands:
 ---
 This can also be done using a single command from `Makefile`:
 ```bash
-# by default, rabbit-api type
+# by default, rabbitmq type
 make run
 
-# specify notifier running mode (eq: rabbit-api, notifier)
-make run api_type=rabbit-api
+# specify notifier running mode (eq: rabbitmq, ws)
+make run publisher_type=rabbitmq
 ```
 
 ## Launching the proxy
@@ -95,9 +95,9 @@ The main config file can be found [here](https://github.com/multiversx/mx-chain-
 After the configuration file is set up, the notifier instance can be
 launched.
 
-There are two ways in which notifier-go can be started:
-* `notifier` mode: it will launch a websocket handler (check [WebSockets](#websockets) section)
-* `rabbit-api` mode: it will set up a rabbitMQ client based on the RabbitMQ section from main config file (check [RabbitMQ](#rabbitmq) section)
+There are multiple publishing options when starting notifier service:
+* `ws`: it will launch a websocket handler (check [WebSockets](#websockets) section)
+* `rabbitmq`: it will set up a rabbitMQ client based on the RabbitMQ section from main config file (check [RabbitMQ](#rabbitmq) section)
 
 There is a development setup using docker containers (with
 docker compose) that can be used for this.
@@ -113,7 +113,7 @@ events are being processed).
 * `notifier` mode can be launched as following (check `Makefile` for details): 
 ```bash
 # Starts setup with one notifier instance
-make docker-new api_type=notifier
+make docker-new publisher_type=ws
 
 # Stop notifier instance
 make docker-stop
@@ -140,7 +140,7 @@ make compose-rm
 
 Start Notifier instance
 ```bash
-make docker-new api_type=rabbit-api
+make docker-new publisher_type=rabbitmq
 ```
 
 ### API Endpoints
