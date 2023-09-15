@@ -9,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -21,8 +22,9 @@ func createMockEventsHandlerArgs() process.ArgsEventsHandler {
 		Config: config.ConnectorApiConfig{
 			CheckDuplicates: false,
 		},
-		Locker:    &mocks.LockerStub{},
-		Publisher: &mocks.PublisherStub{},
+		Locker:               &mocks.LockerStub{},
+		Publisher:            &mocks.PublisherStub{},
+		StatusMetricsHandler: &mocks.StatusMetricsStub{},
 	}
 }
 
@@ -48,6 +50,17 @@ func TestNewEventsHandler(t *testing.T) {
 
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Equal(t, process.ErrNilPublisherService, err)
+		require.Nil(t, eventsHandler)
+	})
+
+	t.Run("nil status metrics handler", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockEventsHandlerArgs()
+		args.StatusMetricsHandler = nil
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Equal(t, common.ErrNilStatusMetricsHandler, err)
 		require.Nil(t, eventsHandler)
 	})
 
@@ -430,6 +443,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 	t.Parallel()
 
 	hash := "hash1"
+	prefix := "prefix_"
 
 	t.Run("event is NOT already processed", func(t *testing.T) {
 		t.Parallel()
@@ -445,7 +459,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
+		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.False(t, ok)
 	})
 
@@ -463,7 +477,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
+		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.True(t, ok)
 	})
 
@@ -494,7 +508,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		ok := eventsHandler.TryCheckProcessedWithRetry(hash)
+		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.True(t, ok)
 	})
 }

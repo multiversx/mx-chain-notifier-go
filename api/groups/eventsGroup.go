@@ -26,9 +26,8 @@ type ArgsEventsGroup struct {
 
 type eventsGroup struct {
 	*baseGroup
-	facade                EventsFacadeHandler
-	payloadHandler        websocket.PayloadHandler
-	additionalMiddlewares []gin.HandlerFunc
+	facade         EventsFacadeHandler
+	payloadHandler websocket.PayloadHandler
 }
 
 // NewEventsGroup registers handlers for the /events group
@@ -39,10 +38,9 @@ func NewEventsGroup(args ArgsEventsGroup) (*eventsGroup, error) {
 	}
 
 	h := &eventsGroup{
-		baseGroup:             &baseGroup{},
-		facade:                args.Facade,
-		payloadHandler:        args.PayloadHandler,
-		additionalMiddlewares: make([]gin.HandlerFunc, 0),
+		baseGroup:      newBaseGroup(),
+		facade:         args.Facade,
+		payloadHandler: args.PayloadHandler,
 	}
 
 	h.createMiddlewares()
@@ -79,11 +77,6 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 	}
 
 	return nil
-}
-
-// GetAdditionalMiddlewares return additional middlewares for this group
-func (h *eventsGroup) GetAdditionalMiddlewares() []gin.HandlerFunc {
-	return h.additionalMiddlewares
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
@@ -135,18 +128,14 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 }
 
 func (h *eventsGroup) createMiddlewares() {
-	var middleware []gin.HandlerFunc
-
 	user, pass := h.facade.GetConnectorUserAndPass()
 
 	if user != "" && pass != "" {
 		basicAuth := gin.BasicAuth(gin.Accounts{
 			user: pass,
 		})
-		middleware = append(middleware, basicAuth)
+		h.authMiddleware = basicAuth
 	}
-
-	h.additionalMiddlewares = middleware
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

@@ -14,6 +14,8 @@ type FacadeStub struct {
 	HandleFinalizedEventsCalled   func(events data.FinalizedBlock)
 	ServeCalled                   func(w http.ResponseWriter, r *http.Request)
 	GetConnectorUserAndPassCalled func() (string, string)
+	GetMetricsCalled              func() map[string]*data.EndpointMetricsResponse
+	GetMetricsForPrometheusCalled func() string
 }
 
 // HandlePushEventsV2 -
@@ -62,6 +64,24 @@ func (fs *FacadeStub) GetConnectorUserAndPass() (string, string) {
 	}
 
 	return "", ""
+}
+
+// GetMetrics -
+func (fs *FacadeStub) GetMetrics() map[string]*data.EndpointMetricsResponse {
+	if fs.GetMetricsCalled != nil {
+		return fs.GetMetricsCalled()
+	}
+
+	return nil
+}
+
+// GetMetricsForPrometheus -
+func (fs *FacadeStub) GetMetricsForPrometheus() string {
+	if fs.GetMetricsForPrometheusCalled != nil {
+		return fs.GetMetricsForPrometheusCalled()
+	}
+
+	return ""
 }
 
 // IsInterfaceNil -

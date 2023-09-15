@@ -2,6 +2,7 @@ package integrationTests
 
 import (
 	"github.com/multiversx/mx-chain-core-go/marshal"
+	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/disabled"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
@@ -9,6 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher/ws"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/filters"
+	"github.com/multiversx/mx-chain-notifier-go/metrics"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
@@ -16,7 +18,7 @@ import (
 )
 
 type testNotifier struct {
-	Facade         FacadeHandler
+	Facade         shared.FacadeHandler
 	Publisher      PublisherHandler
 	WSHandler      dispatcher.WSHandler
 	RedisClient    *mocks.RedisClientMock
@@ -24,9 +26,8 @@ type testNotifier struct {
 }
 
 // NewTestNotifierWithWS will create a notifier instance for websockets flow
-func NewTestNotifierWithWS(cfg *config.Config) (*testNotifier, error) {
+func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 	marshaller := &marshal.JsonMarshalizer{}
-
 	redisClient := mocks.NewRedisClientMock()
 	redlockArgs := redis.ArgsRedlockWrapper{
 		Client:       redisClient,
@@ -46,10 +47,13 @@ func NewTestNotifierWithWS(cfg *config.Config) (*testNotifier, error) {
 		return nil, err
 	}
 
+	statusMetricsHandler := metrics.NewStatusMetrics()
+
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:    cfg.ConnectorApi,
-		Locker:    locker,
-		Publisher: publisher,
+		Config:               cfg.ConnectorApi,
+		Locker:               locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -79,10 +83,11 @@ func NewTestNotifierWithWS(cfg *config.Config) (*testNotifier, error) {
 	}
 
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         cfg.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            cfg.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
@@ -99,9 +104,8 @@ func NewTestNotifierWithWS(cfg *config.Config) (*testNotifier, error) {
 }
 
 // NewTestNotifierWithRabbitMq will create a notifier instance with rabbitmq
-func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
+func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 	marshaller := &marshal.JsonMarshalizer{}
-
 	redisClient := mocks.NewRedisClientMock()
 	redlockArgs := redis.ArgsRedlockWrapper{
 		Client:       redisClient,
@@ -111,6 +115,8 @@ func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	statusMetricsHandler := metrics.NewStatusMetrics()
 
 	rabbitmqMock := mocks.NewRabbitClientMock()
 	publisherArgs := rabbitmq.ArgsRabbitMqPublisher{
@@ -124,9 +130,10 @@ func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:    cfg.ConnectorApi,
-		Locker:    locker,
-		Publisher: publisher,
+		Config:               cfg.ConnectorApi,
+		Locker:               locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -143,10 +150,11 @@ func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
 
 	wsHandler := &disabled.WSHandler{}
 	facadeArgs := facade.ArgsNotifierFacade{
-		EventsHandler:     eventsHandler,
-		APIConfig:         cfg.ConnectorApi,
-		WSHandler:         wsHandler,
-		EventsInterceptor: eventsInterceptor,
+		EventsHandler:        eventsHandler,
+		APIConfig:            cfg.ConnectorApi,
+		WSHandler:            wsHandler,
+		EventsInterceptor:    eventsInterceptor,
+		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
 	if err != nil {
@@ -162,63 +170,65 @@ func NewTestNotifierWithRabbitMq(cfg *config.Config) (*testNotifier, error) {
 	}, nil
 }
 
-func GetDefaultConfigs() *config.Config {
-	return &config.Config{
-		General: config.GeneralConfig{
-			ExternalMarshaller: config.MarshallerConfig{
-				Type: "json",
+// GetDefaultConfigs default configs
+func GetDefaultConfigs() config.Configs {
+	return config.Configs{
+		MainConfig: config.MainConfig{
+			General: config.GeneralConfig{
+				ExternalMarshaller: config.MarshallerConfig{
+					Type: "json",
+				},
+				InternalMarshaller: config.MarshallerConfig{
+					Type: "json",
+				},
+				AddressConverter: config.AddressConverterConfig{
+					Type:   "bech32",
+					Prefix: "erd",
+					Length: 32,
+				},
 			},
-			InternalMarshaller: config.MarshallerConfig{
-				Type: "json",
+			ConnectorApi: config.ConnectorApiConfig{
+				Host:            "8081",
+				Username:        "user",
+				Password:        "pass",
+				CheckDuplicates: false,
 			},
-			AddressConverter: config.AddressConverterConfig{
-				Type:   "bech32",
-				Prefix: "erd",
-				Length: 32,
+			Redis: config.RedisConfig{
+				Url:            "redis://localhost:6379",
+				MasterName:     "mymaster",
+				SentinelUrl:    "localhost:26379",
+				ConnectionType: "sentinel",
+				TTL:            30,
+			},
+			RabbitMQ: config.RabbitMQConfig{
+				Url: "amqp://guest:guest@localhost:5672",
+				EventsExchange: config.RabbitMQExchangeConfig{
+					Name: "allevents",
+					Type: "fanout",
+				},
+				RevertEventsExchange: config.RabbitMQExchangeConfig{
+					Name: "revert",
+					Type: "fanout",
+				},
+				FinalizedEventsExchange: config.RabbitMQExchangeConfig{
+					Name: "finalized",
+					Type: "fanout",
+				},
+				BlockTxsExchange: config.RabbitMQExchangeConfig{
+					Name: "blocktxs",
+					Type: "fanout",
+				},
+				BlockScrsExchange: config.RabbitMQExchangeConfig{
+					Name: "blockscrs",
+					Type: "fanout",
+				},
+				BlockEventsExchange: config.RabbitMQExchangeConfig{
+					Name: "blockevents",
+					Type: "fanout",
+				},
 			},
 		},
-		ConnectorApi: config.ConnectorApiConfig{
-			Port:            "8081",
-			Username:        "user",
-			Password:        "pass",
-			CheckDuplicates: false,
-		},
-		Redis: config.RedisConfig{
-			Url:            "redis://localhost:6379",
-			Channel:        "pub-sub",
-			MasterName:     "mymaster",
-			SentinelUrl:    "localhost:26379",
-			ConnectionType: "sentinel",
-			TTL:            30,
-		},
-		RabbitMQ: config.RabbitMQConfig{
-			Url: "amqp://guest:guest@localhost:5672",
-			EventsExchange: config.RabbitMQExchangeConfig{
-				Name: "allevents",
-				Type: "fanout",
-			},
-			RevertEventsExchange: config.RabbitMQExchangeConfig{
-				Name: "revert",
-				Type: "fanout",
-			},
-			FinalizedEventsExchange: config.RabbitMQExchangeConfig{
-				Name: "finalized",
-				Type: "fanout",
-			},
-			BlockTxsExchange: config.RabbitMQExchangeConfig{
-				Name: "blocktxs",
-				Type: "fanout",
-			},
-			BlockScrsExchange: config.RabbitMQExchangeConfig{
-				Name: "blockscrs",
-				Type: "fanout",
-			},
-			BlockEventsExchange: config.RabbitMQExchangeConfig{
-				Name: "blockevents",
-				Type: "fanout",
-			},
-		},
-		Flags: &config.FlagsConfig{
+		Flags: config.FlagsConfig{
 			LogLevel:          "*:INFO",
 			SaveLogFile:       false,
 			GeneralConfigPath: "./config/config.toml",

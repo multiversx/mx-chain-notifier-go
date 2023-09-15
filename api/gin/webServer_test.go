@@ -17,11 +17,17 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 	return gin.ArgsWebServerHandler{
 		Facade:         &mocks.FacadeStub{},
 		PayloadHandler: &testscommon.PayloadHandlerStub{},
-		Config: config.ConnectorApiConfig{
-			Port: "8080",
+		Configs: config.Configs{
+			MainConfig: config.MainConfig{
+				ConnectorApi: config.ConnectorApiConfig{
+					Host: "8080",
+				},
+			},
+			Flags: config.FlagsConfig{
+				APIType:       "notifier",
+				ConnectorType: "http",
+			},
 		},
-		Type:          "notifier",
-		ConnectorType: common.HTTPConnectorType,
 	}
 }
 
@@ -54,7 +60,7 @@ func TestNewWebServerHandler(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWebServerHandler()
-		args.Type = ""
+		args.Configs.Flags.APIType = ""
 
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))
@@ -65,7 +71,7 @@ func TestNewWebServerHandler(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWebServerHandler()
-		args.ConnectorType = ""
+		args.Configs.Flags.ConnectorType = ""
 
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))

@@ -32,8 +32,8 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 
 func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.ConnectorApi.CheckDuplicates = true
-	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg)
+	cfg.MainConfig.ConnectorApi.CheckDuplicates = true
+	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
 	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)

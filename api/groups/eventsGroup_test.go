@@ -17,6 +17,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/groups"
+	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/stretchr/testify/assert"
@@ -68,13 +69,39 @@ func TestNewEventsGroup(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		require.Equal(t, 1, len(eg.GetAdditionalMiddlewares()))
-
+		require.NotNil(t, eg.GetAuthMiddleware())
 	})
 }
 
 func TestEventsGroup_PushEvents(t *testing.T) {
 	t.Parallel()
+
+	t.Run("invalid data, bad request", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockEventsGroupArgs()
+		wasCalled := false
+		args.PayloadHandler = &testscommon.PayloadHandlerStub{
+			ProcessPayloadCalled: func(payload []byte, topic string) error {
+				wasCalled = true
+				return errors.New("expected err")
+			},
+		}
+
+		eg, err := groups.NewEventsGroup(args)
+		require.Nil(t, err)
+
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
+
+		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer([]byte("invalid data")))
+		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
+
+		ws.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusBadRequest, resp.Code)
+		assert.True(t, wasCalled)
+	})
 
 	t.Run("facade error, will try push events v2, should fail", func(t *testing.T) {
 		t.Parallel()
@@ -111,7 +138,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		ws := startWebServer(eg, eventsPath)
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
 
 		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
@@ -190,7 +217,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		ws := startWebServer(eg, eventsPath)
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
 
 		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
@@ -222,7 +249,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		ws := startWebServer(eg, eventsPath)
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
 
 		req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer([]byte("invalid data")))
 		req.Header.Set("Content-Type", "application/json")
@@ -263,7 +290,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		ws := startWebServer(eg, eventsPath)
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
 
 		req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
@@ -292,7 +319,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		ws := startWebServer(eg, eventsPath)
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
 
 		req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer([]byte("invalid data")))
 		req.Header.Set("Content-Type", "application/json")
@@ -331,7 +358,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		eg, err := groups.NewEventsGroup(args)
 		require.Nil(t, err)
 
-		ws := startWebServer(eg, eventsPath)
+		ws := startWebServer(eg, eventsPath, getEventsRoutesConfig())
 
 		req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
@@ -342,4 +369,18 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		assert.True(t, wasCalled)
 		assert.Equal(t, http.StatusOK, resp.Code)
 	})
+}
+
+func getEventsRoutesConfig() config.APIRoutesConfig {
+	return config.APIRoutesConfig{
+		APIPackages: map[string]config.APIPackageConfig{
+			"events": {
+				Routes: []config.RouteConfig{
+					{Name: "/push", Open: true},
+					{Name: "/revert", Open: true},
+					{Name: "/finalized", Open: true},
+				},
+			},
+		},
+	}
 }

@@ -9,7 +9,7 @@ import (
 )
 
 // CreatePublisher creates publisher component
-func CreatePublisher(apiType string, config *config.Config, marshaller marshal.Marshalizer) (rabbitmq.PublisherService, error) {
+func CreatePublisher(apiType string, config config.MainConfig, marshaller marshal.Marshalizer) (rabbitmq.PublisherService, error) {
 	switch apiType {
 	case common.MessageQueueAPIType:
 		return createRabbitMqPublisher(config.RabbitMQ, marshaller)

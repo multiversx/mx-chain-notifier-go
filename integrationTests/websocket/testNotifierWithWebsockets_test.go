@@ -21,7 +21,7 @@ import (
 
 func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSAPIType)
@@ -106,7 +106,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSAPIType)
@@ -198,7 +198,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSAPIType)
@@ -259,7 +259,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSAPIType)
@@ -310,7 +310,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSAPIType)
@@ -394,7 +394,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 
 func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSAPIType)
@@ -487,8 +487,8 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.ConnectorApi.CheckDuplicates = true
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg)
+	cfg.MainConfig.ConnectorApi.CheckDuplicates = true
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
 	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
