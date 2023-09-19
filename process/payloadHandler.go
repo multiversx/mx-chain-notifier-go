@@ -53,7 +53,7 @@ func (ph *payloadHandler) initActionsMap() {
 }
 
 // ProcessPayload will proces the provided payload based on the topic
-func (ph *payloadHandler) ProcessPayload(payload []byte, topic string) error {
+func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version string) error {
 	payloadTypeAction, ok := ph.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)
