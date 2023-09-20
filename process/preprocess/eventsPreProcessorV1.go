@@ -1,16 +1,11 @@
-package process
+package preprocess
 
 import (
 	"encoding/hex"
 	"errors"
 
 	"github.com/multiversx/mx-chain-core-go/core"
-	"github.com/multiversx/mx-chain-core-go/core/check"
-	coreData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
-	"github.com/multiversx/mx-chain-core-go/marshal"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -25,54 +20,31 @@ var (
 	ErrNilHeaderGasConsumption = errors.New("nil header gas consumption")
 )
 
-// ArgsEventsDataPreProcessor defines the arguments needed to create a new events data preprocessor
-type ArgsEventsDataPreProcessor struct {
-	Marshaller marshal.Marshalizer
-	Facade     EventsFacadeHandler
+type eventsPreProcessorV1 struct {
+	*baseEventsPreProcessor
 }
 
-type eventsDataPreProcessor struct {
-	marshaller        marshal.Marshalizer
-	emptyBlockCreator EmptyBlockCreatorContainer
-	facade            EventsFacadeHandler
-}
-
-// NewEventsDataPreProcessor will create a new events data preprocessor instance
-func NewEventsDataPreProcessor(args ArgsEventsDataPreProcessor) (*eventsDataPreProcessor, error) {
-	err := checkDataIndexerArgs(args)
+// NewEventsPreProcessorV1 will create a new events data preprocessor instance
+func NewEventsPreProcessorV1(args ArgsEventsPreProcessor) (*eventsPreProcessorV1, error) {
+	baseEventsPreProcessor, err := newBaseEventsPreProcessor(args)
 	if err != nil {
 		return nil, err
 	}
 
-	di := &eventsDataPreProcessor{
-		marshaller: args.Marshaller,
-		facade:     args.Facade,
-	}
-
-	emptyBlockContainer, err := createEmptyBlockCreatorContainer()
-	if err != nil {
-		return nil, err
-	}
-
-	di.emptyBlockCreator = emptyBlockContainer
-
-	return di, nil
-}
-
-func checkDataIndexerArgs(args ArgsEventsDataPreProcessor) error {
-	if check.IfNil(args.Marshaller) {
-		return common.ErrNilMarshaller
-	}
-	if check.IfNil(args.Facade) {
-		return common.ErrNilFacadeHandler
-	}
-
-	return nil
+	return &eventsPreProcessorV1{
+		baseEventsPreProcessor: baseEventsPreProcessor,
+	}, nil
 }
 
 // SaveBlock will handle the block info data
-func (d *eventsDataPreProcessor) SaveBlock(outportBlock *outport.OutportBlock) error {
-	err := checkBlockDataValid(outportBlock)
+func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
+	outportBlock := &outport.OutportBlock{}
+	err := d.marshaller.Unmarshal(outportBlock, marshalledData)
+	if err != nil {
+		return err
+	}
+
+	err = checkBlockDataValid(outportBlock)
 	if err != nil {
 		return err
 	}
@@ -103,15 +75,6 @@ func (d *eventsDataPreProcessor) SaveBlock(outportBlock *outport.OutportBlock) e
 	return nil
 }
 
-func (d *eventsDataPreProcessor) getHeaderFromBytes(headerType core.HeaderType, headerBytes []byte) (header coreData.HeaderHandler, err error) {
-	creator, err := d.emptyBlockCreator.Get(headerType)
-	if err != nil {
-		return nil, err
-	}
-
-	return block.GetHeaderFromBytes(d.marshaller, creator, headerBytes)
-}
-
 func checkBlockDataValid(block *outport.OutportBlock) error {
 	if block.BlockData == nil {
 		return ErrNilBlockData
@@ -127,7 +90,13 @@ func checkBlockDataValid(block *outport.OutportBlock) error {
 }
 
 // RevertIndexedBlock will handle the revert block event
-func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData) error {
+func (d *eventsPreProcessorV1) RevertIndexedBlock(marshalledData []byte) error {
+	blockData := &outport.BlockData{}
+	err := d.marshaller.Unmarshal(blockData, marshalledData)
+	if err != nil {
+		return err
+	}
+
 	header, err := d.getHeaderFromBytes(core.HeaderType(blockData.HeaderType), blockData.HeaderBytes)
 	if err != nil {
 		return err
@@ -146,7 +115,13 @@ func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData
 }
 
 // FinalizedBlock will handler the finalized block event
-func (d *eventsDataPreProcessor) FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error {
+func (d *eventsPreProcessorV1) FinalizedBlock(marshalledData []byte) error {
+	finalizedBlock := &outport.FinalizedBlock{}
+	err := d.marshaller.Unmarshal(finalizedBlock, marshalledData)
+	if err != nil {
+		return err
+	}
+
 	finalizedData := data.FinalizedBlock{
 		Hash: hex.EncodeToString(finalizedBlock.GetHeaderHash()),
 	}
@@ -156,28 +131,7 @@ func (d *eventsDataPreProcessor) FinalizedBlock(finalizedBlock *outport.Finalize
 	return nil
 }
 
-func createEmptyBlockCreatorContainer() (EmptyBlockCreatorContainer, error) {
-	container := block.NewEmptyBlockCreatorsContainer()
-
-	err := container.Add(core.ShardHeaderV1, block.NewEmptyHeaderCreator())
-	if err != nil {
-		return nil, err
-	}
-
-	err = container.Add(core.ShardHeaderV2, block.NewEmptyHeaderV2Creator())
-	if err != nil {
-		return nil, err
-	}
-
-	err = container.Add(core.MetaHeader, block.NewEmptyMetaBlockCreator())
-	if err != nil {
-		return nil, err
-	}
-
-	return container, nil
-}
-
 // IsInterfaceNil returns true if there is no value under the interface
-func (d *eventsDataPreProcessor) IsInterfaceNil() bool {
+func (d *eventsPreProcessorV1) IsInterfaceNil() bool {
 	return d == nil
 }

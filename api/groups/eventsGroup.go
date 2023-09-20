@@ -10,6 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 )
 
 const (
@@ -86,7 +87,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock)
+	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, string(common.PayloadV0))
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -102,7 +103,7 @@ func (h *eventsGroup) revertEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock)
+	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, string(common.PayloadV0))
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -118,7 +119,7 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock)
+	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, string(common.PayloadV0))
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return

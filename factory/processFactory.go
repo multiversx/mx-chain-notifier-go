@@ -10,6 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/process"
+	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
 )
 
 var log = logger.GetOrCreate("factory")
@@ -123,19 +124,37 @@ func createHeaderMarshaller(cfg config.Configs) (marshal.Marshalizer, error) {
 }
 
 func createPayloadHandler(marshaller, headerMarshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
-	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
+	dataPreProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: headerMarshaller,
 		Facade:     facade,
 	}
-	dataPreProcessor, err := process.NewEventsDataPreProcessor(dataIndexerArgs)
+	dataPreProcessors, err := createEventsDataPreProcessors(dataPreProcessorArgs)
 	if err != nil {
 		return nil, err
 	}
 
-	payloadHandler, err := process.NewPayloadHandler(marshaller, dataPreProcessor)
+	payloadHandler, err := process.NewPayloadHandler(marshaller, dataPreProcessors)
 	if err != nil {
 		return nil, err
 	}
 
 	return payloadHandler, nil
+}
+
+func createEventsDataPreProcessors(dataPreProcessorArgs preprocess.ArgsEventsPreProcessor) (map[common.PayloadVersion]process.DataProcessor, error) {
+	eventsProcessors := make(map[common.PayloadVersion]process.DataProcessor)
+
+	eventsProcessorV0, err := preprocess.NewEventsPreProcessorV0(dataPreProcessorArgs)
+	if err != nil {
+		return nil, err
+	}
+	eventsProcessors[common.PayloadV0] = eventsProcessorV0
+
+	eventsProcessorV1, err := preprocess.NewEventsPreProcessorV1(dataPreProcessorArgs)
+	if err != nil {
+		return nil, err
+	}
+	eventsProcessors[common.PayloadV1] = eventsProcessorV1
+
+	return eventsProcessors, nil
 }

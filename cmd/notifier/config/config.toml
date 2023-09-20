@@ -33,6 +33,9 @@
     # After a message will be sent it will wait for an ack message if this flag is enabled
     WithAcknowledge = true
 
+    # The duration in seconds to wait for an acknowledgment message, after this time passes an error will be returned
+    AcknowledgeTimeoutInSec = 60
+
 [ConnectorApi]
     # The address on which the events notifier listens for subscriptions
     # It can be specified as "localhost:5000" or only as "5000"

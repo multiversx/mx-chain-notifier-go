@@ -90,12 +90,15 @@ type RabbitMQExchangeConfig struct {
 
 // WebSocketConfig holds the configuration for websocket observer interaction config
 type WebSocketConfig struct {
-	URL                string
-	Mode               string
+	URL                        string
+	Mode                       string
+	RetryDurationInSec         int
+	AcknowledgeTimeoutInSec    int
+	WithAcknowledge            bool
+	BlockingAckOnError         bool
+	DropMessagesIfNoConnection bool
+
 	DataMarshallerType string
-	RetryDurationInSec uint32
-	BlockingAckOnError bool
-	WithAcknowledge    bool
 }
 
 // FlagsConfig holds the values for CLI flags

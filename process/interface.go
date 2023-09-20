@@ -3,9 +3,6 @@ package process
 import (
 	"context"
 
-	"github.com/multiversx/mx-chain-core-go/core"
-	"github.com/multiversx/mx-chain-core-go/data/block"
-	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -53,16 +50,9 @@ type WSClient interface {
 
 // DataProcessor dines what a data indexer should do
 type DataProcessor interface {
-	SaveBlock(outportBlock *outport.OutportBlock) error
-	RevertIndexedBlock(blockData *outport.BlockData) error
-	FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error
-	IsInterfaceNil() bool
-}
-
-// EmptyBlockCreatorContainer defines the behavior of a empty block creator container
-type EmptyBlockCreatorContainer interface {
-	Add(headerType core.HeaderType, creator block.EmptyBlockCreator) error
-	Get(headerType core.HeaderType) (block.EmptyBlockCreator, error)
+	SaveBlock(marshalledData []byte) error
+	RevertIndexedBlock(marshalledData []byte) error
+	FinalizedBlock(marshalledData []byte) error
 	IsInterfaceNil() bool
 }
 
