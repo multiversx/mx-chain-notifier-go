@@ -87,7 +87,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, string(common.PayloadV0))
+	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, common.PayloadV0)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -103,7 +103,7 @@ func (h *eventsGroup) revertEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, string(common.PayloadV0))
+	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, common.PayloadV0)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -119,7 +119,7 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, string(common.PayloadV0))
+	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, common.PayloadV0)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return

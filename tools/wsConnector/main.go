@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	marshaller := &marshal.JsonMarshalizer{}
+	marshaller := &marshal.GogoProtoMarshalizer{}
 	wsClient, err := newWSObsClient(marshaller)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -63,7 +63,7 @@ func newWSObsClient(marshaller marshal.Marshalizer) (*wsObsClient, error) {
 			RetryDurationInSec:      5,
 			BlockingAckOnError:      false,
 			AcknowledgeTimeoutInSec: 60,
-			Version:                 "1.0",
+			Version:                 1,
 		},
 		Marshaller: marshaller,
 		Log:        log,

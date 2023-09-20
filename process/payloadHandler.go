@@ -20,12 +20,12 @@ var ErrInvalidPayloadVersion = errors.New("invalid payload version")
 
 type payloadHandler struct {
 	marshaller marshal.Marshalizer
-	dp         map[common.PayloadVersion]DataProcessor
-	actions    map[string]func(marshalledData []byte, version string) error
+	dp         map[uint32]DataProcessor
+	actions    map[string]func(marshalledData []byte, version uint32) error
 }
 
 // NewPayloadHandler will create a new instance of events indexer
-func NewPayloadHandler(marshaller marshal.Marshalizer, dataProcessors map[common.PayloadVersion]DataProcessor) (*payloadHandler, error) {
+func NewPayloadHandler(marshaller marshal.Marshalizer, dataProcessors map[uint32]DataProcessor) (*payloadHandler, error) {
 	if check.IfNil(marshaller) {
 		return nil, common.ErrNilMarshaller
 	}
@@ -44,7 +44,7 @@ func NewPayloadHandler(marshaller marshal.Marshalizer, dataProcessors map[common
 
 // GetOperationsMap returns the map with all the operations that will index data
 func (ph *payloadHandler) initActionsMap() {
-	ph.actions = map[string]func(d []byte, v string) error{
+	ph.actions = map[string]func(d []byte, v uint32) error{
 		outport.TopicSaveBlock:             ph.saveBlock,
 		outport.TopicRevertIndexedBlock:    ph.revertIndexedBlock,
 		outport.TopicSaveRoundsInfo:        ph.saveRounds,
@@ -56,7 +56,7 @@ func (ph *payloadHandler) initActionsMap() {
 }
 
 // ProcessPayload will proces the provided payload based on the topic
-func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version string) error {
+func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version uint32) error {
 	payloadTypeAction, ok := ph.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)
@@ -66,8 +66,8 @@ func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version s
 	return payloadTypeAction(payload, version)
 }
 
-func (ph *payloadHandler) saveBlock(marshalledData []byte, version string) error {
-	dataProcessor, ok := ph.dp[common.PayloadVersion(version)]
+func (ph *payloadHandler) saveBlock(marshalledData []byte, version uint32) error {
+	dataProcessor, ok := ph.dp[version]
 	if !ok {
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
@@ -77,8 +77,8 @@ func (ph *payloadHandler) saveBlock(marshalledData []byte, version string) error
 	return dataProcessor.SaveBlock(marshalledData)
 }
 
-func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version string) error {
-	dataProcessor, ok := ph.dp[common.PayloadVersion(version)]
+func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version uint32) error {
+	dataProcessor, ok := ph.dp[version]
 	if !ok {
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
@@ -88,8 +88,8 @@ func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version stri
 	return dataProcessor.RevertIndexedBlock(marshalledData)
 }
 
-func (ph *payloadHandler) finalizedBlock(marshalledData []byte, version string) error {
-	dataProcessor, ok := ph.dp[common.PayloadVersion(version)]
+func (ph *payloadHandler) finalizedBlock(marshalledData []byte, version uint32) error {
+	dataProcessor, ok := ph.dp[version]
 	if !ok {
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
@@ -98,19 +98,19 @@ func (ph *payloadHandler) finalizedBlock(marshalledData []byte, version string) 
 	return dataProcessor.FinalizedBlock(marshalledData)
 }
 
-func (ph *payloadHandler) saveRounds(marshalledData []byte, version string) error {
+func (ph *payloadHandler) saveRounds(marshalledData []byte, version uint32) error {
 	return nil
 }
 
-func (ph *payloadHandler) saveValidatorsRating(marshalledData []byte, version string) error {
+func (ph *payloadHandler) saveValidatorsRating(marshalledData []byte, version uint32) error {
 	return nil
 }
 
-func (ph *payloadHandler) saveValidatorsPubKeys(marshalledData []byte, version string) error {
+func (ph *payloadHandler) saveValidatorsPubKeys(marshalledData []byte, version uint32) error {
 	return nil
 }
 
-func (ph *payloadHandler) saveAccounts(marshalledData []byte, version string) error {
+func (ph *payloadHandler) saveAccounts(marshalledData []byte, version uint32) error {
 	return nil
 }
 

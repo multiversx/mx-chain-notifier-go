@@ -141,8 +141,8 @@ func createPayloadHandler(marshaller, headerMarshaller marshal.Marshalizer, faca
 	return payloadHandler, nil
 }
 
-func createEventsDataPreProcessors(dataPreProcessorArgs preprocess.ArgsEventsPreProcessor) (map[common.PayloadVersion]process.DataProcessor, error) {
-	eventsProcessors := make(map[common.PayloadVersion]process.DataProcessor)
+func createEventsDataPreProcessors(dataPreProcessorArgs preprocess.ArgsEventsPreProcessor) (map[uint32]process.DataProcessor, error) {
+	eventsProcessors := make(map[uint32]process.DataProcessor)
 
 	eventsProcessorV0, err := preprocess.NewEventsPreProcessorV0(dataPreProcessorArgs)
 	if err != nil {

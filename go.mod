@@ -17,7 +17,7 @@ require (
 
 require (
 	github.com/gin-contrib/cors v1.4.0
-	github.com/multiversx/mx-chain-communication-go v1.0.7-0.20230919121221-34c9bc8f5fe1
+	github.com/multiversx/mx-chain-communication-go v1.0.7-0.20230920140934-77ca04b5a631
 	github.com/prometheus/client_model v0.4.0
 	github.com/prometheus/common v0.44.0
 	google.golang.org/protobuf v1.30.0
