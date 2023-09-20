@@ -1,0 +1,2 @@
+multiversx-sdk-core==0.4.3
+pytest==7.4.0
