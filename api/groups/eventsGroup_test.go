@@ -82,7 +82,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		args := createMockEventsGroupArgs()
 		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				wasCalled = true
 				return errors.New("expected err")
 			},
@@ -95,6 +95,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer([]byte("invalid data")))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("version", "0")
 		resp := httptest.NewRecorder()
 
 		ws.ServeHTTP(resp, req)
@@ -129,7 +130,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				wasCalled = true
 				return errors.New("expected err")
 			},
@@ -142,6 +143,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("version", "0")
 		resp := httptest.NewRecorder()
 
 		ws.ServeHTTP(resp, req)
@@ -206,7 +208,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		wasCalled := false
 		args := createMockEventsGroupArgs()
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				require.Equal(t, jsonBytes, payload)
 				require.Equal(t, topic, outport.TopicSaveBlock)
 				wasCalled = true
@@ -221,6 +223,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("version", "0")
 		resp := httptest.NewRecorder()
 
 		ws.ServeHTTP(resp, req)
@@ -240,7 +243,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 
 		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				wasCalled = true
 				return errors.New("expected err")
 			},
@@ -253,6 +256,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer([]byte("invalid data")))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("version", "0")
 		resp := httptest.NewRecorder()
 
 		ws.ServeHTTP(resp, req)
@@ -274,7 +278,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 
 		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				require.Equal(t, jsonBytes, payload)
 				require.Equal(t, topic, outport.TopicRevertIndexedBlock)
 				wasCalled = true
@@ -294,6 +298,7 @@ func TestEventsGroup_RevertEvents(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("version", "0")
 		resp := httptest.NewRecorder()
 
 		ws.ServeHTTP(resp, req)
@@ -311,7 +316,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 
 		args := createMockEventsGroupArgs()
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				return errors.New("expected err")
 			},
 		}
@@ -341,7 +346,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 		wasCalled := false
 		args := createMockEventsGroupArgs()
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
 				require.Equal(t, jsonBytes, payload)
 				require.Equal(t, topic, outport.TopicFinalizedBlock)
 				wasCalled = true
@@ -362,6 +367,7 @@ func TestEventsGroup_FinalizedEvents(t *testing.T) {
 
 		req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
 		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("version", "0")
 		resp := httptest.NewRecorder()
 
 		ws.ServeHTTP(resp, req)

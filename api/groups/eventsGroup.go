@@ -3,6 +3,7 @@ package groups
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-communication-go/websocket"
@@ -10,7 +11,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 )
 
 const (
@@ -80,6 +80,15 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 	return nil
 }
 
+func getPayloadVersion(c *gin.Context) (uint32, error) {
+	version, err := strconv.Atoi(c.GetHeader("version"))
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(version), nil
+}
+
 func (h *eventsGroup) pushEvents(c *gin.Context) {
 	pushEventsRawData, err := c.GetRawData()
 	if err != nil {
@@ -87,7 +96,13 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, common.PayloadV0)
+	payloadVersion, err := getPayloadVersion(c)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, payloadVersion)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -103,7 +118,13 @@ func (h *eventsGroup) revertEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, common.PayloadV0)
+	payloadVersion, err := getPayloadVersion(c)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, payloadVersion)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
@@ -119,7 +140,13 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 		return
 	}
 
-	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, common.PayloadV0)
+	payloadVersion, err := getPayloadVersion(c)
+	if err != nil {
+		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
+		return
+	}
+
+	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, payloadVersion)
 	if err != nil {
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
