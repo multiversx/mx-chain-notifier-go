@@ -7,6 +7,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/config"
 )
 
+// CreateWebServerHandler will create a new web server handler component
 func CreateWebServerHandler(facade shared.FacadeHandler, configs config.Configs) (shared.WebServerHandler, error) {
 	marshaller, err := marshalFactory.NewMarshalizer(configs.MainConfig.General.InternalMarshaller.Type)
 	if err != nil {
