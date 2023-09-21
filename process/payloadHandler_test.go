@@ -35,18 +35,10 @@ func createDefaultDataProcessors() map[uint32]process.DataProcessor {
 func TestNewPayloadHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil marshaller", func(t *testing.T) {
-		t.Parallel()
-
-		ei, err := process.NewPayloadHandler(nil, createDefaultDataProcessors())
-		require.Nil(t, ei)
-		require.Equal(t, common.ErrNilMarshaller, err)
-	})
-
 	t.Run("nil data processor", func(t *testing.T) {
 		t.Parallel()
 
-		ei, err := process.NewPayloadHandler(&mock.MarshalizerMock{}, nil)
+		ei, err := process.NewPayloadHandler(nil)
 		require.Nil(t, ei)
 		require.Equal(t, process.ErrNilDataProcessor, err)
 	})
@@ -54,7 +46,7 @@ func TestNewPayloadHandler(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		ei, err := process.NewPayloadHandler(&mock.MarshalizerMock{}, createDefaultDataProcessors())
+		ei, err := process.NewPayloadHandler(createDefaultDataProcessors())
 		require.Nil(t, err)
 		require.NotNil(t, ei)
 		require.False(t, ei.IsInterfaceNil())
@@ -69,7 +61,7 @@ func TestProcessPayload(t *testing.T) {
 	t.Run("invalid topic, should return nil", func(t *testing.T) {
 		t.Parallel()
 
-		ei, err := process.NewPayloadHandler(&mock.MarshalizerMock{}, createDefaultDataProcessors())
+		ei, err := process.NewPayloadHandler(createDefaultDataProcessors())
 		err = ei.ProcessPayload([]byte("payload"), "invalid topic", 1)
 		require.Nil(t, err)
 	})
@@ -88,7 +80,7 @@ func TestProcessPayload(t *testing.T) {
 		}
 		eventsProcessors[common.PayloadV1] = dp
 
-		ei, err := process.NewPayloadHandler(&mock.MarshalizerMock{}, eventsProcessors)
+		ei, err := process.NewPayloadHandler(eventsProcessors)
 		require.Nil(t, err)
 
 		err = ei.ProcessPayload([]byte("payload"), outport.TopicSaveBlock, common.PayloadV0)
@@ -117,7 +109,7 @@ func TestProcessPayload(t *testing.T) {
 		}
 		eventsProcessors[common.PayloadV1] = dp
 
-		ei, err := process.NewPayloadHandler(&mock.MarshalizerMock{}, eventsProcessors)
+		ei, err := process.NewPayloadHandler(eventsProcessors)
 		require.Nil(t, err)
 
 		err = ei.ProcessPayload([]byte("payload"), outport.TopicRevertIndexedBlock, common.PayloadV0)
@@ -153,7 +145,7 @@ func TestProcessPayload(t *testing.T) {
 		}
 		eventsProcessors[common.PayloadV1] = dp
 
-		ei, err := process.NewPayloadHandler(&mock.MarshalizerMock{}, eventsProcessors)
+		ei, err := process.NewPayloadHandler(eventsProcessors)
 		require.Nil(t, err)
 
 		err = ei.ProcessPayload([]byte("payload"), outport.TopicFinalizedBlock, common.PayloadV0)

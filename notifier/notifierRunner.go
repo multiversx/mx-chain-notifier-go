@@ -6,7 +6,6 @@ import (
 
 	marshalFactory "github.com/multiversx/mx-chain-core-go/marshal/factory"
 	logger "github.com/multiversx/mx-chain-logger-go"
-	"github.com/multiversx/mx-chain-notifier-go/api/gin"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
@@ -37,10 +36,6 @@ func NewNotifierRunner(cfgs *config.Configs) (*notifierRunner, error) {
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
 	externalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.MainConfig.General.ExternalMarshaller.Type)
-	if err != nil {
-		return err
-	}
-	wsConnectorMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.MainConfig.WebSocketConnector.DataMarshallerType)
 	if err != nil {
 		return err
 	}
@@ -97,22 +92,12 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	payloadHandler, err := factory.CreatePayloadHandler(nr.configs, facade)
+	webServer, err := factory.CreateWebServerHandler(facade, nr.configs)
 	if err != nil {
 		return err
 	}
 
-	webServerArgs := gin.ArgsWebServerHandler{
-		Facade:         facade,
-		PayloadHandler: payloadHandler,
-		Configs:        nr.configs,
-	}
-	webServer, err := gin.NewWebServerHandler(webServerArgs)
-	if err != nil {
-		return err
-	}
-
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.Flags.ConnectorType, nr.configs.MainConfig.WebSocketConnector, wsConnectorMarshaller, payloadHandler)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.MainConfig.WebSocketConnector, facade)
 	if err != nil {
 		return err
 	}

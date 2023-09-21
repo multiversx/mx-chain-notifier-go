@@ -3,10 +3,7 @@ package process
 import (
 	"errors"
 
-	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
-	"github.com/multiversx/mx-chain-core-go/marshal"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 )
 
 // ErrNilDataProcessor signals that a nil data processor has been provided
@@ -19,23 +16,18 @@ var ErrInvalidPayloadType = errors.New("invalid payload type")
 var ErrInvalidPayloadVersion = errors.New("invalid payload version")
 
 type payloadHandler struct {
-	marshaller marshal.Marshalizer
-	dp         map[uint32]DataProcessor
-	actions    map[string]func(marshalledData []byte, version uint32) error
+	dp      map[uint32]DataProcessor
+	actions map[string]func(marshalledData []byte, version uint32) error
 }
 
 // NewPayloadHandler will create a new instance of events indexer
-func NewPayloadHandler(marshaller marshal.Marshalizer, dataProcessors map[uint32]DataProcessor) (*payloadHandler, error) {
-	if check.IfNil(marshaller) {
-		return nil, common.ErrNilMarshaller
-	}
+func NewPayloadHandler(dataProcessors map[uint32]DataProcessor) (*payloadHandler, error) {
 	if len(dataProcessors) == 0 {
 		return nil, ErrNilDataProcessor
 	}
 
 	payloadIndexer := &payloadHandler{
-		marshaller: marshaller,
-		dp:         dataProcessors,
+		dp: dataProcessors,
 	}
 	payloadIndexer.initActionsMap()
 

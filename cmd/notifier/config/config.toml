@@ -14,6 +14,9 @@
         Length = 32
 
 [WebSocketConnector]
+    # Enabled will determine if websocket connector will be enabled or not
+    Enabled = false
+
     # URL for the WebSocket client/server connection
     # This value represents the IP address and port number that the WebSocket client or server will use to establish a connection.
     URL = "localhost:22111"
@@ -22,7 +25,7 @@
     Mode = "server"
 
     # Possible values: json, gogo protobuf. Should be compatible with mx-chain-node outport driver config
-    DataMarshallerType = "json"
+    DataMarshallerType = "gogo protobuf"
 
     # Retry duration (receive/send ack signal) in seconds
     RetryDurationInSec = 5
@@ -37,6 +40,9 @@
     AcknowledgeTimeoutInSec = 60
 
 [ConnectorApi]
+    # Enabled will determine if http connector will be enabled or not
+    Enabled = true
+
     # The address on which the events notifier listens for subscriptions
     # It can be specified as "localhost:5000" or only as "5000"
     Host = "5000"

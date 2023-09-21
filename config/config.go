@@ -39,6 +39,7 @@ type AddressConverterConfig struct {
 
 // ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
+	Enabled         bool
 	Host            string
 	Username        string
 	Password        string
@@ -90,6 +91,7 @@ type RabbitMQExchangeConfig struct {
 
 // WebSocketConfig holds the configuration for websocket observer interaction config
 type WebSocketConfig struct {
+	Enabled                    bool
 	URL                        string
 	Mode                       string
 	RetryDurationInSec         int
@@ -110,7 +112,6 @@ type FlagsConfig struct {
 	WorkingDir        string
 	APIType           string
 	RestApiInterface  string
-	ConnectorType     string
 }
 
 // LoadMainConfig returns a MainConfig instance by reading the provided toml file
