@@ -85,18 +85,14 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 
 // TODO: remove this behaviour after deprecating http connector
 // If received version not already handled, go to v0, for pre versioning setup
-func getPayloadVersion(c *gin.Context) (uint32, error) {
+func getPayloadVersion(c *gin.Context) uint32 {
 	version, err := strconv.Atoi(c.GetHeader(payloadVersionHeaderKey))
 	if err != nil {
-		return 0, err
+		log.Warn("failed to parse version header, used default version")
+		return common.PayloadV0
 	}
 
-	switch uint32(version) {
-	case common.PayloadV1:
-		return common.PayloadV1, nil
-	default:
-		return common.PayloadV0, nil
-	}
+	return uint32(version)
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
@@ -106,11 +102,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 		return
 	}
 
-	payloadVersion, err := getPayloadVersion(c)
-	if err != nil {
-		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
-	}
+	payloadVersion := getPayloadVersion(c)
 
 	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, payloadVersion)
 	if err != nil {
@@ -128,11 +120,7 @@ func (h *eventsGroup) revertEvents(c *gin.Context) {
 		return
 	}
 
-	payloadVersion, err := getPayloadVersion(c)
-	if err != nil {
-		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
-	}
+	payloadVersion := getPayloadVersion(c)
 
 	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, payloadVersion)
 	if err != nil {
@@ -150,11 +138,7 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 		return
 	}
 
-	payloadVersion, err := getPayloadVersion(c)
-	if err != nil {
-		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
-		return
-	}
+	payloadVersion := getPayloadVersion(c)
 
 	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, payloadVersion)
 	if err != nil {
