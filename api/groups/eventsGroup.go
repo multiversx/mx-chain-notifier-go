@@ -11,12 +11,15 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 )
 
 const (
 	pushEventsEndpoint      = "/push"
 	revertEventsEndpoint    = "/revert"
 	finalizedEventsEndpoint = "/finalized"
+
+	payloadVersionHeaderKey = "version"
 )
 
 // ArgsEventsGroup defines the arguments needed to create a new events group component
@@ -80,13 +83,20 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 	return nil
 }
 
+// TODO: remove this behaviour after deprecating http connector
+// If received version not already handled, go to v0, for pre versioning setup
 func getPayloadVersion(c *gin.Context) (uint32, error) {
-	version, err := strconv.Atoi(c.GetHeader("version"))
+	version, err := strconv.Atoi(c.GetHeader(payloadVersionHeaderKey))
 	if err != nil {
 		return 0, err
 	}
 
-	return uint32(version), nil
+	switch uint32(version) {
+	case common.PayloadV1:
+		return common.PayloadV1, nil
+	default:
+		return common.PayloadV0, nil
+	}
 }
 
 func (h *eventsGroup) pushEvents(c *gin.Context) {
