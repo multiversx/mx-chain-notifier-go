@@ -97,6 +97,7 @@ func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) error {
 
 	req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("version", "1")
 
 	resp := w.DoRequest(req)
 	if resp.Code != http.StatusOK {
@@ -112,6 +113,7 @@ func (w *TestWebServer) RevertEventsRequest(events *outport.BlockData) error {
 
 	req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("version", "1")
 
 	resp := w.DoRequest(req)
 	if resp.Code != http.StatusOK {
@@ -127,6 +129,7 @@ func (w *TestWebServer) FinalizedEventsRequest(events *outport.FinalizedBlock) e
 
 	req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("version", "1")
 
 	resp := w.DoRequest(req)
 

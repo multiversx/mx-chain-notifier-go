@@ -90,20 +90,6 @@ func (d *eventsPreProcessorV0) getHeader(marshaledData []byte) (nodeData.HeaderH
 	return header, nil
 }
 
-func checkSaveBlockDataValid(block *outport.OutportBlock) error {
-	if block.BlockData == nil {
-		return ErrNilBlockData
-	}
-	if block.TransactionPool == nil {
-		return ErrNilTransactionPool
-	}
-	if block.HeaderGasConsumption == nil {
-		return ErrNilHeaderGasConsumption
-	}
-
-	return nil
-}
-
 func (d *eventsPreProcessorV0) getHeaderFromBytes(headerType core.HeaderType, headerBytes []byte) (header coreData.HeaderHandler, err error) {
 	creator, err := d.emptyBlockCreator.Get(headerType)
 	if err != nil {

@@ -17,17 +17,21 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
 	"github.com/multiversx/mx-chain-notifier-go/process"
+	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
 )
 
 // CreateObserverConnector will create observer connector component
 func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
-	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
+	dataIndexerArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
 		Facade:     facade,
 	}
-	dataPreProcessor, _ := process.NewEventsDataPreProcessor(dataIndexerArgs)
-	payloadHandler, _ := process.NewPayloadHandler(marshaller, dataPreProcessor)
+
+	eventsProcessors := make(map[uint32]process.DataProcessor)
+	dataPreProcessor, _ := preprocess.NewEventsPreProcessorV1(dataIndexerArgs)
+	eventsProcessors[common.PayloadV1] = dataPreProcessor
+	payloadHandler, _ := process.NewPayloadHandler(marshaller, eventsProcessors)
 
 	switch connType {
 	case common.HTTPConnectorType:
@@ -43,11 +47,12 @@ func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiTy
 func newTestWSServer(connType string, payloadHandler websocket.PayloadHandler, marshaller marshal.Marshalizer) (ObserverConnector, error) {
 	port := getRandomPort()
 	conf := config.WebSocketConfig{
-		URL:                "localhost:" + fmt.Sprintf("%d", port),
-		WithAcknowledge:    true,
-		Mode:               "server",
-		RetryDurationInSec: 5,
-		BlockingAckOnError: false,
+		URL:                     "localhost:" + fmt.Sprintf("%d", port),
+		WithAcknowledge:         true,
+		Mode:                    "server",
+		RetryDurationInSec:      5,
+		BlockingAckOnError:      false,
+		AcknowledgeTimeoutInSec: 60,
 	}
 
 	_, err := factory.CreateWSObserverConnector(connType, conf, marshaller, payloadHandler)
@@ -102,11 +107,13 @@ func newWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, e
 
 	wsHost, err := wsFactory.CreateWebSocketHost(wsFactory.ArgsWebSocketHost{
 		WebSocketConfig: wsData.WebSocketConfig{
-			URL:                url,
-			WithAcknowledge:    true,
-			Mode:               "client",
-			RetryDurationInSec: 5,
-			BlockingAckOnError: false,
+			URL:                     url,
+			WithAcknowledge:         true,
+			Mode:                    "client",
+			RetryDurationInSec:      5,
+			BlockingAckOnError:      false,
+			AcknowledgeTimeoutInSec: 60,
+			Version:                 1,
 		},
 		Marshaller: marshaller,
 		Log:        log,
