@@ -64,7 +64,6 @@ func (ph *payloadHandler) saveBlock(marshalledData []byte, version uint32) error
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
 	}
-	log.Debug("PayloadHandler", "version", version)
 
 	return dataProcessor.SaveBlock(marshalledData)
 }
@@ -75,7 +74,6 @@ func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version uint
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
 	}
-	log.Debug("PayloadHandler", "version", version)
 
 	return dataProcessor.RevertIndexedBlock(marshalledData)
 }

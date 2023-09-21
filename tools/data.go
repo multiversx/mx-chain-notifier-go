@@ -168,10 +168,17 @@ func RevertBlockV0() *notifierData.RevertBlock {
 
 // RevertBlockV1 -
 func RevertBlockV1() *outport.BlockData {
+	header := &block.Header{
+		ShardID:   1,
+		TimeStamp: 1234,
+	}
+	headerBytes, _ := json.Marshal(header)
+
 	return &outport.BlockData{
-		ShardID:    1,
-		HeaderType: "Header",
-		HeaderHash: []byte("headerHash1"),
+		ShardID:     1,
+		HeaderBytes: headerBytes,
+		HeaderType:  "Header",
+		HeaderHash:  []byte("headerHash1"),
 		Body: &block.Body{
 			MiniBlocks: []*block.MiniBlock{
 				{
