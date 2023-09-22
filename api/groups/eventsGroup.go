@@ -88,7 +88,7 @@ func checkEventsGroupArgs(args ArgsEventsGroup) error {
 func getPayloadVersion(c *gin.Context) uint32 {
 	version, err := strconv.Atoi(c.GetHeader(payloadVersionHeaderKey))
 	if err != nil {
-		log.Warn("failed to parse version header, used default version")
+		log.Debug("failed to parse version header, used default version")
 		return common.PayloadV0
 	}
 

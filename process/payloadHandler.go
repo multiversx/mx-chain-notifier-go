@@ -16,8 +16,8 @@ var ErrInvalidPayloadType = errors.New("invalid payload type")
 var ErrInvalidPayloadVersion = errors.New("invalid payload version")
 
 type payloadHandler struct {
-	dp      map[uint32]DataProcessor
-	actions map[string]func(marshalledData []byte, version uint32) error
+	dataProcessors map[uint32]DataProcessor
+	actions        map[string]func(marshalledData []byte, version uint32) error
 }
 
 // NewPayloadHandler will create a new instance of events indexer
@@ -27,7 +27,7 @@ func NewPayloadHandler(dataProcessors map[uint32]DataProcessor) (*payloadHandler
 	}
 
 	payloadIndexer := &payloadHandler{
-		dp: dataProcessors,
+		dataProcessors: dataProcessors,
 	}
 	payloadIndexer.initActionsMap()
 
@@ -59,7 +59,7 @@ func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version u
 }
 
 func (ph *payloadHandler) saveBlock(marshalledData []byte, version uint32) error {
-	dataProcessor, ok := ph.dp[version]
+	dataProcessor, ok := ph.dataProcessors[version]
 	if !ok {
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
@@ -69,7 +69,7 @@ func (ph *payloadHandler) saveBlock(marshalledData []byte, version uint32) error
 }
 
 func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version uint32) error {
-	dataProcessor, ok := ph.dp[version]
+	dataProcessor, ok := ph.dataProcessors[version]
 	if !ok {
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
@@ -79,7 +79,7 @@ func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version uint
 }
 
 func (ph *payloadHandler) finalizedBlock(marshalledData []byte, version uint32) error {
-	dataProcessor, ok := ph.dp[version]
+	dataProcessor, ok := ph.dataProcessors[version]
 	if !ok {
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType

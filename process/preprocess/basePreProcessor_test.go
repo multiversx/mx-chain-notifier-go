@@ -3,10 +3,19 @@ package preprocess_test
 import (
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
 	"github.com/stretchr/testify/require"
 )
+
+func createMockEventsDataPreProcessorArgs() preprocess.ArgsEventsPreProcessor {
+	return preprocess.ArgsEventsPreProcessor{
+		Marshaller: &mock.MarshalizerMock{},
+		Facade:     &mocks.FacadeStub{},
+	}
+}
 
 func TestNewBaseEventsPreProcessor(t *testing.T) {
 	t.Parallel()

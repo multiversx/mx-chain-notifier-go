@@ -112,7 +112,7 @@ func (d *eventsPreProcessorV0) RevertIndexedBlock(marshalledData []byte) error {
 	return nil
 }
 
-// FinalizedBlock will handler the finalized block event
+// FinalizedBlock will handle the finalized block event
 func (d *eventsPreProcessorV0) FinalizedBlock(marshalledData []byte) error {
 	finalizedBlock := &data.FinalizedBlock{}
 	err := d.marshaller.Unmarshal(finalizedBlock, marshalledData)
