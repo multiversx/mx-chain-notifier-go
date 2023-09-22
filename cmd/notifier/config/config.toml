@@ -13,6 +13,10 @@
         Prefix = "erd"
         Length = 32
 
+    # CheckDuplicates signals if the events received from observers have been already pushed to clients
+    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
+    CheckDuplicates = true
+
 [WebSocketConnector]
     # Enabled will determine if websocket connector will be enabled or not
     Enabled = false
@@ -52,10 +56,6 @@
     # in api.toml config file 
     Username = ""
     Password = ""
-
-    # CheckDuplicates signals if the events received from observers have been already pushed to clients
-    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
-    CheckDuplicates = true
 
 [Redis]
     # The url used to connect to a pubsub server

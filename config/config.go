@@ -21,8 +21,8 @@ type MainConfig struct {
 // GeneralConfig maps the general config section
 type GeneralConfig struct {
 	ExternalMarshaller MarshallerConfig
-	InternalMarshaller MarshallerConfig
 	AddressConverter   AddressConverterConfig
+	CheckDuplicates    bool
 }
 
 // MarshallerConfig maps the marshaller configuration
@@ -39,11 +39,10 @@ type AddressConverterConfig struct {
 
 // ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
-	Enabled         bool
-	Host            string
-	Username        string
-	Password        string
-	CheckDuplicates bool
+	Enabled  bool
+	Host     string
+	Username string
+	Password string
 }
 
 // APIRoutesConfig holds the configuration related to Rest API routes

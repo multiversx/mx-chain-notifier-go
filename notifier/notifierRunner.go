@@ -40,7 +40,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	lockService, err := factory.CreateLockService(nr.configs.MainConfig.ConnectorApi.CheckDuplicates, nr.configs.MainConfig.Redis)
+	lockService, err := factory.CreateLockService(nr.configs.MainConfig.General.CheckDuplicates, nr.configs.MainConfig.Redis)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (nr *notifierRunner) Start() error {
 	statusMetricsHandler := metrics.NewStatusMetrics()
 
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		APIConfig:            nr.configs.MainConfig.ConnectorApi,
+		CheckDuplicates:      nr.configs.MainConfig.General.CheckDuplicates,
 		Locker:               lockService,
 		MqPublisher:          publisher,
 		HubPublisher:         hub,

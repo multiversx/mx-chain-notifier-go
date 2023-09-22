@@ -8,7 +8,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
-	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -30,17 +29,17 @@ const (
 
 // ArgsEventsHandler defines the arguments needed for an events handler
 type ArgsEventsHandler struct {
-	Config               config.ConnectorApiConfig
 	Locker               LockService
 	Publisher            Publisher
 	StatusMetricsHandler common.StatusMetricsHandler
+	CheckDuplicates      bool
 }
 
 type eventsHandler struct {
-	config         config.ConnectorApiConfig
-	locker         LockService
-	publisher      Publisher
-	metricsHandler common.StatusMetricsHandler
+	locker          LockService
+	publisher       Publisher
+	metricsHandler  common.StatusMetricsHandler
+	checkDuplicates bool
 }
 
 // NewEventsHandler creates a new events handler component
@@ -51,10 +50,10 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:         args.Locker,
-		publisher:      args.Publisher,
-		config:         args.Config,
-		metricsHandler: args.StatusMetricsHandler,
+		locker:          args.Locker,
+		publisher:       args.Publisher,
+		metricsHandler:  args.StatusMetricsHandler,
+		checkDuplicates: args.CheckDuplicates,
 	}, nil
 }
 
@@ -82,7 +81,7 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 	}
 
 	shouldProcessEvents := true
-	if eh.config.CheckDuplicates {
+	if eh.checkDuplicates {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(common.PushLogsAndEvents, events.Hash)
 	}
 
@@ -123,7 +122,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	}
 
 	shouldProcessRevert := true
-	if eh.config.CheckDuplicates {
+	if eh.checkDuplicates {
 		shouldProcessRevert = eh.tryCheckProcessedWithRetry(common.RevertBlockEvents, revertBlock.Hash)
 	}
 
@@ -154,7 +153,7 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 		return
 	}
 	shouldProcessFinalized := true
-	if eh.config.CheckDuplicates {
+	if eh.checkDuplicates {
 		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(common.FinalizedBlockEvents, finalizedBlock.Hash)
 	}
 
@@ -185,7 +184,7 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 		return
 	}
 	shouldProcessTxs := true
-	if eh.config.CheckDuplicates {
+	if eh.checkDuplicates {
 		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockTxs, blockTxs.Hash)
 	}
 
@@ -223,7 +222,7 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 		return
 	}
 	shouldProcessScrs := true
-	if eh.config.CheckDuplicates {
+	if eh.checkDuplicates {
 		shouldProcessScrs = eh.tryCheckProcessedWithRetry(common.BlockScrs, blockScrs.Hash)
 	}
 
@@ -261,7 +260,7 @@ func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 		return
 	}
 	shouldProcessTxs := true
-	if eh.config.CheckDuplicates {
+	if eh.checkDuplicates {
 		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockEvents, blockTxs.Hash)
 	}
 

@@ -487,7 +487,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.MainConfig.ConnectorApi.CheckDuplicates = true
+	cfg.MainConfig.General.CheckDuplicates = true
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 

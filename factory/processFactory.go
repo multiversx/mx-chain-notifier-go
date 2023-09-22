@@ -18,7 +18,7 @@ const bech32PubkeyConverterType = "bech32"
 
 // ArgsEventsHandlerFactory defines the arguments needed for events handler creation
 type ArgsEventsHandlerFactory struct {
-	APIConfig            config.ConnectorApiConfig
+	CheckDuplicates      bool
 	Locker               process.LockService
 	MqPublisher          process.Publisher
 	HubPublisher         process.Publisher
@@ -34,10 +34,10 @@ func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, 
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:               args.APIConfig,
 		Locker:               args.Locker,
 		Publisher:            publisher,
 		StatusMetricsHandler: args.StatusMetricsHandler,
+		CheckDuplicates:      args.CheckDuplicates,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
