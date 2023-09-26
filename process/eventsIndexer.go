@@ -7,6 +7,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
 // ErrNilDataProcessor signals that a nil data processor has been provided
@@ -74,7 +75,7 @@ func (ph *payloadHandler) saveBlock(marshalledData []byte) error {
 }
 
 func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte) error {
-	blockData := &outport.BlockData{}
+	blockData := &data.RevertBlock{}
 	err := ph.marshaller.Unmarshal(blockData, marshalledData)
 	if err != nil {
 		return err

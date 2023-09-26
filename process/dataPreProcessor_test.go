@@ -152,43 +152,18 @@ func TestSaveBlock(t *testing.T) {
 func TestRevertIndexerBlock(t *testing.T) {
 	t.Parallel()
 
-	t.Run("failed to get header from bytes, invalid header type", func(t *testing.T) {
-		t.Parallel()
-
-		b := &block.Header{
-			Nonce: 1,
-		}
-		blockBytes, _ := json.Marshal(b)
-
-		blockData := &outport.BlockData{
-			HeaderBytes: blockBytes,
-			HeaderType:  "invalid",
-		}
-
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
-		require.Nil(t, err)
-
-		err = dp.RevertIndexedBlock(blockData)
-		require.Equal(t, coreData.ErrInvalidHeaderType, err)
-	})
-
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		b := &block.Header{
-			Nonce: 1,
-		}
-		blockBytes, _ := json.Marshal(b)
-
-		blockData := &outport.BlockData{
-			HeaderBytes: blockBytes,
-			HeaderType:  "Header",
+		revertBlock := &data.RevertBlock{
+			Nonce: 37,
+			Round: 38,
 		}
 
 		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.RevertIndexedBlock(blockData)
+		err = dp.RevertIndexedBlock(revertBlock)
 		require.Nil(t, err)
 	})
 }

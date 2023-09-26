@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"sync"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -108,7 +110,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 			HeaderHash:  []byte("headerHash1"),
 			Body: &block.Body{
 				MiniBlocks: []*block.MiniBlock{
-					&block.MiniBlock{},
+					{},
 				},
 			},
 		},
@@ -125,18 +127,13 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 }
 
 func pushRevertRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
-	header := &block.HeaderV2{
-		Header: &block.Header{
-			Nonce: 1,
-		},
+	revertData := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("headerHash2")),
+		Nonce: 1,
+		Round: 1,
+		Epoch: 1,
 	}
-	headerBytes, _ := json.Marshal(header)
-	blockData := &outport.BlockData{
-		HeaderBytes: headerBytes,
-		HeaderType:  string(core.ShardHeaderV2),
-		HeaderHash:  []byte("headerHash2"),
-	}
-	err := webServer.RevertEventsRequest(blockData)
+	err := webServer.RevertEventsRequest(revertData)
 	log.LogIfError(err)
 
 	if err == nil {

@@ -20,6 +20,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -107,8 +108,8 @@ func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) error {
 }
 
 // RevertEventsRequest will send a http request for revert event
-func (w *TestWebServer) RevertEventsRequest(events *outport.BlockData) error {
-	jsonBytes, _ := json.Marshal(events)
+func (w *TestWebServer) RevertEventsRequest(revertData *data.RevertBlock) error {
+	jsonBytes, _ := json.Marshal(revertData)
 
 	req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")

@@ -15,6 +15,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 )
@@ -121,17 +122,17 @@ func newWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, e
 	}, nil
 }
 
-// SaveBlock will handle the saving of block
+// PushEventsRequest will handle the saving of block
 func (o *wsObsClient) PushEventsRequest(outportBlock *outport.OutportBlock) error {
 	return o.handleAction(outportBlock, outport.TopicSaveBlock)
 }
 
-// RevertIndexedBlock will handle the action of reverting the indexed block
-func (o *wsObsClient) RevertEventsRequest(blockData *outport.BlockData) error {
-	return o.handleAction(blockData, outport.TopicRevertIndexedBlock)
+// RevertEventsRequest will handle the action of reverting the indexed block
+func (o *wsObsClient) RevertEventsRequest(revertData *data.RevertBlock) error {
+	return o.handleAction(revertData, outport.TopicRevertIndexedBlock)
 }
 
-// FinalizedBlock will handle the finalized block
+// FinalizedEventsRequest will handle the finalized block
 func (o *wsObsClient) FinalizedEventsRequest(finalizedBlock *outport.FinalizedBlock) error {
 	return o.handleAction(finalizedBlock, outport.TopicFinalizedBlock)
 }

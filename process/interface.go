@@ -54,7 +54,7 @@ type WSClient interface {
 // DataProcessor dines what a data indexer should do
 type DataProcessor interface {
 	SaveBlock(outportBlock *outport.OutportBlock) error
-	RevertIndexedBlock(blockData *outport.BlockData) error
+	RevertIndexedBlock(blockData *data.RevertBlock) error
 	FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error
 	IsInterfaceNil() bool
 }

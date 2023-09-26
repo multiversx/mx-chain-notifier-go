@@ -1,11 +1,14 @@
 package mocks
 
-import "github.com/multiversx/mx-chain-core-go/data/outport"
+import (
+	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-notifier-go/data"
+)
 
 // EventsDataProcessorStub -
 type EventsDataProcessorStub struct {
 	SaveBlockCalled          func(outportBlock *outport.OutportBlock) error
-	RevertIndexedBlockCalled func(blockData *outport.BlockData) error
+	RevertIndexedBlockCalled func(blockData *data.RevertBlock) error
 	FinalizedBlockCalled     func(finalizedBlock *outport.FinalizedBlock) error
 }
 
@@ -19,7 +22,7 @@ func (stub *EventsDataProcessorStub) SaveBlock(outportBlock *outport.OutportBloc
 }
 
 // RevertIndexedBlock -
-func (stub *EventsDataProcessorStub) RevertIndexedBlock(blockData *outport.BlockData) error {
+func (stub *EventsDataProcessorStub) RevertIndexedBlock(blockData *data.RevertBlock) error {
 	if stub.RevertIndexedBlockCalled != nil {
 		return stub.RevertIndexedBlockCalled(blockData)
 	}

@@ -219,18 +219,11 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 		},
 	}
 
-	ws.SendSubscribeMessage(subscribeEvent)
+	_ = ws.SendSubscribeMessage(subscribeEvent)
 
-	header := &block.HeaderV2{
-		Header: &block.Header{
-			Nonce: 1,
-		},
-	}
-	headerBytes, _ := json.Marshal(header)
-	blockEvents := &outport.BlockData{
-		HeaderBytes: headerBytes,
-		HeaderType:  string(core.ShardHeaderV2),
-		HeaderHash:  []byte("hash1"),
+	revertBlock := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
+		Nonce: 1,
 	}
 
 	expReply := &data.RevertBlock{
@@ -251,7 +244,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	err = webServer.RevertEventsRequest(blockEvents)
+	err = webServer.RevertEventsRequest(revertBlock)
 	require.Nil(t, err)
 
 	integrationTests.WaitTimeout(t, wg, time.Second*2)
@@ -533,15 +526,9 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 		},
 	}
 	headerBytes, _ := json.Marshal(header)
-	revertBlock := &outport.BlockData{
-		HeaderBytes: headerBytes,
-		HeaderType:  string(core.ShardHeaderV2),
-		HeaderHash:  []byte("hash1"),
-		Body: &block.Body{
-			MiniBlocks: []*block.MiniBlock{
-				&block.MiniBlock{},
-			},
-		},
+	revertData := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
+		Nonce: 1,
 	}
 	expRevertBlock := &data.RevertBlock{
 		Hash:  hex.EncodeToString([]byte("hash1")),
@@ -711,7 +698,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 
 	go client.PushEventsRequest(blockEvents)
 	go client.FinalizedEventsRequest(finalizedBlock)
-	go client.RevertEventsRequest(revertBlock)
+	go client.RevertEventsRequest(revertData)
 
 	integrationTests.WaitTimeout(t, wg, time.Second*4)
 

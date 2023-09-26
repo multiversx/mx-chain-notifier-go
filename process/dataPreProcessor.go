@@ -127,19 +127,7 @@ func checkBlockDataValid(block *outport.OutportBlock) error {
 }
 
 // RevertIndexedBlock will handle the revert block event
-func (d *eventsDataPreProcessor) RevertIndexedBlock(blockData *outport.BlockData) error {
-	header, err := d.getHeaderFromBytes(core.HeaderType(blockData.HeaderType), blockData.HeaderBytes)
-	if err != nil {
-		return err
-	}
-
-	revertData := &data.RevertBlock{
-		Hash:  hex.EncodeToString(blockData.GetHeaderHash()),
-		Nonce: header.GetNonce(),
-		Round: header.GetRound(),
-		Epoch: header.GetEpoch(),
-	}
-
+func (d *eventsDataPreProcessor) RevertIndexedBlock(revertData *data.RevertBlock) error {
 	d.facade.HandleRevertEvents(*revertData)
 
 	return nil

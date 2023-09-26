@@ -9,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/common"
+	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/stretchr/testify/require"
@@ -88,7 +89,7 @@ func TestProcessPayload(t *testing.T) {
 
 		wasCalled := false
 		dp := &mocks.EventsDataProcessorStub{
-			RevertIndexedBlockCalled: func(blockData *outport.BlockData) error {
+			RevertIndexedBlockCalled: func(blockData *data.RevertBlock) error {
 				wasCalled = true
 				return nil
 			},
