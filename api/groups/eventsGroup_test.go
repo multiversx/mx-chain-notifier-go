@@ -82,7 +82,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 		args := createMockEventsGroupArgs()
 		wasCalled := false
 		args.PayloadHandler = &testscommon.PayloadHandlerStub{
-			ProcessPayloadCalled: func(payload []byte, topic string, version uint32) error {
+			ProcessPayloadCalled: func(payload []byte, topic string, _ uint32) error {
 				wasCalled = true
 				return errors.New("expected err")
 			},

@@ -20,7 +20,7 @@ import (
 )
 
 // CreateObserverConnector will create observer connector component
-func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string) (ObserverConnector, error) {
+func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string, payloadVersion uint32) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
 	preProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
@@ -33,7 +33,7 @@ func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiTy
 		return nil, err
 	}
 
-	eventsProcessors[common.PayloadV1] = dataPreProcessor
+	eventsProcessors[payloadVersion] = dataPreProcessor
 	payloadHandler, err := process.NewPayloadHandler(eventsProcessors)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiTy
 
 	switch connType {
 	case common.HTTPConnectorType:
-		return NewTestWebServer(facade, apiType, payloadHandler), nil
+		return NewTestWebServer(facade, apiType, payloadHandler, payloadVersion), nil
 	case common.WSObsConnectorType:
 		return newTestWSServer(facade, marshaller)
 	default:

@@ -30,18 +30,20 @@ type TestWebServer struct {
 	apiType            string
 	marshaller         marshal.Marshalizer
 	internalMarshaller marshal.Marshalizer
+	payloadVersion     uint32
 	ws                 *gin.Engine
 	mutWs              sync.Mutex
 }
 
 // NewTestWebServer creates a new test web server
-func NewTestWebServer(facade shared.FacadeHandler, apiType string, payloadHandler websocket.PayloadHandler) *TestWebServer {
+func NewTestWebServer(facade shared.FacadeHandler, apiType string, payloadHandler websocket.PayloadHandler, payloadVersion uint32) *TestWebServer {
 	webServer := &TestWebServer{
 		facade:             facade,
 		payloadHandler:     payloadHandler,
 		apiType:            apiType,
 		marshaller:         &marshal.JsonMarshalizer{},
 		internalMarshaller: &marshal.JsonMarshalizer{},
+		payloadVersion:     payloadVersion,
 	}
 
 	ws := gin.New()
@@ -97,7 +99,7 @@ func (w *TestWebServer) PushEventsRequest(events *outport.OutportBlock) error {
 
 	req, _ := http.NewRequest("POST", "/events/push", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("version", "1")
+	req.Header.Set("version", fmt.Sprint(w.payloadVersion))
 
 	resp := w.DoRequest(req)
 	if resp.Code != http.StatusOK {
@@ -113,7 +115,7 @@ func (w *TestWebServer) RevertEventsRequest(events *outport.BlockData) error {
 
 	req, _ := http.NewRequest("POST", "/events/revert", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("version", "1")
+	req.Header.Set("version", fmt.Sprint(w.payloadVersion))
 
 	resp := w.DoRequest(req)
 	if resp.Code != http.StatusOK {
@@ -129,7 +131,7 @@ func (w *TestWebServer) FinalizedEventsRequest(events *outport.FinalizedBlock) e
 
 	req, _ := http.NewRequest("POST", "/events/finalized", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("version", "1")
+	req.Header.Set("version", fmt.Sprint(w.payloadVersion))
 
 	resp := w.DoRequest(req)
 
