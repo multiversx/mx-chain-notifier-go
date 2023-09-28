@@ -21,22 +21,26 @@ import (
 var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
+	t.Run("with http observer connnector + payload version 0", func(t *testing.T) {
+		testNotifierWithRabbitMQ(t, common.HTTPConnectorType, common.PayloadV0)
+	})
+
 	t.Run("with http observer connnector", func(t *testing.T) {
-		testNotifierWithRabbitMQ(t, common.HTTPConnectorType)
+		testNotifierWithRabbitMQ(t, common.HTTPConnectorType, common.PayloadV1)
 	})
 
 	t.Run("with ws observer connnector", func(t *testing.T) {
-		testNotifierWithRabbitMQ(t, common.WSObsConnectorType)
+		testNotifierWithRabbitMQ(t, common.WSObsConnectorType, common.PayloadV1)
 	})
 }
 
-func testNotifierWithRabbitMQ(t *testing.T, observerType string) {
+func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion uint32) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.MainConfig.ConnectorApi.CheckDuplicates = true
+	cfg.MainConfig.General.CheckDuplicates = true
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
-	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueueAPIType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()

@@ -24,8 +24,7 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 				},
 			},
 			Flags: config.FlagsConfig{
-				APIType:       "notifier",
-				ConnectorType: "http",
+				APIType: "notifier",
 			},
 		},
 	}
@@ -65,17 +64,6 @@ func TestNewWebServerHandler(t *testing.T) {
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))
 		require.Equal(t, common.ErrInvalidAPIType, err)
-	})
-
-	t.Run("invalid obs connector type", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockArgsWebServerHandler()
-		args.Configs.Flags.ConnectorType = ""
-
-		ws, err := gin.NewWebServerHandler(args)
-		require.True(t, check.IfNil(ws))
-		require.Equal(t, common.ErrInvalidConnectorType, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {

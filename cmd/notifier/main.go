@@ -72,12 +72,6 @@ VERSION:
 		Usage: "This flag specifies the api type, it defines the way in which it will expose the events. Options: rabbit-api | notifier",
 		Value: "notifier",
 	}
-
-	connectorType = cli.StringFlag{
-		Name:  "connector-type",
-		Usage: "This flag specifies the observer connector type. Options: ws | http",
-		Value: "http",
-	}
 )
 
 func main() {
@@ -91,7 +85,6 @@ func main() {
 		apiConfigFile,
 		workingDirectory,
 		apiType,
-		connectorType,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -178,7 +171,6 @@ func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
 	flagsConfig.GeneralConfigPath = ctx.GlobalString(generalConfigFile.Name)
 	flagsConfig.APIConfigPath = ctx.GlobalString(apiConfigFile.Name)
 	flagsConfig.APIType = ctx.GlobalString(apiType.Name)
-	flagsConfig.ConnectorType = ctx.GlobalString(connectorType.Name)
 
 	return flagsConfig, nil
 }

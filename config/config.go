@@ -21,8 +21,8 @@ type MainConfig struct {
 // GeneralConfig maps the general config section
 type GeneralConfig struct {
 	ExternalMarshaller MarshallerConfig
-	InternalMarshaller MarshallerConfig
 	AddressConverter   AddressConverterConfig
+	CheckDuplicates    bool
 }
 
 // MarshallerConfig maps the marshaller configuration
@@ -39,10 +39,10 @@ type AddressConverterConfig struct {
 
 // ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
-	Host            string
-	Username        string
-	Password        string
-	CheckDuplicates bool
+	Enabled  bool
+	Host     string
+	Username string
+	Password string
 }
 
 // APIRoutesConfig holds the configuration related to Rest API routes
@@ -90,12 +90,16 @@ type RabbitMQExchangeConfig struct {
 
 // WebSocketConfig holds the configuration for websocket observer interaction config
 type WebSocketConfig struct {
-	URL                string
-	Mode               string
+	Enabled                    bool
+	URL                        string
+	Mode                       string
+	RetryDurationInSec         int
+	AcknowledgeTimeoutInSec    int
+	WithAcknowledge            bool
+	BlockingAckOnError         bool
+	DropMessagesIfNoConnection bool
+
 	DataMarshallerType string
-	RetryDurationInSec uint32
-	BlockingAckOnError bool
-	WithAcknowledge    bool
 }
 
 // FlagsConfig holds the values for CLI flags
@@ -107,7 +111,6 @@ type FlagsConfig struct {
 	WorkingDir        string
 	APIType           string
 	RestApiInterface  string
-	ConnectorType     string
 }
 
 // LoadMainConfig returns a MainConfig instance by reading the provided toml file

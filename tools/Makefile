@@ -2,17 +2,21 @@ SHELL := $(shell which bash)
 
 .PHONY: obs-run ws-run rabbit-run request-test
 
-obs-run:
-	cd obs && \
+http-connector:
+	cd httpConnector && \
 		go run main.go httpClientWrapper.go
 
-ws-run:
-	cd wsClient && \
+ws-connector:
+	cd wsConnector && \
 		go run main.go
 
-rabbit-run:
-	cd rabbitClient && \
+rabbit-publisher:
+	cd rabbitPublisher && \
 		python3 receive.py
+
+ws-publisher:
+	cd wsPublisher && \
+		go run main.go
 
 
 # #########################

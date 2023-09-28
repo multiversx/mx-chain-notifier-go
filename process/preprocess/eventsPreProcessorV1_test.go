@@ -1,66 +1,22 @@
-package process_test
+package preprocess_test
 
 import (
 	"encoding/json"
 	"errors"
 	"testing"
 
-	"github.com/multiversx/mx-chain-core-go/core/mock"
 	coreData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
-	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
-	"github.com/multiversx/mx-chain-notifier-go/process"
+	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
 	"github.com/stretchr/testify/require"
 )
 
-func createMockEventsDataPreProcessorArgs() process.ArgsEventsDataPreProcessor {
-	return process.ArgsEventsDataPreProcessor{
-		Marshaller: &mock.MarshalizerMock{},
-		Facade:     &mocks.FacadeStub{},
-	}
-}
-
-func TestNewEventsDataPreProcessor(t *testing.T) {
-	t.Parallel()
-
-	t.Run("nil marshaller", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsDataPreProcessorArgs()
-		args.Marshaller = nil
-
-		dp, err := process.NewEventsDataPreProcessor(args)
-		require.Nil(t, dp)
-		require.Equal(t, common.ErrNilMarshaller, err)
-	})
-
-	t.Run("nil facade", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockEventsDataPreProcessorArgs()
-		args.Facade = nil
-
-		dp, err := process.NewEventsDataPreProcessor(args)
-		require.Nil(t, dp)
-		require.Equal(t, common.ErrNilFacadeHandler, err)
-	})
-
-	t.Run("should work", func(t *testing.T) {
-		t.Parallel()
-
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
-		require.Nil(t, err)
-		require.NotNil(t, dp)
-		require.False(t, dp.IsInterfaceNil())
-	})
-}
-
-func TestSaveBlock(t *testing.T) {
+func TestPreProcessorV1_SaveBlock(t *testing.T) {
 	t.Parallel()
 
 	t.Run("nil block data", func(t *testing.T) {
@@ -68,12 +24,13 @@ func TestSaveBlock(t *testing.T) {
 
 		outportBlock := createDefaultOutportBlock()
 		outportBlock.BlockData = nil
+		marshalledBlock, _ := json.Marshal(outportBlock)
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.SaveBlock(outportBlock)
-		require.Equal(t, process.ErrNilBlockData, err)
+		err = dp.SaveBlock(marshalledBlock)
+		require.Equal(t, preprocess.ErrNilBlockData, err)
 	})
 
 	t.Run("nil transaction pool", func(t *testing.T) {
@@ -82,11 +39,12 @@ func TestSaveBlock(t *testing.T) {
 		outportBlock := createDefaultOutportBlock()
 		outportBlock.TransactionPool = nil
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.SaveBlock(outportBlock)
-		require.Equal(t, process.ErrNilTransactionPool, err)
+		marshalledBlock, _ := json.Marshal(outportBlock)
+		err = dp.SaveBlock(marshalledBlock)
+		require.Equal(t, preprocess.ErrNilTransactionPool, err)
 	})
 
 	t.Run("nil header gas consumption", func(t *testing.T) {
@@ -95,11 +53,12 @@ func TestSaveBlock(t *testing.T) {
 		outportBlock := createDefaultOutportBlock()
 		outportBlock.HeaderGasConsumption = nil
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.SaveBlock(outportBlock)
-		require.Equal(t, process.ErrNilHeaderGasConsumption, err)
+		marshalledBlock, _ := json.Marshal(outportBlock)
+		err = dp.SaveBlock(marshalledBlock)
+		require.Equal(t, preprocess.ErrNilHeaderGasConsumption, err)
 	})
 
 	t.Run("failed to get header from bytes", func(t *testing.T) {
@@ -108,10 +67,11 @@ func TestSaveBlock(t *testing.T) {
 		outportBlock := createDefaultOutportBlock()
 		outportBlock.BlockData.HeaderType = "invalid"
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.SaveBlock(outportBlock)
+		marshalledBlock, _ := json.Marshal(outportBlock)
+		err = dp.SaveBlock(marshalledBlock)
 		require.Equal(t, coreData.ErrInvalidHeaderType, err)
 	})
 
@@ -129,27 +89,29 @@ func TestSaveBlock(t *testing.T) {
 
 		outportBlock := createDefaultOutportBlock()
 
-		dp, err := process.NewEventsDataPreProcessor(args)
+		dp, err := preprocess.NewEventsPreProcessorV1(args)
 		require.Nil(t, err)
 
-		err = dp.SaveBlock(outportBlock)
+		marshalledBlock, _ := json.Marshal(outportBlock)
+		err = dp.SaveBlock(marshalledBlock)
 		require.Equal(t, expectedErr, err)
 	})
 
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
 		outportBlock := createDefaultOutportBlock()
 
-		err = dp.SaveBlock(outportBlock)
+		marshalledBlock, _ := json.Marshal(outportBlock)
+		err = dp.SaveBlock(marshalledBlock)
 		require.Nil(t, err)
 	})
 }
 
-func TestRevertIndexerBlock(t *testing.T) {
+func TestPreProcessorV1_RevertIndexerBlock(t *testing.T) {
 	t.Parallel()
 
 	t.Run("failed to get header from bytes, invalid header type", func(t *testing.T) {
@@ -165,10 +127,11 @@ func TestRevertIndexerBlock(t *testing.T) {
 			HeaderType:  "invalid",
 		}
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.RevertIndexedBlock(blockData)
+		marshalledBlock, _ := json.Marshal(blockData)
+		err = dp.RevertIndexedBlock(marshalledBlock)
 		require.Equal(t, coreData.ErrInvalidHeaderType, err)
 	})
 
@@ -185,25 +148,27 @@ func TestRevertIndexerBlock(t *testing.T) {
 			HeaderType:  "Header",
 		}
 
-		dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 		require.Nil(t, err)
 
-		err = dp.RevertIndexedBlock(blockData)
+		marshalledBlock, _ := json.Marshal(blockData)
+		err = dp.RevertIndexedBlock(marshalledBlock)
 		require.Nil(t, err)
 	})
 }
 
-func TestFinalizedBlock(t *testing.T) {
+func TestPreProcessorV1_FinalizedBlock(t *testing.T) {
 	t.Parallel()
 
 	finalizedBlock := &outport.FinalizedBlock{
 		HeaderHash: []byte("headerHash1"),
 	}
 
-	dp, err := process.NewEventsDataPreProcessor(createMockEventsDataPreProcessorArgs())
+	dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
 	require.Nil(t, err)
 
-	err = dp.FinalizedBlock(finalizedBlock)
+	marshalledBlock, _ := json.Marshal(finalizedBlock)
+	err = dp.FinalizedBlock(marshalledBlock)
 	require.Nil(t, err)
 }
 

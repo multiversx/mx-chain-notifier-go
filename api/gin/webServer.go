@@ -71,9 +71,6 @@ func checkArgs(args ArgsWebServerHandler) error {
 	if args.Configs.Flags.APIType == "" {
 		return common.ErrInvalidAPIType
 	}
-	if args.Configs.Flags.ConnectorType == "" {
-		return common.ErrInvalidConnectorType
-	}
 	if check.IfNil(args.PayloadHandler) {
 		return apiErrors.ErrNilPayloadHandler
 	}
@@ -144,7 +141,7 @@ func (w *webServer) createGroups() error {
 		PayloadHandler: w.payloadHandler,
 	}
 
-	if w.configs.Flags.ConnectorType == common.HTTPConnectorType {
+	if w.configs.MainConfig.ConnectorApi.Enabled {
 		eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
 		if err != nil {
 			return err
