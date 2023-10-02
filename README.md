@@ -11,40 +11,17 @@ has to setup one or multiple observers. For running an observing squad,
 these [docs](https://docs.multiversx.com/integrators/observing-squad/) 
 cover the whole process. 
 
+The observer node can be connected using WebSocket integration. Please check observer
+node config for setting up the connector. Enable `HostDriversConfig` in order to use
+WebSocket integration.
+
 The required configs for launching an observer/s with a driver attached,
 can be found [here](https://github.com/multiversx/mx-chain-go/blob/master/cmd/node/config/external.toml).
 
-The supported config variables are as follows:
+The HTTP integration is still available for backwards compatibility, but it will be
+deprecated in the future.
 
-- `Enabled`: signals whether a driver should be attached when launching the node.
-- `UseAuthorization`: signal whether to use authorization. For testing purposes it can be set to `false`.
-- `ProxyUrl`: host and port on which the `eventNotifier` will push the parsed event data.
-- `Username`: the username used for authorization.
-- `Password`: the password used for authorization.
-
-The corresponding config section for enabling the driver:
-
-```toml
-[EventNotifierConnector]
-    # Enabled will turn on or off the event notifier connector
-    Enabled = true
-
-    # UseAuthorization signals the proxy to use authorization
-    # Never run a production setup without authorization
-    UseAuthorization = false
-
-    # ProxyUrl is used to communicate with the subscriptions hub
-    # The indexer instance will broadcast data using ProxyUrl
-    ProxyUrl = "http://localhost:5000"
-
-    # Username and Password need to be specified if UseAuthorization is set to true
-    Username = ""
-
-    # Password is used to authorize an observer to push event data
-    Password = ""
-```
-
-## Install
+## How to run
 
 Using the `cmd/notifier` package as root, execute the following commands:
 
@@ -55,29 +32,31 @@ Using the `cmd/notifier` package as root, execute the following commands:
 ---
 This can also be done using a single command from `Makefile`:
 ```bash
-# by default, rabbit-api type
+# by default, rabbitmq type
 make run
 
-# specify notifier running mode (eq: rabbit-api, notifier)
-make run api_type=rabbit-api
+# specify notifier running mode (eq: rabbitmq, ws)
+make run publisher_type=rabbitmq
 ```
 
-## Launching the proxy
 
 CLI: run `--help` to get the command line parameters
 ```bash
 ./cmd/notifier/event-notifier --help
 ```
 
+### Prerequisites
+
 Before launching the proxy (notifier) service, it has to be configured so that it runs with the
-correct environment variables.
+correct config variables.
+
+The main config file can be found [here](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml).
 
 The supported config variables are:
 - `Host`: the host and port on which the http server listens on. Should be the same port
   as the one specified in the `ProxyUrl` described above.
 - `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
 - `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
-- `CheckDuplicates`: if true, it will check (based on a locker service using redis) if the event have been already pushed to clients
 
 If observer connector is set to use BasicAuth with `UseAuthorization = true`, `Username` and `Password` has to be
 set here on events notifier, and `Auth` flag has to be enabled in
@@ -90,14 +69,14 @@ For example:
         { Name = "/revert", Open = true, Auth = false },
 ```
 
-The main config file can be found [here](https://github.com/multiversx/mx-chain-notifier-go/blob/main/cmd/notifier/config/config.toml).
-
 After the configuration file is set up, the notifier instance can be
 launched.
 
-There are two ways in which notifier-go can be started:
-* `notifier` mode: it will launch a websocket handler (check [WebSockets](#websockets) section)
-* `rabbit-api` mode: it will set up a rabbitMQ client based on the RabbitMQ section from main config file (check [RabbitMQ](#rabbitmq) section)
+There are multiple publishing options when starting notifier service:
+* `ws`: it will launch a websocket handler (check [WebSockets](#websockets) section)
+* `rabbitmq`: it will set up a rabbitMQ client based on the RabbitMQ section from main config file (check [RabbitMQ](#rabbitmq) section)
+
+## Development setup
 
 There is a development setup using docker containers (with
 docker compose) that can be used for this.
@@ -113,7 +92,7 @@ events are being processed).
 * `notifier` mode can be launched as following (check `Makefile` for details): 
 ```bash
 # Starts setup with one notifier instance
-make docker-new api_type=notifier
+make docker-new publisher_type=ws
 
 # Stop notifier instance
 make docker-stop
@@ -140,7 +119,7 @@ make compose-rm
 
 Start Notifier instance
 ```bash
-make docker-new api_type=rabbit-api
+make docker-new publisher_type=rabbitmq
 ```
 
 ### API Endpoints

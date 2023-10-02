@@ -24,7 +24,7 @@ func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 				},
 			},
 			Flags: config.FlagsConfig{
-				APIType: "notifier",
+				PublisherType: "notifier",
 			},
 		},
 	}
@@ -59,7 +59,7 @@ func TestNewWebServerHandler(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWebServerHandler()
-		args.Configs.Flags.APIType = ""
+		args.Configs.Flags.PublisherType = ""
 
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))

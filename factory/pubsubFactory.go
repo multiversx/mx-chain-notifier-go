@@ -11,9 +11,9 @@ import (
 // CreatePublisher creates publisher component
 func CreatePublisher(apiType string, config config.MainConfig, marshaller marshal.Marshalizer) (rabbitmq.PublisherService, error) {
 	switch apiType {
-	case common.MessageQueueAPIType:
+	case common.MessageQueuePublisherType:
 		return createRabbitMqPublisher(config.RabbitMQ, marshaller)
-	case common.WSAPIType:
+	case common.WSPublisherType:
 		return &disabled.Publisher{}, nil
 	default:
 		return nil, common.ErrInvalidAPIType

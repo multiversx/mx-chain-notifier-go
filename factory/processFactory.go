@@ -53,9 +53,9 @@ func getPublisher(
 	hubPublisher process.Publisher,
 ) (process.Publisher, error) {
 	switch apiType {
-	case common.MessageQueueAPIType:
+	case common.MessageQueuePublisherType:
 		return mqPublisher, nil
-	case common.WSAPIType:
+	case common.WSPublisherType:
 		return hubPublisher, nil
 	default:
 		return nil, common.ErrInvalidAPIType

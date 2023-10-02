@@ -45,17 +45,17 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.APIType, nr.configs.MainConfig, externalMarshaller)
+	publisher, err := factory.CreatePublisher(nr.configs.Flags.PublisherType, nr.configs.MainConfig, externalMarshaller)
 	if err != nil {
 		return err
 	}
 
-	hub, err := factory.CreateHub(nr.configs.Flags.APIType)
+	hub, err := factory.CreateHub(nr.configs.Flags.PublisherType)
 	if err != nil {
 		return err
 	}
 
-	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.APIType, hub, externalMarshaller)
+	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.PublisherType, hub, externalMarshaller)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (nr *notifierRunner) Start() error {
 		Locker:               lockService,
 		MqPublisher:          publisher,
 		HubPublisher:         hub,
-		APIType:              nr.configs.Flags.APIType,
+		APIType:              nr.configs.Flags.PublisherType,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)

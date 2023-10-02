@@ -21,9 +21,9 @@ const (
 // CreateWSHandler creates websocket handler component based on api type
 func CreateWSHandler(apiType string, hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
 	switch apiType {
-	case common.MessageQueueAPIType:
+	case common.MessageQueuePublisherType:
 		return &disabled.WSHandler{}, nil
-	case common.WSAPIType:
+	case common.WSPublisherType:
 		return createWSHandler(hub, marshaller)
 	default:
 		return nil, common.ErrInvalidAPIType

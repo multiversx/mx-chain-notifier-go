@@ -230,7 +230,7 @@ func GetDefaultConfigs() config.Configs {
 			SaveLogFile:       false,
 			GeneralConfigPath: "./config/config.toml",
 			WorkingDir:        "",
-			APIType:           "notifier",
+			PublisherType:     "notifier",
 		},
 	}
 }

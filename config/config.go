@@ -109,7 +109,7 @@ type FlagsConfig struct {
 	GeneralConfigPath string
 	APIConfigPath     string
 	WorkingDir        string
-	APIType           string
+	PublisherType     string
 	RestApiInterface  string
 }
 
