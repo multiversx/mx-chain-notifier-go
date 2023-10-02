@@ -11,7 +11,7 @@ has to setup one or multiple observers. For running an observing squad,
 these [docs](https://docs.multiversx.com/integrators/observing-squad/) 
 cover the whole process. 
 
-There observer node can be connected using WebSocket integration. Please check observer
+The observer node can be connected using WebSocket integration. Please check observer
 node config for setting up the connector. Enable `HostDriversConfig` in order to use
 WebSocket integration.
 
