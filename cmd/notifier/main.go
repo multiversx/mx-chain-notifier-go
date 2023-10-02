@@ -83,12 +83,6 @@ VERSION:
 		Usage: "This flag specifies the publisher type, it defines the way in which it will expose the events. Options: " + common.MessageQueuePublisherType + " | " + common.WSPublisherType,
 		Value: common.MessageQueuePublisherType,
 	}
-
-	connectorType = cli.StringFlag{
-		Name:  "connector-type",
-		Usage: "This flag specifies the observer connector type. Options: " + common.WSObsConnectorType + " | " + common.HTTPConnectorType,
-		Value: "http",
-	}
 )
 
 // appVersion should be populated at build time using ldflags
@@ -116,7 +110,6 @@ func main() {
 		workingDirectory,
 		apiType,
 		publisherType,
-		connectorType,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -214,8 +207,6 @@ func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
 	if ctx.IsSet(publisherType.Name) {
 		flagsConfig.PublisherType = ctx.GlobalString(publisherType.Name)
 	}
-
-	flagsConfig.ConnectorType = ctx.GlobalString(connectorType.Name)
 
 	return flagsConfig, nil
 }

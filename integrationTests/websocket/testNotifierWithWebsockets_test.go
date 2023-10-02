@@ -24,7 +24,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()
@@ -109,7 +109,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()
@@ -201,7 +201,7 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()
@@ -262,7 +262,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()
@@ -313,7 +313,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()
@@ -397,7 +397,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()
@@ -487,11 +487,11 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.MainConfig.ConnectorApi.CheckDuplicates = true
+	cfg.MainConfig.General.CheckDuplicates = true
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
 	notifier.Publisher.Run()

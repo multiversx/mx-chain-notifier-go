@@ -10,7 +10,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
-	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
@@ -19,9 +18,7 @@ import (
 
 func createMockEventsHandlerArgs() process.ArgsEventsHandler {
 	return process.ArgsEventsHandler{
-		Config: config.ConnectorApiConfig{
-			CheckDuplicates: false,
-		},
+		CheckDuplicates:      false,
 		Locker:               &mocks.LockerStub{},
 		Publisher:            &mocks.PublisherStub{},
 		StatusMetricsHandler: &mocks.StatusMetricsStub{},
@@ -115,7 +112,7 @@ func TestHandlePushEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastCalled: func(events data.BlockEvents) {
 				require.Equal(t, blockEvents, events)
@@ -172,7 +169,7 @@ func TestHandleRevertEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastRevertCalled: func(events data.RevertBlock) {
 				require.Equal(t, revertEvents, events)
@@ -224,7 +221,7 @@ func TestHandleFinalizedEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastFinalizedCalled: func(events data.FinalizedBlock) {
 				wasCalled = true
@@ -293,7 +290,7 @@ func TestHandleTxsEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastTxsCalled: func(event data.BlockTxs) {
 				require.Equal(t, blockTxs, event)
@@ -350,7 +347,7 @@ func TestHandleScrsEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastScrsCalled: func(event data.BlockScrs) {
 				wasCalled = true
@@ -418,7 +415,7 @@ func TestHandleBlockEventsWithOrderEvents(t *testing.T) {
 
 		wasCalled := false
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Publisher = &mocks.PublisherStub{
 			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
 				require.Equal(t, events, events)
@@ -449,7 +446,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		t.Parallel()
 
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Locker = &mocks.LockerStub{
 			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
 				return false, nil
@@ -467,7 +464,7 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		t.Parallel()
 
 		args := createMockEventsHandlerArgs()
-		args.Config.CheckDuplicates = true
+		args.CheckDuplicates = true
 		args.Locker = &mocks.LockerStub{
 			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
 				return true, nil

@@ -1,36 +1,34 @@
 package mocks
 
-import "github.com/multiversx/mx-chain-core-go/data/outport"
-
 // EventsDataProcessorStub -
 type EventsDataProcessorStub struct {
-	SaveBlockCalled          func(outportBlock *outport.OutportBlock) error
-	RevertIndexedBlockCalled func(blockData *outport.BlockData) error
-	FinalizedBlockCalled     func(finalizedBlock *outport.FinalizedBlock) error
+	SaveBlockCalled          func(marshalledData []byte) error
+	RevertIndexedBlockCalled func(marshalledData []byte) error
+	FinalizedBlockCalled     func(marshalledData []byte) error
 }
 
 // SaveBlock -
-func (stub *EventsDataProcessorStub) SaveBlock(outportBlock *outport.OutportBlock) error {
+func (stub *EventsDataProcessorStub) SaveBlock(marshalledData []byte) error {
 	if stub.SaveBlockCalled != nil {
-		return stub.SaveBlockCalled(outportBlock)
+		return stub.SaveBlockCalled(marshalledData)
 	}
 
 	return nil
 }
 
 // RevertIndexedBlock -
-func (stub *EventsDataProcessorStub) RevertIndexedBlock(blockData *outport.BlockData) error {
+func (stub *EventsDataProcessorStub) RevertIndexedBlock(marshalledData []byte) error {
 	if stub.RevertIndexedBlockCalled != nil {
-		return stub.RevertIndexedBlockCalled(blockData)
+		return stub.RevertIndexedBlockCalled(marshalledData)
 	}
 
 	return nil
 }
 
 // FinalizedBlock -
-func (stub *EventsDataProcessorStub) FinalizedBlock(finalizedBlock *outport.FinalizedBlock) error {
+func (stub *EventsDataProcessorStub) FinalizedBlock(marshalledData []byte) error {
 	if stub.FinalizedBlockCalled != nil {
-		return stub.FinalizedBlockCalled(finalizedBlock)
+		return stub.FinalizedBlockCalled(marshalledData)
 	}
 
 	return nil

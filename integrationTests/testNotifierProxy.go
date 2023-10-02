@@ -50,10 +50,10 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 	statusMetricsHandler := metrics.NewStatusMetrics()
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:               cfg.ConnectorApi,
 		Locker:               locker,
 		Publisher:            publisher,
 		StatusMetricsHandler: statusMetricsHandler,
+		CheckDuplicates:      cfg.General.CheckDuplicates,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -130,10 +130,10 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 	}
 
 	argsEventsHandler := process.ArgsEventsHandler{
-		Config:               cfg.ConnectorApi,
 		Locker:               locker,
 		Publisher:            publisher,
 		StatusMetricsHandler: statusMetricsHandler,
+		CheckDuplicates:      cfg.General.CheckDuplicates,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -178,20 +178,17 @@ func GetDefaultConfigs() config.Configs {
 				ExternalMarshaller: config.MarshallerConfig{
 					Type: "json",
 				},
-				InternalMarshaller: config.MarshallerConfig{
-					Type: "json",
-				},
 				AddressConverter: config.AddressConverterConfig{
 					Type:   "bech32",
 					Prefix: "erd",
 					Length: 32,
 				},
+				CheckDuplicates: false,
 			},
 			ConnectorApi: config.ConnectorApiConfig{
-				Host:            "8081",
-				Username:        "user",
-				Password:        "pass",
-				CheckDuplicates: false,
+				Host:     "8081",
+				Username: "user",
+				Password: "pass",
 			},
 			Redis: config.RedisConfig{
 				Url:            "redis://localhost:6379",
@@ -234,7 +231,6 @@ func GetDefaultConfigs() config.Configs {
 			GeneralConfigPath: "./config/config.toml",
 			WorkingDir:        "",
 			PublisherType:     "notifier",
-			ConnectorType:     "http",
 		},
 	}
 }

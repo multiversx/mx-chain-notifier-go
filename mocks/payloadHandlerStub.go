@@ -2,14 +2,14 @@ package mocks
 
 // PayloadHandlerStub -
 type PayloadHandlerStub struct {
-	ProcessPayloadCalled func(payload []byte, topic string) error
+	ProcessPayloadCalled func(payload []byte, topic string, version uint32) error
 	CloseCalled          func() error
 }
 
 // ProcessPayload -
-func (ph *PayloadHandlerStub) ProcessPayload(payload []byte, topic string) error {
+func (ph *PayloadHandlerStub) ProcessPayload(payload []byte, topic string, version uint32) error {
 	if ph.ProcessPayloadCalled != nil {
-		return ph.ProcessPayloadCalled(payload, topic)
+		return ph.ProcessPayloadCalled(payload, topic, version)
 	}
 	return nil
 }

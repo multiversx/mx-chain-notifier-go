@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/multiversx/mx-chain-communication-go/websocket"
 	wsData "github.com/multiversx/mx-chain-communication-go/websocket/data"
 	wsFactory "github.com/multiversx/mx-chain-communication-go/websocket/factory"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -17,40 +16,54 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
 	"github.com/multiversx/mx-chain-notifier-go/process"
+	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
 )
 
 // CreateObserverConnector will create observer connector component
-func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string) (ObserverConnector, error) {
+func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string, payloadVersion uint32) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
-	dataIndexerArgs := process.ArgsEventsDataPreProcessor{
+	preProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
 		Facade:     facade,
 	}
-	dataPreProcessor, _ := process.NewEventsDataPreProcessor(dataIndexerArgs)
-	payloadHandler, _ := process.NewPayloadHandler(marshaller, dataPreProcessor)
+
+	eventsProcessors := make(map[uint32]process.DataProcessor)
+	dataPreProcessor, err := preprocess.NewEventsPreProcessorV1(preProcessorArgs)
+	if err != nil {
+		return nil, err
+	}
+
+	eventsProcessors[payloadVersion] = dataPreProcessor
+	payloadHandler, err := process.NewPayloadHandler(eventsProcessors)
+	if err != nil {
+		return nil, err
+	}
 
 	switch connType {
 	case common.HTTPConnectorType:
-		return NewTestWebServer(facade, apiType, payloadHandler), nil
+		return NewTestWebServer(facade, apiType, payloadHandler, payloadVersion), nil
 	case common.WSObsConnectorType:
-		return newTestWSServer(connType, payloadHandler, marshaller)
+		return newTestWSServer(facade, marshaller)
 	default:
 		return nil, errors.New("invalid observer connector type")
 	}
 }
 
 // newTestWSServer will create a new test ws server
-func newTestWSServer(connType string, payloadHandler websocket.PayloadHandler, marshaller marshal.Marshalizer) (ObserverConnector, error) {
+func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer) (ObserverConnector, error) {
 	port := getRandomPort()
 	conf := config.WebSocketConfig{
-		URL:                "localhost:" + fmt.Sprintf("%d", port),
-		WithAcknowledge:    true,
-		Mode:               "server",
-		RetryDurationInSec: 5,
-		BlockingAckOnError: false,
+		Enabled:                 true,
+		URL:                     "localhost:" + fmt.Sprintf("%d", port),
+		WithAcknowledge:         true,
+		Mode:                    "server",
+		RetryDurationInSec:      5,
+		BlockingAckOnError:      false,
+		AcknowledgeTimeoutInSec: 60,
+		DataMarshallerType:      "json",
 	}
 
-	_, err := factory.CreateWSObserverConnector(connType, conf, marshaller, payloadHandler)
+	_, err := factory.CreateWSObserverConnector(conf, facade)
 	if err != nil {
 		return nil, err
 	}
@@ -102,11 +115,13 @@ func newWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, e
 
 	wsHost, err := wsFactory.CreateWebSocketHost(wsFactory.ArgsWebSocketHost{
 		WebSocketConfig: wsData.WebSocketConfig{
-			URL:                url,
-			WithAcknowledge:    true,
-			Mode:               "client",
-			RetryDurationInSec: 5,
-			BlockingAckOnError: false,
+			URL:                     url,
+			WithAcknowledge:         true,
+			Mode:                    "client",
+			RetryDurationInSec:      5,
+			BlockingAckOnError:      false,
+			AcknowledgeTimeoutInSec: 60,
+			Version:                 1,
 		},
 		Marshaller: marshaller,
 		Log:        log,

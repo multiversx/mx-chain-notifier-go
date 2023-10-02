@@ -43,3 +43,11 @@ const (
 	// HTTPConnectorType defines the http observer connector type
 	HTTPConnectorType string = "http"
 )
+
+const (
+	// PayloadV0 defines the version of payload before versioning implementation
+	PayloadV0 uint32 = 0
+
+	// PayloadV1 defines first payload implementation with versioning
+	PayloadV1 uint32 = 1
+)

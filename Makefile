@@ -34,10 +34,9 @@ build:
 		go build -v -ldflags="-X main.appVersion=$(git describe --tags --long --dirty)" -o ${binary}
 
 publisher_type="rabbitmq"
-conn_type="http"
 run: build
 	cd ${cmd_dir} && \
-		./${binary} --publisher-type=${publisher_type} --log-level="*:DEBUG" --connector-type=${conn_type}
+		./${binary} --publisher-type=${publisher_type} --log-level="*:DEBUG"
 
 runb: build
 	cd ${cmd_dir} && \
