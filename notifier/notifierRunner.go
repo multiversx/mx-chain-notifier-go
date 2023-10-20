@@ -50,12 +50,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	hub, err := factory.CreateHub(nr.configs.Flags.PublisherType)
-	if err != nil {
-		return err
-	}
-
-	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.PublisherType, hub, externalMarshaller)
+	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.PublisherType, publisher, externalMarshaller)
 	if err != nil {
 		return err
 	}
@@ -65,9 +60,7 @@ func (nr *notifierRunner) Start() error {
 	argsEventsHandler := factory.ArgsEventsHandlerFactory{
 		CheckDuplicates:      nr.configs.MainConfig.General.CheckDuplicates,
 		Locker:               lockService,
-		MqPublisher:          publisher,
-		HubPublisher:         hub,
-		APIType:              nr.configs.Flags.PublisherType,
+		Publisher:            publisher,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)

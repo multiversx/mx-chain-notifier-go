@@ -20,22 +20,15 @@ const bech32PubkeyConverterType = "bech32"
 type ArgsEventsHandlerFactory struct {
 	CheckDuplicates      bool
 	Locker               process.LockService
-	MqPublisher          process.Publisher
-	HubPublisher         process.Publisher
-	APIType              string
+	Publisher            process.Publisher
 	StatusMetricsHandler common.StatusMetricsHandler
 }
 
 // CreateEventsHandler will create an events handler processor
 func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, error) {
-	publisher, err := getPublisher(args.APIType, args.MqPublisher, args.HubPublisher)
-	if err != nil {
-		return nil, err
-	}
-
 	argsEventsHandler := process.ArgsEventsHandler{
 		Locker:               args.Locker,
-		Publisher:            publisher,
+		Publisher:            args.Publisher,
 		StatusMetricsHandler: args.StatusMetricsHandler,
 		CheckDuplicates:      args.CheckDuplicates,
 	}
@@ -45,21 +38,6 @@ func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, 
 	}
 
 	return eventsHandler, nil
-}
-
-func getPublisher(
-	apiType string,
-	mqPublisher process.Publisher,
-	hubPublisher process.Publisher,
-) (process.Publisher, error) {
-	switch apiType {
-	case common.MessageQueuePublisherType:
-		return mqPublisher, nil
-	case common.WSPublisherType:
-		return hubPublisher, nil
-	default:
-		return nil, common.ErrInvalidAPIType
-	}
 }
 
 // CreateEventsInterceptor will create the events interceptor
