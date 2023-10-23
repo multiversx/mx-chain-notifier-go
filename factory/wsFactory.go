@@ -19,7 +19,13 @@ const (
 )
 
 // CreateWSHandler creates websocket handler component based on api type
-func CreateWSHandler(apiType string, hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
+func CreateWSHandler(apiType string, publisher process.Publisher, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
+	// TODO: remove this after refactoring WS publisher
+	hub, ok := publisher.(dispatcher.Hub)
+	if !ok {
+		log.Warn("unable to cast publisher to hub")
+	}
+
 	switch apiType {
 	case common.MessageQueuePublisherType:
 		return &disabled.WSHandler{}, nil

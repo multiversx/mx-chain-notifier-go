@@ -3,21 +3,12 @@ package process
 import (
 	"context"
 
+	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-type publisherHandler interface {
-	Publish(events data.BlockEvents)
-	PublishRevert(revertBlock data.RevertBlock)
-	PublishFinalized(finalizedBlock data.FinalizedBlock)
-	PublishTxs(blockTxs data.BlockTxs)
-	PublishScrs(blockScrs data.BlockScrs)
-	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
-	Close()
-}
-
 type publisher struct {
-	handler publisherHandler
+	handler PublisherHandler
 
 	broadcast                     chan data.BlockEvents
 	broadcastRevert               chan data.RevertBlock
@@ -30,8 +21,14 @@ type publisher struct {
 	closeChan  chan struct{}
 }
 
-func NewPublisher() (Publisher, error) {
+// NewPublisher will create a new publisher component
+func NewPublisher(handler PublisherHandler) (*publisher, error) {
+	if check.IfNil(handler) {
+		return nil, ErrNilPublisherHandler
+	}
+
 	p := &publisher{
+		handler:                       handler,
 		broadcast:                     make(chan data.BlockEvents),
 		broadcastRevert:               make(chan data.RevertBlock),
 		broadcastFinalized:            make(chan data.FinalizedBlock),
@@ -57,6 +54,7 @@ func (p *publisher) run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			p.handler.Close()
+
 		case events := <-p.broadcast:
 			p.handler.Publish(events)
 		case revertBlock := <-p.broadcastRevert:
@@ -69,6 +67,7 @@ func (p *publisher) run(ctx context.Context) {
 			p.handler.PublishScrs(blockScrs)
 		case blockEvents := <-p.broadcastBlockEventsWithOrder:
 			p.handler.PublishBlockEventsWithOrder(blockEvents)
+
 		}
 	}
 }
@@ -81,7 +80,7 @@ func (p *publisher) Broadcast(events data.BlockEvents) {
 	}
 }
 
-// BroadcastRevert will handle the revert event pushed by producers and sends them to rabbitMQ channel
+// BroadcastRevert will handle the revert event pushed by producers
 func (p *publisher) BroadcastRevert(events data.RevertBlock) {
 	select {
 	case p.broadcastRevert <- events:
@@ -89,7 +88,7 @@ func (p *publisher) BroadcastRevert(events data.RevertBlock) {
 	}
 }
 
-// BroadcastFinalized will handle the finalized event pushed by producers and sends them to rabbitMQ channel
+// BroadcastFinalized will handle the finalized event pushed by producers
 func (p *publisher) BroadcastFinalized(events data.FinalizedBlock) {
 	select {
 	case p.broadcastFinalized <- events:
@@ -97,7 +96,7 @@ func (p *publisher) BroadcastFinalized(events data.FinalizedBlock) {
 	}
 }
 
-// BroadcastTxs will handle the txs event pushed by producers and sends them to rabbitMQ channel
+// BroadcastTxs will handle the txs event pushed by producers
 func (p *publisher) BroadcastTxs(events data.BlockTxs) {
 	select {
 	case p.broadcastTxs <- events:
@@ -105,7 +104,7 @@ func (p *publisher) BroadcastTxs(events data.BlockTxs) {
 	}
 }
 
-// BroadcastScrs will handle the scrs event pushed by producers and sends them to rabbitMQ channel
+// BroadcastScrs will handle the scrs event pushed by producers
 func (p *publisher) BroadcastScrs(events data.BlockScrs) {
 	select {
 	case p.broadcastScrs <- events:
@@ -113,12 +112,23 @@ func (p *publisher) BroadcastScrs(events data.BlockScrs) {
 	}
 }
 
-// BroadcastBlockEventsWithOrder will handle the full block events pushed by producers and sends them to rabbitMQ channel
+// BroadcastBlockEventsWithOrder will handle the full block events pushed by producers
 func (p *publisher) BroadcastBlockEventsWithOrder(events data.BlockEventsWithOrder) {
 	select {
 	case p.broadcastBlockEventsWithOrder <- events:
 	case <-p.closeChan:
 	}
+}
+
+// Close will close the channels
+func (p *publisher) Close() error {
+	if p.cancelFunc != nil {
+		p.cancelFunc()
+	}
+
+	close(p.closeChan)
+
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

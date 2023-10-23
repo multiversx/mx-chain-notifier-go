@@ -8,7 +8,6 @@ import (
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/api/shared"
 	"github.com/multiversx/mx-chain-notifier-go/config"
-	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/facade"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
 	"github.com/multiversx/mx-chain-notifier-go/metrics"
@@ -95,14 +94,14 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	startHandlers(hub, publisher)
+	publisher.Run()
 
 	err = webServer.Run()
 	if err != nil {
 		return err
 	}
 
-	err = waitForGracefulShutdown(webServer, publisher, hub, wsConnector)
+	err = waitForGracefulShutdown(webServer, publisher, wsConnector)
 	if err != nil {
 		return err
 	}
@@ -111,15 +110,9 @@ func (nr *notifierRunner) Start() error {
 	return nil
 }
 
-func startHandlers(hub dispatcher.Hub, publisher rabbitmq.PublisherService) {
-	hub.Run()
-	publisher.Run()
-}
-
 func waitForGracefulShutdown(
 	server shared.WebServerHandler,
 	publisher rabbitmq.PublisherService,
-	hub dispatcher.Hub,
 	wsConnector process.WSClient,
 ) error {
 	quit := make(chan os.Signal, 1)
@@ -137,11 +130,6 @@ func waitForGracefulShutdown(
 	}
 
 	err = publisher.Close()
-	if err != nil {
-		return err
-	}
-
-	err = hub.Close()
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher/hub"
 	"github.com/multiversx/mx-chain-notifier-go/filters"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
 
@@ -38,7 +39,12 @@ func createRabbitMqPublisher(config config.RabbitMQConfig, marshaller marshal.Ma
 		return nil, err
 	}
 
-	return rabbitPublisher, nil
+	publisher, err := process.NewPublisher(rabbitPublisher)
+	if err != nil {
+		return nil, err
+	}
+
+	return publisher, nil
 }
 
 func createHub() (dispatcher.Hub, error) {

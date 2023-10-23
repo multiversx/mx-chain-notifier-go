@@ -63,3 +63,15 @@ type EventsFacadeHandler interface {
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	IsInterfaceNil() bool
 }
+
+// PublisherHandler defines the behavior of a publisher component
+type PublisherHandler interface {
+	Publish(events data.BlockEvents)
+	PublishRevert(revertBlock data.RevertBlock)
+	PublishFinalized(finalizedBlock data.FinalizedBlock)
+	PublishTxs(blockTxs data.BlockTxs)
+	PublishScrs(blockScrs data.BlockScrs)
+	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
+	Close()
+	IsInterfaceNil() bool
+}
