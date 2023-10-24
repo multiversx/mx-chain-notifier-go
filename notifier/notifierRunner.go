@@ -94,7 +94,10 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	publisher.Run()
+	err = publisher.Run()
+	if err != nil {
+		return err
+	}
 
 	err = webServer.Run()
 	if err != nil {

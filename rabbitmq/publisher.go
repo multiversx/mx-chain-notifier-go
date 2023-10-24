@@ -142,6 +142,7 @@ func (rp *rabbitMqPublisher) createExchange(conf config.RabbitMQExchangeConfig) 
 	return nil
 }
 
+// Publish will publish logs and events to rabbitmq
 func (rp *rabbitMqPublisher) Publish(events data.BlockEvents) {
 	eventsBytes, err := rp.marshaller.Marshal(events)
 	if err != nil {
@@ -155,6 +156,7 @@ func (rp *rabbitMqPublisher) Publish(events data.BlockEvents) {
 	}
 }
 
+// PublishRevert will publish revert event to rabbitmq
 func (rp *rabbitMqPublisher) PublishRevert(revertBlock data.RevertBlock) {
 	revertBlockBytes, err := rp.marshaller.Marshal(revertBlock)
 	if err != nil {
@@ -168,6 +170,7 @@ func (rp *rabbitMqPublisher) PublishRevert(revertBlock data.RevertBlock) {
 	}
 }
 
+// PublishFinalized will publish finalized event to rabbitmq
 func (rp *rabbitMqPublisher) PublishFinalized(finalizedBlock data.FinalizedBlock) {
 	finalizedBlockBytes, err := rp.marshaller.Marshal(finalizedBlock)
 	if err != nil {
@@ -181,6 +184,7 @@ func (rp *rabbitMqPublisher) PublishFinalized(finalizedBlock data.FinalizedBlock
 	}
 }
 
+// PublishTxs will publish txs event to rabbitmq
 func (rp *rabbitMqPublisher) PublishTxs(blockTxs data.BlockTxs) {
 	txsBlockBytes, err := rp.marshaller.Marshal(blockTxs)
 	if err != nil {
@@ -194,6 +198,7 @@ func (rp *rabbitMqPublisher) PublishTxs(blockTxs data.BlockTxs) {
 	}
 }
 
+// PublishTxs will publish scrs event to rabbitmq
 func (rp *rabbitMqPublisher) PublishScrs(blockScrs data.BlockScrs) {
 	scrsBlockBytes, err := rp.marshaller.Marshal(blockScrs)
 	if err != nil {
@@ -207,6 +212,7 @@ func (rp *rabbitMqPublisher) PublishScrs(blockScrs data.BlockScrs) {
 	}
 }
 
+// PublishBlockEventsWithOrder will publish block events with order to rabbitmq
 func (rp *rabbitMqPublisher) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	txsBlockBytes, err := rp.marshaller.Marshal(blockTxs)
 	if err != nil {

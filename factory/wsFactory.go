@@ -24,6 +24,7 @@ func CreateWSHandler(apiType string, publisher process.Publisher, marshaller mar
 	hub, ok := publisher.(dispatcher.Hub)
 	if !ok {
 		log.Warn("unable to cast publisher to hub")
+		return nil, common.ErrWrongTypeAssertion
 	}
 
 	switch apiType {

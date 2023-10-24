@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"sync"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -19,6 +20,7 @@ type publisher struct {
 
 	cancelFunc func()
 	closeChan  chan struct{}
+	mutState   sync.RWMutex
 }
 
 // NewPublisher will create a new publisher component
@@ -41,12 +43,21 @@ func NewPublisher(handler PublisherHandler) (*publisher, error) {
 	return p, nil
 }
 
-// Run is launched as a goroutine and listens for events on the exposed channels
-func (p *publisher) Run() {
+// Run creates a goroutine and listens for events on the exposed channels
+func (p *publisher) Run() error {
+	p.mutState.Lock()
+	defer p.mutState.Unlock()
+
+	if p.cancelFunc != nil {
+		return ErrLoopAlreadyStarted
+	}
+
 	var ctx context.Context
 	ctx, p.cancelFunc = context.WithCancel(context.Background())
 
 	go p.run(ctx)
+
+	return nil
 }
 
 func (p *publisher) run(ctx context.Context) {
@@ -54,7 +65,7 @@ func (p *publisher) run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			p.handler.Close()
-
+			return
 		case events := <-p.broadcast:
 			p.handler.Publish(events)
 		case revertBlock := <-p.broadcastRevert:
@@ -67,12 +78,11 @@ func (p *publisher) run(ctx context.Context) {
 			p.handler.PublishScrs(blockScrs)
 		case blockEvents := <-p.broadcastBlockEventsWithOrder:
 			p.handler.PublishBlockEventsWithOrder(blockEvents)
-
 		}
 	}
 }
 
-// Broadcast will handle the block events pushed by producers and sends them to rabbitMQ channel
+// Broadcast will handle the block events pushed by producers
 func (p *publisher) Broadcast(events data.BlockEvents) {
 	select {
 	case p.broadcast <- events:
@@ -122,6 +132,9 @@ func (p *publisher) BroadcastBlockEventsWithOrder(events data.BlockEventsWithOrd
 
 // Close will close the channels
 func (p *publisher) Close() error {
+	p.mutState.RLock()
+	defer p.mutState.RUnlock()
+
 	if p.cancelFunc != nil {
 		p.cancelFunc()
 	}

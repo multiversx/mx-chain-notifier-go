@@ -4,6 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -31,6 +32,25 @@ func TestNewPublisher(t *testing.T) {
 	})
 }
 
+func TestRun(t *testing.T) {
+	t.Parallel()
+
+	t.Run("should fail if triggered multiple times", func(t *testing.T) {
+		t.Parallel()
+
+		p, err := process.NewPublisher(&mocks.PublisherHandlerStub{})
+		require.Nil(t, err)
+
+		err = p.Run()
+		require.Nil(t, err)
+
+		defer p.Close()
+
+		err = p.Run()
+		require.Equal(t, process.ErrLoopAlreadyStarted, err)
+	})
+}
+
 func TestBroadcast(t *testing.T) {
 	t.Parallel()
 
@@ -47,7 +67,7 @@ func TestBroadcast(t *testing.T) {
 	p, err := process.NewPublisher(ph)
 	require.Nil(t, err)
 
-	p.Run()
+	_ = p.Run()
 	defer p.Close()
 	wg.Add(1)
 
@@ -74,7 +94,7 @@ func TestBroadcastRevert(t *testing.T) {
 	p, err := process.NewPublisher(ph)
 	require.Nil(t, err)
 
-	p.Run()
+	_ = p.Run()
 	defer p.Close()
 	wg.Add(1)
 
@@ -101,7 +121,7 @@ func TestBroadcastFinalized(t *testing.T) {
 	p, err := process.NewPublisher(ph)
 	require.Nil(t, err)
 
-	p.Run()
+	_ = p.Run()
 	defer p.Close()
 	wg.Add(1)
 
@@ -128,7 +148,7 @@ func TestBroadcastTxs(t *testing.T) {
 	p, err := process.NewPublisher(ph)
 	require.Nil(t, err)
 
-	p.Run()
+	_ = p.Run()
 	defer p.Close()
 	wg.Add(1)
 
@@ -155,7 +175,7 @@ func TestBroadcastScrs(t *testing.T) {
 	p, err := process.NewPublisher(ph)
 	require.Nil(t, err)
 
-	p.Run()
+	_ = p.Run()
 	defer p.Close()
 	wg.Add(1)
 
@@ -182,7 +202,7 @@ func TestBroadcastBlockEventsWithOrder(t *testing.T) {
 	p, err := process.NewPublisher(ph)
 	require.Nil(t, err)
 
-	p.Run()
+	_ = p.Run()
 	defer p.Close()
 	wg.Add(1)
 
@@ -196,11 +216,29 @@ func TestBroadcastBlockEventsWithOrder(t *testing.T) {
 func TestClose(t *testing.T) {
 	t.Parallel()
 
-	p, err := process.NewPublisher(&mocks.PublisherHandlerStub{})
-	require.Nil(t, err)
+	t.Run("publish should not be called after processing loop is closed", func(t *testing.T) {
+		t.Parallel()
 
-	p.Run()
+		numCalls := uint32(0)
 
-	err = p.Close()
-	require.Nil(t, err)
+		ph := &mocks.PublisherHandlerStub{
+			PublishCalled: func(events data.BlockEvents) {
+				atomic.AddUint32(&numCalls, 1)
+			},
+		}
+
+		p, err := process.NewPublisher(ph)
+		require.Nil(t, err)
+
+		_ = p.Run()
+
+		err = p.Close()
+		require.Nil(t, err)
+
+		time.Sleep(100 * time.Millisecond)
+
+		p.Broadcast(data.BlockEvents{})
+
+		require.Equal(t, uint32(0), atomic.LoadUint32(&numCalls))
+	})
 }

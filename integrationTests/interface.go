@@ -7,7 +7,7 @@ import (
 
 // PublisherHandler defines publisher behaviour
 type PublisherHandler interface {
-	Run()
+	Run() error
 	Broadcast(events data.BlockEvents)
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)

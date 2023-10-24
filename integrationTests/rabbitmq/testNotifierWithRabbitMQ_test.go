@@ -43,7 +43,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, common.PayloadV1)
 	require.Nil(t, err)
 
-	notifier.Publisher.Run()
+	_ = notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
 	wg := &sync.WaitGroup{}
