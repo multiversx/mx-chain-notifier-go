@@ -74,6 +74,7 @@ func checkArgs(args ArgsCommonHub) error {
 }
 
 // Run is launched as a goroutine and listens for events on the exposed channels
+// TODO: use protection from triggering multiple times
 func (ch *commonHub) Run() error {
 	var ctx context.Context
 	ctx, ch.cancelFunc = context.WithCancel(context.Background())
