@@ -7,7 +7,7 @@ import (
 
 // HubStub implements Hub interface
 type HubStub struct {
-	RunCalled                           func()
+	RunCalled                           func() error
 	BroadcastCalled                     func(events data.BlockEvents)
 	BroadcastRevertCalled               func(event data.RevertBlock)
 	BroadcastFinalizedCalled            func(event data.FinalizedBlock)
@@ -21,10 +21,12 @@ type HubStub struct {
 }
 
 // Run -
-func (h *HubStub) Run() {
+func (h *HubStub) Run() error {
 	if h.RunCalled != nil {
-		h.RunCalled()
+		return h.RunCalled()
 	}
+
+	return nil
 }
 
 // Broadcast -

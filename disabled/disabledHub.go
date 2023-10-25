@@ -10,7 +10,8 @@ type Hub struct {
 }
 
 // Run does nothing
-func (h *Hub) Run() {
+func (h *Hub) Run() error {
+	return nil
 }
 
 // Broadcast does nothing

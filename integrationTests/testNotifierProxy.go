@@ -124,7 +124,11 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 		Config:     cfg.RabbitMQ,
 		Marshaller: marshaller,
 	}
-	publisher, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
+	publisherHandler, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
+	if err != nil {
+		return nil, err
+	}
+	publisher, err := process.NewPublisher(publisherHandler)
 	if err != nil {
 		return nil, err
 	}

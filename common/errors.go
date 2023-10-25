@@ -31,3 +31,6 @@ var ErrNilFacadeHandler = errors.New("nil facade handler")
 
 // ErrNilStatusMetricsHandler signals that a nil status metrics handler has been provided
 var ErrNilStatusMetricsHandler = errors.New("nil status metrics handler")
+
+// ErrWrongTypeAssertion signals a wrong type assertion
+var ErrWrongTypeAssertion = errors.New("wrong type assertion")

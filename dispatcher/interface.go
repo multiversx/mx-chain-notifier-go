@@ -23,7 +23,7 @@ type EventDispatcher interface {
 // Hub defines the behaviour of a hub component which should be able to register
 // and unregister dispatching events
 type Hub interface {
-	Run()
+	Run() error
 	Broadcast(events data.BlockEvents)
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)
