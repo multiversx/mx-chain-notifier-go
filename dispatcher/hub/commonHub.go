@@ -83,9 +83,10 @@ func (ch *commonHub) RegisterListener() error {
 func (ch *commonHub) registerListener(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case dispatcherClient := <-ch.register:
 			ch.registerDispatcher(dispatcherClient)
-
 		case dispatcherClient := <-ch.unregister:
 			ch.unregisterDispatcher(dispatcherClient)
 		}
@@ -284,6 +285,9 @@ func (ch *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 
 // Close will close the goroutine and channels
 func (ch *commonHub) Close() error {
+	ch.mutState.Lock()
+	defer ch.mutState.Unlock()
+
 	if ch.cancelFunc != nil {
 		ch.cancelFunc()
 	}

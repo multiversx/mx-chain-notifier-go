@@ -19,6 +19,7 @@ import (
 
 type testNotifier struct {
 	Facade         shared.FacadeHandler
+	Hub            dispatcher.Hub
 	Publisher      PublisherHandler
 	WSHandler      dispatcher.WSHandler
 	RedisClient    *mocks.RedisClientMock
@@ -42,7 +43,11 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 		Filter:             filters.NewDefaultFilter(),
 		SubscriptionMapper: dispatcher.NewSubscriptionMapper(),
 	}
-	publisher, err := hub.NewCommonHub(args)
+	commonHub, err := hub.NewCommonHub(args)
+	if err != nil {
+		return nil, err
+	}
+	publisher, err := process.NewPublisher(commonHub)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +70,7 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 		return nil, err
 	}
 	wsHandlerArgs := ws.ArgsWebSocketProcessor{
-		Hub:        publisher,
+		Dispatcher: commonHub,
 		Upgrader:   upgrader,
 		Marshaller: marshaller,
 	}
@@ -96,6 +101,7 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 
 	return &testNotifier{
 		Facade:         facade,
+		Hub:            commonHub,
 		Publisher:      publisher,
 		WSHandler:      wsHandler,
 		RedisClient:    redisClient,
@@ -167,6 +173,7 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 
 	return &testNotifier{
 		Facade:         facade,
+		Hub:            &disabled.Hub{},
 		Publisher:      publisher,
 		WSHandler:      wsHandler,
 		RedisClient:    redisClient,

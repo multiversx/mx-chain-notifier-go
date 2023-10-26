@@ -27,9 +27,6 @@ type rabbitMqPublisher struct {
 	client     RabbitMqClient
 	marshaller marshal.Marshalizer
 	cfg        config.RabbitMQConfig
-
-	cancelFunc func()
-	closeChan  chan struct{}
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance

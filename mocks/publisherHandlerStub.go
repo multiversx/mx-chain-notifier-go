@@ -10,7 +10,7 @@ type PublisherHandlerStub struct {
 	PublishTxsCalled                  func(blockTxs data.BlockTxs)
 	PublishScrsCalled                 func(blockScrs data.BlockScrs)
 	PublishBlockEventsWithOrderCalled func(blockTxs data.BlockEventsWithOrder)
-	CloseCalled                       func()
+	CloseCalled                       func() error
 }
 
 // Publish -
@@ -56,10 +56,12 @@ func (p *PublisherHandlerStub) PublishBlockEventsWithOrder(blockTxs data.BlockEv
 }
 
 // Close -
-func (p *PublisherHandlerStub) Close() {
+func (p *PublisherHandlerStub) Close() error {
 	if p.CloseCalled != nil {
-		p.CloseCalled()
+		return p.CloseCalled()
 	}
+
+	return nil
 }
 
 // IsInterfaceNil -
