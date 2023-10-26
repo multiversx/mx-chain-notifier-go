@@ -9,33 +9,33 @@ import (
 type Hub struct {
 }
 
-// Run does nothing
-func (h *Hub) Run() error {
+// RegisterListener does nothing
+func (h *Hub) RegisterListener() error {
 	return nil
 }
 
-// Broadcast does nothing
-func (h *Hub) Broadcast(_ data.BlockEvents) {
+// Publish -
+func (h *Hub) Publish(events data.BlockEvents) {
 }
 
-// BroadcastRevert does nothing
-func (h *Hub) BroadcastRevert(_ data.RevertBlock) {
+// PublishRevert -
+func (h *Hub) PublishRevert(revertBlock data.RevertBlock) {
 }
 
-// BroadcastFinalized does nothing
-func (h *Hub) BroadcastFinalized(_ data.FinalizedBlock) {
+// PublishFinalized -
+func (h *Hub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
 }
 
-// BroadcastTxs does nothing
-func (h *Hub) BroadcastTxs(_ data.BlockTxs) {
+// PublishTxs -
+func (h *Hub) PublishTxs(blockTxs data.BlockTxs) {
 }
 
-// BroadcastScrs does nothing
-func (h *Hub) BroadcastScrs(_ data.BlockScrs) {
+// PublishScrs -
+func (h *Hub) PublishScrs(blockScrs data.BlockScrs) {
 }
 
-// BroadcastBlockEventsWithOrder does nothing
-func (h *Hub) BroadcastBlockEventsWithOrder(_ data.BlockEventsWithOrder) {
+// PublishBlockEventsWithOrder -
+func (h *Hub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 }
 
 // RegisterEvent does nothing

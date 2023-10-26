@@ -31,7 +31,7 @@ func TestNewWebSocketHandler(t *testing.T) {
 
 		wh, err := ws.NewWebSocketProcessor(args)
 		require.True(t, check.IfNil(wh))
-		assert.Equal(t, ws.ErrNilHubHandler, err)
+		assert.Equal(t, ws.ErrNilDispatcher, err)
 	})
 
 	t.Run("nil ws upgrader", func(t *testing.T) {

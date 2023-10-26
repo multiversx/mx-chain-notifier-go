@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -49,7 +50,7 @@ func (p *publisher) Run() error {
 	defer p.mutState.Unlock()
 
 	if p.cancelFunc != nil {
-		return ErrLoopAlreadyStarted
+		return common.ErrLoopAlreadyStarted
 	}
 
 	var ctx context.Context

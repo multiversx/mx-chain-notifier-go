@@ -28,6 +28,3 @@ var ErrNilBlockHeader = errors.New("nil block header provided")
 
 // ErrNilPublisherHandler signals that a nil publisher handler has been provided
 var ErrNilPublisherHandler = errors.New("nil publisher handler provided")
-
-// ErrLoopAlreadyStarted signals that a loop has already been started
-var ErrLoopAlreadyStarted = errors.New("loop already started")

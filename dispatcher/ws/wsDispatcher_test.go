@@ -33,7 +33,7 @@ func (tw *testWriter) Close() error {
 func createMockWSDispatcherArgs() ws.ArgsWSDispatcher {
 	args := ws.ArgsWSDispatcher{}
 
-	args.Hub = &mocks.HubStub{}
+	args.Dispatcher = &mocks.HubStub{}
 	args.Conn = &mocks.WSConnStub{}
 	args.Marshaller = &mock.MarshalizerMock{}
 	return args
@@ -46,11 +46,11 @@ func TestNewWebSocketDispatcher(t *testing.T) {
 		t.Parallel()
 
 		args := createMockWSDispatcherArgs()
-		args.Hub = nil
+		args.Dispatcher = nil
 
 		wd, err := ws.NewTestWSDispatcher(args)
 		require.Nil(t, wd)
-		assert.Equal(t, ws.ErrNilHubHandler, err)
+		assert.Equal(t, ws.ErrNilDispatcher, err)
 	})
 
 	t.Run("nil ws conn", func(t *testing.T) {

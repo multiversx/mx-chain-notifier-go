@@ -34,3 +34,6 @@ var ErrNilStatusMetricsHandler = errors.New("nil status metrics handler")
 
 // ErrWrongTypeAssertion signals a wrong type assertion
 var ErrWrongTypeAssertion = errors.New("wrong type assertion")
+
+// ErrLoopAlreadyStarted signals that a loop has already been started
+var ErrLoopAlreadyStarted = errors.New("loop already started")

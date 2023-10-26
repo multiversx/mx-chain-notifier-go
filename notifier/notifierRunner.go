@@ -34,6 +34,8 @@ func NewNotifierRunner(cfgs *config.Configs) (*notifierRunner, error) {
 
 // Start will trigger the notifier service
 func (nr *notifierRunner) Start() error {
+	publisherType := nr.configs.Flags.PublisherType
+
 	externalMarshaller, err := marshalFactory.NewMarshalizer(nr.configs.MainConfig.General.ExternalMarshaller.Type)
 	if err != nil {
 		return err
@@ -44,12 +46,17 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	publisher, err := factory.CreatePublisher(nr.configs.Flags.PublisherType, nr.configs.MainConfig, externalMarshaller)
+	commonHub, err := factory.CreateHub(publisherType)
 	if err != nil {
 		return err
 	}
 
-	wsHandler, err := factory.CreateWSHandler(nr.configs.Flags.PublisherType, publisher, externalMarshaller)
+	publisher, err := factory.CreatePublisher(publisherType, nr.configs.MainConfig, externalMarshaller, commonHub)
+	if err != nil {
+		return err
+	}
+
+	wsHandler, err := factory.CreateWSHandler(publisherType, commonHub, externalMarshaller)
 	if err != nil {
 		return err
 	}

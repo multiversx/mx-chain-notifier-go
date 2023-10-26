@@ -17,12 +17,14 @@ type LockService interface {
 // Publisher defines the behaviour of a publisher component which should be
 // able to publish received events and broadcast them to channels
 type Publisher interface {
+	Run() error
 	Broadcast(events data.BlockEvents)
 	BroadcastRevert(event data.RevertBlock)
 	BroadcastFinalized(event data.FinalizedBlock)
 	BroadcastTxs(event data.BlockTxs)
 	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
 	BroadcastScrs(event data.BlockScrs)
+	Close() error
 	IsInterfaceNil() bool
 }
 
@@ -72,6 +74,6 @@ type PublisherHandler interface {
 	PublishTxs(blockTxs data.BlockTxs)
 	PublishScrs(blockScrs data.BlockScrs)
 	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
-	Close()
+	Close() error
 	IsInterfaceNil() bool
 }
