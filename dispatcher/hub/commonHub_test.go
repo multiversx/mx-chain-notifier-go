@@ -175,7 +175,7 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	consumer2 := mocks.NewConsumerMock()
 	dispatcher2 := mocks.NewDispatcherMock(consumer2, hub)
 	consumer3 := mocks.NewConsumerMock()
-	dispatcher3 := mocks.NewDispatcherMock(consumer2, hub)
+	dispatcher3 := mocks.NewDispatcherMock(consumer3, hub)
 
 	_ = hub.RegisterListener()
 	defer hub.Close()
@@ -183,6 +183,8 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
 	hub.RegisterEvent(dispatcher3)
+
+	time.Sleep(time.Millisecond * 100)
 
 	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher1.GetID(),
@@ -206,8 +208,8 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 		DispatcherID: dispatcher3.GetID(),
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				Address:    "erd2",
-				Identifier: "lock",
+				Address:    "erd3",
+				Identifier: "random",
 			},
 		},
 	})
@@ -220,7 +222,7 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 
 	require.True(t, consumer2.HasEvent(blockEvents.Events[1]))
 	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
-	require.True(t, consumer3.HasEvent(blockEvents.Events[1]))
+	require.True(t, consumer3.HasEvent(blockEvents.Events[2]))
 }
 
 func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
