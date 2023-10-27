@@ -235,6 +235,7 @@ func (ch *commonHub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOr
 	}
 }
 
+// PublishScrs will publish scrs events to dispatcher
 func (ch *commonHub) PublishScrs(blockScrs data.BlockScrs) {
 	subscriptions := ch.subscriptionMapper.Subscriptions()
 

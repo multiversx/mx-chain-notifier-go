@@ -42,19 +42,9 @@ func createRabbitMqPublisher(config config.RabbitMQConfig, marshaller marshal.Ma
 		return nil, err
 	}
 
-	publisher, err := process.NewPublisher(rabbitPublisher)
-	if err != nil {
-		return nil, err
-	}
-
-	return publisher, nil
+	return process.NewPublisher(rabbitPublisher)
 }
 
 func createWSPublisher(commonHub dispatcher.Hub) (process.Publisher, error) {
-	publisher, err := process.NewPublisher(commonHub)
-	if err != nil {
-		return nil, err
-	}
-
-	return publisher, nil
+	return process.NewPublisher(commonHub)
 }

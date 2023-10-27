@@ -14,27 +14,27 @@ func (h *Hub) RegisterListener() error {
 	return nil
 }
 
-// Publish -
+// Publish does nothing
 func (h *Hub) Publish(events data.BlockEvents) {
 }
 
-// PublishRevert -
+// PublishRevert does nothing
 func (h *Hub) PublishRevert(revertBlock data.RevertBlock) {
 }
 
-// PublishFinalized -
+// PublishFinalized does nothing
 func (h *Hub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
 }
 
-// PublishTxs -
+// PublishTxs does nothing
 func (h *Hub) PublishTxs(blockTxs data.BlockTxs) {
 }
 
-// PublishScrs -
+// PublishScrs does nothing
 func (h *Hub) PublishScrs(blockScrs data.BlockScrs) {
 }
 
-// PublishBlockEventsWithOrder -
+// PublishBlockEventsWithOrder does nothing
 func (h *Hub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 }
 
