@@ -7,7 +7,6 @@ import (
 
 // HubStub implements Hub interface
 type HubStub struct {
-	RegisterListenerCalled            func() error
 	PublishCalled                     func(events data.BlockEvents)
 	PublishRevertCalled               func(revertBlock data.RevertBlock)
 	PublishFinalizedCalled            func(finalizedBlock data.FinalizedBlock)
@@ -18,15 +17,6 @@ type HubStub struct {
 	UnregisterEventCalled             func(event dispatcher.EventDispatcher)
 	SubscribeCalled                   func(event data.SubscribeEvent)
 	CloseCalled                       func() error
-}
-
-// RegisterListener -
-func (h *HubStub) RegisterListener() error {
-	if h.RegisterListenerCalled != nil {
-		return h.RegisterListenerCalled()
-	}
-
-	return nil
 }
 
 // Publish -

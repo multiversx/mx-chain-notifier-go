@@ -9,11 +9,6 @@ import (
 type Hub struct {
 }
 
-// RegisterListener does nothing
-func (h *Hub) RegisterListener() error {
-	return nil
-}
-
 // Publish does nothing
 func (h *Hub) Publish(events data.BlockEvents) {
 }

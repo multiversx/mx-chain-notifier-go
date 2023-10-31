@@ -101,11 +101,6 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	err = commonHub.RegisterListener()
-	if err != nil {
-		return err
-	}
-
 	err = publisher.Run()
 	if err != nil {
 		return err

@@ -56,38 +56,6 @@ func TestNewCommonHub(t *testing.T) {
 	})
 }
 
-func TestCommonHub_RegisterListener(t *testing.T) {
-	t.Parallel()
-
-	t.Run("should work", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockCommonHubArgs()
-		hub, err := NewCommonHub(args)
-		require.Nil(t, err)
-
-		err = hub.RegisterListener()
-		err = hub.Close()
-		require.Nil(t, err)
-	})
-
-	t.Run("should fail if triggered multiple times", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockCommonHubArgs()
-		hub, err := NewCommonHub(args)
-		require.Nil(t, err)
-
-		err = hub.RegisterListener()
-		require.Nil(t, err)
-
-		defer hub.Close()
-
-		err = hub.RegisterListener()
-		require.Equal(t, common.ErrLoopAlreadyStarted, err)
-	})
-}
-
 func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	t.Parallel()
 
@@ -97,9 +65,6 @@ func TestCommonHub_RegisterDispatcher(t *testing.T) {
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
-
-	err = hub.RegisterListener()
-	defer hub.Close()
 
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
@@ -120,9 +85,6 @@ func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
 
-	err = hub.RegisterListener()
-	defer hub.Close()
-
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
 
@@ -140,9 +102,6 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 	args := createMockCommonHubArgs()
 	hub, err := NewCommonHub(args)
 	require.Nil(t, err)
-
-	_ = hub.RegisterListener()
-	defer hub.Close()
 
 	consumer := mocks.NewConsumerMock()
 	dispatcher1 := mocks.NewDispatcherMock(consumer, hub)
@@ -176,9 +135,6 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	dispatcher2 := mocks.NewDispatcherMock(consumer2, hub)
 	consumer3 := mocks.NewConsumerMock()
 	dispatcher3 := mocks.NewDispatcherMock(consumer3, hub)
-
-	_ = hub.RegisterListener()
-	defer hub.Close()
 
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
@@ -247,9 +203,6 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 		},
 	})
 
-	_ = hub.RegisterListener()
-	defer hub.Close()
-
 	blockEvents := data.RevertBlock{
 		Hash:  "hash1",
 		Nonce: 1,
@@ -284,9 +237,6 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 		},
 	})
 
-	_ = hub.RegisterListener()
-	defer hub.Close()
-
 	blockEvents := data.FinalizedBlock{
 		Hash: "hash1",
 	}
@@ -319,9 +269,6 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 			},
 		},
 	})
-
-	_ = hub.RegisterListener()
-	defer hub.Close()
 
 	blockEvents := data.BlockTxs{
 		Hash: "hash1",
@@ -356,9 +303,6 @@ func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
 		},
 	})
 
-	_ = hub.RegisterListener()
-	defer hub.Close()
-
 	blockEvents := data.BlockEventsWithOrder{
 		Hash: "hash1",
 	}
@@ -391,9 +335,6 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 			},
 		},
 	})
-
-	_ = hub.RegisterListener()
-	defer hub.Close()
 
 	blockEvents := data.BlockScrs{
 		Hash: "hash1",

@@ -31,7 +31,6 @@ type Hub interface {
 // Dispatcher defines the behaviour of a dispatcher component which should be able to register
 // and unregister dispatching events
 type Dispatcher interface {
-	RegisterListener() error
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
 	Subscribe(event data.SubscribeEvent)

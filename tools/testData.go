@@ -15,6 +15,7 @@ type blockData struct {
 	marshaller marshal.Marshalizer
 }
 
+// NewBlockData will create block data component for testing
 func NewBlockData(marshaller marshal.Marshalizer) (*blockData, error) {
 	if check.IfNil(marshaller) {
 		return nil, common.ErrNilMarshaller

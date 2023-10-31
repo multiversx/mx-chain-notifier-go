@@ -1,7 +1,6 @@
 package hub
 
 import (
-	"context"
 	"sync"
 
 	"github.com/google/uuid"
@@ -29,9 +28,7 @@ type commonHub struct {
 	register           chan dispatcher.EventDispatcher
 	unregister         chan dispatcher.EventDispatcher
 
-	cancelFunc func()
-	closeChan  chan struct{}
-	mutState   sync.RWMutex
+	mutState sync.RWMutex
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -48,7 +45,6 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
 		register:           make(chan dispatcher.EventDispatcher),
 		unregister:         make(chan dispatcher.EventDispatcher),
-		closeChan:          make(chan struct{}),
 	}, nil
 }
 
@@ -63,36 +59,6 @@ func checkArgs(args ArgsCommonHub) error {
 	return nil
 }
 
-// RegisterListener creates a goroutine and listens for WS register events
-func (ch *commonHub) RegisterListener() error {
-	ch.mutState.Lock()
-	defer ch.mutState.Unlock()
-
-	if ch.cancelFunc != nil {
-		return common.ErrLoopAlreadyStarted
-	}
-
-	var ctx context.Context
-	ctx, ch.cancelFunc = context.WithCancel(context.Background())
-
-	go ch.registerListener(ctx)
-
-	return nil
-}
-
-func (ch *commonHub) registerListener(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case dispatcherClient := <-ch.register:
-			ch.registerDispatcher(dispatcherClient)
-		case dispatcherClient := <-ch.unregister:
-			ch.unregisterDispatcher(dispatcherClient)
-		}
-	}
-}
-
 // Subscribe is used by a dispatcher to send a dispatcher.SubscribeEvent
 func (ch *commonHub) Subscribe(event data.SubscribeEvent) {
 	ch.subscriptionMapper.MatchSubscribeEvent(event)
@@ -100,18 +66,12 @@ func (ch *commonHub) Subscribe(event data.SubscribeEvent) {
 
 // RegisterEvent will send event to a receive-only channel used to register dispatchers
 func (ch *commonHub) RegisterEvent(event dispatcher.EventDispatcher) {
-	select {
-	case ch.register <- event:
-	case <-ch.closeChan:
-	}
+	ch.registerDispatcher(event)
 }
 
 // UnregisterEvent will send event to a receive-only channel used by a dispatcher to signal it has disconnected
 func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
-	select {
-	case ch.unregister <- event:
-	case <-ch.closeChan:
-	}
+	ch.unregisterDispatcher(event)
 }
 
 // Publish will publish logs and events to dispatcher
@@ -286,15 +246,6 @@ func (ch *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 
 // Close will close the goroutine and channels
 func (ch *commonHub) Close() error {
-	ch.mutState.Lock()
-	defer ch.mutState.Unlock()
-
-	if ch.cancelFunc != nil {
-		ch.cancelFunc()
-	}
-
-	close(ch.closeChan)
-
 	return nil
 }
 
