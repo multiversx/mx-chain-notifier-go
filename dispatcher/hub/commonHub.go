@@ -25,10 +25,6 @@ type commonHub struct {
 	subscriptionMapper dispatcher.SubscriptionMapperHandler
 	mutDispatchers     sync.RWMutex
 	dispatchers        map[uuid.UUID]dispatcher.EventDispatcher
-	register           chan dispatcher.EventDispatcher
-	unregister         chan dispatcher.EventDispatcher
-
-	mutState sync.RWMutex
 }
 
 // NewCommonHub creates a new commonHub instance
@@ -43,8 +39,6 @@ func NewCommonHub(args ArgsCommonHub) (*commonHub, error) {
 		filter:             args.Filter,
 		subscriptionMapper: args.SubscriptionMapper,
 		dispatchers:        make(map[uuid.UUID]dispatcher.EventDispatcher),
-		register:           make(chan dispatcher.EventDispatcher),
-		unregister:         make(chan dispatcher.EventDispatcher),
 	}, nil
 }
 
