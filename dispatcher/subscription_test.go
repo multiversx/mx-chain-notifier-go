@@ -26,7 +26,7 @@ func TestSubscriptionMap_Subscriptions(t *testing.T) {
 
 	subs := subMap.Subscriptions()
 
-	require.True(t, len(subs) >= len(subEvents))
+	require.True(t, len(subs[common.PushLogsAndEvents]) >= len(subEvents))
 }
 
 func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) {
@@ -73,16 +73,18 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 
 	subsFromMap := subMap.Subscriptions()
 
-	require.True(t, len(subsFromMap) == len(subsFromEntries))
+	require.True(t, len(subsFromMap[common.PushLogsAndEvents]) == len(subsFromEntries))
 
-	for _, sub1 := range subsFromMap {
-		found := false
-		for _, sub2 := range subsFromEntries {
-			if reflect.DeepEqual(sub1, sub2) {
-				found = true
+	for _, subs := range subsFromMap {
+		for _, sub1 := range subs {
+			found := false
+			for _, sub2 := range subsFromEntries {
+				if reflect.DeepEqual(sub1, sub2) {
+					found = true
+				}
 			}
+			require.True(t, found)
 		}
-		require.True(t, found)
 	}
 }
 
@@ -96,16 +98,20 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 	subEvent := data.SubscribeEvent{
 		SubscriptionEntries: []data.SubscriptionEntry{
 			{
-				Address: addr1,
+				EventType: common.BlockEvents,
+				Address:   addr1,
 			},
 			{
+				EventType:  common.BlockEvents,
 				Address:    addr2,
 				Identifier: "ESDTTransfer",
 			},
 			{
+				EventType:  common.BlockTxs,
 				Identifier: "wrapEGLD",
 			},
 			{
+				EventType:  common.BlockTxs,
 				Address:    addr3,
 				Identifier: "withdraw",
 				Topics:     []string{"1", "2"},
@@ -119,17 +125,17 @@ func TestSubscriptionMap_MatchSubscribeEventCorrectMatchLevel(t *testing.T) {
 
 	subs := subMap.Subscriptions()
 
-	require.NotEmpty(t, subs[0])
-	require.True(t, subs[0].MatchLevel == MatchAddress)
+	require.NotEmpty(t, subs[common.BlockEvents][0])
+	require.True(t, subs[common.BlockEvents][0].MatchLevel == MatchAddress)
 
-	require.NotEmpty(t, subs[1])
-	require.True(t, subs[1].MatchLevel == MatchAddressIdentifier)
+	require.NotEmpty(t, subs[common.BlockEvents][1])
+	require.True(t, subs[common.BlockEvents][1].MatchLevel == MatchAddressIdentifier)
 
-	require.NotEmpty(t, subs[2])
-	require.True(t, subs[2].MatchLevel == MatchIdentifier)
+	require.NotEmpty(t, subs[common.BlockTxs][0])
+	require.True(t, subs[common.BlockTxs][0].MatchLevel == MatchIdentifier)
 
-	require.NotEmpty(t, subs[3])
-	require.True(t, subs[3].MatchLevel == MatchTopics)
+	require.NotEmpty(t, subs[common.BlockTxs][1])
+	require.True(t, subs[common.BlockTxs][1].MatchLevel == MatchTopics)
 }
 
 func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
@@ -149,9 +155,11 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 
 	subsFromMap := subMap.Subscriptions()
 
-	for _, sub := range subsFromMap {
-		if sub.DispatcherID == rmDispatcherID {
-			t.Error("should clear all subscriptions")
+	for _, subs := range subsFromMap {
+		for _, sub := range subs {
+			if sub.DispatcherID == rmDispatcherID {
+				t.Error("should clear all subscriptions")
+			}
 		}
 	}
 }

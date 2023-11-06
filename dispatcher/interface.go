@@ -64,6 +64,6 @@ type WSUpgrader interface {
 type SubscriptionMapperHandler interface {
 	MatchSubscribeEvent(event data.SubscribeEvent)
 	RemoveSubscriptions(dispatcherID uuid.UUID)
-	Subscriptions() []data.Subscription
+	Subscriptions() map[string][]data.Subscription
 	IsInterfaceNil() bool
 }

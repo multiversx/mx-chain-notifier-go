@@ -78,12 +78,8 @@ func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
 func (ch *commonHub) Publish(blockEvents data.BlockEvents) {
 	subscriptions := ch.subscriptionMapper.Subscriptions()
 
-	for _, subscription := range subscriptions {
-		if subscription.EventType != common.PushLogsAndEvents {
-			continue
-		}
-
-		ch.handlePushBlockEvents(blockEvents, subscription)
+	for _, sub := range subscriptions[common.PushLogsAndEvents] {
+		ch.handlePushBlockEvents(blockEvents, sub)
 	}
 }
 
@@ -109,12 +105,8 @@ func (ch *commonHub) PublishRevert(revertBlock data.RevertBlock) {
 
 	dispatchersMap := make(map[uuid.UUID]data.RevertBlock)
 
-	for _, subscription := range subscriptions {
-		if subscription.EventType != common.RevertBlockEvents {
-			continue
-		}
-
-		dispatchersMap[subscription.DispatcherID] = revertBlock
+	for _, sub := range subscriptions[common.RevertBlockEvents] {
+		dispatchersMap[sub.DispatcherID] = revertBlock
 	}
 
 	ch.mutDispatchers.RLock()
@@ -132,11 +124,7 @@ func (ch *commonHub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
 
 	dispatchersMap := make(map[uuid.UUID]data.FinalizedBlock)
 
-	for _, subscription := range subscriptions {
-		if subscription.EventType != common.FinalizedBlockEvents {
-			continue
-		}
-
+	for _, subscription := range subscriptions[common.FinalizedBlockEvents] {
 		dispatchersMap[subscription.DispatcherID] = finalizedBlock
 	}
 
@@ -155,11 +143,7 @@ func (ch *commonHub) PublishTxs(blockTxs data.BlockTxs) {
 
 	dispatchersMap := make(map[uuid.UUID]data.BlockTxs)
 
-	for _, subscription := range subscriptions {
-		if subscription.EventType != common.BlockTxs {
-			continue
-		}
-
+	for _, subscription := range subscriptions[common.BlockTxs] {
 		dispatchersMap[subscription.DispatcherID] = blockTxs
 	}
 
@@ -178,11 +162,7 @@ func (ch *commonHub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOr
 
 	dispatchersMap := make(map[uuid.UUID]data.BlockEventsWithOrder)
 
-	for _, subscription := range subscriptions {
-		if subscription.EventType != common.BlockEvents {
-			continue
-		}
-
+	for _, subscription := range subscriptions[common.BlockEvents] {
 		dispatchersMap[subscription.DispatcherID] = blockTxs
 	}
 
@@ -201,11 +181,7 @@ func (ch *commonHub) PublishScrs(blockScrs data.BlockScrs) {
 
 	dispatchersMap := make(map[uuid.UUID]data.BlockScrs)
 
-	for _, subscription := range subscriptions {
-		if subscription.EventType != common.BlockScrs {
-			continue
-		}
-
+	for _, subscription := range subscriptions[common.BlockScrs] {
 		dispatchersMap[subscription.DispatcherID] = blockScrs
 	}
 
