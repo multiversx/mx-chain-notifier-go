@@ -27,9 +27,6 @@ type rabbitMqPublisher struct {
 	client     RabbitMqClient
 	marshaller marshal.Marshalizer
 	cfg        config.RabbitMQConfig
-
-	cancelFunc func()
-	closeChan  chan struct{}
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance
@@ -198,7 +195,7 @@ func (rp *rabbitMqPublisher) PublishTxs(blockTxs data.BlockTxs) {
 	}
 }
 
-// PublishTxs will publish scrs event to rabbitmq
+// PublishScrs will publish scrs event to rabbitmq
 func (rp *rabbitMqPublisher) PublishScrs(blockScrs data.BlockScrs) {
 	scrsBlockBytes, err := rp.marshaller.Marshal(blockScrs)
 	if err != nil {
@@ -239,8 +236,9 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 }
 
 // Close will trigger to close rabbitmq client
-func (rp *rabbitMqPublisher) Close() {
+func (rp *rabbitMqPublisher) Close() error {
 	rp.client.Close()
+	return nil
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

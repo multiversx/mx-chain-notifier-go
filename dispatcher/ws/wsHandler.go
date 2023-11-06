@@ -11,13 +11,13 @@ import (
 
 // ArgsWebSocketProcessor defines the argument needed to create a websocketHandler
 type ArgsWebSocketProcessor struct {
-	Hub        dispatcher.Hub
+	Dispatcher dispatcher.Dispatcher
 	Upgrader   dispatcher.WSUpgrader
 	Marshaller marshal.Marshalizer
 }
 
 type websocketProcessor struct {
-	hub        dispatcher.Hub
+	dispatcher dispatcher.Dispatcher
 	upgrader   dispatcher.WSUpgrader
 	marshaller marshal.Marshalizer
 }
@@ -30,15 +30,15 @@ func NewWebSocketProcessor(args ArgsWebSocketProcessor) (*websocketProcessor, er
 	}
 
 	return &websocketProcessor{
-		hub:        args.Hub,
+		dispatcher: args.Dispatcher,
 		upgrader:   args.Upgrader,
 		marshaller: args.Marshaller,
 	}, nil
 }
 
 func checkArgs(args ArgsWebSocketProcessor) error {
-	if check.IfNil(args.Hub) {
-		return ErrNilHubHandler
+	if check.IfNil(args.Dispatcher) {
+		return ErrNilDispatcher
 	}
 	if args.Upgrader == nil {
 		return ErrNilWSUpgrader
@@ -59,7 +59,7 @@ func (wh *websocketProcessor) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	}
 
 	args := argsWebSocketDispatcher{
-		Hub:        wh.hub,
+		Dispatcher: wh.dispatcher,
 		Conn:       conn,
 		Marshaller: wh.marshaller,
 	}
@@ -68,7 +68,7 @@ func (wh *websocketProcessor) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		log.Error("failed creating a new websocket dispatcher", "err", err.Error())
 		return
 	}
-	wsDispatcher.hub.RegisterEvent(wsDispatcher)
+	wsDispatcher.dispatcher.RegisterEvent(wsDispatcher)
 
 	go wsDispatcher.writePump()
 	go wsDispatcher.readPump()

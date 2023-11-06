@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
@@ -47,7 +48,7 @@ func TestRun(t *testing.T) {
 		defer p.Close()
 
 		err = p.Run()
-		require.Equal(t, process.ErrLoopAlreadyStarted, err)
+		require.Equal(t, common.ErrLoopAlreadyStarted, err)
 	})
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/tools"
 )
 
@@ -18,19 +19,26 @@ func main() {
 		return
 	}
 
-	err = httpClient.Post("/events/push", tools.OutportBlockV0())
+	marshaller := &marshal.JsonMarshalizer{}
+	blockData, err := tools.NewBlockData(marshaller)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	err = httpClient.Post("/events/push", blockData.OutportBlockV1())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
 	}
 
-	err = httpClient.Post("/events/revert", tools.RevertBlockV0())
+	err = httpClient.Post("/events/revert", blockData.RevertBlockV1())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
 	}
 
-	err = httpClient.Post("/events/finalized", tools.FinalizedBlockV0())
+	err = httpClient.Post("/events/finalized", blockData.FinalizedBlockV1())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return

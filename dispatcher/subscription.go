@@ -98,13 +98,15 @@ func (sm *SubscriptionMapper) RemoveSubscriptions(dispatcherID uuid.UUID) {
 }
 
 // Subscriptions returns a slice reflecting the subscriptions present in the map
-func (sm *SubscriptionMapper) Subscriptions() []data.Subscription {
+func (sm *SubscriptionMapper) Subscriptions() map[string][]data.Subscription {
 	sm.rwMut.RLock()
 	defer sm.rwMut.RUnlock()
 
-	var subscriptions []data.Subscription
+	subscriptions := make(map[string][]data.Subscription)
 	for _, sub := range sm.subscriptions {
-		subscriptions = append(subscriptions, sub...)
+		for _, s := range sub {
+			subscriptions[s.EventType] = append(subscriptions[s.EventType], s)
+		}
 	}
 
 	return subscriptions

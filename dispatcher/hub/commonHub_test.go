@@ -66,9 +66,6 @@ func TestCommonHub_RegisterDispatcher(t *testing.T) {
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
 
-	hub.Run()
-	defer hub.Close()
-
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
 
@@ -87,9 +84,6 @@ func TestCommonHub_UnregisterDispatcher(t *testing.T) {
 
 	dispatcher1 := mocks.NewDispatcherMock(nil, hub)
 	dispatcher2 := mocks.NewDispatcherMock(nil, hub)
-
-	hub.Run()
-	defer hub.Close()
 
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
@@ -112,18 +106,15 @@ func TestCommonHub_HandleBroadcastDispatcherReceivesEvents(t *testing.T) {
 	consumer := mocks.NewConsumerMock()
 	dispatcher1 := mocks.NewDispatcherMock(consumer, hub)
 
-	hub.registerDispatcher(dispatcher1)
+	hub.RegisterEvent(dispatcher1)
 	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID:        dispatcher1.GetID(),
 		SubscriptionEntries: []data.SubscriptionEntry{},
 	})
 
-	hub.Run()
-	defer hub.Close()
-
 	blockEvents := getEvents()
 
-	hub.Broadcast(blockEvents)
+	hub.Publish(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -142,12 +133,14 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 	dispatcher1 := mocks.NewDispatcherMock(consumer1, hub)
 	consumer2 := mocks.NewConsumerMock()
 	dispatcher2 := mocks.NewDispatcherMock(consumer2, hub)
-
-	hub.Run()
-	defer hub.Close()
+	consumer3 := mocks.NewConsumerMock()
+	dispatcher3 := mocks.NewDispatcherMock(consumer3, hub)
 
 	hub.RegisterEvent(dispatcher1)
 	hub.RegisterEvent(dispatcher2)
+	hub.RegisterEvent(dispatcher3)
+
+	time.Sleep(time.Millisecond * 100)
 
 	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID: dispatcher1.GetID(),
@@ -167,27 +160,25 @@ func TestCommonHub_HandleBroadcastMultipleDispatchers(t *testing.T) {
 			},
 		},
 	})
+	hub.Subscribe(data.SubscribeEvent{
+		DispatcherID: dispatcher3.GetID(),
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				Address:    "erd3",
+				Identifier: "random",
+			},
+		},
+	})
 
 	blockEvents := getEvents()
 
-	hub.Broadcast(blockEvents)
+	hub.Publish(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 
-	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
 	require.True(t, consumer2.HasEvent(blockEvents.Events[1]))
-}
-
-func TestCommonHubRun(t *testing.T) {
-	t.Parallel()
-
-	args := createMockCommonHubArgs()
-	hub, err := NewCommonHub(args)
-	require.Nil(t, err)
-
-	hub.Run()
-	err = hub.Close()
-	require.Nil(t, err)
+	require.True(t, consumer1.HasEvent(blockEvents.Events[0]))
+	require.True(t, consumer3.HasEvent(blockEvents.Events[2]))
 }
 
 func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
@@ -212,15 +203,12 @@ func TestCommonHub_HandleRevertBroadcast(t *testing.T) {
 		},
 	})
 
-	hub.Run()
-	defer hub.Close()
-
 	blockEvents := data.RevertBlock{
 		Hash:  "hash1",
 		Nonce: 1,
 	}
 
-	hub.BroadcastRevert(blockEvents)
+	hub.PublishRevert(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -249,14 +237,11 @@ func TestCommonHub_HandleFinalizedBroadcast(t *testing.T) {
 		},
 	})
 
-	hub.Run()
-	defer hub.Close()
-
 	blockEvents := data.FinalizedBlock{
 		Hash: "hash1",
 	}
 
-	hub.BroadcastFinalized(blockEvents)
+	hub.PublishFinalized(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -285,14 +270,11 @@ func TestCommonHub_HandleTxsBroadcast(t *testing.T) {
 		},
 	})
 
-	hub.Run()
-	defer hub.Close()
-
 	blockEvents := data.BlockTxs{
 		Hash: "hash1",
 	}
 
-	hub.BroadcastTxs(blockEvents)
+	hub.PublishTxs(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -321,14 +303,11 @@ func TestCommonHub_HandleBlockEventsBroadcast(t *testing.T) {
 		},
 	})
 
-	hub.Run()
-	defer hub.Close()
-
 	blockEvents := data.BlockEventsWithOrder{
 		Hash: "hash1",
 	}
 
-	hub.handleBlockEventsWithOrderBroadcast(blockEvents)
+	hub.PublishBlockEventsWithOrder(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 
@@ -357,14 +336,11 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 		},
 	})
 
-	hub.Run()
-	defer hub.Close()
-
 	blockEvents := data.BlockScrs{
 		Hash: "hash1",
 	}
 
-	hub.BroadcastScrs(blockEvents)
+	hub.PublishScrs(blockEvents)
 
 	time.Sleep(time.Millisecond * 100)
 

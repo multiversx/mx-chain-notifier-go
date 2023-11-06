@@ -8,7 +8,7 @@ type ArgsWSDispatcher struct {
 // NewTestWSDispatcher -
 func NewTestWSDispatcher(args ArgsWSDispatcher) (*websocketDispatcher, error) {
 	wsArgs := argsWebSocketDispatcher{
-		Hub:        args.Hub,
+		Dispatcher: args.Dispatcher,
 		Conn:       args.Conn,
 		Marshaller: args.Marshaller,
 	}
