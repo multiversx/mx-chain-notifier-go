@@ -6,10 +6,10 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	coreData "github.com/multiversx/mx-chain-core-go/data"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
-	"github.com/multiversx/mx-chain-core-go/data/alteredAccount"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 )
 
 // TODO: dismiss this implementation after http integration is fully deprecated
@@ -31,18 +31,8 @@ func NewEventsPreProcessorV0(args ArgsEventsPreProcessor) (*eventsPreProcessorV0
 
 // SaveBlock will handle the block info data
 func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
-	argsBlockS := struct {
-		HeaderHash             []byte
-		Body                   *block.Body
-		TransactionsPool       *outport.TransactionPool
-		SignersIndexes         []uint64
-		NotarizedHeadersHashes []string
-		HeaderGasConsumption   outport.HeaderGasConsumption
-		AlteredAccounts        map[string]*alteredAccount.AlteredAccount
-		NumberOfShards         uint32
-		IsImportDB             bool
-	}{}
-	err := json.Unmarshal(marshalledData, &argsBlockS)
+	blockData := &data.OutportBlockDataOld{}
+	err := json.Unmarshal(marshalledData, &blockData)
 	if err != nil {
 		return err
 	}
@@ -52,15 +42,20 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
+	txsPool, err := d.setTransactionsPool(blockData.TransactionsPool)
+	if err != nil {
+		return err
+	}
+
 	saveBlockData := &data.ArgsSaveBlockData{
-		HeaderHash:             argsBlockS.HeaderHash,
-		Body:                   argsBlockS.Body,
-		SignersIndexes:         argsBlockS.SignersIndexes,
-		NotarizedHeadersHashes: argsBlockS.NotarizedHeadersHashes,
-		HeaderGasConsumption:   &argsBlockS.HeaderGasConsumption,
-		AlteredAccounts:        argsBlockS.AlteredAccounts,
-		NumberOfShards:         argsBlockS.NumberOfShards,
-		TransactionsPool:       argsBlockS.TransactionsPool,
+		HeaderHash:             blockData.HeaderHash,
+		Body:                   blockData.Body,
+		SignersIndexes:         blockData.SignersIndexes,
+		NotarizedHeadersHashes: blockData.NotarizedHeadersHashes,
+		HeaderGasConsumption:   &blockData.HeaderGasConsumption,
+		AlteredAccounts:        blockData.AlteredAccounts,
+		NumberOfShards:         blockData.NumberOfShards,
+		TransactionsPool:       txsPool,
 		Header:                 header,
 	}
 
@@ -70,6 +65,53 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 	}
 
 	return nil
+}
+
+func (d *eventsPreProcessorV0) setTransactionsPool(txsPool *data.TransactionsPool) (*outport.TransactionPool, error) {
+	if txsPool == nil {
+		return nil, process.ErrNilTransactionsPool
+	}
+
+	txs := make(map[string]*outport.TxInfo)
+
+	if txsPool.Txs != nil {
+		for hash, txHandler := range txsPool.Txs {
+			txs[hash] = &outport.TxInfo{
+				Transaction:    txHandler.TransactionHandler,
+				FeeInfo:        &txHandler.FeeInfo,
+				ExecutionOrder: uint32(txHandler.ExecutionOrder),
+			}
+		}
+	}
+
+	scrs := make(map[string]*outport.SCRInfo)
+
+	if txsPool.Scrs != nil {
+		for hash, scrHandler := range txsPool.Scrs {
+			scrs[hash] = &outport.SCRInfo{
+				SmartContractResult: scrHandler.TransactionHandler,
+				FeeInfo:             &scrHandler.FeeInfo,
+				ExecutionOrder:      uint32(scrHandler.ExecutionOrder),
+			}
+		}
+	}
+
+	logs := make([]*outport.LogData, 0)
+
+	if txsPool.Logs != nil {
+		for _, logHandler := range txsPool.Logs {
+			logs = append(logs, &outport.LogData{
+				TxHash: logHandler.TxHash,
+				Log:    logHandler.LogHandler,
+			})
+		}
+	}
+
+	return &outport.TransactionPool{
+		Transactions:         txs,
+		SmartContractResults: scrs,
+		Logs:                 logs,
+	}, nil
 }
 
 func (d *eventsPreProcessorV0) getHeader(marshaledData []byte) (nodeData.HeaderHandler, error) {
