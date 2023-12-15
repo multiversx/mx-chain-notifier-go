@@ -32,7 +32,7 @@ func NewEventsPreProcessorV0(args ArgsEventsPreProcessor) (*eventsPreProcessorV0
 // SaveBlock will handle the block info data
 func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 	blockData := &data.OutportBlockDataOld{}
-	err := json.Unmarshal(marshalledData, &blockData)
+	err := json.Unmarshal(marshalledData, blockData)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
-	txsPool, err := d.setTransactionsPool(blockData.TransactionsPool)
+	txsPool, err := d.parseTransactionsPool(blockData.TransactionsPool)
 	if err != nil {
 		return err
 	}
@@ -67,44 +67,24 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 	return nil
 }
 
-func (d *eventsPreProcessorV0) setTransactionsPool(txsPool *data.TransactionsPool) (*outport.TransactionPool, error) {
+func (d *eventsPreProcessorV0) parseTransactionsPool(txsPool *data.TransactionsPool) (*outport.TransactionPool, error) {
 	if txsPool == nil {
 		return nil, process.ErrNilTransactionsPool
 	}
 
 	txs := make(map[string]*outport.TxInfo)
-
 	if txsPool.Txs != nil {
-		for hash, txHandler := range txsPool.Txs {
-			txs[hash] = &outport.TxInfo{
-				Transaction:    txHandler.TransactionHandler,
-				FeeInfo:        &txHandler.FeeInfo,
-				ExecutionOrder: uint32(txHandler.ExecutionOrder),
-			}
-		}
+		txs = d.parseTxs(txsPool.Txs)
 	}
 
 	scrs := make(map[string]*outport.SCRInfo)
-
 	if txsPool.Scrs != nil {
-		for hash, scrHandler := range txsPool.Scrs {
-			scrs[hash] = &outport.SCRInfo{
-				SmartContractResult: scrHandler.TransactionHandler,
-				FeeInfo:             &scrHandler.FeeInfo,
-				ExecutionOrder:      uint32(scrHandler.ExecutionOrder),
-			}
-		}
+		scrs = d.parseScrs(txsPool.Scrs)
 	}
 
 	logs := make([]*outport.LogData, 0)
-
 	if txsPool.Logs != nil {
-		for _, logHandler := range txsPool.Logs {
-			logs = append(logs, &outport.LogData{
-				TxHash: logHandler.TxHash,
-				Log:    logHandler.LogHandler,
-			})
-		}
+		logs = d.parseLogs(txsPool.Logs)
 	}
 
 	return &outport.TransactionPool{
@@ -112,6 +92,59 @@ func (d *eventsPreProcessorV0) setTransactionsPool(txsPool *data.TransactionsPoo
 		SmartContractResults: scrs,
 		Logs:                 logs,
 	}, nil
+}
+
+func (d *eventsPreProcessorV0) parseTxs(txs map[string]*data.NodeTransaction) map[string]*outport.TxInfo {
+	newTxs := make(map[string]*outport.TxInfo, len(txs))
+
+	for hash, txHandler := range txs {
+		if txHandler == nil {
+			continue
+		}
+
+		newTxs[hash] = &outport.TxInfo{
+			Transaction:    txHandler.TransactionHandler,
+			FeeInfo:        &txHandler.FeeInfo,
+			ExecutionOrder: uint32(txHandler.ExecutionOrder),
+		}
+	}
+
+	return newTxs
+}
+
+func (d *eventsPreProcessorV0) parseScrs(scrs map[string]*data.NodeSmartContractResult) map[string]*outport.SCRInfo {
+	newScrs := make(map[string]*outport.SCRInfo, len(scrs))
+
+	for hash, scrHandler := range scrs {
+		if scrHandler == nil {
+			continue
+		}
+
+		newScrs[hash] = &outport.SCRInfo{
+			SmartContractResult: scrHandler.TransactionHandler,
+			FeeInfo:             &scrHandler.FeeInfo,
+			ExecutionOrder:      uint32(scrHandler.ExecutionOrder),
+		}
+	}
+
+	return newScrs
+}
+
+func (d *eventsPreProcessorV0) parseLogs(logs []*data.LogData) []*outport.LogData {
+	newLogs := make([]*outport.LogData, len(logs))
+
+	for _, logHandler := range logs {
+		if logHandler == nil {
+			continue
+		}
+
+		newLogs = append(newLogs, &outport.LogData{
+			TxHash: logHandler.TxHash,
+			Log:    logHandler.LogHandler,
+		})
+	}
+
+	return newLogs
 }
 
 func (d *eventsPreProcessorV0) getHeader(marshaledData []byte) (nodeData.HeaderHandler, error) {
