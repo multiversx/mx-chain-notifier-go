@@ -72,31 +72,15 @@ func (d *eventsPreProcessorV0) parseTransactionsPool(txsPool *data.TransactionsP
 		return nil, process.ErrNilTransactionsPool
 	}
 
-	txs := make(map[string]*outport.TxInfo)
-	if txsPool.Txs != nil {
-		txs = d.parseTxs(txsPool.Txs)
-	}
-
-	scrs := make(map[string]*outport.SCRInfo)
-	if txsPool.Scrs != nil {
-		scrs = d.parseScrs(txsPool.Scrs)
-	}
-
-	logs := make([]*outport.LogData, 0)
-	if txsPool.Logs != nil {
-		logs = d.parseLogs(txsPool.Logs)
-	}
-
 	return &outport.TransactionPool{
-		Transactions:         txs,
-		SmartContractResults: scrs,
-		Logs:                 logs,
+		Transactions:         d.parseTxs(txsPool.Txs),
+		SmartContractResults: d.parseScrs(txsPool.Scrs),
+		Logs:                 d.parseLogs(txsPool.Logs),
 	}, nil
 }
 
 func (d *eventsPreProcessorV0) parseTxs(txs map[string]*data.NodeTransaction) map[string]*outport.TxInfo {
-	newTxs := make(map[string]*outport.TxInfo, len(txs))
-
+	newTxs := make(map[string]*outport.TxInfo)
 	for hash, txHandler := range txs {
 		if txHandler == nil {
 			continue
@@ -113,8 +97,7 @@ func (d *eventsPreProcessorV0) parseTxs(txs map[string]*data.NodeTransaction) ma
 }
 
 func (d *eventsPreProcessorV0) parseScrs(scrs map[string]*data.NodeSmartContractResult) map[string]*outport.SCRInfo {
-	newScrs := make(map[string]*outport.SCRInfo, len(scrs))
-
+	newScrs := make(map[string]*outport.SCRInfo)
 	for hash, scrHandler := range scrs {
 		if scrHandler == nil {
 			continue
@@ -132,7 +115,6 @@ func (d *eventsPreProcessorV0) parseScrs(scrs map[string]*data.NodeSmartContract
 
 func (d *eventsPreProcessorV0) parseLogs(logs []*data.LogData) []*outport.LogData {
 	newLogs := make([]*outport.LogData, len(logs))
-
 	for _, logHandler := range logs {
 		if logHandler == nil {
 			continue
