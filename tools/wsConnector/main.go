@@ -8,7 +8,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
-	"github.com/multiversx/mx-chain-notifier-go/tools"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 )
 
 func main() {
@@ -19,19 +19,19 @@ func main() {
 		return
 	}
 
-	err = wsClient.PushEventsRequest(tools.OutportBlockV1())
+	err = wsClient.PushEventsRequest(testdata.OutportBlockV1())
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	err = wsClient.RevertEventsRequest(tools.RevertBlockV1())
+	err = wsClient.RevertEventsRequest(testdata.RevertBlockV1())
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	err = wsClient.FinalizedEventsRequest(tools.FinalizedBlockV1())
+	err = wsClient.FinalizedEventsRequest(testdata.FinalizedBlockV1())
 	if err != nil {
 		fmt.Println(err.Error())
 		return

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/multiversx/mx-chain-notifier-go/tools"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 )
 
 func main() {
@@ -18,19 +18,19 @@ func main() {
 		return
 	}
 
-	err = httpClient.Post("/events/push", tools.OutportBlockV0())
+	err = httpClient.Post("/events/push", testdata.OutportBlockV0())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
 	}
 
-	err = httpClient.Post("/events/revert", tools.RevertBlockV0())
+	err = httpClient.Post("/events/revert", testdata.RevertBlockV0())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
 	}
 
-	err = httpClient.Post("/events/finalized", tools.FinalizedBlockV0())
+	err = httpClient.Post("/events/finalized", testdata.FinalizedBlockV0())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
