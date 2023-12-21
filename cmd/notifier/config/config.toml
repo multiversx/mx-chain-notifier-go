@@ -1,4 +1,8 @@
 [General]
+    # CheckDuplicates signals if the events received from observers have been already pushed to clients
+    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
+    CheckDuplicates = true
+
     # ExternalMarshaller is used for handling incoming/outcoming api requests 
     [General.ExternalMarshaller]
         Type = "json"
@@ -12,10 +16,6 @@
         Type = "bech32"
         Prefix = "erd"
         Length = 32
-
-    # CheckDuplicates signals if the events received from observers have been already pushed to clients
-    # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
-    CheckDuplicates = true
 
 [WebSocketConnector]
     # Enabled will determine if websocket connector will be enabled or not
@@ -44,7 +44,9 @@
     AcknowledgeTimeoutInSec = 60
 
 [ConnectorApi]
-    # Enabled will determine if http connector will be enabled or not
+    # Enabled will determine if http connector will be enabled or not.
+    # It will determine if http connector endpoints will be created.
+    # If set to false, the web server will still be created 
     Enabled = true
 
     # The address on which the events notifier listens for subscriptions
