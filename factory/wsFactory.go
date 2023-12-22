@@ -86,12 +86,13 @@ func createWsObsConnector(
 func createWsHost(wsConfig config.WebSocketConfig, wsMarshaller marshal.Marshalizer) (factoryHost.FullDuplexHost, error) {
 	return factoryHost.CreateWebSocketHost(factoryHost.ArgsWebSocketHost{
 		WebSocketConfig: data.WebSocketConfig{
-			URL:                     wsConfig.URL,
-			WithAcknowledge:         wsConfig.WithAcknowledge,
-			Mode:                    wsConfig.Mode,
-			RetryDurationInSec:      int(wsConfig.RetryDurationInSec),
-			BlockingAckOnError:      wsConfig.BlockingAckOnError,
-			AcknowledgeTimeoutInSec: wsConfig.AcknowledgeTimeoutInSec,
+			URL:                        wsConfig.URL,
+			WithAcknowledge:            wsConfig.WithAcknowledge,
+			Mode:                       wsConfig.Mode,
+			RetryDurationInSec:         int(wsConfig.RetryDurationInSec),
+			BlockingAckOnError:         wsConfig.BlockingAckOnError,
+			AcknowledgeTimeoutInSec:    wsConfig.AcknowledgeTimeoutInSec,
+			DropMessagesIfNoConnection: wsConfig.DropMessagesIfNoConnection,
 		},
 		Marshaller: wsMarshaller,
 		Log:        log,
