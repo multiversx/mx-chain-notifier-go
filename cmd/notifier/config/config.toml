@@ -37,6 +37,9 @@
     # Signals if in case of data payload processing error, we should send the ack signal or not
     BlockingAckOnError = false
 
+    # Set to true to drop messages if there is no active WebSocket connection to send to.
+    DropMessagesIfNoConnection = false
+
     # After a message will be sent it will wait for an ack message if this flag is enabled
     WithAcknowledge = true
 
