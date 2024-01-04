@@ -3,6 +3,8 @@ package data
 import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/data/alteredAccount"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -24,9 +26,9 @@ type InterceptorBlockData struct {
 	Body          nodeData.BodyHandler
 	Header        nodeData.HeaderHandler
 	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*NotifierTransaction
+	TxsWithOrder  map[string]*outport.TxInfo
 	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*NotifierSmartContractResult
+	ScrsWithOrder map[string]*outport.SCRInfo
 	LogEvents     []Event
 }
 
@@ -37,9 +39,23 @@ type ArgsSaveBlockData struct {
 	Header                 nodeData.HeaderHandler
 	SignersIndexes         []uint64
 	NotarizedHeadersHashes []string
-	HeaderGasConsumption   outport.HeaderGasConsumption
+	HeaderGasConsumption   *outport.HeaderGasConsumption
+	TransactionsPool       *outport.TransactionPool
+	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
+	NumberOfShards         uint32
+}
+
+// OutportBlockDataOld holds the block data that will be received on push events
+// TODO: remove on next iterations, new versions will use outport driver structs from
+// core repository, which will be backwards compatible from now on
+type OutportBlockDataOld struct {
+	HeaderHash             []byte
+	Body                   *block.Body
 	TransactionsPool       *TransactionsPool
-	AlteredAccounts        map[string]*outport.AlteredAccount
+	SignersIndexes         []uint64
+	NotarizedHeadersHashes []string
+	HeaderGasConsumption   outport.HeaderGasConsumption
+	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
 }
@@ -47,7 +63,7 @@ type ArgsSaveBlockData struct {
 // ArgsSaveBlock holds block data with header type
 type ArgsSaveBlock struct {
 	HeaderType core.HeaderType
-	ArgsSaveBlockData
+	OutportBlockDataOld
 }
 
 // LogData holds the data needed for indexing logs and events

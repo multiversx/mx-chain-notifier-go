@@ -2,10 +2,11 @@ package rabbitmq
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/streadway/amqp"
@@ -19,13 +20,15 @@ var log = logger.GetOrCreate("rabbitmq")
 
 // ArgsRabbitMqPublisher defines the arguments needed for rabbitmq publisher creation
 type ArgsRabbitMqPublisher struct {
-	Client RabbitMqClient
-	Config config.RabbitMQConfig
+	Client     RabbitMqClient
+	Config     config.RabbitMQConfig
+	Marshaller marshal.Marshalizer
 }
 
 type rabbitMqPublisher struct {
-	client RabbitMqClient
-	cfg    config.RabbitMQConfig
+	client     RabbitMqClient
+	marshaller marshal.Marshalizer
+	cfg        config.RabbitMQConfig
 
 	broadcast                     chan data.BlockEvents
 	broadcastRevert               chan data.RevertBlock
@@ -54,6 +57,7 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 		broadcastBlockEventsWithOrder: make(chan data.BlockEventsWithOrder),
 		cfg:                           args.Config,
 		client:                        args.Client,
+		marshaller:                    args.Marshaller,
 		closeChan:                     make(chan struct{}),
 	}
 
@@ -68,6 +72,9 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 func checkArgs(args ArgsRabbitMqPublisher) error {
 	if check.IfNil(args.Client) {
 		return ErrNilRabbitMqClient
+	}
+	if check.IfNil(args.Marshaller) {
+		return common.ErrNilMarshaller
 	}
 
 	if args.Config.EventsExchange.Name == "" {
@@ -240,7 +247,7 @@ func (rp *rabbitMqPublisher) BroadcastBlockEventsWithOrder(events data.BlockEven
 }
 
 func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
-	eventsBytes, err := json.Marshal(events)
+	eventsBytes, err := rp.marshaller.Marshal(events)
 	if err != nil {
 		log.Error("could not marshal events", "err", err.Error())
 		return
@@ -253,7 +260,7 @@ func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
 }
 
 func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBlock) {
-	revertBlockBytes, err := json.Marshal(revertBlock)
+	revertBlockBytes, err := rp.marshaller.Marshal(revertBlock)
 	if err != nil {
 		log.Error("could not marshal revert event", "err", err.Error())
 		return
@@ -266,7 +273,7 @@ func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBloc
 }
 
 func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.FinalizedBlock) {
-	finalizedBlockBytes, err := json.Marshal(finalizedBlock)
+	finalizedBlockBytes, err := rp.marshaller.Marshal(finalizedBlock)
 	if err != nil {
 		log.Error("could not marshal finalized event", "err", err.Error())
 		return
@@ -279,7 +286,7 @@ func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.Fina
 }
 
 func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
-	txsBlockBytes, err := json.Marshal(blockTxs)
+	txsBlockBytes, err := rp.marshaller.Marshal(blockTxs)
 	if err != nil {
 		log.Error("could not marshal block txs event", "err", err.Error())
 		return
@@ -292,7 +299,7 @@ func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
 }
 
 func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
-	scrsBlockBytes, err := json.Marshal(blockScrs)
+	scrsBlockBytes, err := rp.marshaller.Marshal(blockScrs)
 	if err != nil {
 		log.Error("could not marshal block scrs event", "err", err.Error())
 		return
@@ -305,7 +312,7 @@ func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
 }
 
 func (rp *rabbitMqPublisher) publishBlockEventsWithOrderToExchange(blockTxs data.BlockEventsWithOrder) {
-	txsBlockBytes, err := json.Marshal(blockTxs)
+	txsBlockBytes, err := rp.marshaller.Marshal(blockTxs)
 	if err != nil {
 		log.Error("could not marshal block txs event", "err", err.Error())
 		return

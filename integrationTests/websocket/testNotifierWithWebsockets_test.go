@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/block"
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -19,10 +21,11 @@ import (
 
 func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -48,12 +51,19 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 			TxHash:  "txHash1",
 		},
 	}
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: []byte("hash1"),
-		TransactionsPool: &data.TransactionsPool{
-			Logs: []*data.LogData{
+
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	saveBlockData := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Logs: []*outport.LogData{
 				{
-					LogHandler: &transaction.Log{
+					Log: &transaction.Log{
 						Events: []*transaction.Event{
 							{
 								Address: addr,
@@ -64,19 +74,15 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 				},
 			},
 		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  []byte("headerHash"),
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
-	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -92,20 +98,19 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(blockEvents)
-	require.NotNil(t, resp)
+	err = webServer.PushEventsRequest(saveBlockData)
+	require.Nil(t, err)
 
-	if waitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -137,16 +142,20 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		ShardID:   1,
 		TimeStamp: 1234,
 		Events:    events,
-		Txs:       make(map[string]*data.NotifierTransaction),
-		Scrs:      make(map[string]*data.NotifierSmartContractResult),
 	}
 
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: headerHash,
-		TransactionsPool: &data.TransactionsPool{
-			Logs: []*data.LogData{
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	saveBlockData := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Logs: []*outport.LogData{
 				{
-					LogHandler: &transaction.Log{
+					Log: &transaction.Log{
 						Events: []*transaction.Event{
 							{
 								Address: addr,
@@ -157,19 +166,15 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 				},
 			},
 		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  headerHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
 		},
-	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -185,20 +190,19 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	resp := webServer.PushEventsRequest(blockEvents)
-	require.NotNil(t, resp)
+	err = webServer.PushEventsRequest(saveBlockData)
+	require.Nil(t, err)
 
-	if waitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -217,8 +221,20 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
-	blockEvents := &data.RevertBlock{
-		Hash:  "hash1",
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("hash1"),
+	}
+
+	expReply := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
 		Nonce: 1,
 	}
 
@@ -229,26 +245,25 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 		reply, err := ws.ReceiveRevertBlock()
 		require.Nil(t, err)
 
-		require.Equal(t, blockEvents, reply)
+		require.Equal(t, expReply, reply)
 		wg.Done()
 	}()
 
 	time.Sleep(time.Second)
 
-	resp := webServer.RevertEventsRequest(blockEvents)
-	require.NotNil(t, resp)
+	err = webServer.RevertEventsRequest(blockEvents)
+	require.Nil(t, err)
 
-	if waitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -267,8 +282,12 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 	ws.SendSubscribeMessage(subscribeEvent)
 
-	blockEvents := &data.FinalizedBlock{
-		Hash: "hash1",
+	expReply := &data.FinalizedBlock{
+		Hash: hex.EncodeToString([]byte("hash1")),
+	}
+
+	blockEvents := &outport.FinalizedBlock{
+		HeaderHash: []byte("hash1"),
 	}
 
 	wg := &sync.WaitGroup{}
@@ -278,7 +297,7 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 		reply, err := ws.ReceiveFinalized()
 		require.Nil(t, err)
 
-		require.Equal(t, blockEvents, reply)
+		require.Equal(t, expReply, reply)
 		wg.Done()
 	}()
 
@@ -286,17 +305,16 @@ func TestNotifierWithWebsockets_FinalizedEvents(t *testing.T) {
 
 	webServer.FinalizedEventsRequest(blockEvents)
 
-	if waitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -316,31 +334,34 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	txs := map[string]*data.NodeTransaction{
+	txs := map[string]*outport.TxInfo{
 		"hash1": {
-			TransactionHandler: &transaction.Transaction{
+			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: blockHash,
-		TransactionsPool: &data.TransactionsPool{
-			Txs: txs,
-		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
+
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
 		},
 	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+	headerBytes, _ := json.Marshal(header)
+	saveBlockData := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Transactions: txs,
+		},
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  blockHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
+			},
+		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	expTxs := map[string]*transaction.Transaction{
@@ -366,19 +387,18 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	webServer.PushEventsRequest(blockEvents)
+	webServer.PushEventsRequest(saveBlockData)
 
-	if waitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -398,31 +418,33 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 	ws.SendSubscribeMessage(subscribeEvent)
 
 	blockHash := []byte("hash1")
-	scrs := map[string]*data.NodeSmartContractResult{
+	scrs := map[string]*outport.SCRInfo{
 		"hash2": {
-			TransactionHandler: &smartContractResult.SmartContractResult{
+			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
 		},
 	}
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: blockHash,
-		TransactionsPool: &data.TransactionsPool{
-			Scrs: scrs,
-		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
-			},
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
 		},
 	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			SmartContractResults: scrs,
+		},
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  blockHash,
+			Body: &block.Body{
+				MiniBlocks: make([]*block.MiniBlock, 1),
+			},
+		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	expScrs := map[string]*smartContractResult.SmartContractResult{
@@ -450,18 +472,27 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 
 	webServer.PushEventsRequest(blockEvents)
 
-	if waitTimeout(t, wg, time.Second*2) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
 }
 
 func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
+	t.Run("with http observer connector", func(t *testing.T) {
+		testNotifierWithWebsockets_AllEvents(t, common.HTTPConnectorType)
+	})
+
+	t.Run("with ws observer connector", func(t *testing.T) {
+		testNotifierWithWebsockets_AllEvents(t, common.WSObsConnectorType)
+	})
+}
+
+func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	cfg := integrationTests.GetDefaultConfigs()
-	cfg.GeneralConfig.ConnectorApi.CheckDuplicates = true
-	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.GeneralConfig)
+	cfg.MainConfig.General.CheckDuplicates = true
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
 	require.Nil(t, err)
 
-	webServer := integrationTests.NewTestWebServer(notifier.Facade, common.WSAPIType)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, common.PayloadV1)
+	require.Nil(t, err)
 
 	notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -496,12 +527,32 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 	err = ws.SendSubscribeMessage(subscribeEvent)
 	require.Nil(t, err)
 
-	revertBlock := &data.RevertBlock{
-		Hash:  "hash1",
+	header := &block.HeaderV2{
+		Header: &block.Header{
+			Nonce: 1,
+		},
+	}
+	headerBytes, _ := json.Marshal(header)
+	revertBlock := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("hash1"),
+		Body: &block.Body{
+			MiniBlocks: []*block.MiniBlock{
+				&block.MiniBlock{},
+			},
+		},
+	}
+	expRevertBlock := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
 		Nonce: 1,
 	}
-	finalizedBlock := &data.FinalizedBlock{
-		Hash: "hash1",
+
+	finalizedBlock := &outport.FinalizedBlock{
+		HeaderHash: []byte("hash1"),
+	}
+	expFinalizedBlock := &data.FinalizedBlock{
+		Hash: hex.EncodeToString([]byte("hash1")),
 	}
 
 	addr := []byte("addr1")
@@ -511,16 +562,16 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		},
 	}
 
-	txs := map[string]*data.NodeTransaction{
+	txs := map[string]*outport.TxInfo{
 		"hash1": {
-			TransactionHandler: &transaction.Transaction{
+			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	scrs := map[string]*data.NodeSmartContractResult{
+	scrs := map[string]*outport.SCRInfo{
 		"hash2": {
-			TransactionHandler: &smartContractResult.SmartContractResult{
+			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
 		},
@@ -547,14 +598,14 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs: expScrs,
 	}
 
-	expTxsWithOrder := map[string]*data.NotifierTransaction{
+	expTxsWithOrder := map[string]*outport.TxInfo{
 		"hash1": {
 			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
 		},
 	}
-	expScrsWithOrder := map[string]*data.NotifierSmartContractResult{
+	expScrsWithOrder := map[string]*outport.SCRInfo{
 		"hash2": {
 			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
@@ -570,14 +621,20 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 		Scrs:      expScrsWithOrder,
 	}
 
-	saveBlockData := data.ArgsSaveBlockData{
-		HeaderHash: []byte(blockHash),
-		TransactionsPool: &data.TransactionsPool{
-			Txs:  txs,
-			Scrs: scrs,
-			Logs: []*data.LogData{
+	header = &block.HeaderV2{
+		Header: &block.Header{
+			ShardID:   1,
+			TimeStamp: 1234,
+		},
+	}
+	headerBytes, _ = json.Marshal(header)
+	blockEvents := &outport.OutportBlock{
+		TransactionPool: &outport.TransactionPool{
+			Transactions:         txs,
+			SmartContractResults: scrs,
+			Logs: []*outport.LogData{
 				{
-					LogHandler: &transaction.Log{
+					Log: &transaction.Log{
 						Events: []*transaction.Event{
 							{
 								Address: addr,
@@ -587,19 +644,17 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 				},
 			},
 		},
-		Body: &block.Body{
-			MiniBlocks: make([]*block.MiniBlock, 1),
-		},
-		Header: &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   1,
-				TimeStamp: 1234,
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  string(core.ShardHeaderV2),
+			HeaderHash:  blockHash,
+			Body: &block.Body{
+				MiniBlocks: []*block.MiniBlock{
+					&block.MiniBlock{},
+				},
 			},
 		},
-	}
-	blockEvents := &data.ArgsSaveBlock{
-		HeaderType:        "HeaderV2",
-		ArgsSaveBlockData: saveBlockData,
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
 
 	numEvents := 6
@@ -624,7 +679,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			case common.RevertBlockEvents:
 				var event *data.RevertBlock
 				_ = json.Unmarshal(reply.Data, &event)
-				assert.Equal(t, revertBlock, event)
+				assert.Equal(t, expRevertBlock, event)
 				wg.Done()
 			case common.BlockEvents:
 				var event data.BlockEventsWithOrder
@@ -634,7 +689,7 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 			case common.FinalizedBlockEvents:
 				var event *data.FinalizedBlock
 				_ = json.Unmarshal(reply.Data, &event)
-				assert.Equal(t, finalizedBlock, event)
+				assert.Equal(t, expFinalizedBlock, event)
 				wg.Done()
 			case common.BlockTxs:
 				var event *data.BlockTxs
@@ -654,34 +709,12 @@ func TestNotifierWithWebsockets_AllEvents(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	go webServer.PushEventsRequest(blockEvents)
-	go webServer.FinalizedEventsRequest(finalizedBlock)
-	go webServer.RevertEventsRequest(revertBlock)
+	go client.PushEventsRequest(blockEvents)
+	go client.FinalizedEventsRequest(finalizedBlock)
+	go client.RevertEventsRequest(revertBlock)
 
-	if waitTimeout(t, wg, time.Second*4) {
-		assert.Fail(t, "timeout when handling websocket events")
-	}
+	integrationTests.WaitTimeout(t, wg, time.Second*4)
 
 	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
-}
-
-// waitTimeout returns true if work group waiting timed out
-func waitTimeout(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) bool {
-	ch := make(chan struct{})
-
-	go func() {
-		defer close(ch)
-		wg.Wait()
-	}()
-
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	select {
-	case <-ch:
-		return false
-	case <-timer.C:
-		return true
-	}
 }

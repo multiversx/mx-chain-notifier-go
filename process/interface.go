@@ -42,3 +42,24 @@ type EventsInterceptor interface {
 	ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error)
 	IsInterfaceNil() bool
 }
+
+// WSClient defines what a websocket client should do
+type WSClient interface {
+	Close() error
+}
+
+// DataProcessor dines what a data indexer should do
+type DataProcessor interface {
+	SaveBlock(marshalledData []byte) error
+	RevertIndexedBlock(marshalledData []byte) error
+	FinalizedBlock(marshalledData []byte) error
+	IsInterfaceNil() bool
+}
+
+// EventsFacadeHandler defines the behavior of a facade handler needed for events group
+type EventsFacadeHandler interface {
+	HandlePushEventsV2(events data.ArgsSaveBlockData) error
+	HandleRevertEvents(revertBlock data.RevertBlock)
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	IsInterfaceNil() bool
+}

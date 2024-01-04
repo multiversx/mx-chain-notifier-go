@@ -3,6 +3,7 @@ package gin_test
 import (
 	"testing"
 
+	"github.com/multiversx/mx-chain-communication-go/testscommon"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/gin"
@@ -14,15 +15,16 @@ import (
 
 func createMockArgsWebServerHandler() gin.ArgsWebServerHandler {
 	return gin.ArgsWebServerHandler{
-		Facade: &mocks.FacadeStub{},
+		Facade:         &mocks.FacadeStub{},
+		PayloadHandler: &testscommon.PayloadHandlerStub{},
 		Configs: config.Configs{
-			GeneralConfig: config.GeneralConfig{
+			MainConfig: config.MainConfig{
 				ConnectorApi: config.ConnectorApiConfig{
 					Host: "8080",
 				},
 			},
 			Flags: config.FlagsConfig{
-				APIType: "notifier",
+				PublisherType: "notifier",
 			},
 		},
 	}
@@ -42,11 +44,22 @@ func TestNewWebServerHandler(t *testing.T) {
 		require.Equal(t, apiErrors.ErrNilFacadeHandler, err)
 	})
 
+	t.Run("nil payload handler", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsWebServerHandler()
+		args.PayloadHandler = nil
+
+		ws, err := gin.NewWebServerHandler(args)
+		require.True(t, check.IfNil(ws))
+		require.Equal(t, apiErrors.ErrNilPayloadHandler, err)
+	})
+
 	t.Run("invalid api type", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWebServerHandler()
-		args.Configs.Flags.APIType = ""
+		args.Configs.Flags.PublisherType = ""
 
 		ws, err := gin.NewWebServerHandler(args)
 		require.True(t, check.IfNil(ws))

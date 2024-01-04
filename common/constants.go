@@ -1,14 +1,11 @@
 package common
 
 const (
-	// WSAPIType defines a webserver api type using WebSockets
-	WSAPIType string = "notifier"
+	// WSPublisherType defines a webserver api type using WebSockets
+	WSPublisherType string = "ws"
 
-	// MessageQueueAPIType defines a webserver api type using a message queueing service
-	MessageQueueAPIType string = "rabbit-api"
-
-	// CommonHubType defines the common hub type name
-	CommonHubType string = "common"
+	// MessageQueuePublisherType defines a webserver api type using a message queueing service
+	MessageQueuePublisherType string = "rabbitmq"
 )
 
 const (
@@ -37,4 +34,20 @@ const (
 
 	// BlockScrs defines the subscription event type for block scrs
 	BlockScrs string = "block_scrs"
+)
+
+const (
+	// WSObsConnectorType defines the websocket observer connector type
+	WSObsConnectorType string = "ws"
+
+	// HTTPConnectorType defines the http observer connector type
+	HTTPConnectorType string = "http"
+)
+
+const (
+	// PayloadV0 defines the version of payload before versioning implementation
+	PayloadV0 uint32 = 0
+
+	// PayloadV1 defines first payload implementation with versioning
+	PayloadV1 uint32 = 1
 )

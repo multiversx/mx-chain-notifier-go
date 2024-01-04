@@ -8,7 +8,7 @@ import (
 
 // RabbitClientMock -
 type RabbitClientMock struct {
-	mut    sync.Mutex
+	mut    sync.RWMutex
 	events map[string]amqp.Publishing
 }
 

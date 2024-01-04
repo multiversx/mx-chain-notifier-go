@@ -4,24 +4,45 @@ import "github.com/multiversx/mx-chain-core-go/core"
 
 // Configs holds all configs
 type Configs struct {
-	GeneralConfig   GeneralConfig
+	MainConfig      MainConfig
 	ApiRoutesConfig APIRoutesConfig
 	Flags           FlagsConfig
 }
 
-// GeneralConfig defines the config setup based on main config file
+// MainConfig defines the config setup based on main config file
+type MainConfig struct {
+	General            GeneralConfig
+	WebSocketConnector WebSocketConfig
+	ConnectorApi       ConnectorApiConfig
+	Redis              RedisConfig
+	RabbitMQ           RabbitMQConfig
+}
+
+// GeneralConfig maps the general config section
 type GeneralConfig struct {
-	ConnectorApi ConnectorApiConfig
-	Redis        RedisConfig
-	RabbitMQ     RabbitMQConfig
+	ExternalMarshaller MarshallerConfig
+	AddressConverter   AddressConverterConfig
+	CheckDuplicates    bool
+}
+
+// MarshallerConfig maps the marshaller configuration
+type MarshallerConfig struct {
+	Type string
+}
+
+// AddressConverterConfig maps the address pubkey converter configuration
+type AddressConverterConfig struct {
+	Type   string
+	Prefix string
+	Length int
 }
 
 // ConnectorApiConfig maps the connector configuration
 type ConnectorApiConfig struct {
-	Host            string
-	Username        string
-	Password        string
-	CheckDuplicates bool
+	Enabled  bool
+	Host     string
+	Username string
+	Password string
 }
 
 // APIRoutesConfig holds the configuration related to Rest API routes
@@ -67,6 +88,20 @@ type RabbitMQExchangeConfig struct {
 	Type string
 }
 
+// WebSocketConfig holds the configuration for websocket observer interaction config
+type WebSocketConfig struct {
+	Enabled                    bool
+	URL                        string
+	Mode                       string
+	RetryDurationInSec         int
+	AcknowledgeTimeoutInSec    int
+	WithAcknowledge            bool
+	BlockingAckOnError         bool
+	DropMessagesIfNoConnection bool
+
+	DataMarshallerType string
+}
+
 // FlagsConfig holds the values for CLI flags
 type FlagsConfig struct {
 	LogLevel          string
@@ -74,13 +109,13 @@ type FlagsConfig struct {
 	GeneralConfigPath string
 	APIConfigPath     string
 	WorkingDir        string
-	APIType           string
+	PublisherType     string
 	RestApiInterface  string
 }
 
-// LoadGeneralConfig returns a GeneralConfig instance by reading the provided toml file
-func LoadGeneralConfig(filePath string) (*GeneralConfig, error) {
-	cfg := &GeneralConfig{}
+// LoadMainConfig returns a MainConfig instance by reading the provided toml file
+func LoadMainConfig(filePath string) (*MainConfig, error) {
+	cfg := &MainConfig{}
 	err := core.LoadTomlFile(cfg, filePath)
 	if err != nil {
 		return nil, err

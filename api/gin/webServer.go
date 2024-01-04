@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/multiversx/mx-chain-communication-go/websocket"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
@@ -23,21 +24,28 @@ const (
 
 var log = logger.GetOrCreate("api/gin")
 
+const (
+	eventsGroupID = "events"
+	hubGroupID    = "hub"
+)
+
 // ArgsWebServerHandler holds the arguments needed to create a web server handler
 type ArgsWebServerHandler struct {
-	Facade  shared.FacadeHandler
-	Configs config.Configs
+	Facade         shared.FacadeHandler
+	PayloadHandler websocket.PayloadHandler
+	Configs        config.Configs
 }
 
 // webServer is a wrapper for gin.Engine, holding additional components
 type webServer struct {
 	sync.RWMutex
-	facade       shared.FacadeHandler
-	httpServer   shared.HTTPServerCloser
-	configs      config.Configs
-	groups       map[string]shared.GroupHandler
-	wasTriggered bool
-	cancelFunc   func()
+	facade         shared.FacadeHandler
+	payloadHandler websocket.PayloadHandler
+	httpServer     shared.HTTPServerCloser
+	groups         map[string]shared.GroupHandler
+	configs        config.Configs
+	wasTriggered   bool
+	cancelFunc     func()
 }
 
 // NewWebServerHandler creates and configures an instance of webServer
@@ -48,10 +56,11 @@ func NewWebServerHandler(args ArgsWebServerHandler) (*webServer, error) {
 	}
 
 	return &webServer{
-		facade:       args.Facade,
-		configs:      args.Configs,
-		groups:       make(map[string]shared.GroupHandler),
-		wasTriggered: false,
+		facade:         args.Facade,
+		payloadHandler: args.PayloadHandler,
+		configs:        args.Configs,
+		groups:         make(map[string]shared.GroupHandler),
+		wasTriggered:   false,
 	}, nil
 }
 
@@ -59,15 +68,18 @@ func checkArgs(args ArgsWebServerHandler) error {
 	if check.IfNil(args.Facade) {
 		return apiErrors.ErrNilFacadeHandler
 	}
-	if args.Configs.Flags.APIType == "" {
+	if args.Configs.Flags.PublisherType == "" {
 		return common.ErrInvalidAPIType
+	}
+	if check.IfNil(args.PayloadHandler) {
+		return apiErrors.ErrNilPayloadHandler
 	}
 
 	return nil
 }
 
 func (w *webServer) getWSAddr() string {
-	addr := w.configs.GeneralConfig.ConnectorApi.Host
+	addr := w.configs.MainConfig.ConnectorApi.Host
 	if addr == "" {
 		return defaultRestInterface
 	}
@@ -124,11 +136,18 @@ func (w *webServer) Run() error {
 func (w *webServer) createGroups() error {
 	groupsMap := make(map[string]shared.GroupHandler)
 
-	eventsGroup, err := groups.NewEventsGroup(w.facade)
-	if err != nil {
-		return err
+	eventsGroupArgs := groups.ArgsEventsGroup{
+		Facade:         w.facade,
+		PayloadHandler: w.payloadHandler,
 	}
-	groupsMap["events"] = eventsGroup
+
+	if w.configs.MainConfig.ConnectorApi.Enabled {
+		eventsGroup, err := groups.NewEventsGroup(eventsGroupArgs)
+		if err != nil {
+			return err
+		}
+		groupsMap[eventsGroupID] = eventsGroup
+	}
 
 	statusGroup, err := groups.NewStatusGroup(w.facade)
 	if err != nil {
@@ -136,12 +155,12 @@ func (w *webServer) createGroups() error {
 	}
 	groupsMap["status"] = statusGroup
 
-	if w.configs.Flags.APIType == common.WSAPIType {
+	if w.configs.Flags.PublisherType == common.WSPublisherType {
 		hubHandler, err := groups.NewHubGroup(w.facade)
 		if err != nil {
 			return err
 		}
-		groupsMap["hub"] = hubHandler
+		groupsMap[hubGroupID] = hubHandler
 	}
 
 	w.groups = groupsMap
