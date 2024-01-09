@@ -29,6 +29,11 @@ Using the `cmd/notifier` package as root, execute the following commands:
 - build executable: `go build -ldflags="-X main.appVersion=$(git describe --tags --long --dirty)" -o event-notifier`
 - run `./event-notifier`
 
+Or use the build script:
+```bash
+bash scripts/build.sh
+```
+
 ---
 
 This can also be done using a single command from `Makefile`:
