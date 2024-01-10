@@ -31,7 +31,7 @@ help:
 
 build:
 	cd ${cmd_dir} && \
-		go build -v -ldflags="-X main.appVersion=$(git describe --tags --long --dirty)" -o ${binary}
+		go build -v -ldflags="-X main.appVersion=$(shell git describe --tags --long --dirty)" -o ${binary}
 
 publisher_type="rabbitmq"
 run: build
