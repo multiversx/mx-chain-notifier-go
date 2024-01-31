@@ -4,6 +4,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/alteredAccount"
+	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
@@ -44,10 +45,25 @@ type ArgsSaveBlockData struct {
 	NumberOfShards         uint32
 }
 
+// OutportBlockDataOld holds the block data that will be received on push events
+// TODO: remove on next iterations, new versions will use outport driver structs from
+// core repository, which will be backwards compatible from now on
+type OutportBlockDataOld struct {
+	HeaderHash             []byte
+	Body                   *block.Body
+	TransactionsPool       *TransactionsPool
+	SignersIndexes         []uint64
+	NotarizedHeadersHashes []string
+	HeaderGasConsumption   outport.HeaderGasConsumption
+	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
+	NumberOfShards         uint32
+	IsImportDB             bool
+}
+
 // ArgsSaveBlock holds block data with header type
 type ArgsSaveBlock struct {
 	HeaderType core.HeaderType
-	ArgsSaveBlockData
+	OutportBlockDataOld
 }
 
 // LogData holds the data needed for indexing logs and events

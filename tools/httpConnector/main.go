@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/multiversx/mx-chain-core-go/marshal"
-	"github.com/multiversx/mx-chain-notifier-go/tools"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	}
 
 	marshaller := &marshal.JsonMarshalizer{}
-	blockData, err := tools.NewBlockData(marshaller)
+	blockData, err := testdata.NewBlockData(marshaller)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

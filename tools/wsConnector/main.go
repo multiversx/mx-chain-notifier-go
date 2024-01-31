@@ -8,7 +8,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
-	"github.com/multiversx/mx-chain-notifier-go/tools"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 )
 
 func main() {
@@ -19,7 +19,7 @@ func main() {
 		return
 	}
 
-	blockData, err := tools.NewBlockData(marshaller)
+	blockData, err := testdata.NewBlockData(marshaller)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
