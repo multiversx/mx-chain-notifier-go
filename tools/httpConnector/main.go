@@ -26,19 +26,19 @@ func main() {
 		return
 	}
 
-	err = httpClient.Post("/events/push", blockData.OutportBlockV0())
+	err = httpClient.Post("/events/push", blockData.OutportBlockV1())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
 	}
 
-	err = httpClient.Post("/events/revert", blockData.RevertBlockV0())
+	err = httpClient.Post("/events/revert", blockData.RevertBlockV1())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return
 	}
 
-	err = httpClient.Post("/events/finalized", blockData.FinalizedBlockV0())
+	err = httpClient.Post("/events/finalized", blockData.FinalizedBlockV1())
 	if err != nil {
 		fmt.Println(fmt.Errorf("%w in eventNotifier.SaveBlock while posting block data", err))
 		return

@@ -24,7 +24,7 @@ const (
 	contentTypeKey       = "Content-Type"
 	contentTypeValue     = "application/json"
 	payloadVersionKey    = "version"
-	payloadVersionValue  = "0"
+	payloadVersionValue  = "1"
 )
 
 type httpClientWrapper struct {
