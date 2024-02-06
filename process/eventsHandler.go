@@ -36,9 +36,10 @@ type ArgsEventsHandler struct {
 }
 
 type eventsHandler struct {
-	locker         LockService
-	publisher      Publisher
-	metricsHandler common.StatusMetricsHandler
+	locker          LockService
+	publisher       Publisher
+	metricsHandler  common.StatusMetricsHandler
+	checkDuplicates bool
 }
 
 // NewEventsHandler creates a new events handler component
@@ -49,9 +50,10 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:         args.Locker,
-		publisher:      args.Publisher,
-		metricsHandler: args.StatusMetricsHandler,
+		locker:          args.Locker,
+		publisher:       args.Publisher,
+		metricsHandler:  args.StatusMetricsHandler,
+		checkDuplicates: args.CheckDuplicates,
 	}, nil
 }
 
@@ -78,7 +80,10 @@ func (eh *eventsHandler) HandlePushEvents(events data.BlockEvents) error {
 		return common.ErrReceivedEmptyEvents
 	}
 
-	shouldProcessEvents := eh.tryCheckProcessedWithRetry(common.PushLogsAndEvents, events.Hash)
+	shouldProcessEvents := true
+	if eh.checkDuplicates {
+		shouldProcessEvents = eh.tryCheckProcessedWithRetry(common.PushLogsAndEvents, events.Hash)
+	}
 
 	if !shouldProcessEvents {
 		log.Info("received duplicated events", "event", common.PushLogsAndEvents,
@@ -116,7 +121,10 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 		return
 	}
 
-	shouldProcessRevert := eh.tryCheckProcessedWithRetry(common.RevertBlockEvents, revertBlock.Hash)
+	shouldProcessRevert := true
+	if eh.checkDuplicates {
+		shouldProcessRevert = eh.tryCheckProcessedWithRetry(common.RevertBlockEvents, revertBlock.Hash)
+	}
 
 	if !shouldProcessRevert {
 		log.Info("received duplicated events", "event", common.RevertBlockEvents,
@@ -144,8 +152,10 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 		)
 		return
 	}
-
-	shouldProcessFinalized := eh.tryCheckProcessedWithRetry(common.FinalizedBlockEvents, finalizedBlock.Hash)
+	shouldProcessFinalized := true
+	if eh.checkDuplicates {
+		shouldProcessFinalized = eh.tryCheckProcessedWithRetry(common.FinalizedBlockEvents, finalizedBlock.Hash)
+	}
 
 	if !shouldProcessFinalized {
 		log.Info("received duplicated events", "event", common.FinalizedBlockEvents,
@@ -173,8 +183,10 @@ func (eh *eventsHandler) HandleBlockTxs(blockTxs data.BlockTxs) {
 		)
 		return
 	}
-
-	shouldProcessTxs := eh.tryCheckProcessedWithRetry(common.BlockTxs, blockTxs.Hash)
+	shouldProcessTxs := true
+	if eh.checkDuplicates {
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockTxs, blockTxs.Hash)
+	}
 
 	if !shouldProcessTxs {
 		log.Info("received duplicated events", "event", common.BlockTxs,
@@ -209,8 +221,10 @@ func (eh *eventsHandler) HandleBlockScrs(blockScrs data.BlockScrs) {
 		)
 		return
 	}
-
-	shouldProcessScrs := eh.tryCheckProcessedWithRetry(common.BlockScrs, blockScrs.Hash)
+	shouldProcessScrs := true
+	if eh.checkDuplicates {
+		shouldProcessScrs = eh.tryCheckProcessedWithRetry(common.BlockScrs, blockScrs.Hash)
+	}
 
 	if !shouldProcessScrs {
 		log.Info("received duplicated events", "event", common.BlockScrs,
@@ -245,8 +259,10 @@ func (eh *eventsHandler) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 		)
 		return
 	}
-
-	shouldProcessTxs := eh.tryCheckProcessedWithRetry(common.BlockEvents, blockTxs.Hash)
+	shouldProcessTxs := true
+	if eh.checkDuplicates {
+		shouldProcessTxs = eh.tryCheckProcessedWithRetry(common.BlockEvents, blockTxs.Hash)
+	}
 
 	if !shouldProcessTxs {
 		log.Info("received duplicated events", "event", common.BlockEvents,
