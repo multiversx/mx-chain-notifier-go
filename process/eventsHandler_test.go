@@ -18,8 +18,14 @@ import (
 
 func createMockEventsHandlerArgs() process.ArgsEventsHandler {
 	return process.ArgsEventsHandler{
-		CheckDuplicates:      false,
-		Locker:               &mocks.LockerStub{},
+		Locker: &mocks.LockerStub{
+			HasConnectionCalled: func(ctx context.Context) bool {
+				return true
+			},
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return true, nil
+			},
+		},
 		Publisher:            &mocks.PublisherStub{},
 		StatusMetricsHandler: &mocks.StatusMetricsStub{},
 	}
