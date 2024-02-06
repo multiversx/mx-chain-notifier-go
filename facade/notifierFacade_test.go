@@ -109,7 +109,7 @@ func TestHandlePushEvents(t *testing.T) {
 			HeaderHash: []byte("blockHash"),
 			Header:     &block.HeaderV2{},
 		}
-		err = facade.HandlePushEventsV2(blockData)
+		err = facade.HandlePushEvents(blockData)
 		require.Equal(t, expectedErr, err)
 	})
 
@@ -253,7 +253,7 @@ func TestHandlePushEvents(t *testing.T) {
 		facade, err := facade.NewNotifierFacade(args)
 		require.Nil(t, err)
 
-		facade.HandlePushEventsV2(blockData)
+		facade.HandlePushEvents(blockData)
 
 		assert.True(t, pushWasCalled)
 		assert.True(t, txsWasCalled)
