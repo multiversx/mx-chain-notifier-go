@@ -30,12 +30,9 @@ type Publisher interface {
 
 // EventsHandler defines the behaviour of an events handler component
 type EventsHandler interface {
-	HandlePushEvents(events data.BlockEvents) error
+	HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData) error
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
-	HandleBlockTxs(blockTxs data.BlockTxs)
-	HandleBlockScrs(blockScrs data.BlockScrs)
-	HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
 	IsInterfaceNil() bool
 }
 

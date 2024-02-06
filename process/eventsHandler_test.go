@@ -128,6 +128,9 @@ func TestHandlePushEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
+		shouldProcess := eventsHandler.ShouldProcessPushEvents(blockEvents.Hash)
+		require.False(t, shouldProcess)
+
 		eventsHandler.HandlePushEvents(blockEvents)
 		require.False(t, wasCalled)
 	})
