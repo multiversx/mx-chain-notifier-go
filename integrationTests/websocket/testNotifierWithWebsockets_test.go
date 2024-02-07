@@ -715,6 +715,6 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 
 	integrationTests.WaitTimeout(t, wg, time.Second*4)
 
-	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, numEvents, len(notifier.RedisClient.GetEntries()))
+	expectedNumRedisEvents := 3 // one redis events per push, revert, finalized
+	assert.Equal(t, expectedNumRedisEvents, len(notifier.RedisClient.GetEntries()))
 }

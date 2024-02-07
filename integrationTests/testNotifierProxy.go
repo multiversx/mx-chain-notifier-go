@@ -54,11 +54,20 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 
 	statusMetricsHandler := metrics.NewStatusMetrics()
 
+	eventsInterceptorArgs := process.ArgsEventsInterceptor{
+		PubKeyConverter: &mocks.PubkeyConverterMock{},
+	}
+	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
+	if err != nil {
+		return nil, err
+	}
+
 	argsEventsHandler := process.ArgsEventsHandler{
 		Locker:               locker,
 		Publisher:            publisher,
 		StatusMetricsHandler: statusMetricsHandler,
 		CheckDuplicates:      cfg.General.CheckDuplicates,
+		EventsInterceptor:    eventsInterceptor,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -79,19 +88,10 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 		return nil, err
 	}
 
-	eventsInterceptorArgs := process.ArgsEventsInterceptor{
-		PubKeyConverter: &mocks.PubkeyConverterMock{},
-	}
-	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
-	if err != nil {
-		return nil, err
-	}
-
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler:        eventsHandler,
 		APIConfig:            cfg.ConnectorApi,
 		WSHandler:            wsHandler,
-		EventsInterceptor:    eventsInterceptor,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
@@ -139,21 +139,22 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 		return nil, err
 	}
 
+	eventsInterceptorArgs := process.ArgsEventsInterceptor{
+		PubKeyConverter: &mocks.PubkeyConverterMock{},
+	}
+	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
+	if err != nil {
+		return nil, err
+	}
+
 	argsEventsHandler := process.ArgsEventsHandler{
 		Locker:               locker,
 		Publisher:            publisher,
 		StatusMetricsHandler: statusMetricsHandler,
 		CheckDuplicates:      cfg.General.CheckDuplicates,
+		EventsInterceptor:    eventsInterceptor,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	eventsInterceptorArgs := process.ArgsEventsInterceptor{
-		PubKeyConverter: &mocks.PubkeyConverterMock{},
-	}
-	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,6 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 		EventsHandler:        eventsHandler,
 		APIConfig:            cfg.ConnectorApi,
 		WSHandler:            wsHandler,
-		EventsInterceptor:    eventsInterceptor,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
