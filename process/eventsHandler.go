@@ -20,9 +20,6 @@ const (
 	minRetries             = 1
 	revertKeyPrefix        = "revert_"
 	finalizedKeyPrefix     = "finalized_"
-	txsKeyPrefix           = "txs_"
-	txsWithOrderKeyPrefix  = "txsWithOrder_"
-	scrsKeyPrefix          = "scrs_"
 
 	rabbitmqMetricPrefix = "RabbitMQ"
 	redisMetricPrefix    = "Redis"
@@ -340,12 +337,6 @@ func getPrefixLockerKey(id string) string {
 		return revertKeyPrefix
 	case common.FinalizedBlockEvents:
 		return finalizedKeyPrefix
-	case common.BlockTxs:
-		return txsKeyPrefix
-	case common.BlockScrs:
-		return scrsKeyPrefix
-	case common.BlockEvents:
-		return txsWithOrderKeyPrefix
 	}
 
 	return ""
