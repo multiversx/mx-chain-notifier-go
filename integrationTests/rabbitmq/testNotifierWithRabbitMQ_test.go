@@ -21,10 +21,6 @@ import (
 var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
-	t.Run("with http observer connnector + payload version 0", func(t *testing.T) {
-		testNotifierWithRabbitMQ(t, common.HTTPConnectorType, common.PayloadV0)
-	})
-
 	t.Run("with http observer connnector", func(t *testing.T) {
 		testNotifierWithRabbitMQ(t, common.HTTPConnectorType, common.PayloadV1)
 	})

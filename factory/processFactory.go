@@ -39,7 +39,8 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 	}
 }
 
-func createPayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+// CreatePayloadHandler will create a new instance of payload handler
+func CreatePayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
 	dataPreProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
 		Facade:     facade,

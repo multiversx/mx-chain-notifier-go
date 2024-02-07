@@ -54,8 +54,8 @@ func (rc *RabbitClientMock) ReopenChannel() {
 
 // GetEntries -
 func (rc *RabbitClientMock) GetEntries() map[string]amqp.Publishing {
-	rc.mut.Lock()
-	defer rc.mut.Unlock()
+	rc.mut.RLock()
+	defer rc.mut.RUnlock()
 
 	return rc.events
 }

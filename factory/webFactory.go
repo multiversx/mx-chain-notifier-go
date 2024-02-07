@@ -14,7 +14,7 @@ func CreateWebServerHandler(facade shared.FacadeHandler, configs config.Configs)
 		return nil, err
 	}
 
-	payloadHandler, err := createPayloadHandler(marshaller, facade)
+	payloadHandler, err := CreatePayloadHandler(marshaller, facade)
 	if err != nil {
 		return nil, err
 	}
