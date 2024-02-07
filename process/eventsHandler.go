@@ -53,10 +53,11 @@ func NewEventsHandler(args ArgsEventsHandler) (*eventsHandler, error) {
 	}
 
 	return &eventsHandler{
-		locker:          args.Locker,
-		publisher:       args.Publisher,
-		metricsHandler:  args.StatusMetricsHandler,
-		checkDuplicates: args.CheckDuplicates,
+		locker:            args.Locker,
+		publisher:         args.Publisher,
+		metricsHandler:    args.StatusMetricsHandler,
+		eventsInterceptor: args.EventsInterceptor,
+		checkDuplicates:   args.CheckDuplicates,
 	}, nil
 }
 
@@ -80,7 +81,7 @@ func checkArgs(args ArgsEventsHandler) error {
 // HandleSaveBlockEvents will handle save block events received from observer
 func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData) error {
 	blockHash := hex.EncodeToString(allEvents.HeaderHash)
-	shouldProcessPushEvents := eh.shouldProcessPushEvents(blockHash)
+	shouldProcessPushEvents := eh.shouldProcessSaveBlockEvents(blockHash)
 	if !shouldProcessPushEvents {
 		return nil
 	}
@@ -152,7 +153,7 @@ func (eh *eventsHandler) handlePushEvents(events data.BlockEvents) error {
 	return nil
 }
 
-func (eh *eventsHandler) shouldProcessPushEvents(blockHash string) bool {
+func (eh *eventsHandler) shouldProcessSaveBlockEvents(blockHash string) bool {
 	shouldProcessEvents := true
 	if eh.checkDuplicates {
 		shouldProcessEvents = eh.tryCheckProcessedWithRetry(common.PushLogsAndEvents, blockHash)

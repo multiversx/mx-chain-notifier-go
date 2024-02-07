@@ -1,7 +1,6 @@
 package facade_test
 
 import (
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,7 +8,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
-	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
@@ -25,7 +23,6 @@ func createMockFacadeArgs() facade.ArgsNotifierFacade {
 		EventsHandler:        &mocks.EventsHandlerStub{},
 		APIConfig:            config.ConnectorApiConfig{},
 		WSHandler:            &mocks.WSHandlerStub{},
-		EventsInterceptor:    &mocks.EventsInterceptorStub{},
 		StatusMetricsHandler: &mocks.StatusMetricsStub{},
 	}
 }
@@ -55,17 +52,6 @@ func TestNewNotifierFacade(t *testing.T) {
 		require.Equal(t, facade.ErrNilWSHandler, err)
 	})
 
-	t.Run("nil events interceptor", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockFacadeArgs()
-		args.EventsInterceptor = nil
-
-		f, err := facade.NewNotifierFacade(args)
-		require.True(t, check.IfNil(f))
-		require.Equal(t, facade.ErrNilEventsInterceptor, err)
-	})
-
 	t.Run("nil status metrics handler", func(t *testing.T) {
 		t.Parallel()
 
@@ -90,29 +76,6 @@ func TestNewNotifierFacade(t *testing.T) {
 func TestHandlePushEvents(t *testing.T) {
 	t.Parallel()
 
-	t.Run("process block events error, should fail", func(t *testing.T) {
-		t.Parallel()
-
-		args := createMockFacadeArgs()
-
-		expectedErr := errors.New("expected error")
-		args.EventsInterceptor = &mocks.EventsInterceptorStub{
-			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
-				return nil, expectedErr
-			},
-		}
-
-		facade, err := facade.NewNotifierFacade(args)
-		require.Nil(t, err)
-
-		blockData := data.ArgsSaveBlockData{
-			HeaderHash: []byte("blockHash"),
-			Header:     &block.HeaderV2{},
-		}
-		err = facade.HandlePushEvents(blockData)
-		require.Equal(t, expectedErr, err)
-	})
-
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -127,138 +90,29 @@ func TestHandlePushEvents(t *testing.T) {
 				ExecutionOrder: 1,
 			},
 		}
-		scrs := map[string]*outport.SCRInfo{
-			"hash2": {
-				SmartContractResult: &smartContractResult.SmartContractResult{
-					Nonce: 2,
-				},
-			},
-		}
-		logData := []*outport.LogData{
-			{
-				Log: &transaction.Log{
-					Address: []byte("logaddr1"),
-					Events:  []*transaction.Event{},
-				},
-				TxHash: "logHash1",
-			},
-		}
-
-		logEvents := []data.Event{
-			{
-				Address: "addr1",
-			},
-		}
-
-		header := &block.HeaderV2{
-			Header: &block.Header{
-				ShardID: 2,
-			},
-		}
 		blockData := data.ArgsSaveBlockData{
 			HeaderHash: []byte(blockHash),
 			TransactionsPool: &outport.TransactionPool{
-				Transactions:         txs,
-				SmartContractResults: scrs,
-				Logs:                 logData,
+				Transactions: txs,
 			},
 			Header: &block.HeaderV2{},
 		}
 
-		expTxs := map[string]*transaction.Transaction{
-			"hash1": {
-				Nonce: 1,
-			},
-		}
-		expScrs := map[string]*smartContractResult.SmartContractResult{
-			"hash2": {
-				Nonce: 2,
-			},
-		}
-
-		expTxsData := data.BlockTxs{
-			Hash: blockHash,
-			Txs:  expTxs,
-		}
-		expScrsData := data.BlockScrs{
-			Hash: blockHash,
-			Scrs: expScrs,
-		}
-		expLogEvents := data.BlockEvents{
-			Hash:    blockHash,
-			Events:  logEvents,
-			ShardID: 2,
-		}
-
-		expTxsWithOrder := map[string]*outport.TxInfo{
-			"hash1": {
-				Transaction: &transaction.Transaction{
-					Nonce: 1,
-				},
-				ExecutionOrder: 1,
-			},
-		}
-		expScrsWithOrder := map[string]*outport.SCRInfo{
-			"hash2": {
-				SmartContractResult: &smartContractResult.SmartContractResult{
-					Nonce: 2,
-				},
-			},
-		}
-		expTxsWithOrderData := data.BlockEventsWithOrder{
-			Hash:    blockHash,
-			ShardID: 2,
-			Txs:     expTxsWithOrder,
-			Scrs:    expScrsWithOrder,
-			Events:  logEvents,
-		}
-
-		pushWasCalled := false
-		txsWasCalled := false
-		scrsWasCalled := false
-		blockEventsWithOrderWasCalled := false
+		saveBlockWasCalled := false
 		args.EventsHandler = &mocks.EventsHandlerStub{
-			HandlePushEventsCalled: func(events data.BlockEvents) error {
-				pushWasCalled = true
-				assert.Equal(t, expLogEvents, events)
+			HandleSaveBlockEventsCalled: func(allEvents data.ArgsSaveBlockData) error {
+				saveBlockWasCalled = true
 				return nil
-			},
-			HandleBlockTxsCalled: func(blockTxs data.BlockTxs) {
-				txsWasCalled = true
-				assert.Equal(t, expTxsData, blockTxs)
-			},
-			HandleBlockScrsCalled: func(blockScrs data.BlockScrs) {
-				scrsWasCalled = true
-				assert.Equal(t, expScrsData, blockScrs)
-			},
-			HandleBlockEventsWithOrderCalled: func(blockTxs data.BlockEventsWithOrder) {
-				blockEventsWithOrderWasCalled = true
-				assert.Equal(t, expTxsWithOrderData, blockTxs)
-			},
-		}
-		args.EventsInterceptor = &mocks.EventsInterceptorStub{
-			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
-				return &data.InterceptorBlockData{
-					Hash:          blockHash,
-					Header:        header,
-					Txs:           expTxs,
-					Scrs:          expScrs,
-					LogEvents:     logEvents,
-					TxsWithOrder:  expTxsWithOrder,
-					ScrsWithOrder: expScrsWithOrder,
-				}, nil
 			},
 		}
 
 		facade, err := facade.NewNotifierFacade(args)
 		require.Nil(t, err)
 
-		facade.HandlePushEvents(blockData)
+		err = facade.HandlePushEvents(blockData)
+		require.Nil(t, err)
 
-		assert.True(t, pushWasCalled)
-		assert.True(t, txsWasCalled)
-		assert.True(t, scrsWasCalled)
-		assert.True(t, blockEventsWithOrderWasCalled)
+		assert.True(t, saveBlockWasCalled)
 	})
 }
 
