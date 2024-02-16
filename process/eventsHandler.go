@@ -279,7 +279,7 @@ func (eh *eventsHandler) handleBlockScrs(blockScrs data.BlockScrs) {
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockScrs), time.Since(t))
 }
 
-// HandleBlockEventsWithOrder will handle full block events received from observer
+// handleBlockEventsWithOrder will handle full block events received from observer
 func (eh *eventsHandler) handleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	if blockTxs.Hash == "" {
 		log.Warn("received empty hash", "event", common.BlockEvents,
