@@ -15,26 +15,12 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/factory"
-	"github.com/multiversx/mx-chain-notifier-go/process"
-	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
 )
 
 // CreateObserverConnector will create observer connector component
 func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string, payloadVersion uint32) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
-	preProcessorArgs := preprocess.ArgsEventsPreProcessor{
-		Marshaller: marshaller,
-		Facade:     facade,
-	}
-
-	eventsProcessors := make(map[uint32]process.DataProcessor)
-	dataPreProcessor, err := preprocess.NewEventsPreProcessorV1(preProcessorArgs)
-	if err != nil {
-		return nil, err
-	}
-
-	eventsProcessors[payloadVersion] = dataPreProcessor
-	payloadHandler, err := process.NewPayloadHandler(eventsProcessors)
+	payloadHandler, err := factory.CreatePayloadHandler(marshaller, facade)
 	if err != nil {
 		return nil, err
 	}

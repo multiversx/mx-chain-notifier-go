@@ -24,8 +24,7 @@ type GroupHandler interface {
 
 // FacadeHandler defines the behavior of a notifier base facade handler
 type FacadeHandler interface {
-	HandlePushEventsV2(events data.ArgsSaveBlockData) error
-	HandlePushEventsV1(events data.SaveBlockData) error
+	HandlePushEvents(events data.ArgsSaveBlockData) error
 	HandleRevertEvents(revertBlock data.RevertBlock)
 	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
 	GetConnectorUserAndPass() (string, string)

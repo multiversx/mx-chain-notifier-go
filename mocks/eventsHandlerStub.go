@@ -4,18 +4,15 @@ import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // EventsHandlerStub implements EventsHandler interface
 type EventsHandlerStub struct {
-	HandlePushEventsCalled           func(events data.BlockEvents) error
-	HandleRevertEventsCalled         func(revertBlock data.RevertBlock)
-	HandleFinalizedEventsCalled      func(finalizedBlock data.FinalizedBlock)
-	HandleBlockTxsCalled             func(blockTxs data.BlockTxs)
-	HandleBlockScrsCalled            func(blockScrs data.BlockScrs)
-	HandleBlockEventsWithOrderCalled func(blockTxs data.BlockEventsWithOrder)
+	HandleSaveBlockEventsCalled func(allEvents data.ArgsSaveBlockData) error
+	HandleRevertEventsCalled    func(revertBlock data.RevertBlock)
+	HandleFinalizedEventsCalled func(finalizedBlock data.FinalizedBlock)
 }
 
-// HandlePushEvents -
-func (e *EventsHandlerStub) HandlePushEvents(events data.BlockEvents) error {
-	if e.HandlePushEventsCalled != nil {
-		return e.HandlePushEventsCalled(events)
+// HandleSaveBlockEvents -
+func (e *EventsHandlerStub) HandleSaveBlockEvents(events data.ArgsSaveBlockData) error {
+	if e.HandleSaveBlockEventsCalled != nil {
+		return e.HandleSaveBlockEventsCalled(events)
 	}
 
 	return nil
@@ -32,27 +29,6 @@ func (e *EventsHandlerStub) HandleRevertEvents(revertBlock data.RevertBlock) {
 func (e *EventsHandlerStub) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
 	if e.HandleFinalizedEventsCalled != nil {
 		e.HandleFinalizedEventsCalled(finalizedBlock)
-	}
-}
-
-// HandleBlockTxs -
-func (e *EventsHandlerStub) HandleBlockTxs(blockTxs data.BlockTxs) {
-	if e.HandleBlockTxsCalled != nil {
-		e.HandleBlockTxsCalled(blockTxs)
-	}
-}
-
-// HandleBlockScrs -
-func (e *EventsHandlerStub) HandleBlockScrs(blockScrs data.BlockScrs) {
-	if e.HandleBlockScrsCalled != nil {
-		e.HandleBlockScrsCalled(blockScrs)
-	}
-}
-
-// HandleBlockEventsWithOrder -
-func (e *EventsHandlerStub) HandleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
-	if e.HandleBlockEventsWithOrderCalled != nil {
-		e.HandleBlockEventsWithOrderCalled(blockTxs)
 	}
 }
 

@@ -63,18 +63,19 @@ func (nr *notifierRunner) Start() error {
 
 	statusMetricsHandler := metrics.NewStatusMetrics()
 
-	argsEventsHandler := factory.ArgsEventsHandlerFactory{
-		CheckDuplicates:      nr.configs.MainConfig.General.CheckDuplicates,
-		Locker:               lockService,
-		Publisher:            publisher,
-		StatusMetricsHandler: statusMetricsHandler,
-	}
-	eventsHandler, err := factory.CreateEventsHandler(argsEventsHandler)
+	eventsInterceptor, err := factory.CreateEventsInterceptor(nr.configs.MainConfig.General)
 	if err != nil {
 		return err
 	}
 
-	eventsInterceptor, err := factory.CreateEventsInterceptor(nr.configs.MainConfig.General)
+	argsEventsHandler := process.ArgsEventsHandler{
+		CheckDuplicates:      nr.configs.MainConfig.General.CheckDuplicates,
+		Locker:               lockService,
+		Publisher:            publisher,
+		StatusMetricsHandler: statusMetricsHandler,
+		EventsInterceptor:    eventsInterceptor,
+	}
+	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,6 @@ func (nr *notifierRunner) Start() error {
 		EventsHandler:        eventsHandler,
 		APIConfig:            nr.configs.MainConfig.ConnectorApi,
 		WSHandler:            wsHandler,
-		EventsInterceptor:    eventsInterceptor,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)

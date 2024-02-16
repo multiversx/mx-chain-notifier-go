@@ -16,30 +16,6 @@ var log = logger.GetOrCreate("factory")
 
 const bech32PubkeyConverterType = "bech32"
 
-// ArgsEventsHandlerFactory defines the arguments needed for events handler creation
-type ArgsEventsHandlerFactory struct {
-	CheckDuplicates      bool
-	Locker               process.LockService
-	Publisher            process.Publisher
-	StatusMetricsHandler common.StatusMetricsHandler
-}
-
-// CreateEventsHandler will create an events handler processor
-func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, error) {
-	argsEventsHandler := process.ArgsEventsHandler{
-		Locker:               args.Locker,
-		Publisher:            args.Publisher,
-		StatusMetricsHandler: args.StatusMetricsHandler,
-		CheckDuplicates:      args.CheckDuplicates,
-	}
-	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	return eventsHandler, nil
-}
-
 // CreateEventsInterceptor will create the events interceptor
 func CreateEventsInterceptor(cfg config.GeneralConfig) (process.EventsInterceptor, error) {
 	pubKeyConverter, err := getPubKeyConverter(cfg)
@@ -63,7 +39,8 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 	}
 }
 
-func createPayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+// CreatePayloadHandler will create a new instance of payload handler
+func CreatePayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
 	dataPreProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
 		Facade:     facade,

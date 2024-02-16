@@ -21,10 +21,6 @@ import (
 var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
-	t.Run("with http observer connnector + payload version 0", func(t *testing.T) {
-		testNotifierWithRabbitMQ(t, common.HTTPConnectorType, common.PayloadV0)
-	})
-
 	t.Run("with http observer connnector", func(t *testing.T) {
 		testNotifierWithRabbitMQ(t, common.HTTPConnectorType, common.PayloadV1)
 	})
@@ -40,7 +36,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
-	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, common.PayloadV1)
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, payloadVersion)
 	require.Nil(t, err)
 
 	_ = notifier.Publisher.Run()
@@ -59,7 +55,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 
 	integrationTests.WaitTimeout(t, wg, time.Second*2)
 
-	assert.Equal(t, 6, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
 }
 

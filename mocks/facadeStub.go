@@ -8,8 +8,7 @@ import (
 
 // FacadeStub implements FacadeHandler interface
 type FacadeStub struct {
-	HandlePushEventsV2Called      func(events data.ArgsSaveBlockData) error
-	HandlePushEventsV1Called      func(eventsData data.SaveBlockData) error
+	HandlePushEventsCalled        func(events data.ArgsSaveBlockData) error
 	HandleRevertEventsCalled      func(events data.RevertBlock)
 	HandleFinalizedEventsCalled   func(events data.FinalizedBlock)
 	ServeCalled                   func(w http.ResponseWriter, r *http.Request)
@@ -18,19 +17,10 @@ type FacadeStub struct {
 	GetMetricsForPrometheusCalled func() string
 }
 
-// HandlePushEventsV2 -
-func (fs *FacadeStub) HandlePushEventsV2(events data.ArgsSaveBlockData) error {
-	if fs.HandlePushEventsV2Called != nil {
-		return fs.HandlePushEventsV2Called(events)
-	}
-
-	return nil
-}
-
-// HandlePushEventsV1 -
-func (fs *FacadeStub) HandlePushEventsV1(events data.SaveBlockData) error {
-	if fs.HandlePushEventsV1Called != nil {
-		return fs.HandlePushEventsV1Called(events)
+// HandlePushEvents -
+func (fs *FacadeStub) HandlePushEvents(events data.ArgsSaveBlockData) error {
+	if fs.HandlePushEventsCalled != nil {
+		return fs.HandlePushEventsCalled(events)
 	}
 
 	return nil
