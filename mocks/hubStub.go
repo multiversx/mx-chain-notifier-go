@@ -7,65 +7,57 @@ import (
 
 // HubStub implements Hub interface
 type HubStub struct {
-	RunCalled                           func()
-	BroadcastCalled                     func(events data.BlockEvents)
-	BroadcastRevertCalled               func(event data.RevertBlock)
-	BroadcastFinalizedCalled            func(event data.FinalizedBlock)
-	BroadcastTxsCalled                  func(event data.BlockTxs)
-	BroadcastScrsCalled                 func(event data.BlockScrs)
-	BroadcastBlockEventsWithOrderCalled func(event data.BlockEventsWithOrder)
-	RegisterEventCalled                 func(event dispatcher.EventDispatcher)
-	UnregisterEventCalled               func(event dispatcher.EventDispatcher)
-	SubscribeCalled                     func(event data.SubscribeEvent)
-	CloseCalled                         func() error
+	PublishCalled                     func(events data.BlockEvents)
+	PublishRevertCalled               func(revertBlock data.RevertBlock)
+	PublishFinalizedCalled            func(finalizedBlock data.FinalizedBlock)
+	PublishTxsCalled                  func(blockTxs data.BlockTxs)
+	PublishScrsCalled                 func(blockScrs data.BlockScrs)
+	PublishBlockEventsWithOrderCalled func(blockTxs data.BlockEventsWithOrder)
+	RegisterEventCalled               func(event dispatcher.EventDispatcher)
+	UnregisterEventCalled             func(event dispatcher.EventDispatcher)
+	SubscribeCalled                   func(event data.SubscribeEvent)
+	CloseCalled                       func() error
 }
 
-// Run -
-func (h *HubStub) Run() {
-	if h.RunCalled != nil {
-		h.RunCalled()
+// Publish -
+func (h *HubStub) Publish(events data.BlockEvents) {
+	if h.PublishCalled != nil {
+		h.PublishCalled(events)
 	}
 }
 
-// Broadcast -
-func (h *HubStub) Broadcast(events data.BlockEvents) {
-	if h.BroadcastCalled != nil {
-		h.BroadcastCalled(events)
+// PublishRevert -
+func (h *HubStub) PublishRevert(revertBlock data.RevertBlock) {
+	if h.PublishRevertCalled != nil {
+		h.PublishRevertCalled(revertBlock)
 	}
 }
 
-// BroadcastRevert -
-func (h *HubStub) BroadcastRevert(event data.RevertBlock) {
-	if h.BroadcastRevertCalled != nil {
-		h.BroadcastRevertCalled(event)
+// PublishFinalized -
+func (h *HubStub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
+	if h.PublishFinalizedCalled != nil {
+		h.PublishFinalizedCalled(finalizedBlock)
 	}
 }
 
-// BroadcastFinalized -
-func (h *HubStub) BroadcastFinalized(event data.FinalizedBlock) {
-	if h.BroadcastFinalizedCalled != nil {
-		h.BroadcastFinalizedCalled(event)
+// PublishTxs -
+func (h *HubStub) PublishTxs(blockTxs data.BlockTxs) {
+	if h.PublishTxsCalled != nil {
+		h.PublishTxsCalled(blockTxs)
 	}
 }
 
-// BroadcastTxs -
-func (h *HubStub) BroadcastTxs(event data.BlockTxs) {
-	if h.BroadcastTxsCalled != nil {
-		h.BroadcastTxsCalled(event)
+// PublishScrs -
+func (h *HubStub) PublishScrs(blockScrs data.BlockScrs) {
+	if h.PublishScrsCalled != nil {
+		h.PublishScrsCalled(blockScrs)
 	}
 }
 
-// BroadcastScrs -
-func (h *HubStub) BroadcastScrs(event data.BlockScrs) {
-	if h.BroadcastScrsCalled != nil {
-		h.BroadcastScrsCalled(event)
-	}
-}
-
-// BroadcastBlockEventsWithOrder -
-func (h *HubStub) BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) {
-	if h.BroadcastBlockEventsWithOrderCalled != nil {
-		h.BroadcastBlockEventsWithOrderCalled(event)
+// PublishBlockEventsWithOrder -
+func (h *HubStub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+	if h.PublishBlockEventsWithOrderCalled != nil {
+		h.PublishBlockEventsWithOrderCalled(blockTxs)
 	}
 }
 

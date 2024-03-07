@@ -16,52 +16,6 @@ var log = logger.GetOrCreate("factory")
 
 const bech32PubkeyConverterType = "bech32"
 
-// ArgsEventsHandlerFactory defines the arguments needed for events handler creation
-type ArgsEventsHandlerFactory struct {
-	CheckDuplicates      bool
-	Locker               process.LockService
-	MqPublisher          process.Publisher
-	HubPublisher         process.Publisher
-	APIType              string
-	StatusMetricsHandler common.StatusMetricsHandler
-}
-
-// CreateEventsHandler will create an events handler processor
-func CreateEventsHandler(args ArgsEventsHandlerFactory) (process.EventsHandler, error) {
-	publisher, err := getPublisher(args.APIType, args.MqPublisher, args.HubPublisher)
-	if err != nil {
-		return nil, err
-	}
-
-	argsEventsHandler := process.ArgsEventsHandler{
-		Locker:               args.Locker,
-		Publisher:            publisher,
-		StatusMetricsHandler: args.StatusMetricsHandler,
-		CheckDuplicates:      args.CheckDuplicates,
-	}
-	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
-	if err != nil {
-		return nil, err
-	}
-
-	return eventsHandler, nil
-}
-
-func getPublisher(
-	apiType string,
-	mqPublisher process.Publisher,
-	hubPublisher process.Publisher,
-) (process.Publisher, error) {
-	switch apiType {
-	case common.MessageQueuePublisherType:
-		return mqPublisher, nil
-	case common.WSPublisherType:
-		return hubPublisher, nil
-	default:
-		return nil, common.ErrInvalidAPIType
-	}
-}
-
 // CreateEventsInterceptor will create the events interceptor
 func CreateEventsInterceptor(cfg config.GeneralConfig) (process.EventsInterceptor, error) {
 	pubKeyConverter, err := getPubKeyConverter(cfg)
@@ -85,7 +39,8 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 	}
 }
 
-func createPayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+// CreatePayloadHandler will create a new instance of payload handler
+func CreatePayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
 	dataPreProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
 		Facade:     facade,

@@ -59,7 +59,7 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 		Header:                 header,
 	}
 
-	err = d.facade.HandlePushEventsV2(*saveBlockData)
+	err = d.facade.HandlePushEvents(*saveBlockData)
 	if err != nil {
 		return err
 	}

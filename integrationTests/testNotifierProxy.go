@@ -19,6 +19,7 @@ import (
 
 type testNotifier struct {
 	Facade         shared.FacadeHandler
+	Hub            dispatcher.Hub
 	Publisher      PublisherHandler
 	WSHandler      dispatcher.WSHandler
 	RedisClient    *mocks.RedisClientMock
@@ -42,18 +43,31 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 		Filter:             filters.NewDefaultFilter(),
 		SubscriptionMapper: dispatcher.NewSubscriptionMapper(),
 	}
-	publisher, err := hub.NewCommonHub(args)
+	commonHub, err := hub.NewCommonHub(args)
+	if err != nil {
+		return nil, err
+	}
+	publisher, err := process.NewPublisher(commonHub)
 	if err != nil {
 		return nil, err
 	}
 
 	statusMetricsHandler := metrics.NewStatusMetrics()
 
+	eventsInterceptorArgs := process.ArgsEventsInterceptor{
+		PubKeyConverter: &mocks.PubkeyConverterMock{},
+	}
+	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
+	if err != nil {
+		return nil, err
+	}
+
 	argsEventsHandler := process.ArgsEventsHandler{
 		Locker:               locker,
 		Publisher:            publisher,
 		StatusMetricsHandler: statusMetricsHandler,
 		CheckDuplicates:      cfg.General.CheckDuplicates,
+		EventsInterceptor:    eventsInterceptor,
 	}
 	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
 	if err != nil {
@@ -65,7 +79,7 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 		return nil, err
 	}
 	wsHandlerArgs := ws.ArgsWebSocketProcessor{
-		Hub:        publisher,
+		Dispatcher: commonHub,
 		Upgrader:   upgrader,
 		Marshaller: marshaller,
 	}
@@ -74,19 +88,10 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 		return nil, err
 	}
 
-	eventsInterceptorArgs := process.ArgsEventsInterceptor{
-		PubKeyConverter: &mocks.PubkeyConverterMock{},
-	}
-	eventsInterceptor, err := process.NewEventsInterceptor(eventsInterceptorArgs)
-	if err != nil {
-		return nil, err
-	}
-
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler:        eventsHandler,
 		APIConfig:            cfg.ConnectorApi,
 		WSHandler:            wsHandler,
-		EventsInterceptor:    eventsInterceptor,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
@@ -96,6 +101,7 @@ func NewTestNotifierWithWS(cfg config.MainConfig) (*testNotifier, error) {
 
 	return &testNotifier{
 		Facade:         facade,
+		Hub:            commonHub,
 		Publisher:      publisher,
 		WSHandler:      wsHandler,
 		RedisClient:    redisClient,
@@ -124,18 +130,11 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 		Config:     cfg.RabbitMQ,
 		Marshaller: marshaller,
 	}
-	publisher, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
+	publisherHandler, err := rabbitmq.NewRabbitMqPublisher(publisherArgs)
 	if err != nil {
 		return nil, err
 	}
-
-	argsEventsHandler := process.ArgsEventsHandler{
-		Locker:               locker,
-		Publisher:            publisher,
-		StatusMetricsHandler: statusMetricsHandler,
-		CheckDuplicates:      cfg.General.CheckDuplicates,
-	}
-	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
+	publisher, err := process.NewPublisher(publisherHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -148,12 +147,23 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 		return nil, err
 	}
 
+	argsEventsHandler := process.ArgsEventsHandler{
+		Locker:               locker,
+		Publisher:            publisher,
+		StatusMetricsHandler: statusMetricsHandler,
+		CheckDuplicates:      cfg.General.CheckDuplicates,
+		EventsInterceptor:    eventsInterceptor,
+	}
+	eventsHandler, err := process.NewEventsHandler(argsEventsHandler)
+	if err != nil {
+		return nil, err
+	}
+
 	wsHandler := &disabled.WSHandler{}
 	facadeArgs := facade.ArgsNotifierFacade{
 		EventsHandler:        eventsHandler,
 		APIConfig:            cfg.ConnectorApi,
 		WSHandler:            wsHandler,
-		EventsInterceptor:    eventsInterceptor,
 		StatusMetricsHandler: statusMetricsHandler,
 	}
 	facade, err := facade.NewNotifierFacade(facadeArgs)
@@ -163,6 +173,7 @@ func NewTestNotifierWithRabbitMq(cfg config.MainConfig) (*testNotifier, error) {
 
 	return &testNotifier{
 		Facade:         facade,
+		Hub:            &disabled.Hub{},
 		Publisher:      publisher,
 		WSHandler:      wsHandler,
 		RedisClient:    redisClient,

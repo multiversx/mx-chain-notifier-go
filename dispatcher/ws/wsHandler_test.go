@@ -14,7 +14,7 @@ import (
 
 func createMockArgsWSHandler() ws.ArgsWebSocketProcessor {
 	return ws.ArgsWebSocketProcessor{
-		Hub:        &mocks.HubStub{},
+		Dispatcher: &mocks.HubStub{},
 		Upgrader:   &mocks.WSUpgraderStub{},
 		Marshaller: &mock.MarshalizerMock{},
 	}
@@ -23,15 +23,15 @@ func createMockArgsWSHandler() ws.ArgsWebSocketProcessor {
 func TestNewWebSocketHandler(t *testing.T) {
 	t.Parallel()
 
-	t.Run("nil hub handler", func(t *testing.T) {
+	t.Run("nil dispatcher handler", func(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWSHandler()
-		args.Hub = nil
+		args.Dispatcher = nil
 
 		wh, err := ws.NewWebSocketProcessor(args)
 		require.True(t, check.IfNil(wh))
-		assert.Equal(t, ws.ErrNilHubHandler, err)
+		assert.Equal(t, ws.ErrNilDispatcher, err)
 	})
 
 	t.Run("nil ws upgrader", func(t *testing.T) {

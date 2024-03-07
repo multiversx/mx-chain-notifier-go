@@ -9,32 +9,28 @@ import (
 type Hub struct {
 }
 
-// Run does nothing
-func (h *Hub) Run() {
+// Publish does nothing
+func (h *Hub) Publish(events data.BlockEvents) {
 }
 
-// Broadcast does nothing
-func (h *Hub) Broadcast(_ data.BlockEvents) {
+// PublishRevert does nothing
+func (h *Hub) PublishRevert(revertBlock data.RevertBlock) {
 }
 
-// BroadcastRevert does nothing
-func (h *Hub) BroadcastRevert(_ data.RevertBlock) {
+// PublishFinalized does nothing
+func (h *Hub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
 }
 
-// BroadcastFinalized does nothing
-func (h *Hub) BroadcastFinalized(_ data.FinalizedBlock) {
+// PublishTxs does nothing
+func (h *Hub) PublishTxs(blockTxs data.BlockTxs) {
 }
 
-// BroadcastTxs does nothing
-func (h *Hub) BroadcastTxs(_ data.BlockTxs) {
+// PublishScrs does nothing
+func (h *Hub) PublishScrs(blockScrs data.BlockScrs) {
 }
 
-// BroadcastScrs does nothing
-func (h *Hub) BroadcastScrs(_ data.BlockScrs) {
-}
-
-// BroadcastBlockEventsWithOrder does nothing
-func (h *Hub) BroadcastBlockEventsWithOrder(_ data.BlockEventsWithOrder) {
+// PublishBlockEventsWithOrder does nothing
+func (h *Hub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 }
 
 // RegisterEvent does nothing

@@ -1,18 +1,32 @@
 package testdata
 
 import (
-	"encoding/json"
-
+	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-core-go/marshal"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	notifierData "github.com/multiversx/mx-chain-notifier-go/data"
 )
 
+type blockData struct {
+	marshaller marshal.Marshalizer
+}
+
+// NewBlockData will create block data component for testing
+func NewBlockData(marshaller marshal.Marshalizer) (*blockData, error) {
+	if check.IfNil(marshaller) {
+		return nil, common.ErrNilMarshaller
+	}
+
+	return &blockData{marshaller: marshaller}, nil
+}
+
 // OldSaveBlockData defines block events data before initial refactoring
-func OldSaveBlockData() *notifierData.SaveBlockData {
+func (bd *blockData) OldSaveBlockData() *notifierData.SaveBlockData {
 	return &notifierData.SaveBlockData{
 		Hash: "blockHash",
 		Txs: map[string]*transaction.Transaction{
@@ -34,7 +48,7 @@ func OldSaveBlockData() *notifierData.SaveBlockData {
 }
 
 // OutportBlockV0 -
-func OutportBlockV0() *notifierData.ArgsSaveBlock {
+func (bd *blockData) OutportBlockV0() *notifierData.ArgsSaveBlock {
 	saveBlockData := data.OutportBlockDataOld{
 		HeaderHash: []byte("headerHash3"),
 		Body: &block.Body{
@@ -94,12 +108,12 @@ func OutportBlockV0() *notifierData.ArgsSaveBlock {
 }
 
 // OutportBlockV1 -
-func OutportBlockV1() *outport.OutportBlock {
+func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 	header := &block.Header{
 		ShardID:   1,
 		TimeStamp: 1234,
 	}
-	headerBytes, _ := json.Marshal(header)
+	headerBytes, _ := bd.marshaller.Marshal(header)
 
 	return &outport.OutportBlock{
 		BlockData: &outport.BlockData{
@@ -160,7 +174,7 @@ func OutportBlockV1() *outport.OutportBlock {
 }
 
 // RevertBlockV0 -
-func RevertBlockV0() *notifierData.RevertBlock {
+func (bd *blockData) RevertBlockV0() *notifierData.RevertBlock {
 	return &notifierData.RevertBlock{
 		Hash:  "headerHash1",
 		Nonce: 1,
@@ -170,12 +184,12 @@ func RevertBlockV0() *notifierData.RevertBlock {
 }
 
 // RevertBlockV1 -
-func RevertBlockV1() *outport.BlockData {
+func (bd *blockData) RevertBlockV1() *outport.BlockData {
 	header := &block.Header{
 		ShardID:   1,
 		TimeStamp: 1234,
 	}
-	headerBytes, _ := json.Marshal(header)
+	headerBytes, _ := bd.marshaller.Marshal(header)
 
 	return &outport.BlockData{
 		ShardID:     1,
@@ -195,14 +209,14 @@ func RevertBlockV1() *outport.BlockData {
 }
 
 // FinalizedBlockV0 -
-func FinalizedBlockV0() *notifierData.FinalizedBlock {
+func (bd *blockData) FinalizedBlockV0() *notifierData.FinalizedBlock {
 	return &notifierData.FinalizedBlock{
 		Hash: "headerHash1",
 	}
 }
 
 // FinalizedBlockV1 -
-func FinalizedBlockV1() *outport.FinalizedBlock {
+func (bd *blockData) FinalizedBlockV1() *outport.FinalizedBlock {
 	return &outport.FinalizedBlock{
 		ShardID:    1,
 		HeaderHash: []byte("headerHash1"),

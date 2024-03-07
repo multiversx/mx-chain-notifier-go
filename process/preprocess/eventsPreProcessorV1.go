@@ -66,8 +66,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		Header:                 header,
 	}
 
-	// TODO: refactor to remove facade versioning
-	err = d.facade.HandlePushEventsV2(*saveBlockData)
+	err = d.facade.HandlePushEvents(*saveBlockData)
 	if err != nil {
 		return err
 	}

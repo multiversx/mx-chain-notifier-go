@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	coreData "github.com/multiversx/mx-chain-core-go/data"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	notifierData "github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -17,10 +18,14 @@ import (
 func TestPreProcessorV0_SaveBlock(t *testing.T) {
 	t.Parallel()
 
+	marshaller := &marshal.JsonMarshalizer{}
+	blockData, err := testdata.NewBlockData(marshaller)
+	require.Nil(t, err)
+
 	t.Run("nil block data", func(t *testing.T) {
 		t.Parallel()
 
-		outportBlock := testdata.OutportBlockV0()
+		outportBlock := blockData.OutportBlockV0()
 		outportBlock.HeaderType = "invalid"
 		marshalledBlock, _ := json.Marshal(outportBlock)
 
@@ -38,12 +43,12 @@ func TestPreProcessorV0_SaveBlock(t *testing.T) {
 
 		expectedErr := errors.New("exp error")
 		args.Facade = &mocks.FacadeStub{
-			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
+			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
 				return expectedErr
 			},
 		}
 
-		outportBlock := testdata.OutportBlockV0()
+		outportBlock := blockData.OutportBlockV0()
 
 		dp, err := preprocess.NewEventsPreProcessorV0(args)
 		require.Nil(t, err)
@@ -60,7 +65,7 @@ func TestPreProcessorV0_SaveBlock(t *testing.T) {
 
 		wasCalled := false
 		args.Facade = &mocks.FacadeStub{
-			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
+			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
 				wasCalled = true
 				return nil
 			},
@@ -69,7 +74,7 @@ func TestPreProcessorV0_SaveBlock(t *testing.T) {
 		dp, err := preprocess.NewEventsPreProcessorV0(args)
 		require.Nil(t, err)
 
-		outportBlock := testdata.OutportBlockV0()
+		outportBlock := blockData.OutportBlockV0()
 
 		marshalledBlock, err := json.Marshal(outportBlock)
 		require.Nil(t, err)

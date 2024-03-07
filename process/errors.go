@@ -25,3 +25,9 @@ var ErrNilBlockBody = errors.New("nil block body provided")
 
 // ErrNilBlockHeader signals that a nil block header has been provided
 var ErrNilBlockHeader = errors.New("nil block header provided")
+
+// ErrNilPublisherHandler signals that a nil publisher handler has been provided
+var ErrNilPublisherHandler = errors.New("nil publisher handler provided")
+
+// ErrNilEventsInterceptor signals that a nil events interceptor was provided
+var ErrNilEventsInterceptor = errors.New("nil events interceptor")

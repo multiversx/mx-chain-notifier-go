@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/multiversx/mx-chain-notifier-go/data"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 )
 
 // EventDispatcher defines the behaviour of a event dispatcher component
@@ -20,20 +21,19 @@ type EventDispatcher interface {
 	ScrsEvent(event data.BlockScrs)
 }
 
-// Hub defines the behaviour of a hub component which should be able to register
-// and unregister dispatching events
+// Hub defines the behaviour of a component which should be able to receive events
+// and publish them to subscribers
 type Hub interface {
-	Run()
-	Broadcast(events data.BlockEvents)
-	BroadcastRevert(event data.RevertBlock)
-	BroadcastFinalized(event data.FinalizedBlock)
-	BroadcastTxs(event data.BlockTxs)
-	BroadcastScrs(event data.BlockScrs)
-	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
+	process.PublisherHandler
+	Dispatcher
+}
+
+// Dispatcher defines the behaviour of a dispatcher component which should be able to register
+// and unregister dispatching events
+type Dispatcher interface {
 	RegisterEvent(event EventDispatcher)
 	UnregisterEvent(event EventDispatcher)
 	Subscribe(event data.SubscribeEvent)
-	Close() error
 	IsInterfaceNil() bool
 }
 
@@ -64,6 +64,6 @@ type WSUpgrader interface {
 type SubscriptionMapperHandler interface {
 	MatchSubscribeEvent(event data.SubscribeEvent)
 	RemoveSubscriptions(dispatcherID uuid.UUID)
-	Subscriptions() []data.Subscription
+	Subscriptions() map[string][]data.Subscription
 	IsInterfaceNil() bool
 }

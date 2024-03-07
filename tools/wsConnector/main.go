@@ -19,19 +19,25 @@ func main() {
 		return
 	}
 
-	err = wsClient.PushEventsRequest(testdata.OutportBlockV1())
+	blockData, err := testdata.NewBlockData(marshaller)
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	err = wsClient.RevertEventsRequest(testdata.RevertBlockV1())
+	err = wsClient.PushEventsRequest(blockData.OutportBlockV1())
 	if err != nil {
 		fmt.Println(err.Error())
 		return
 	}
 
-	err = wsClient.FinalizedEventsRequest(testdata.FinalizedBlockV1())
+	err = wsClient.RevertEventsRequest(blockData.RevertBlockV1())
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	err = wsClient.FinalizedEventsRequest(blockData.FinalizedBlockV1())
 	if err != nil {
 		fmt.Println(err.Error())
 		return

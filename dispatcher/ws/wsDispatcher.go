@@ -32,7 +32,7 @@ var (
 
 // argsWebSocketDispatcher defines the arguments needed for ws dispatcher
 type argsWebSocketDispatcher struct {
-	Hub        dispatcher.Hub
+	Dispatcher dispatcher.Dispatcher
 	Conn       dispatcher.WSConnection
 	Marshaller marshal.Marshalizer
 }
@@ -42,14 +42,14 @@ type websocketDispatcher struct {
 	wg         sync.WaitGroup
 	send       chan []byte
 	conn       dispatcher.WSConnection
-	hub        dispatcher.Hub
+	dispatcher dispatcher.Dispatcher
 	marshaller marshal.Marshalizer
 }
 
 // newWebSocketDispatcher createa a new ws dispatcher instance
 func newWebSocketDispatcher(args argsWebSocketDispatcher) (*websocketDispatcher, error) {
-	if check.IfNil(args.Hub) {
-		return nil, ErrNilHubHandler
+	if check.IfNil(args.Dispatcher) {
+		return nil, ErrNilDispatcher
 	}
 	if args.Conn == nil {
 		return nil, ErrNilWSConn
@@ -62,7 +62,7 @@ func newWebSocketDispatcher(args argsWebSocketDispatcher) (*websocketDispatcher,
 		id:         uuid.New(),
 		send:       make(chan []byte, 256),
 		conn:       args.Conn,
-		hub:        args.Hub,
+		dispatcher: args.Dispatcher,
 		marshaller: args.Marshaller,
 	}, nil
 }
@@ -254,7 +254,7 @@ func (wd *websocketDispatcher) writePump() {
 // readPump listens for incoming events and reads the content from the socket stream
 func (wd *websocketDispatcher) readPump() {
 	defer func() {
-		wd.hub.UnregisterEvent(wd)
+		wd.dispatcher.UnregisterEvent(wd)
 		if err := wd.conn.Close(); err != nil {
 			log.Error("failed to close socket on defer", "err", err.Error())
 		}
@@ -293,7 +293,7 @@ func (wd *websocketDispatcher) trySendSubscribeEvent(eventBytes []byte) {
 		return
 	}
 	subscribeEvent.DispatcherID = wd.id
-	wd.hub.Subscribe(subscribeEvent)
+	wd.dispatcher.Subscribe(subscribeEvent)
 }
 
 func (wd *websocketDispatcher) setSocketWriteLimits() error {

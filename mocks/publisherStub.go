@@ -4,20 +4,23 @@ import "github.com/multiversx/mx-chain-notifier-go/data"
 
 // PublisherStub implements PublisherService interface
 type PublisherStub struct {
-	RunCalled                           func()
+	RunCalled                           func() error
 	BroadcastCalled                     func(events data.BlockEvents)
 	BroadcastRevertCalled               func(event data.RevertBlock)
 	BroadcastFinalizedCalled            func(event data.FinalizedBlock)
 	BroadcastTxsCalled                  func(event data.BlockTxs)
 	BroadcastScrsCalled                 func(event data.BlockScrs)
 	BroadcastBlockEventsWithOrderCalled func(event data.BlockEventsWithOrder)
+	CloseCalled                         func() error
 }
 
 // Run -
-func (ps *PublisherStub) Run() {
+func (ps *PublisherStub) Run() error {
 	if ps.RunCalled != nil {
-		ps.RunCalled()
+		return ps.RunCalled()
 	}
+
+	return nil
 }
 
 // Broadcast -
@@ -60,6 +63,15 @@ func (ps *PublisherStub) BroadcastBlockEventsWithOrder(event data.BlockEventsWit
 	if ps.BroadcastBlockEventsWithOrderCalled != nil {
 		ps.BroadcastBlockEventsWithOrderCalled(event)
 	}
+}
+
+// Close -
+func (ps *PublisherStub) Close() error {
+	if ps.CloseCalled != nil {
+		return ps.CloseCalled()
+	}
+
+	return nil
 }
 
 // IsInterfaceNil -

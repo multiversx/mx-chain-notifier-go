@@ -82,7 +82,7 @@ func TestPreProcessorV1_SaveBlock(t *testing.T) {
 
 		expectedErr := errors.New("exp error")
 		args.Facade = &mocks.FacadeStub{
-			HandlePushEventsV2Called: func(events data.ArgsSaveBlockData) error {
+			HandlePushEventsCalled: func(events data.ArgsSaveBlockData) error {
 				return expectedErr
 			},
 		}

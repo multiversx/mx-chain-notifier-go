@@ -1,8 +1,6 @@
 package rabbitmq
 
 import (
-	"context"
-
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
@@ -29,16 +27,6 @@ type rabbitMqPublisher struct {
 	client     RabbitMqClient
 	marshaller marshal.Marshalizer
 	cfg        config.RabbitMQConfig
-
-	broadcast                     chan data.BlockEvents
-	broadcastRevert               chan data.RevertBlock
-	broadcastFinalized            chan data.FinalizedBlock
-	broadcastTxs                  chan data.BlockTxs
-	broadcastBlockEventsWithOrder chan data.BlockEventsWithOrder
-	broadcastScrs                 chan data.BlockScrs
-
-	cancelFunc func()
-	closeChan  chan struct{}
 }
 
 // NewRabbitMqPublisher creates a new rabbitMQ publisher instance
@@ -49,16 +37,9 @@ func NewRabbitMqPublisher(args ArgsRabbitMqPublisher) (*rabbitMqPublisher, error
 	}
 
 	rp := &rabbitMqPublisher{
-		broadcast:                     make(chan data.BlockEvents),
-		broadcastRevert:               make(chan data.RevertBlock),
-		broadcastFinalized:            make(chan data.FinalizedBlock),
-		broadcastTxs:                  make(chan data.BlockTxs),
-		broadcastScrs:                 make(chan data.BlockScrs),
-		broadcastBlockEventsWithOrder: make(chan data.BlockEventsWithOrder),
-		cfg:                           args.Config,
-		client:                        args.Client,
-		marshaller:                    args.Marshaller,
-		closeChan:                     make(chan struct{}),
+		cfg:        args.Config,
+		client:     args.Client,
+		marshaller: args.Marshaller,
 	}
 
 	err = rp.createExchanges()
@@ -158,95 +139,8 @@ func (rp *rabbitMqPublisher) createExchange(conf config.RabbitMQExchangeConfig) 
 	return nil
 }
 
-// Run is launched as a goroutine and listens for events on the exposed channels
-func (rp *rabbitMqPublisher) Run() {
-	var ctx context.Context
-	ctx, rp.cancelFunc = context.WithCancel(context.Background())
-
-	go rp.run(ctx)
-}
-
-func (rp *rabbitMqPublisher) run(ctx context.Context) {
-	for {
-		select {
-		case <-ctx.Done():
-			log.Debug("RabbitMQ publisher is stopping...")
-			rp.client.Close()
-		case events := <-rp.broadcast:
-			rp.publishToExchanges(events)
-		case revertBlock := <-rp.broadcastRevert:
-			rp.publishRevertToExchange(revertBlock)
-		case finalizedBlock := <-rp.broadcastFinalized:
-			rp.publishFinalizedToExchange(finalizedBlock)
-		case blockTxs := <-rp.broadcastTxs:
-			rp.publishTxsToExchange(blockTxs)
-		case blockScrs := <-rp.broadcastScrs:
-			rp.publishScrsToExchange(blockScrs)
-		case blockEvents := <-rp.broadcastBlockEventsWithOrder:
-			rp.publishBlockEventsWithOrderToExchange(blockEvents)
-		case err := <-rp.client.ConnErrChan():
-			if err != nil {
-				log.Error("rabbitMQ connection failure", "err", err.Error())
-				rp.client.Reconnect()
-			}
-		case err := <-rp.client.CloseErrChan():
-			if err != nil {
-				log.Error("rabbitMQ channel failure", "err", err.Error())
-				rp.client.ReopenChannel()
-			}
-		}
-	}
-}
-
-// Broadcast will handle the block events pushed by producers and sends them to rabbitMQ channel
-func (rp *rabbitMqPublisher) Broadcast(events data.BlockEvents) {
-	select {
-	case rp.broadcast <- events:
-	case <-rp.closeChan:
-	}
-}
-
-// BroadcastRevert will handle the revert event pushed by producers and sends them to rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastRevert(events data.RevertBlock) {
-	select {
-	case rp.broadcastRevert <- events:
-	case <-rp.closeChan:
-	}
-}
-
-// BroadcastFinalized will handle the finalized event pushed by producers and sends them to rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastFinalized(events data.FinalizedBlock) {
-	select {
-	case rp.broadcastFinalized <- events:
-	case <-rp.closeChan:
-	}
-}
-
-// BroadcastTxs will handle the txs event pushed by producers and sends them to rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastTxs(events data.BlockTxs) {
-	select {
-	case rp.broadcastTxs <- events:
-	case <-rp.closeChan:
-	}
-}
-
-// BroadcastScrs will handle the scrs event pushed by producers and sends them to rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastScrs(events data.BlockScrs) {
-	select {
-	case rp.broadcastScrs <- events:
-	case <-rp.closeChan:
-	}
-}
-
-// BroadcastBlockEventsWithOrder will handle the full block events pushed by producers and sends them to rabbitMQ channel
-func (rp *rabbitMqPublisher) BroadcastBlockEventsWithOrder(events data.BlockEventsWithOrder) {
-	select {
-	case rp.broadcastBlockEventsWithOrder <- events:
-	case <-rp.closeChan:
-	}
-}
-
-func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
+// Publish will publish logs and events to rabbitmq
+func (rp *rabbitMqPublisher) Publish(events data.BlockEvents) {
 	eventsBytes, err := rp.marshaller.Marshal(events)
 	if err != nil {
 		log.Error("could not marshal events", "err", err.Error())
@@ -259,7 +153,8 @@ func (rp *rabbitMqPublisher) publishToExchanges(events data.BlockEvents) {
 	}
 }
 
-func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBlock) {
+// PublishRevert will publish revert event to rabbitmq
+func (rp *rabbitMqPublisher) PublishRevert(revertBlock data.RevertBlock) {
 	revertBlockBytes, err := rp.marshaller.Marshal(revertBlock)
 	if err != nil {
 		log.Error("could not marshal revert event", "err", err.Error())
@@ -272,7 +167,8 @@ func (rp *rabbitMqPublisher) publishRevertToExchange(revertBlock data.RevertBloc
 	}
 }
 
-func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.FinalizedBlock) {
+// PublishFinalized will publish finalized event to rabbitmq
+func (rp *rabbitMqPublisher) PublishFinalized(finalizedBlock data.FinalizedBlock) {
 	finalizedBlockBytes, err := rp.marshaller.Marshal(finalizedBlock)
 	if err != nil {
 		log.Error("could not marshal finalized event", "err", err.Error())
@@ -285,7 +181,8 @@ func (rp *rabbitMqPublisher) publishFinalizedToExchange(finalizedBlock data.Fina
 	}
 }
 
-func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
+// PublishTxs will publish txs event to rabbitmq
+func (rp *rabbitMqPublisher) PublishTxs(blockTxs data.BlockTxs) {
 	txsBlockBytes, err := rp.marshaller.Marshal(blockTxs)
 	if err != nil {
 		log.Error("could not marshal block txs event", "err", err.Error())
@@ -298,7 +195,8 @@ func (rp *rabbitMqPublisher) publishTxsToExchange(blockTxs data.BlockTxs) {
 	}
 }
 
-func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
+// PublishScrs will publish scrs event to rabbitmq
+func (rp *rabbitMqPublisher) PublishScrs(blockScrs data.BlockScrs) {
 	scrsBlockBytes, err := rp.marshaller.Marshal(blockScrs)
 	if err != nil {
 		log.Error("could not marshal block scrs event", "err", err.Error())
@@ -311,7 +209,8 @@ func (rp *rabbitMqPublisher) publishScrsToExchange(blockScrs data.BlockScrs) {
 	}
 }
 
-func (rp *rabbitMqPublisher) publishBlockEventsWithOrderToExchange(blockTxs data.BlockEventsWithOrder) {
+// PublishBlockEventsWithOrder will publish block events with order to rabbitmq
+func (rp *rabbitMqPublisher) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 	txsBlockBytes, err := rp.marshaller.Marshal(blockTxs)
 	if err != nil {
 		log.Error("could not marshal block txs event", "err", err.Error())
@@ -336,14 +235,9 @@ func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) 
 	)
 }
 
-// Close will close the channels
+// Close will trigger to close rabbitmq client
 func (rp *rabbitMqPublisher) Close() error {
-	if rp.cancelFunc != nil {
-		rp.cancelFunc()
-	}
-
-	close(rp.closeChan)
-
+	rp.client.Close()
 	return nil
 }
 

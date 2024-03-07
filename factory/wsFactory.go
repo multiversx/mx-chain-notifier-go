@@ -19,25 +19,25 @@ const (
 )
 
 // CreateWSHandler creates websocket handler component based on api type
-func CreateWSHandler(apiType string, hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
+func CreateWSHandler(apiType string, wsDispatcher dispatcher.Dispatcher, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
 	switch apiType {
 	case common.MessageQueuePublisherType:
 		return &disabled.WSHandler{}, nil
 	case common.WSPublisherType:
-		return createWSHandler(hub, marshaller)
+		return createWSHandler(wsDispatcher, marshaller)
 	default:
 		return nil, common.ErrInvalidAPIType
 	}
 }
 
-func createWSHandler(hub dispatcher.Hub, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
+func createWSHandler(wsDispatcher dispatcher.Dispatcher, marshaller marshal.Marshalizer) (dispatcher.WSHandler, error) {
 	upgrader, err := ws.NewWSUpgraderWrapper(readBufferSize, writeBufferSize)
 	if err != nil {
 		return nil, err
 	}
 
 	args := ws.ArgsWebSocketProcessor{
-		Hub:        hub,
+		Dispatcher: wsDispatcher,
 		Upgrader:   upgrader,
 		Marshaller: marshaller,
 	}
@@ -70,7 +70,7 @@ func createWsObsConnector(
 		return nil, err
 	}
 
-	payloadHandler, err := createPayloadHandler(marshaller, facade)
+	payloadHandler, err := CreatePayloadHandler(marshaller, facade)
 	if err != nil {
 		return nil, err
 	}

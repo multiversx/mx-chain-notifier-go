@@ -4,17 +4,23 @@ import (
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
-	"github.com/multiversx/mx-chain-notifier-go/disabled"
+	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
+	"github.com/multiversx/mx-chain-notifier-go/process"
 	"github.com/multiversx/mx-chain-notifier-go/rabbitmq"
 )
 
 // CreatePublisher creates publisher component
-func CreatePublisher(apiType string, config config.MainConfig, marshaller marshal.Marshalizer) (rabbitmq.PublisherService, error) {
+func CreatePublisher(
+	apiType string,
+	config config.MainConfig,
+	marshaller marshal.Marshalizer,
+	commonHub dispatcher.Hub,
+) (process.Publisher, error) {
 	switch apiType {
 	case common.MessageQueuePublisherType:
 		return createRabbitMqPublisher(config.RabbitMQ, marshaller)
 	case common.WSPublisherType:
-		return &disabled.Publisher{}, nil
+		return createWSPublisher(commonHub)
 	default:
 		return nil, common.ErrInvalidAPIType
 	}
@@ -36,5 +42,9 @@ func createRabbitMqPublisher(config config.RabbitMQConfig, marshaller marshal.Ma
 		return nil, err
 	}
 
-	return rabbitPublisher, nil
+	return process.NewPublisher(rabbitPublisher)
+}
+
+func createWSPublisher(commonHub dispatcher.Hub) (process.Publisher, error) {
+	return process.NewPublisher(commonHub)
 }
