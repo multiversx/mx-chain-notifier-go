@@ -102,10 +102,12 @@ func (d *eventsPreProcessorV1) RevertIndexedBlock(marshalledData []byte) error {
 	}
 
 	revertData := &data.RevertBlock{
-		Hash:  hex.EncodeToString(blockData.GetHeaderHash()),
-		Nonce: header.GetNonce(),
-		Round: header.GetRound(),
-		Epoch: header.GetEpoch(),
+		Hash:      hex.EncodeToString(blockData.GetHeaderHash()),
+		Nonce:     header.GetNonce(),
+		Round:     header.GetRound(),
+		Epoch:     header.GetEpoch(),
+		ShardID:   blockData.GetShardID(),
+		TimeStamp: header.GetTimeStamp(),
 	}
 
 	d.facade.HandleRevertEvents(*revertData)
