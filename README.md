@@ -177,7 +177,7 @@ communication protocol and send a payload signalling the intention of
 subscribing. This will generate a subscription for that session.
 
 There are two types of events:
-- Protocol based events, such as `ESDTTrasnfer` or `NFTCreate`
+- Protocol based events, such as `ESDTTransfer` or `NFTCreate`
 - Smart contract based events. These are defined inside a smart contract. 
   The event will automatically be assigned the smart contract address, 
   and the identifier will be the function by which it was triggered.
