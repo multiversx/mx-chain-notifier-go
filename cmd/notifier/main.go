@@ -85,7 +85,7 @@ VERSION:
 
 	checkDuplicates = cli.BoolTFlag{
 		Name:  "check-duplicates",
-		Usage: "Boolean option for to check the duplicates. Set this to '--check-duplicates=false' to disable the check",
+		Usage: "Boolean option to check the duplicates. Set this to '--check-duplicates=false' to disable the check",
 	}
 )
 
