@@ -83,9 +83,9 @@ VERSION:
 		Value: common.MessageQueuePublisherType,
 	}
 
-	noDuplicationCheck = cli.BoolFlag{
-		Name:  "no-duplicates-check",
-		Usage: "Boolean option for skipping duplication checks",
+	checkDuplicates = cli.BoolTFlag{
+		Name:  "check-duplicates",
+		Usage: "Boolean option for to check the duplicates. Set this to '--check-duplicates=false' to disable the check",
 	}
 )
 
@@ -114,7 +114,7 @@ func main() {
 		workingDirectory,
 		apiType,
 		publisherType,
-		noDuplicationCheck,
+		checkDuplicates,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -178,8 +178,8 @@ func readConfigs(ctx *cli.Context) (*config.Configs, error) {
 		return nil, err
 	}
 
-	if ctx.IsSet(noDuplicationCheck.Name) {
-		mainConfig.General.CheckDuplicates = false
+	if ctx.IsSet(checkDuplicates.Name) {
+		mainConfig.General.CheckDuplicates = ctx.GlobalBool(checkDuplicates.Name)
 	}
 
 	apiConfig, err := config.LoadAPIConfig(flagsConfig.APIConfigPath)

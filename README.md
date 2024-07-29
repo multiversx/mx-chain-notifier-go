@@ -146,7 +146,8 @@ If the service will be in "notifier" mode, it will expose a additional route:
 
 In this setup, `Redis` is used as a locker service. If `CheckDuplicates` config
 parameter is set to `true` notifier instance will check for duplicated events
-in locker service.
+in locker service. Alternatively, this option can be set/unset via the binary flag 
+called `--check-duplicates`.
 
 Check `Redis` section from config in order to set up the available options.
 
