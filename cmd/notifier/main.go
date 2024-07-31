@@ -207,15 +207,14 @@ func getFlagsConfig(ctx *cli.Context) (*config.FlagsConfig, error) {
 	flagsConfig.SaveLogFile = ctx.GlobalBool(logSaveFile.Name)
 	flagsConfig.GeneralConfigPath = ctx.GlobalString(generalConfigFile.Name)
 	flagsConfig.APIConfigPath = ctx.GlobalString(apiConfigFile.Name)
-	flagsConfig.PublisherType = ctx.GlobalString(publisherType.Name)
 
-	// TODO: remove deprecated flag
-	if ctx.IsSet(apiType.Name) {
-		// override for backwards compatibility
-		flagsConfig.PublisherType, err = handleAPIType(ctx)
-		if err != nil {
-			return nil, err
-		}
+	flagsConfig.PublisherType, err = handleAPIType(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctx.IsSet(publisherType.Name) {
+		flagsConfig.PublisherType = ctx.GlobalString(publisherType.Name)
 	}
 
 	return flagsConfig, nil
