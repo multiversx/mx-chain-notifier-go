@@ -122,11 +122,21 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.Lo
 			"identifier", eventIdentifier,
 		)
 
+		topics := event.EventHandler.GetTopics()
+		if topics == nil {
+			topics = make([][]byte, 0)
+		}
+
+		eventData := event.EventHandler.GetData()
+		if eventData == nil {
+			eventData = make([]byte, 0)
+		}
+
 		events = append(events, data.Event{
 			Address:    bech32Address,
 			Identifier: eventIdentifier,
-			Topics:     event.EventHandler.GetTopics(),
-			Data:       event.EventHandler.GetData(),
+			Topics:     topics,
+			Data:       eventData,
 			TxHash:     event.TxHash,
 		})
 	}
