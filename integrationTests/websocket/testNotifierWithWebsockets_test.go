@@ -49,6 +49,8 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		{
 			Address: hex.EncodeToString(addr),
 			TxHash:  "txHash1",
+			Data:    make([]byte, 0),
+			Topics:  make([][]byte, 0),
 		},
 	}
 
@@ -135,6 +137,8 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		{
 			Address: hex.EncodeToString(addr),
 			TxHash:  "txHash1",
+			Data:    make([]byte, 0),
+			Topics:  make([][]byte, 0),
 		},
 	}
 	expBlockEvents := &data.BlockEventsWithOrder{
@@ -559,6 +563,8 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 	events := []data.Event{
 		{
 			Address: hex.EncodeToString(addr),
+			Data:    make([]byte, 0),
+			Topics:  make([][]byte, 0),
 		},
 	}
 
