@@ -101,7 +101,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.Lo
 	}
 
 	if len(logEvents) == 0 {
-		return nil
+		return make([]data.Event, 0)
 	}
 
 	events := make([]data.Event, 0, len(logEvents))
