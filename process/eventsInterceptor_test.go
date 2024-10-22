@@ -196,7 +196,10 @@ func TestProcessBlockEvents(t *testing.T) {
 			ScrsWithOrder: expScrsWithOrder,
 			LogEvents: []data.Event{
 				{
-					Address: hex.EncodeToString(addr),
+					Address:    hex.EncodeToString(addr),
+					Identifier: "",
+					Data:       make([]byte, 0),
+					Topics:     make([][]byte, 0),
 				},
 			},
 		}
@@ -205,6 +208,71 @@ func TestProcessBlockEvents(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, expEvents, events)
 	})
+
+	t.Run("nil event fields should be returned as empty", func(t *testing.T) {
+		t.Parallel()
+
+		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+
+		addr := []byte("addr1")
+
+		blockBody := &block.Body{
+			MiniBlocks: make([]*block.MiniBlock, 1),
+		}
+		blockHeader := &block.HeaderV2{
+			Header: &block.Header{
+				ShardID:   1,
+				TimeStamp: 1234,
+			},
+		}
+
+		logs := []*outport.LogData{
+			{
+				Log: &transaction.Log{
+					Address: addr,
+					Events: []*transaction.Event{
+						{
+							Address:    addr,
+							Topics:     nil,
+							Data:       nil,
+							Identifier: nil,
+						},
+					},
+				},
+			},
+		}
+
+		blockHash := []byte("blockHash")
+		blockEvents := data.ArgsSaveBlockData{
+			HeaderHash: blockHash,
+			Body:       blockBody,
+			Header:     blockHeader,
+			TransactionsPool: &outport.TransactionPool{
+				Logs: logs,
+			},
+		}
+
+		expEvents := &data.InterceptorBlockData{
+			Hash:   hex.EncodeToString(blockHash),
+			Body:   blockBody,
+			Header: blockHeader,
+			Txs:    make(map[string]*transaction.Transaction),
+			Scrs:   make(map[string]*smartContractResult.SmartContractResult),
+			LogEvents: []data.Event{
+				{
+					Address:    hex.EncodeToString(addr),
+					Identifier: "",
+					Data:       make([]byte, 0),
+					Topics:     make([][]byte, 0),
+				},
+			},
+		}
+
+		events, err := eventsInterceptor.ProcessBlockEvents(&blockEvents)
+		require.Nil(t, err)
+		require.Equal(t, expEvents, events)
+	})
+
 }
 
 func TestGetLogEventsFromTransactionsPool(t *testing.T) {
