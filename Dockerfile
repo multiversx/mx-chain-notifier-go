@@ -17,5 +17,8 @@ EXPOSE 8080
 
 WORKDIR /multiversx
 
+RUN apt-get update && apt-get install -y curl
+CMD /bin/bash
+
 ENTRYPOINT ["./notifier"]
 CMD ["--api-type", "rabbit-api"]
