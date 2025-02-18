@@ -35,10 +35,12 @@ type BlockEvents struct {
 
 // RevertBlock holds revert event data
 type RevertBlock struct {
-	Hash  string `json:"hash"`
-	Nonce uint64 `json:"nonce"`
-	Round uint64 `json:"round"`
-	Epoch uint32 `json:"epoch"`
+	Hash      string `json:"hash"`
+	Nonce     uint64 `json:"nonce"`
+	Round     uint64 `json:"round"`
+	Epoch     uint32 `json:"epoch"`
+	ShardID   uint32 `json:"shardId"`
+	TimeStamp uint64 `json:"timestamp"`
 }
 
 // FinalizedBlock holds finalized block data

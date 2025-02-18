@@ -1,4 +1,4 @@
-FROM golang:1.22.4 as builder
+FROM golang:1.23.6 AS builder
 
 MAINTAINER MultiversX
 
@@ -10,12 +10,15 @@ WORKDIR /multiversx/cmd/notifier
 RUN go build -o notifier
 
 # ===== SECOND STAGE ======
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 COPY --from=builder /multiversx/cmd/notifier /multiversx
 
 EXPOSE 8080
 
 WORKDIR /multiversx
+
+RUN apt-get update && apt-get install -y curl
+CMD /bin/bash
 
 ENTRYPOINT ["./notifier"]
 CMD ["--api-type", "rabbit-api"]

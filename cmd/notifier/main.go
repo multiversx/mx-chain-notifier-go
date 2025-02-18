@@ -17,10 +17,9 @@ import (
 )
 
 const (
-	defaultLogsPath      = "logs"
-	logFilePrefix        = "event-notifier"
-	logFileLifeSpanSec   = 86400
-	defaultRestInterface = "localhost:8080"
+	defaultLogsPath    = "logs"
+	logFilePrefix      = "event-notifier"
+	logFileLifeSpanSec = 86400
 )
 
 var (
@@ -83,6 +82,11 @@ VERSION:
 		Usage: "This flag specifies the publisher type, it defines the way in which it will expose the events. Options: " + common.MessageQueuePublisherType + " | " + common.WSPublisherType,
 		Value: common.MessageQueuePublisherType,
 	}
+
+	checkDuplicates = cli.BoolTFlag{
+		Name:  "check-duplicates",
+		Usage: "Boolean option to check the duplicates. Set this to '--check-duplicates=false' to disable the check",
+	}
 )
 
 // appVersion should be populated at build time using ldflags
@@ -110,6 +114,7 @@ func main() {
 		workingDirectory,
 		apiType,
 		publisherType,
+		checkDuplicates,
 	}
 	app.Authors = []cli.Author{
 		{
@@ -171,6 +176,10 @@ func readConfigs(ctx *cli.Context) (*config.Configs, error) {
 	mainConfig, err := config.LoadMainConfig(flagsConfig.GeneralConfigPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if ctx.IsSet(checkDuplicates.Name) {
+		mainConfig.General.CheckDuplicates = ctx.GlobalBool(checkDuplicates.Name)
 	}
 
 	apiConfig, err := config.LoadAPIConfig(flagsConfig.APIConfigPath)

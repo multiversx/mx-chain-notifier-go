@@ -1,6 +1,7 @@
 package preprocess_test
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -138,22 +139,55 @@ func TestPreProcessorV1_RevertIndexerBlock(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
+		shardID := uint32(2)
+		nonce := uint64(11)
+		round := uint64(12)
+		epoch := uint32(3)
+		timestamp := uint64(1234)
+		headerHash := []byte("headerHash1")
+
 		b := &block.Header{
-			Nonce: 1,
+			Nonce:     nonce,
+			Round:     round,
+			Epoch:     epoch,
+			TimeStamp: timestamp,
 		}
 		blockBytes, _ := json.Marshal(b)
 
 		blockData := &outport.BlockData{
 			HeaderBytes: blockBytes,
+			HeaderHash:  headerHash,
 			HeaderType:  "Header",
+			ShardID:     shardID,
 		}
 
-		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
+		expRevertBlock := data.RevertBlock{
+			Hash:      hex.EncodeToString(headerHash),
+			Nonce:     nonce,
+			Round:     round,
+			Epoch:     epoch,
+			ShardID:   shardID,
+			TimeStamp: timestamp,
+		}
+
+		args := createMockEventsDataPreProcessorArgs()
+
+		revertCalled := false
+		args.Facade = &mocks.FacadeStub{
+			HandleRevertEventsCalled: func(events data.RevertBlock) {
+				revertCalled = true
+				require.Equal(t, expRevertBlock, events)
+			},
+		}
+
+		dp, err := preprocess.NewEventsPreProcessorV1(args)
 		require.Nil(t, err)
 
 		marshalledBlock, _ := json.Marshal(blockData)
 		err = dp.RevertIndexedBlock(marshalledBlock)
 		require.Nil(t, err)
+
+		require.True(t, revertCalled)
 	})
 }
 
