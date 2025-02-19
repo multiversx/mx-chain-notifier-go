@@ -40,7 +40,7 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 	port := getRandomPort()
 	conf := config.WebSocketConfig{
 		Enabled:                 true,
-		URL:                     "localhost:" + fmt.Sprintf("%d", port),
+		URL:                     "ws://localhost:" + fmt.Sprintf("%d", port),
 		WithAcknowledge:         true,
 		Mode:                    "server",
 		RetryDurationInSec:      5,
