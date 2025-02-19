@@ -64,7 +64,7 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 	}
 
 	// wait for ws client to start
-	time.Sleep(10 * time.Second)
+	time.Sleep(4 * time.Second)
 
 	return wsClient, nil
 }
