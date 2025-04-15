@@ -7,6 +7,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
+
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 )
@@ -81,6 +82,11 @@ func createEmptyBlockCreatorContainer() (EmptyBlockCreatorContainer, error) {
 	}
 
 	err = container.Add(core.MetaHeader, block.NewEmptyMetaBlockCreator())
+	if err != nil {
+		return nil, err
+	}
+
+	err = container.Add(core.SovereignChainHeader, block.NewEmptySovereignHeaderCreator())
 	if err != nil {
 		return nil, err
 	}
