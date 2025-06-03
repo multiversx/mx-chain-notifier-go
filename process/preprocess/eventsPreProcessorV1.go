@@ -101,13 +101,17 @@ func (d *eventsPreProcessorV1) RevertIndexedBlock(marshalledData []byte) error {
 		return err
 	}
 
+	headerTimeStamp := header.GetTimeStamp()
+	headerTimeStampMs := headerTimeStamp * 1000 // TODO: handle this properly in Supernova release
+
 	revertData := &data.RevertBlock{
-		Hash:      hex.EncodeToString(blockData.GetHeaderHash()),
-		Nonce:     header.GetNonce(),
-		Round:     header.GetRound(),
-		Epoch:     header.GetEpoch(),
-		ShardID:   blockData.GetShardID(),
-		TimeStamp: header.GetTimeStamp(),
+		Hash:        hex.EncodeToString(blockData.GetHeaderHash()),
+		Nonce:       header.GetNonce(),
+		Round:       header.GetRound(),
+		Epoch:       header.GetEpoch(),
+		ShardID:     blockData.GetShardID(),
+		TimeStamp:   headerTimeStamp,
+		TimeStampMs: headerTimeStampMs,
 	}
 
 	d.facade.HandleRevertEvents(*revertData)
