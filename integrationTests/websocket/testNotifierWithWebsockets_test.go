@@ -178,6 +178,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
+			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
@@ -661,6 +662,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 					&block.MiniBlock{},
 				},
 			},
+			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}

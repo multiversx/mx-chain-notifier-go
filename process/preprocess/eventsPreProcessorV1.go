@@ -64,6 +64,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		NumberOfShards:         outportBlock.NumberOfShards,
 		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
+		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)
@@ -102,7 +103,7 @@ func (d *eventsPreProcessorV1) RevertIndexedBlock(marshalledData []byte) error {
 	}
 
 	headerTimeStamp := header.GetTimeStamp()
-	headerTimeStampMs := headerTimeStamp * 1000 // TODO: handle this properly in Supernova release
+	headerTimeStampMs := blockData.GetTimestampMs()
 
 	revertData := &data.RevertBlock{
 		Hash:        hex.EncodeToString(blockData.GetHeaderHash()),

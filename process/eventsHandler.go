@@ -93,7 +93,7 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 	}
 
 	headerTimeStamp := eventsData.Header.GetTimeStamp()
-	headerTimeStampMs := headerTimeStamp * 1000 // TODO: handle this properly in Supernova release
+	headerTimeStampMs := allEvents.HeaderTimeStampMs
 
 	pushEvents := data.BlockEvents{
 		Hash:        eventsData.Hash,
