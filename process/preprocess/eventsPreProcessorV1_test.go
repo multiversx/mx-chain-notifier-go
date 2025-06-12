@@ -159,15 +159,17 @@ func TestPreProcessorV1_RevertIndexerBlock(t *testing.T) {
 			HeaderHash:  headerHash,
 			HeaderType:  "Header",
 			ShardID:     shardID,
+			TimestampMs: timestamp * 1000,
 		}
 
 		expRevertBlock := data.RevertBlock{
-			Hash:      hex.EncodeToString(headerHash),
-			Nonce:     nonce,
-			Round:     round,
-			Epoch:     epoch,
-			ShardID:   shardID,
-			TimeStamp: timestamp,
+			Hash:        hex.EncodeToString(headerHash),
+			Nonce:       nonce,
+			Round:       round,
+			Epoch:       epoch,
+			ShardID:     shardID,
+			TimeStamp:   timestamp,
+			TimeStampMs: timestamp * 1000,
 		}
 
 		args := createMockEventsDataPreProcessorArgs()
