@@ -88,11 +88,19 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 		return err
 	}
 
+	if check.IfNil(eventsData.Header) {
+		return ErrNilBlockHeader
+	}
+
+	headerTimeStamp := eventsData.Header.GetTimeStamp()
+	headerTimeStampMs := allEvents.HeaderTimeStampMs
+
 	pushEvents := data.BlockEvents{
-		Hash:      eventsData.Hash,
-		ShardID:   eventsData.Header.GetShardID(),
-		TimeStamp: eventsData.Header.GetTimeStamp(),
-		Events:    eventsData.LogEvents,
+		Hash:        eventsData.Hash,
+		ShardID:     eventsData.Header.GetShardID(),
+		TimeStamp:   headerTimeStamp,
+		TimeStampMs: headerTimeStampMs,
+		Events:      eventsData.LogEvents,
 	}
 	err = eh.handlePushEvents(pushEvents)
 	if err != nil {
@@ -112,12 +120,13 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 	eh.handleBlockScrs(scrs)
 
 	txsWithOrder := data.BlockEventsWithOrder{
-		Hash:      eventsData.Hash,
-		ShardID:   eventsData.Header.GetShardID(),
-		TimeStamp: eventsData.Header.GetTimeStamp(),
-		Txs:       eventsData.TxsWithOrder,
-		Scrs:      eventsData.ScrsWithOrder,
-		Events:    eventsData.LogEvents,
+		Hash:        eventsData.Hash,
+		ShardID:     eventsData.Header.GetShardID(),
+		TimeStamp:   headerTimeStamp,
+		TimeStampMs: headerTimeStampMs,
+		Txs:         eventsData.TxsWithOrder,
+		Scrs:        eventsData.ScrsWithOrder,
+		Events:      eventsData.LogEvents,
 	}
 	eh.handleBlockEventsWithOrder(txsWithOrder)
 

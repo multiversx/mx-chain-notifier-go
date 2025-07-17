@@ -64,6 +64,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		NumberOfShards:         outportBlock.NumberOfShards,
 		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
+		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)
@@ -101,13 +102,17 @@ func (d *eventsPreProcessorV1) RevertIndexedBlock(marshalledData []byte) error {
 		return err
 	}
 
+	headerTimeStamp := header.GetTimeStamp()
+	headerTimeStampMs := blockData.GetTimestampMs()
+
 	revertData := &data.RevertBlock{
-		Hash:      hex.EncodeToString(blockData.GetHeaderHash()),
-		Nonce:     header.GetNonce(),
-		Round:     header.GetRound(),
-		Epoch:     header.GetEpoch(),
-		ShardID:   blockData.GetShardID(),
-		TimeStamp: header.GetTimeStamp(),
+		Hash:        hex.EncodeToString(blockData.GetHeaderHash()),
+		Nonce:       header.GetNonce(),
+		Round:       header.GetRound(),
+		Epoch:       header.GetEpoch(),
+		ShardID:     blockData.GetShardID(),
+		TimeStamp:   headerTimeStamp,
+		TimeStampMs: headerTimeStampMs,
 	}
 
 	d.facade.HandleRevertEvents(*revertData)

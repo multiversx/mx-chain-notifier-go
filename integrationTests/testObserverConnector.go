@@ -55,15 +55,16 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 	}
 
 	// wait for ws server to start
-	time.Sleep(4 * time.Second)
+	time.Sleep(10 * time.Second)
 
-	wsClient, err := newWSObsClient(marshaller, conf.URL)
+	clientURL := "ws://" + conf.URL
+	wsClient, err := newWSObsClient(marshaller, clientURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// wait for ws client to start
-	time.Sleep(4 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	return wsClient, nil
 }

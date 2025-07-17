@@ -43,6 +43,7 @@ type ArgsSaveBlockData struct {
 	TransactionsPool       *outport.TransactionPool
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
+	HeaderTimeStampMs      uint64
 }
 
 // OutportBlockDataOld holds the block data that will be received on push events

@@ -27,20 +27,22 @@ type Event struct {
 
 // BlockEvents holds events data for a block
 type BlockEvents struct {
-	Hash      string  `json:"hash"`
-	ShardID   uint32  `json:"shardId"`
-	TimeStamp uint64  `json:"timestamp"`
-	Events    []Event `json:"events"`
+	Hash        string  `json:"hash"`
+	ShardID     uint32  `json:"shardId"`
+	TimeStamp   uint64  `json:"timestamp"`
+	TimeStampMs uint64  `json:"timestampMs"`
+	Events      []Event `json:"events"`
 }
 
 // RevertBlock holds revert event data
 type RevertBlock struct {
-	Hash      string `json:"hash"`
-	Nonce     uint64 `json:"nonce"`
-	Round     uint64 `json:"round"`
-	Epoch     uint32 `json:"epoch"`
-	ShardID   uint32 `json:"shardId"`
-	TimeStamp uint64 `json:"timestamp"`
+	Hash        string `json:"hash"`
+	Nonce       uint64 `json:"nonce"`
+	Round       uint64 `json:"round"`
+	Epoch       uint32 `json:"epoch"`
+	ShardID     uint32 `json:"shardId"`
+	TimeStamp   uint64 `json:"timestamp"`
+	TimeStampMs uint64 `json:"timestampMs"`
 }
 
 // FinalizedBlock holds finalized block data
@@ -62,12 +64,13 @@ type BlockScrs struct {
 
 // BlockEventsWithOrder holds the block transactions with order
 type BlockEventsWithOrder struct {
-	Hash      string                      `json:"hash"`
-	ShardID   uint32                      `json:"shardID"`
-	TimeStamp uint64                      `json:"timestamp"`
-	Txs       map[string]*outport.TxInfo  `json:"txs"`
-	Scrs      map[string]*outport.SCRInfo `json:"scrs"`
-	Events    []Event                     `json:"events"`
+	Hash        string                      `json:"hash"`
+	ShardID     uint32                      `json:"shardID"`
+	TimeStamp   uint64                      `json:"timestamp"`
+	TimeStampMs uint64                      `json:"timestampMs"`
+	Txs         map[string]*outport.TxInfo  `json:"txs"`
+	Scrs        map[string]*outport.SCRInfo `json:"scrs"`
+	Events      []Event                     `json:"events"`
 }
 
 // NotifierTransaction defines a wrapper over transaction

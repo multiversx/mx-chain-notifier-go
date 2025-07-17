@@ -142,10 +142,11 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		},
 	}
 	expBlockEvents := &data.BlockEventsWithOrder{
-		Hash:      hex.EncodeToString(headerHash),
-		ShardID:   1,
-		TimeStamp: 1234,
-		Events:    events,
+		Hash:        hex.EncodeToString(headerHash),
+		ShardID:     1,
+		TimeStamp:   1234,
+		TimeStampMs: 1234000,
+		Events:      events,
 	}
 
 	header := &block.HeaderV2{
@@ -177,6 +178,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			Body: &block.Body{
 				MiniBlocks: make([]*block.MiniBlock, 1),
 			},
+			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
@@ -619,12 +621,13 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 		},
 	}
 	expBlockEvents := data.BlockEventsWithOrder{
-		Hash:      hex.EncodeToString(blockHash),
-		ShardID:   1,
-		TimeStamp: 1234,
-		Events:    events,
-		Txs:       expTxsWithOrder,
-		Scrs:      expScrsWithOrder,
+		Hash:        hex.EncodeToString(blockHash),
+		ShardID:     1,
+		TimeStamp:   1234,
+		TimeStampMs: 1234000,
+		Events:      events,
+		Txs:         expTxsWithOrder,
+		Scrs:        expScrsWithOrder,
 	}
 
 	header = &block.HeaderV2{
@@ -659,6 +662,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 					&block.MiniBlock{},
 				},
 			},
+			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 	}
