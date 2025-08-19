@@ -24,6 +24,7 @@ type Publisher interface {
 	BroadcastTxs(event data.BlockTxs)
 	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
 	BroadcastScrs(event data.BlockScrs)
+	BroadcastStateAccesses(events data.BlockStateAccesses)
 	Close() error
 	IsInterfaceNil() bool
 }
@@ -71,6 +72,7 @@ type PublisherHandler interface {
 	PublishTxs(blockTxs data.BlockTxs)
 	PublishScrs(blockScrs data.BlockScrs)
 	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
+	PublishStateAccesses(stateAccesses data.BlockStateAccesses)
 	Close() error
 	IsInterfaceNil() bool
 }

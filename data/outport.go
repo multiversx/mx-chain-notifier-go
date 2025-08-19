@@ -7,6 +7,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
 
@@ -71,6 +72,12 @@ type BlockEventsWithOrder struct {
 	Txs         map[string]*outport.TxInfo  `json:"txs"`
 	Scrs        map[string]*outport.SCRInfo `json:"scrs"`
 	Events      []Event                     `json:"events"`
+}
+
+// BlockStateAccesses holds the block state accesses
+type BlockStateAccesses struct {
+	Hash          string                                `json:"hash"`
+	StateAccesses map[string]*stateChange.StateAccesses `json:"stateAccesses"`
 }
 
 // NotifierTransaction defines a wrapper over transaction

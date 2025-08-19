@@ -94,6 +94,12 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 	if args.Config.BlockEventsExchange.Type == "" {
 		return ErrInvalidRabbitMqExchangeType
 	}
+	if args.Config.StateAccessesExchange.Name == "" {
+		return ErrInvalidRabbitMqExchangeName
+	}
+	if args.Config.StateAccessesExchange.Type == "" {
+		return ErrInvalidRabbitMqExchangeType
+	}
 
 	return nil
 }
@@ -121,6 +127,10 @@ func (rp *rabbitMqPublisher) createExchanges() error {
 		return err
 	}
 	err = rp.createExchange(rp.cfg.BlockEventsExchange)
+	if err != nil {
+		return err
+	}
+	err = rp.createExchange(rp.cfg.StateAccessesExchange)
 	if err != nil {
 		return err
 	}
@@ -220,6 +230,20 @@ func (rp *rabbitMqPublisher) PublishBlockEventsWithOrder(blockTxs data.BlockEven
 	err = rp.publishFanout(rp.cfg.BlockEventsExchange.Name, txsBlockBytes)
 	if err != nil {
 		log.Error("failed to publish full block events to rabbitMQ", "err", err.Error())
+	}
+}
+
+// PublishStateAccesses will publish block state accesses to rabbitmq
+func (rp *rabbitMqPublisher) PublishStateAccesses(stateAccesses data.BlockStateAccesses) {
+	stateAccessesBytes, err := rp.marshaller.Marshal(stateAccesses)
+	if err != nil {
+		log.Error("could not marshal block state accesses", "err", err.Error())
+		return
+	}
+
+	err = rp.publishFanout(rp.cfg.StateAccessesExchange.Name, stateAccessesBytes)
+	if err != nil {
+		log.Error("failed to publish block state accesses to rabbitMQ", "err", err.Error())
 	}
 }
 

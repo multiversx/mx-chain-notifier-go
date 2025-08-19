@@ -34,6 +34,9 @@ const (
 
 	// BlockScrs defines the subscription event type for block scrs
 	BlockScrs string = "block_scrs"
+
+	// BlockStateAccesses defines the subscription event type for block state accesses
+	BlockStateAccesses string = "block_state_accesses"
 )
 
 const (

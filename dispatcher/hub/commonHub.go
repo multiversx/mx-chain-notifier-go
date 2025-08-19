@@ -188,6 +188,25 @@ func (ch *commonHub) PublishScrs(blockScrs data.BlockScrs) {
 	}
 }
 
+// PublishStateAccesses will publish state accesses to dispatcher
+func (ch *commonHub) PublishStateAccesses(stateAccesses data.BlockStateAccesses) {
+	subscriptions := ch.subscriptionMapper.Subscriptions()
+
+	dispatchersMap := make(map[uuid.UUID]data.BlockStateAccesses)
+
+	for _, subscription := range subscriptions[common.BlockStateAccesses] {
+		dispatchersMap[subscription.DispatcherID] = stateAccesses
+	}
+
+	ch.mutDispatchers.RLock()
+	defer ch.mutDispatchers.RUnlock()
+	for id, event := range dispatchersMap {
+		if d, ok := ch.dispatchers[id]; ok {
+			d.StateAccessesEvent(event)
+		}
+	}
+}
+
 func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
 	ch.mutDispatchers.Lock()
 	defer ch.mutDispatchers.Unlock()
