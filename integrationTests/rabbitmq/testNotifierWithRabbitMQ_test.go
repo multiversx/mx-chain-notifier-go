@@ -107,11 +107,11 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		StateAccess: []*stateChange.StateAccess{
 			&stateChange.StateAccess{
 				MainTrieKey: []byte("mainTrieKey1"),
-				MainTrieVal: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
 			},
 			&stateChange.StateAccess{
 				MainTrieKey: []byte("mainTrieKey2"),
-				MainTrieVal: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
 			},
 		},
 	}

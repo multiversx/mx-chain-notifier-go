@@ -1,6 +1,8 @@
 package rabbitmq
 
 import (
+	"fmt"
+
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
@@ -59,46 +61,46 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 	}
 
 	if args.Config.EventsExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.EventsExchange.Name)
 	}
 	if args.Config.EventsExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.EventsExchange.Type)
 	}
 	if args.Config.RevertEventsExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.RevertEventsExchange.Name)
 	}
 	if args.Config.RevertEventsExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.RevertEventsExchange.Type)
 	}
 	if args.Config.FinalizedEventsExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.FinalizedEventsExchange.Name)
 	}
 	if args.Config.FinalizedEventsExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.FinalizedEventsExchange.Type)
 	}
 	if args.Config.BlockTxsExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.BlockTxsExchange.Name)
 	}
 	if args.Config.BlockTxsExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.BlockTxsExchange.Type)
 	}
 	if args.Config.BlockScrsExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.BlockScrsExchange.Name)
 	}
 	if args.Config.BlockScrsExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.BlockScrsExchange.Type)
 	}
 	if args.Config.BlockEventsExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.BlockEventsExchange.Name)
 	}
 	if args.Config.BlockEventsExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.BlockEventsExchange.Type)
 	}
 	if args.Config.StateAccessesExchange.Name == "" {
-		return ErrInvalidRabbitMqExchangeName
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.StateAccessesExchange.Name)
 	}
 	if args.Config.StateAccessesExchange.Type == "" {
-		return ErrInvalidRabbitMqExchangeType
+		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.StateAccessesExchange.Type)
 	}
 
 	return nil
