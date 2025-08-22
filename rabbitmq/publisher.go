@@ -61,46 +61,46 @@ func checkArgs(args ArgsRabbitMqPublisher) error {
 	}
 
 	if args.Config.EventsExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.EventsExchange.Name)
+		return fmt.Errorf("%w for EventsExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.EventsExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.EventsExchange.Type)
+		return fmt.Errorf("%w for EventsExchange", ErrInvalidRabbitMqExchangeType)
 	}
 	if args.Config.RevertEventsExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.RevertEventsExchange.Name)
+		return fmt.Errorf("%w for RevertEventsExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.RevertEventsExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.RevertEventsExchange.Type)
+		return fmt.Errorf("%w for RevertEventsExchange", ErrInvalidRabbitMqExchangeType)
 	}
 	if args.Config.FinalizedEventsExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.FinalizedEventsExchange.Name)
+		return fmt.Errorf("%w for FinalizedEventsExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.FinalizedEventsExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.FinalizedEventsExchange.Type)
+		return fmt.Errorf("%w for FinalizedEventsExchange", ErrInvalidRabbitMqExchangeType)
 	}
 	if args.Config.BlockTxsExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.BlockTxsExchange.Name)
+		return fmt.Errorf("%w for BlockTxsExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.BlockTxsExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.BlockTxsExchange.Type)
+		return fmt.Errorf("%w for BlockTxsExchange", ErrInvalidRabbitMqExchangeType)
 	}
 	if args.Config.BlockScrsExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.BlockScrsExchange.Name)
+		return fmt.Errorf("%w for BlockScrsExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.BlockScrsExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.BlockScrsExchange.Type)
+		return fmt.Errorf("%w for BlockScrsExchange", ErrInvalidRabbitMqExchangeType)
 	}
 	if args.Config.BlockEventsExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.BlockEventsExchange.Name)
+		return fmt.Errorf("%w for BlockEventsExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.BlockEventsExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.BlockEventsExchange.Type)
+		return fmt.Errorf("%w for BlockEventsExchange", ErrInvalidRabbitMqExchangeType)
 	}
 	if args.Config.StateAccessesExchange.Name == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeName, args.Config.StateAccessesExchange.Name)
+		return fmt.Errorf("%w for StateAccessesExchange", ErrInvalidRabbitMqExchangeName)
 	}
 	if args.Config.StateAccessesExchange.Type == "" {
-		return fmt.Errorf("%w for %s", ErrInvalidRabbitMqExchangeType, args.Config.StateAccessesExchange.Type)
+		return fmt.Errorf("%w for StateAccessesExchange", ErrInvalidRabbitMqExchangeType)
 	}
 
 	return nil
