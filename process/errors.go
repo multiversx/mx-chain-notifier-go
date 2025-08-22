@@ -33,4 +33,4 @@ var ErrNilPublisherHandler = errors.New("nil publisher handler provided")
 var ErrNilEventsInterceptor = errors.New("nil events interceptor")
 
 // ErrNilStateAccesses signals that a nil state accesses has been provided
-var ErrNilStateAccesses = errors.New("nil state accessess provided")
+var ErrNilStateAccesses = errors.New("nil state accesses provided")

@@ -143,7 +143,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 		for _, stateAccess := range stateAccessesPerTx.StateAccess {
 			if stateAccess.Type == stateChange.Read {
-				// TODO: add a flag here to allow read state accessess
+				// TODO: add a flag here to allow read state accesses
 				continue
 			}
 
