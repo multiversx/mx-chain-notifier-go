@@ -10,6 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -56,7 +57,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	integrationTests.WaitTimeout(t, wg, time.Second*2)
 
 	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, 7, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
@@ -100,6 +101,21 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 			},
 		},
 	}
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
+			},
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
 
 	saveBlockData := &outport.OutportBlock{
 		BlockData: &outport.BlockData{

@@ -43,6 +43,10 @@ func createMockArgsRabbitMqPublisher() rabbitmq.ArgsRabbitMqPublisher {
 				Name: "blockeventswithorder",
 				Type: "fanout",
 			},
+			StateAccessesExchange: config.RabbitMQExchangeConfig{
+				Name: "stateAccesses",
+				Type: "fanout",
+			},
 		},
 		Marshaller: &mock.MarshalizerMock{},
 	}
@@ -126,6 +130,28 @@ func TestRabbitMqPublisher(t *testing.T) {
 		client, err := rabbitmq.NewRabbitMqPublisher(args)
 		require.True(t, check.IfNil(client))
 		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid state accesses exchange name", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.StateAccessesExchange.Name = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeName))
+	})
+
+	t.Run("invalid state accesses exchange type", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Config.StateAccessesExchange.Type = ""
+
+		client, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.True(t, check.IfNil(client))
+		require.True(t, errors.Is(err, rabbitmq.ErrInvalidRabbitMqExchangeType))
 	})
 
 	t.Run("invalid exchange type", func(t *testing.T) {
@@ -304,6 +330,28 @@ func TestBroadcastBlockEventsWithOrder(t *testing.T) {
 	require.Nil(t, err)
 
 	rabbitmq.PublishBlockEventsWithOrder(data.BlockEventsWithOrder{})
+
+	require.True(t, wasCalled)
+}
+
+func TestBroadcastBlockStateAccesses(t *testing.T) {
+	t.Parallel()
+
+	wasCalled := false
+	client := &mocks.RabbitClientStub{
+		PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+			wasCalled = true
+			return nil
+		},
+	}
+
+	args := createMockArgsRabbitMqPublisher()
+	args.Client = client
+
+	rabbitmq, err := rabbitmq.NewRabbitMqPublisher(args)
+	require.Nil(t, err)
+
+	rabbitmq.PublishStateAccesses(data.BlockStateAccesses{})
 
 	require.True(t, wasCalled)
 }

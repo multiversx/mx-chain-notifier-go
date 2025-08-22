@@ -18,6 +18,7 @@ type publisher struct {
 	broadcastTxs                  chan data.BlockTxs
 	broadcastBlockEventsWithOrder chan data.BlockEventsWithOrder
 	broadcastScrs                 chan data.BlockScrs
+	broadcastStateAccesses        chan data.BlockStateAccesses
 
 	cancelFunc func()
 	closeChan  chan struct{}
@@ -38,6 +39,7 @@ func NewPublisher(handler PublisherHandler) (*publisher, error) {
 		broadcastTxs:                  make(chan data.BlockTxs),
 		broadcastScrs:                 make(chan data.BlockScrs),
 		broadcastBlockEventsWithOrder: make(chan data.BlockEventsWithOrder),
+		broadcastStateAccesses:        make(chan data.BlockStateAccesses),
 		closeChan:                     make(chan struct{}),
 	}
 
@@ -79,6 +81,8 @@ func (p *publisher) run(ctx context.Context) {
 			p.handler.PublishScrs(blockScrs)
 		case blockEvents := <-p.broadcastBlockEventsWithOrder:
 			p.handler.PublishBlockEventsWithOrder(blockEvents)
+		case blockStateAccesses := <-p.broadcastStateAccesses:
+			p.handler.PublishStateAccesses(blockStateAccesses)
 		}
 	}
 }
@@ -127,6 +131,14 @@ func (p *publisher) BroadcastScrs(events data.BlockScrs) {
 func (p *publisher) BroadcastBlockEventsWithOrder(events data.BlockEventsWithOrder) {
 	select {
 	case p.broadcastBlockEventsWithOrder <- events:
+	case <-p.closeChan:
+	}
+}
+
+// BroadcastStateAccesses will handle state accesses pushed by producers
+func (p *publisher) BroadcastStateAccesses(events data.BlockStateAccesses) {
+	select {
+	case p.broadcastStateAccesses <- events:
 	case <-p.closeChan:
 	}
 }

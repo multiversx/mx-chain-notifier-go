@@ -65,6 +65,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
 		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
+		StateAccesses:          outportBlock.GetStateAccesses(),
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)

@@ -114,3 +114,8 @@
     [RabbitMQ.BlockEventsExchange]
         Name = "block_events"
         Type = "fanout"
+
+    # The exchange which holds state accesses
+    [RabbitMQ.StateAccessesExchange]
+        Name = "state_accesses"
+        Type = "fanout"

@@ -33,6 +33,10 @@ func (h *Hub) PublishScrs(blockScrs data.BlockScrs) {
 func (h *Hub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
 }
 
+// PublishStateAccesses does nothing
+func (h *Hub) PublishStateAccesses(blockTxs data.BlockStateAccesses) {
+}
+
 // RegisterEvent does nothing
 func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }

@@ -80,6 +80,7 @@ type RabbitMQConfig struct {
 	BlockTxsExchange        RabbitMQExchangeConfig
 	BlockScrsExchange       RabbitMQExchangeConfig
 	BlockEventsExchange     RabbitMQExchangeConfig
+	StateAccessesExchange   RabbitMQExchangeConfig
 }
 
 // RabbitMQExchangeConfig holds the configuration for a rabbitMQ exchange
