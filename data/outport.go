@@ -76,8 +76,8 @@ type BlockEventsWithOrder struct {
 
 // BlockStateAccesses holds the block state accesses
 type BlockStateAccesses struct {
-	Hash          string                                `json:"hash"`
-	StateAccesses map[string]*stateChange.StateAccesses `json:"stateAccesses"`
+	Hash                     string                                `json:"hash"`
+	StateAccessesPerAccounts map[string]*stateChange.StateAccesses `json:"stateAccessesPerAccounts"`
 }
 
 // NotifierTransaction defines a wrapper over transaction

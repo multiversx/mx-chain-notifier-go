@@ -2,6 +2,7 @@ package process
 
 import (
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -38,4 +39,9 @@ func (eh *eventsHandler) ShouldProcessSaveBlockEvents(blockHash string) bool {
 // GetLogEventsFromTransactionsPool exports internal method for testing
 func (ei *eventsInterceptor) GetLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
 	return ei.getLogEventsFromTransactionsPool(logs)
+}
+
+// GetStateAccessesPerAccounts -
+func (ei *eventsInterceptor) GetStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
+	return ei.getStateAccessesPerAccounts(eventsData)
 }

@@ -130,6 +130,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		},
 		TransactionPool:      txPool,
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	err := webServer.PushEventsRequest(saveBlockData)

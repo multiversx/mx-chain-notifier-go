@@ -2,15 +2,22 @@ package process
 
 import (
 	"encoding/hex"
+	"sort"
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
+
+type txWithOrder struct {
+	hash  string
+	index uint32
+}
 
 // logEvent defines a log event associated with corresponding tx hash
 type logEvent struct {
@@ -52,6 +59,9 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	if eventsData.Header == nil {
 		return nil, ErrNilBlockHeader
 	}
+	if eventsData.StateAccesses == nil {
+		return nil, ErrNilStateAccesses
+	}
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
@@ -67,16 +77,95 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	}
 	scrsWithOrder := eventsData.TransactionsPool.SmartContractResults
 
+	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
+
 	return &data.InterceptorBlockData{
-		Hash:          hex.EncodeToString(eventsData.HeaderHash),
-		Body:          eventsData.Body,
-		Header:        eventsData.Header,
-		Txs:           txs,
-		TxsWithOrder:  txsWithOrder,
-		Scrs:          scrs,
-		ScrsWithOrder: scrsWithOrder,
-		LogEvents:     events,
+		Hash:                     hex.EncodeToString(eventsData.HeaderHash),
+		Body:                     eventsData.Body,
+		Header:                   eventsData.Header,
+		Txs:                      txs,
+		TxsWithOrder:             txsWithOrder,
+		Scrs:                     scrs,
+		ScrsWithOrder:            scrsWithOrder,
+		LogEvents:                events,
+		StateAccessesPerAccounts: stateAccessesPerAccounts,
 	}, nil
+}
+
+func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
+	txsWithOrder := make([]txWithOrder, 0)
+
+	for txHash, txInfo := range transactionsPool.Transactions {
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:  txHash,
+			index: txInfo.ExecutionOrder,
+		})
+	}
+	for txHash, txInfo := range transactionsPool.SmartContractResults {
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:  txHash,
+			index: txInfo.ExecutionOrder,
+		})
+	}
+	for txHash, txInfo := range transactionsPool.Rewards {
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:  txHash,
+			index: txInfo.ExecutionOrder,
+		})
+	}
+	for txHash, txInfo := range transactionsPool.InvalidTxs {
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:  txHash,
+			index: txInfo.ExecutionOrder,
+		})
+	}
+
+	sort.Slice(txsWithOrder, func(i, j int) bool {
+		return txsWithOrder[i].index < txsWithOrder[j].index
+	})
+
+	return txsWithOrder
+}
+
+func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
+	stateAccessesPerTxs := eventsData.StateAccesses
+
+	// txs hashes with order
+	txsWithOrder := getTxsWithOrder(eventsData.TransactionsPool)
+
+	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+	for _, txInfo := range txsWithOrder {
+		stateAccessesPerTx, ok := stateAccessesPerTxs[txInfo.hash]
+		if !ok {
+			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash)
+			continue
+		}
+
+		for _, stateAccess := range stateAccessesPerTx.StateAccess {
+			if stateAccess.Type == stateChange.Read {
+				// TODO: add a flag here to allow read state accessess
+				continue
+			}
+
+			if stateAccess.Operation == stateChange.WriteCode {
+				// TODO: handle code update operations
+				continue
+			}
+
+			accKey := hex.EncodeToString(stateAccess.MainTrieKey)
+			acc, ok := stateAccessesPerAccounts[accKey]
+			if !ok {
+				acc = &stateChange.StateAccesses{
+					StateAccess: make([]*stateChange.StateAccess, 0),
+				}
+				stateAccessesPerAccounts[accKey] = acc
+			}
+
+			stateAccessesPerAccounts[accKey].StateAccess = append(stateAccessesPerAccounts[accKey].StateAccess, stateAccess)
+		}
+	}
+
+	return stateAccessesPerAccounts
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
