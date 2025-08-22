@@ -8,6 +8,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -101,6 +102,23 @@ func TestProcessBlockEvents(t *testing.T) {
 		require.Equal(t, process.ErrNilBlockHeader, err)
 	})
 
+	t.Run("nil state accesses", func(t *testing.T) {
+		t.Parallel()
+
+		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+
+		eventsData := &data.ArgsSaveBlockData{
+			HeaderHash:       []byte("headerHash"),
+			TransactionsPool: &outport.TransactionPool{},
+			Body:             &block.Body{},
+			Header:           &block.HeaderV2{},
+			StateAccesses:    nil,
+		}
+		events, err := eventsInterceptor.ProcessBlockEvents(eventsData)
+		require.Nil(t, events)
+		require.Equal(t, process.ErrNilStateAccesses, err)
+	})
+
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
@@ -157,6 +175,7 @@ func TestProcessBlockEvents(t *testing.T) {
 				SmartContractResults: scrs,
 				Logs:                 logs,
 			},
+			StateAccesses: make(map[string]*stateChange.StateAccesses),
 		}
 
 		expTxs := map[string]*transaction.Transaction{
@@ -202,6 +221,7 @@ func TestProcessBlockEvents(t *testing.T) {
 					Topics:     make([][]byte, 0),
 				},
 			},
+			StateAccessesPerAccounts: make(map[string]*stateChange.StateAccesses),
 		}
 
 		events, err := eventsInterceptor.ProcessBlockEvents(&blockEvents)
@@ -250,6 +270,7 @@ func TestProcessBlockEvents(t *testing.T) {
 			TransactionsPool: &outport.TransactionPool{
 				Logs: logs,
 			},
+			StateAccesses: make(map[string]*stateChange.StateAccesses),
 		}
 
 		expEvents := &data.InterceptorBlockData{
@@ -266,6 +287,7 @@ func TestProcessBlockEvents(t *testing.T) {
 					Topics:     make([][]byte, 0),
 				},
 			},
+			StateAccessesPerAccounts: make(map[string]*stateChange.StateAccesses),
 		}
 
 		events, err := eventsInterceptor.ProcessBlockEvents(&blockEvents)
@@ -330,4 +352,241 @@ func TestGetLogEventsFromTransactionsPool(t *testing.T) {
 	require.Equal(t, txHash1, receivedEvents[0].TxHash)
 	require.Equal(t, txHash1, receivedEvents[1].TxHash)
 	require.Equal(t, txHash2, receivedEvents[2].TxHash)
+}
+
+func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
+	t.Parallel()
+
+	args := createMockEventsInterceptorArgs()
+	en, _ := process.NewEventsInterceptor(args)
+
+	txs := map[string]*outport.TxInfo{
+		"txHash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 2,
+			},
+			ExecutionOrder: 1,
+		},
+	}
+	scrs := map[string]*outport.SCRInfo{
+		"txHash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
+				Nonce: 3,
+			},
+			ExecutionOrder: 2,
+		},
+	}
+	invalidTxs := map[string]*outport.TxInfo{
+		"txHash0": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
+			},
+			ExecutionOrder: 0,
+		},
+	}
+
+	blockHash := []byte("blockHash")
+
+	t.Run("with write operations", func(t *testing.T) {
+		t.Parallel()
+
+		stateAccesses := make(map[string]*stateChange.StateAccesses)
+		stateAccesses["txHash1"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey1"),
+					MainTrieVal: []byte("mainTrieVal1"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+		stateAccesses["txHash0"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey3"),
+					MainTrieVal: []byte("mainTrieVal3"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal4"),
+				},
+			},
+		}
+
+		blockEvents := &data.ArgsSaveBlockData{
+			HeaderHash: blockHash,
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				InvalidTxs:           invalidTxs,
+			},
+			StateAccesses: stateAccesses,
+		}
+
+		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey1"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey1"),
+					MainTrieVal: []byte("mainTrieVal1"),
+				},
+			},
+		}
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal4"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey3"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey3"),
+					MainTrieVal: []byte("mainTrieVal3"),
+				},
+			},
+		}
+
+		stateAccessesPerAccounts := en.GetStateAccessesPerAccounts(blockEvents)
+
+		require.Equal(t, expStateAccessesPerAccounts, stateAccessesPerAccounts)
+	})
+
+	t.Run("with read operations", func(t *testing.T) {
+		t.Parallel()
+
+		stateAccesses := make(map[string]*stateChange.StateAccesses)
+		stateAccesses["txHash1"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Read,
+					MainTrieKey: []byte("mainTrieKey1"),
+					MainTrieVal: []byte("mainTrieVal1"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Read,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+		stateAccesses["txHash0"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Read,
+					MainTrieKey: []byte("mainTrieKey3"),
+					MainTrieVal: []byte("mainTrieVal3"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Read,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal4"),
+				},
+			},
+		}
+
+		blockEvents := &data.ArgsSaveBlockData{
+			HeaderHash: blockHash,
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				InvalidTxs:           invalidTxs,
+			},
+			StateAccesses: stateAccesses,
+		}
+
+		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+
+		stateAccessesPerAccounts := en.GetStateAccessesPerAccounts(blockEvents)
+
+		require.Equal(t, expStateAccessesPerAccounts, stateAccessesPerAccounts)
+	})
+
+	t.Run("with read and write operations", func(t *testing.T) {
+		t.Parallel()
+
+		stateAccesses := make(map[string]*stateChange.StateAccesses)
+		stateAccesses["txHash1"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Read,
+					MainTrieKey: []byte("mainTrieKey1"),
+					MainTrieVal: []byte("mainTrieVal1"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+		stateAccesses["txHash0"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey3"),
+					MainTrieVal: []byte("mainTrieVal3"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Read,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal4"),
+				},
+			},
+		}
+
+		blockEvents := &data.ArgsSaveBlockData{
+			HeaderHash: blockHash,
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				InvalidTxs:           invalidTxs,
+			},
+			StateAccesses: stateAccesses,
+		}
+
+		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey3"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey3"),
+					MainTrieVal: []byte("mainTrieVal3"),
+				},
+			},
+		}
+
+		stateAccessesPerAccounts := en.GetStateAccessesPerAccounts(blockEvents)
+
+		require.Equal(t, expStateAccessesPerAccounts, stateAccessesPerAccounts)
+	})
 }
