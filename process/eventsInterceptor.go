@@ -147,10 +147,11 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 				continue
 			}
 
-			if stateAccess.Operation == stateChange.WriteCode {
-				// TODO: handle code update operations
-				continue
-			}
+			// TODO: make sure code update operations are handled properly
+			//	at the moment they are handled as a separate entry
+			// if stateAccess.Operation == stateChange.WriteCode {
+			// 	continue
+			// }
 
 			accKey := hex.EncodeToString(stateAccess.MainTrieKey)
 			acc, ok := stateAccessesPerAccounts[accKey]
