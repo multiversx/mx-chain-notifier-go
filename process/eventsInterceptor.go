@@ -59,9 +59,6 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	if eventsData.Header == nil {
 		return nil, ErrNilBlockHeader
 	}
-	if eventsData.StateAccesses == nil {
-		return nil, ErrNilStateAccesses
-	}
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
 
@@ -128,6 +125,15 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 }
 
 func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
+
+	if eventsData.StateAccesses == nil {
+		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+			"error", ErrNilStateAccesses,
+		)
+
+		return make(map[string]*stateChange.StateAccesses)
+	}
+
 	stateAccessesPerTxs := eventsData.StateAccesses
 
 	// txs hashes with order
