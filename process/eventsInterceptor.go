@@ -145,7 +145,13 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	for _, txInfo := range txsWithOrder {
-		stateAccessesPerTx, ok := stateAccessesPerTxs[txInfo.hash]
+		txHash, err := hex.DecodeString(txInfo.hash)
+		if err != nil {
+			log.Error("failed to decode tx hash", "txHash", txInfo.hash)
+			continue
+		}
+
+		stateAccessesPerTx, ok := stateAccessesPerTxs[string(txHash)]
 		if !ok {
 			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash)
 			continue
