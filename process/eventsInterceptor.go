@@ -136,6 +136,10 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 	stateAccessesPerTxs := eventsData.StateAccesses
 
+	log.Debug("getStateAccessesPerAccounts",
+		"num stateAccessesPerTxs", len(stateAccessesPerTxs),
+	)
+
 	// txs hashes with order
 	txsWithOrder := getTxsWithOrder(eventsData.TransactionsPool)
 
@@ -171,6 +175,10 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 			stateAccessesPerAccounts[accKey].StateAccess = append(stateAccessesPerAccounts[accKey].StateAccess, stateAccess)
 		}
 	}
+
+	log.Debug("getStateAccessesPerAccounts",
+		"num stateAccessesPerAccounts", len(stateAccessesPerAccounts),
+	)
 
 	return stateAccessesPerAccounts
 }
