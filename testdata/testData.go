@@ -5,6 +5,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -115,6 +116,21 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 	}
 	headerBytes, _ := bd.marshaller.Marshal(header)
 
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
+			},
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
 	return &outport.OutportBlock{
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
@@ -169,6 +185,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 				},
 			},
 		},
+		StateAccesses:  stateAccesses,
 		NumberOfShards: 2,
 	}
 }
