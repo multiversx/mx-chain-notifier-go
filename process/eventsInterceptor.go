@@ -125,9 +125,9 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 }
 
 func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
-
 	if eventsData.StateAccesses == nil {
 		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+			"block hash", eventsData.HeaderHash,
 			"error", ErrNilStateAccesses,
 		)
 
@@ -136,9 +136,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 	stateAccessesPerTxs := eventsData.StateAccesses
 
-	log.Debug("getStateAccessesPerAccounts",
-		"num stateAccessesPerTxs", len(stateAccessesPerTxs),
-	)
+	logStateAccessesPerTxs(stateAccessesPerTxs)
 
 	// txs hashes with order
 	txsWithOrder := getTxsWithOrder(eventsData.TransactionsPool)
@@ -182,11 +180,29 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 		}
 	}
 
-	log.Debug("getStateAccessesPerAccounts",
+	log.Trace("getStateAccessesPerAccounts",
 		"num stateAccessesPerAccounts", len(stateAccessesPerAccounts),
 	)
 
 	return stateAccessesPerAccounts
+}
+
+func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses) {
+	log.Trace("getStateAccessesPerAccounts",
+		"num stateAccessesPerTxs", len(stateAccesses),
+	)
+
+	for txHash, sts := range stateAccesses {
+		log.Trace("stateAccessesPerTx",
+			"txHash", txHash,
+		)
+
+		for _, st := range sts.StateAccess {
+			log.Trace("st",
+				"txHash", st.GetTxHash(),
+			)
+		}
+	}
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {

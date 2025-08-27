@@ -102,7 +102,7 @@ func TestProcessBlockEvents(t *testing.T) {
 		require.Equal(t, process.ErrNilBlockHeader, err)
 	})
 
-	t.Run("nil state accesses", func(t *testing.T) {
+	t.Run("nil state accesses, should return empty map", func(t *testing.T) {
 		t.Parallel()
 
 		eventsInterceptor, _ := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
@@ -115,8 +115,21 @@ func TestProcessBlockEvents(t *testing.T) {
 			StateAccesses:    nil,
 		}
 		events, err := eventsInterceptor.ProcessBlockEvents(eventsData)
-		require.Nil(t, events)
-		require.Equal(t, process.ErrNilStateAccesses, err)
+		require.Nil(t, err)
+
+		expInterceptorData := &data.InterceptorBlockData{
+			Hash:                     hex.EncodeToString([]byte("headerHash")),
+			Body:                     &block.Body{},
+			Header:                   &block.HeaderV2{},
+			Txs:                      map[string]*transaction.Transaction{},
+			TxsWithOrder:             map[string]*outport.TxInfo(nil),
+			Scrs:                     map[string]*smartContractResult.SmartContractResult{},
+			ScrsWithOrder:            map[string]*outport.SCRInfo(nil),
+			LogEvents:                []data.Event{},
+			StateAccessesPerAccounts: map[string]*stateChange.StateAccesses{},
+		}
+
+		require.Equal(t, expInterceptorData, events)
 	})
 
 	t.Run("should work", func(t *testing.T) {
@@ -361,7 +374,7 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 	en, _ := process.NewEventsInterceptor(args)
 
 	txs := map[string]*outport.TxInfo{
-		"txHash1": {
+		hex.EncodeToString([]byte("txHash1")): {
 			Transaction: &transaction.Transaction{
 				Nonce: 2,
 			},
@@ -369,7 +382,7 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 		},
 	}
 	scrs := map[string]*outport.SCRInfo{
-		"txHash2": {
+		hex.EncodeToString([]byte("txHash2")): {
 			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 3,
 			},
@@ -377,7 +390,7 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 		},
 	}
 	invalidTxs := map[string]*outport.TxInfo{
-		"txHash0": {
+		hex.EncodeToString([]byte("txHash0")): {
 			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
