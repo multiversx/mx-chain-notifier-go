@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -163,17 +164,13 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 			// TODO: make sure code update operations are handled properly
 			//	at the moment they are handled as a separate entry
-			// if stateAccess.Operation == stateChange.WriteCode {
-			// 	continue
-			// }
 
 			accKey := hex.EncodeToString(stateAccess.MainTrieKey)
-			acc, ok := stateAccessesPerAccounts[accKey]
+			_, ok := stateAccessesPerAccounts[accKey]
 			if !ok {
-				acc = &stateChange.StateAccesses{
+				stateAccessesPerAccounts[accKey] = &stateChange.StateAccesses{
 					StateAccess: make([]*stateChange.StateAccess, 0),
 				}
-				stateAccessesPerAccounts[accKey] = acc
 			}
 
 			stateAccessesPerAccounts[accKey].StateAccess = append(stateAccessesPerAccounts[accKey].StateAccess, stateAccess)
@@ -188,6 +185,10 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 }
 
 func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses) {
+	if log.GetLevel() > logger.LogTrace {
+		return
+	}
+
 	log.Trace("getStateAccessesPerAccounts",
 		"num stateAccessesPerTxs", len(stateAccesses),
 	)
