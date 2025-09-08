@@ -200,7 +200,8 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 
 		for _, st := range sts.StateAccess {
 			log.Trace("st",
-				"txHash", st.GetTxHash(),
+				"actionType", st.GetType(),
+				"operation", st.GetOperation(),
 			)
 		}
 	}
