@@ -23,15 +23,15 @@ type SaveBlockData struct {
 
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
-	Hash          string
-	Body          nodeData.BodyHandler
-	Header        nodeData.HeaderHandler
-	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*outport.TxInfo
-	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*outport.SCRInfo
-	LogEvents     []Event
-	StateAccesses map[string]*stateChange.StateAccesses
+	Hash                     string
+	Body                     nodeData.BodyHandler
+	Header                   nodeData.HeaderHandler
+	Txs                      map[string]*transaction.Transaction
+	TxsWithOrder             map[string]*outport.TxInfo
+	Scrs                     map[string]*smartContractResult.SmartContractResult
+	ScrsWithOrder            map[string]*outport.SCRInfo
+	LogEvents                []Event
+	StateAccessesPerAccounts map[string]*stateChange.StateAccesses
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events

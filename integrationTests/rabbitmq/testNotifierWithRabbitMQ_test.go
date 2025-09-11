@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"sync"
 	"testing"
@@ -40,6 +41,9 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, payloadVersion)
 	require.Nil(t, err)
 
+	// wait for components to start
+	time.Sleep(time.Second * 5)
+
 	_ = notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
 
@@ -70,7 +74,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 
 	txPool := &outport.TransactionPool{
 		Transactions: map[string]*outport.TxInfo{
-			"hash1": {
+			hex.EncodeToString([]byte("hash1")): {
 				Transaction: &transaction.Transaction{
 					Nonce: 1,
 				},
@@ -81,7 +85,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 			},
 		},
 		SmartContractResults: map[string]*outport.SCRInfo{
-			"hash2": {
+			hex.EncodeToString([]byte("hash2")): {
 				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 2,
 				},
@@ -130,6 +134,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		},
 		TransactionPool:      txPool,
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	err := webServer.PushEventsRequest(saveBlockData)
