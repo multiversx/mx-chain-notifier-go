@@ -145,7 +145,8 @@ func getEventType(subEntry data.SubscriptionEntry) string {
 		subEntry.EventType == common.RevertBlockEvents ||
 		subEntry.EventType == common.BlockTxs ||
 		subEntry.EventType == common.BlockScrs ||
-		subEntry.EventType == common.BlockEvents {
+		subEntry.EventType == common.BlockEvents ||
+		subEntry.EventType == common.BlockStateAccesses {
 		return subEntry.EventType
 	}
 
