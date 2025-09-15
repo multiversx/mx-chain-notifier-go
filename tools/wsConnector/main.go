@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	wsData "github.com/multiversx/mx-chain-communication-go/websocket/data"
 	wsFactory "github.com/multiversx/mx-chain-communication-go/websocket/factory"
@@ -19,28 +20,38 @@ func main() {
 		return
 	}
 
-	blockData, err := testdata.NewBlockData(marshaller)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
+	for {
+		blockData, err := testdata.NewBlockData(marshaller)
+		if err != nil {
+			fmt.Println(err.Error())
+			time.Sleep(6 * time.Second)
+			continue
+		}
 
-	err = wsClient.PushEventsRequest(blockData.OutportBlockV1())
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
+		err = wsClient.PushEventsRequest(blockData.OutportBlockV1())
+		if err != nil {
+			fmt.Println(err.Error())
+			time.Sleep(6 * time.Second)
+			continue
+		}
 
-	err = wsClient.RevertEventsRequest(blockData.RevertBlockV1())
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
+		err = wsClient.RevertEventsRequest(blockData.RevertBlockV1())
+		if err != nil {
+			time.Sleep(6 * time.Second)
+			fmt.Println(err.Error())
+			continue
+		}
 
-	err = wsClient.FinalizedEventsRequest(blockData.FinalizedBlockV1())
-	if err != nil {
-		fmt.Println(err.Error())
-		return
+		err = wsClient.FinalizedEventsRequest(blockData.FinalizedBlockV1())
+		if err != nil {
+			fmt.Println(err.Error())
+			time.Sleep(6 * time.Second)
+			continue
+		}
+
+		fmt.Println("sent properly")
+
+		time.Sleep(6 * time.Second)
 	}
 }
 
@@ -63,7 +74,7 @@ func newWSObsClient(marshaller marshal.Marshalizer) (*wsObsClient, error) {
 	port := 22111
 	wsHost, err := wsFactory.CreateWebSocketHost(wsFactory.ArgsWebSocketHost{
 		WebSocketConfig: wsData.WebSocketConfig{
-			URL:                     "localhost:" + fmt.Sprintf("%d", port),
+			URL:                     "ws://localhost:" + fmt.Sprintf("%d", port),
 			WithAcknowledge:         true,
 			Mode:                    "client",
 			RetryDurationInSec:      5,
