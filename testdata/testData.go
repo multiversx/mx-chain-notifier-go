@@ -122,16 +122,18 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 	stateAccesses["txHash1"] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
 			&stateChange.StateAccess{
-				Type:        stateChange.Write,
-				MainTrieKey: []byte("mainTrieKey1"),
-				MainTrieVal: []byte("mainTrieVal1"),
-				TxHash:      []byte("txHash1"),
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey1"),
+				MainTrieVal:    []byte("mainTrieVal1"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 8,
 			},
 			&stateChange.StateAccess{
-				Type:        stateChange.Write,
-				MainTrieKey: []byte("mainTrieKey2"),
-				MainTrieVal: []byte("mainTrieVal2"),
-				TxHash:      []byte("txHash1"),
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey2"),
+				MainTrieVal:    []byte("mainTrieVal2"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 4,
 			},
 		},
 	}
