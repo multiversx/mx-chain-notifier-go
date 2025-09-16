@@ -1,6 +1,8 @@
 package testdata
 
 import (
+	"encoding/hex"
+
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -120,12 +122,16 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 	stateAccesses["txHash1"] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
 			&stateChange.StateAccess{
+				Type:        stateChange.Write,
 				MainTrieKey: []byte("mainTrieKey1"),
 				MainTrieVal: []byte("mainTrieVal1"),
+				TxHash:      []byte("txHash1"),
 			},
 			&stateChange.StateAccess{
+				Type:        stateChange.Write,
 				MainTrieKey: []byte("mainTrieKey2"),
 				MainTrieVal: []byte("mainTrieVal2"),
+				TxHash:      []byte("txHash1"),
 			},
 		},
 	}
@@ -149,7 +155,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		TransactionPool: &outport.TransactionPool{
 			Transactions: map[string]*outport.TxInfo{
-				"txHash1": {
+				hex.EncodeToString([]byte("txHash1")): {
 					Transaction: &transaction.Transaction{
 						Nonce:    1,
 						GasPrice: 1,
@@ -162,7 +168,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 				},
 			},
 			SmartContractResults: map[string]*outport.SCRInfo{
-				"scrHash1": {
+				hex.EncodeToString([]byte("scrHash1")): {
 					SmartContractResult: &smartContractResult.SmartContractResult{
 						Nonce:    2,
 						GasLimit: 2,
