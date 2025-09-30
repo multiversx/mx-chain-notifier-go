@@ -130,13 +130,18 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 	}
 	eh.handleBlockEventsWithOrder(txsWithOrder)
 
+	var scheduledRootHash []byte
+	if eventsData.Header.GetAdditionalData() != nil {
+		scheduledRootHash = eventsData.Header.GetAdditionalData().GetScheduledRootHash()
+	}
+
 	stateAccesses := data.BlockStateAccesses{
 		Hash:                     eventsData.Hash,
 		ShardID:                  eventsData.Header.GetShardID(),
 		TimeStampMs:              headerTimeStampMs,
 		Nonce:                    eventsData.Header.GetNonce(),
 		RootHash:                 eventsData.Header.GetRootHash(),
-		ScheduledRootHash:        eventsData.Header.GetAdditionalData().GetScheduledRootHash(),
+		ScheduledRootHash:        scheduledRootHash,
 		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
 	}
 	eh.handleStateAccesses(stateAccesses)
