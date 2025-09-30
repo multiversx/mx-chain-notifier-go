@@ -135,6 +135,8 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 		ShardID:                  eventsData.Header.GetShardID(),
 		TimeStampMs:              headerTimeStampMs,
 		Nonce:                    eventsData.Header.GetNonce(),
+		RootHash:                 eventsData.Header.GetRootHash(),
+		ScheduledRootHash:        eventsData.Header.GetAdditionalData().GetScheduledRootHash(),
 		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
 	}
 	eh.handleStateAccesses(stateAccesses)
