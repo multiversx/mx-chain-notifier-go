@@ -93,35 +93,31 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
-	txsWithOrder := make([]txWithOrder, 0)
+	txsWithOrderMap := make(map[string]uint32)
 
 	for txHash, txInfo := range transactionsPool.Transactions {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: txInfo.ExecutionOrder,
-		})
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 		log.Trace("tx with order before sort - normal", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: txInfo.ExecutionOrder,
-		})
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 		log.Trace("tx with order before sort - scr", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: txInfo.ExecutionOrder,
-		})
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 		log.Trace("tx with order before sort - rewards", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
+		log.Trace("tx with order before sort - invalid tx", "txHash", txHash, "index", txInfo.ExecutionOrder)
+	}
+
+	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
+	for txHash, index := range txsWithOrderMap {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:  txHash,
-			index: txInfo.ExecutionOrder,
+			index: index,
 		})
-		log.Trace("tx with order before sort - invalid tx", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 
 	sort.Slice(txsWithOrder, func(i, j int) bool {
