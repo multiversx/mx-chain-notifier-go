@@ -2,7 +2,9 @@ package process
 
 import (
 	"encoding/hex"
+	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -174,6 +176,8 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 			}
 
 			stateAccessesPerAccounts[accKey].StateAccess = append(stateAccessesPerAccounts[accKey].StateAccess, stateAccess)
+			// TODO: remove this log after testing
+			log.Trace("added state access to account", "account", stateAccess.MainTrieKey, "stateAccess", stateAccessToString(stateAccess), "txHash", txInfo.hash)
 		}
 	}
 
@@ -199,12 +203,25 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 		)
 
 		for _, st := range sts.StateAccess {
-			log.Trace("st",
-				"actionType", st.GetType(),
-				"operation", st.GetOperation(),
-			)
+			log.Trace("state access", "stateChange", stateAccessToString(st))
 		}
 	}
+}
+
+func stateAccessToString(stateAccess *stateChange.StateAccess) string {
+	dataTrieChanges := make([]string, len(stateAccess.GetDataTrieChanges()))
+	for i, dataTrieChange := range stateAccess.GetDataTrieChanges() {
+		dataTrieChanges[i] = fmt.Sprintf("key: %v, val: %v, type: %v, operation %v, version %v", hex.EncodeToString(dataTrieChange.Key), hex.EncodeToString(dataTrieChange.Val), dataTrieChange.Type, dataTrieChange.Operation, dataTrieChange.Version)
+	}
+	return fmt.Sprintf("type: %v, operation: %v, mainTrieKey: %v, mainTrieVal: %v, index: %v, dataTrieChanges: %v, accountChanges %v",
+		stateAccess.GetType(),
+		stateAccess.GetOperation(),
+		hex.EncodeToString(stateAccess.GetMainTrieKey()),
+		hex.EncodeToString(stateAccess.GetMainTrieVal()),
+		stateAccess.GetIndex(),
+		strings.Join(dataTrieChanges, ", "),
+		stateAccess.GetAccountChanges(),
+	)
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
