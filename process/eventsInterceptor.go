@@ -100,29 +100,37 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 			hash:  txHash,
 			index: txInfo.ExecutionOrder,
 		})
+		log.Trace("tx with order before sort - normal", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:  txHash,
 			index: txInfo.ExecutionOrder,
 		})
+		log.Trace("tx with order before sort - scr", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:  txHash,
 			index: txInfo.ExecutionOrder,
 		})
+		log.Trace("tx with order before sort - rewards", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:  txHash,
 			index: txInfo.ExecutionOrder,
 		})
+		log.Trace("tx with order before sort - invalid tx", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 
 	sort.Slice(txsWithOrder, func(i, j int) bool {
 		return txsWithOrder[i].index < txsWithOrder[j].index
 	})
+
+	for i, txInfo := range txsWithOrder {
+		log.Trace("tx with order after sort", "txHash", txInfo.hash, "index", txInfo.index, "position in slice", i)
+	}
 
 	return txsWithOrder
 }
@@ -146,6 +154,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	for _, txInfo := range txsWithOrder {
+		log.Trace("tx with order", "txHash", txInfo.hash, "index", txInfo.index)
 		txHash, err := hex.DecodeString(txInfo.hash)
 		if err != nil {
 			log.Error("failed to decode tx hash", "txHash", txInfo.hash)
@@ -184,6 +193,15 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 	log.Trace("getStateAccessesPerAccounts",
 		"num stateAccessesPerAccounts", len(stateAccessesPerAccounts),
 	)
+	for accKey, sts := range stateAccessesPerAccounts {
+		log.Trace("stateAccessesPerAccount",
+			"account", accKey,
+			"num stateAccesses", len(sts.StateAccess),
+		)
+		for _, st := range sts.StateAccess {
+			log.Trace("state access", "stateChange", stateAccessToString(st))
+		}
+	}
 
 	return stateAccessesPerAccounts
 }
