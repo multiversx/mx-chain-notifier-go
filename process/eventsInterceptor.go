@@ -91,30 +91,26 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
-	txsWithOrder := make([]txWithOrder, 0)
+	txsWithOrderMap := make(map[string]uint32)
 
 	for txHash, txInfo := range transactionsPool.Transactions {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: txInfo.ExecutionOrder,
-		})
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: txInfo.ExecutionOrder,
-		})
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: txInfo.ExecutionOrder,
-		})
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
+		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
+	}
+
+	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
+	for txHash, index := range txsWithOrderMap {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:  txHash,
-			index: txInfo.ExecutionOrder,
+			index: index,
 		})
 	}
 
