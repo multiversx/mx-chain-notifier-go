@@ -97,7 +97,6 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 
 	for txHash, txInfo := range transactionsPool.Transactions {
 		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-<<<<<<< HEAD
 		log.Trace("tx with order before sort - normal", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
@@ -111,17 +110,6 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
 		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
 		log.Trace("tx with order before sort - invalid tx", "txHash", txHash, "index", txInfo.ExecutionOrder)
-=======
-	}
-	for txHash, txInfo := range transactionsPool.SmartContractResults {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-	}
-	for txHash, txInfo := range transactionsPool.Rewards {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-	}
-	for txHash, txInfo := range transactionsPool.InvalidTxs {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
->>>>>>> rc/supernova
 	}
 
 	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
@@ -193,8 +181,6 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 			}
 
 			stateAccessesPerAccounts[accKey].StateAccess = append(stateAccessesPerAccounts[accKey].StateAccess, stateAccess)
-			// TODO: remove this log after testing
-			log.Trace("added state access to account", "account", stateAccess.MainTrieKey, "stateAccess", stateAccessToString(stateAccess), "txHash", txInfo.hash)
 		}
 	}
 
