@@ -35,6 +35,7 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion uint32) {
 	cfg := integrationTests.GetDefaultConfigs()
 	cfg.MainConfig.General.CheckDuplicates = true
+	cfg.MainConfig.General.WithReadStateChanges = true
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
