@@ -9,6 +9,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/receipt"
 	"github.com/multiversx/mx-chain-core-go/data/rewardTx"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 )
 
@@ -22,14 +23,15 @@ type SaveBlockData struct {
 
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
-	Hash          string
-	Body          nodeData.BodyHandler
-	Header        nodeData.HeaderHandler
-	Txs           map[string]*transaction.Transaction
-	TxsWithOrder  map[string]*outport.TxInfo
-	Scrs          map[string]*smartContractResult.SmartContractResult
-	ScrsWithOrder map[string]*outport.SCRInfo
-	LogEvents     []Event
+	Hash                     string
+	Body                     nodeData.BodyHandler
+	Header                   nodeData.HeaderHandler
+	Txs                      map[string]*transaction.Transaction
+	TxsWithOrder             map[string]*outport.TxInfo
+	Scrs                     map[string]*smartContractResult.SmartContractResult
+	ScrsWithOrder            map[string]*outport.SCRInfo
+	LogEvents                []Event
+	StateAccessesPerAccounts map[string]*stateChange.StateAccesses
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events
@@ -44,6 +46,7 @@ type ArgsSaveBlockData struct {
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	HeaderTimeStampMs      uint64
+	StateAccesses          map[string]*stateChange.StateAccesses
 }
 
 // OutportBlockDataOld holds the block data that will be received on push events

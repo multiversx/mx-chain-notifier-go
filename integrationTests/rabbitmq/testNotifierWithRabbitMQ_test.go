@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"sync"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -33,11 +35,15 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion uint32) {
 	cfg := integrationTests.GetDefaultConfigs()
 	cfg.MainConfig.General.CheckDuplicates = true
+	cfg.MainConfig.General.WithReadStateChanges = true
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
 	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, payloadVersion)
 	require.Nil(t, err)
+
+	// wait for components to start
+	time.Sleep(time.Second * 5)
 
 	_ = notifier.Publisher.Run()
 	defer notifier.Publisher.Close()
@@ -56,7 +62,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	integrationTests.WaitTimeout(t, wg, time.Second*2)
 
 	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 6, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, 7, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
@@ -69,7 +75,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 
 	txPool := &outport.TransactionPool{
 		Transactions: map[string]*outport.TxInfo{
-			"hash1": {
+			hex.EncodeToString([]byte("hash1")): {
 				Transaction: &transaction.Transaction{
 					Nonce: 1,
 				},
@@ -80,7 +86,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 			},
 		},
 		SmartContractResults: map[string]*outport.SCRInfo{
-			"hash2": {
+			hex.EncodeToString([]byte("hash2")): {
 				SmartContractResult: &smartContractResult.SmartContractResult{
 					Nonce: 2,
 				},
@@ -101,6 +107,21 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		},
 	}
 
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
+			},
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
 	saveBlockData := &outport.OutportBlock{
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
@@ -114,6 +135,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		},
 		TransactionPool:      txPool,
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	err := webServer.PushEventsRequest(saveBlockData)

@@ -234,6 +234,10 @@ func GetDefaultConfigs() config.Configs {
 					Name: "blockevents",
 					Type: "fanout",
 				},
+				StateAccessesExchange: config.RabbitMQExchangeConfig{
+					Name: "stateaccesses",
+					Type: "fanout",
+				},
 			},
 		},
 		Flags: config.FlagsConfig{

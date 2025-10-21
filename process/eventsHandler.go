@@ -130,6 +130,15 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 	}
 	eh.handleBlockEventsWithOrder(txsWithOrder)
 
+	stateAccesses := data.BlockStateAccesses{
+		Hash:                     eventsData.Hash,
+		ShardID:                  eventsData.Header.GetShardID(),
+		TimeStampMs:              headerTimeStampMs,
+		Nonce:                    eventsData.Header.GetNonce(),
+		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
+	}
+	eh.handleStateAccesses(stateAccesses)
+
 	return nil
 }
 
@@ -304,6 +313,23 @@ func (eh *eventsHandler) handleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 	t := time.Now()
 	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockEvents), time.Since(t))
+}
+
+func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccesses) {
+	if stateAccesses.Hash == "" {
+		log.Warn("received empty state accesses",
+			"will process", false,
+		)
+		return
+	}
+
+	log.Info("received state accesses",
+		"block hash", stateAccesses.Hash,
+	)
+
+	t := time.Now()
+	eh.publisher.BroadcastStateAccesses(stateAccesses)
+	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockStateAccesses), time.Since(t))
 }
 
 func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {

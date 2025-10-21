@@ -17,6 +17,7 @@ func TestMainConfig(t *testing.T) {
 	adrConverterPrefix := "erd"
 	adrConverterLength := 32
 	checkDuplicates := true
+	withReadStateChanges := true
 
 	connectorAPIHost := "5000"
 	connectorAPIUsername := "guest"
@@ -50,7 +51,8 @@ func TestMainConfig(t *testing.T) {
 				Prefix: adrConverterPrefix,
 				Length: adrConverterLength,
 			},
-			CheckDuplicates: checkDuplicates,
+			CheckDuplicates:      checkDuplicates,
+			WithReadStateChanges: withReadStateChanges,
 		},
 		WebSocketConnector: config.WebSocketConfig{
 			Enabled:                    true,
@@ -94,6 +96,10 @@ func TestMainConfig(t *testing.T) {
     # CheckDuplicates signals if the events received from observers have been already pushed to clients
     # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
     CheckDuplicates = true
+
+    # WithReadStateChanges signals if read state changes operation will be handled
+    # It depends also if read state changes are enabled from observer nodes
+    WithReadStateChanges = true
 
     # ExternalMarshaller is used for handling incoming/outcoming api requests 
     [General.ExternalMarshaller]

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -36,6 +37,9 @@ func main() {
 			{
 				EventType: common.BlockTxs,
 			},
+			{
+				EventType: common.BlockStateAccesses,
+			},
 		},
 	}
 
@@ -59,7 +63,7 @@ func main() {
 		case common.BlockEvents:
 			var event data.BlockEventsWithOrder
 			_ = json.Unmarshal(reply.Data, &event)
-			fmt.Println(event)
+			fmt.Printf("Hash: %s, TimeStamp: %d\n", event.Hash, event.TimeStamp)
 		case common.RevertBlockEvents:
 			var event *data.RevertBlock
 			_ = json.Unmarshal(reply.Data, &event)
@@ -67,7 +71,7 @@ func main() {
 		case common.FinalizedBlockEvents:
 			var event *data.FinalizedBlock
 			_ = json.Unmarshal(reply.Data, &event)
-			fmt.Println(event)
+			fmt.Printf("Hash: %s, TimeStamp: %d\n", event.Hash, time.Now().Unix())
 		case common.BlockTxs:
 			var event *data.BlockTxs
 			_ = json.Unmarshal(reply.Data, &event)
@@ -76,6 +80,16 @@ func main() {
 			var event data.BlockScrs
 			_ = json.Unmarshal(reply.Data, &event)
 			fmt.Println(event.Hash)
+		case common.BlockStateAccesses:
+			var event data.BlockStateAccesses
+			_ = json.Unmarshal(reply.Data, &event)
+			fmt.Printf("SA: Hash: %s, TimeStamp: %d, Len sa: %d\n", event.Hash, time.Now().Unix(), len(event.StateAccessesPerAccounts))
+			for acc, sas := range event.StateAccessesPerAccounts {
+				fmt.Printf("Account: %s\n", acc)
+				for _, sa := range sas.StateAccess {
+					fmt.Printf("Txhash: %s, Type: %d, AccountChanges: %d\n", sa.TxHash, sa.Type, sa.AccountChanges)
+				}
+			}
 		default:
 			fmt.Println("invalid message type")
 		}

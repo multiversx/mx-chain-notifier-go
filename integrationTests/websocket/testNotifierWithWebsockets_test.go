@@ -11,6 +11,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -61,6 +62,22 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 		},
 	}
 	headerBytes, _ := json.Marshal(header)
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
+			},
+			&stateChange.StateAccess{
+				MainTrieKey: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
 			Logs: []*outport.LogData{
@@ -85,6 +102,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -156,6 +174,10 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 		},
 	}
 	headerBytes, _ := json.Marshal(header)
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{}
+
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
 			Logs: []*outport.LogData{
@@ -181,6 +203,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	wg := &sync.WaitGroup{}
@@ -355,6 +378,10 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 		},
 	}
 	headerBytes, _ := json.Marshal(header)
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{}
+
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
 			Transactions: txs,
@@ -368,6 +395,7 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	expTxs := map[string]*transaction.Transaction{
@@ -438,6 +466,10 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 		},
 	}
 	headerBytes, _ := json.Marshal(header)
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{}
+
 	blockEvents := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
 			SmartContractResults: scrs,
@@ -451,6 +483,7 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	expScrs := map[string]*smartContractResult.SmartContractResult{
@@ -637,6 +670,10 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 		},
 	}
 	headerBytes, _ = json.Marshal(header)
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{}
+
 	blockEvents := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
 			Transactions:         txs,
@@ -665,6 +702,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		StateAccesses:        stateAccesses,
 	}
 
 	numEvents := 6

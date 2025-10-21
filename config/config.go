@@ -20,9 +20,10 @@ type MainConfig struct {
 
 // GeneralConfig maps the general config section
 type GeneralConfig struct {
-	ExternalMarshaller MarshallerConfig
-	AddressConverter   AddressConverterConfig
-	CheckDuplicates    bool
+	ExternalMarshaller   MarshallerConfig
+	AddressConverter     AddressConverterConfig
+	CheckDuplicates      bool
+	WithReadStateChanges bool
 }
 
 // MarshallerConfig maps the marshaller configuration
@@ -80,6 +81,7 @@ type RabbitMQConfig struct {
 	BlockTxsExchange        RabbitMQExchangeConfig
 	BlockScrsExchange       RabbitMQExchangeConfig
 	BlockEventsExchange     RabbitMQExchangeConfig
+	StateAccessesExchange   RabbitMQExchangeConfig
 }
 
 // RabbitMQExchangeConfig holds the configuration for a rabbitMQ exchange

@@ -1,10 +1,13 @@
 package testdata
 
 import (
+	"encoding/hex"
+
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/common"
@@ -115,6 +118,27 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 	}
 	headerBytes, _ := bd.marshaller.Marshal(header)
 
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey1"),
+				MainTrieVal:    []byte("mainTrieVal1"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 8,
+			},
+			&stateChange.StateAccess{
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey2"),
+				MainTrieVal:    []byte("mainTrieVal2"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 4,
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
 	return &outport.OutportBlock{
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
@@ -133,7 +157,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		TransactionPool: &outport.TransactionPool{
 			Transactions: map[string]*outport.TxInfo{
-				"txHash1": {
+				hex.EncodeToString([]byte("txHash1")): {
 					Transaction: &transaction.Transaction{
 						Nonce:    1,
 						GasPrice: 1,
@@ -146,7 +170,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 				},
 			},
 			SmartContractResults: map[string]*outport.SCRInfo{
-				"scrHash1": {
+				hex.EncodeToString([]byte("scrHash1")): {
 					SmartContractResult: &smartContractResult.SmartContractResult{
 						Nonce:    2,
 						GasLimit: 2,
@@ -169,6 +193,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 				},
 			},
 		},
+		StateAccesses:  stateAccesses,
 		NumberOfShards: 2,
 	}
 }

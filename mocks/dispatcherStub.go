@@ -7,13 +7,14 @@ import (
 
 // DispatcherStub implements dispatcher EventDispatcher interface
 type DispatcherStub struct {
-	GetIDCalled          func() uuid.UUID
-	PushEventsCalled     func(events []data.Event)
-	BlockEventsCalled    func(event data.BlockEventsWithOrder)
-	RevertEventCalled    func(event data.RevertBlock)
-	FinalizedEventCalled func(event data.FinalizedBlock)
-	TxsEventCalled       func(event data.BlockTxs)
-	ScrsEventCalled      func(event data.BlockScrs)
+	GetIDCalled              func() uuid.UUID
+	PushEventsCalled         func(events []data.Event)
+	BlockEventsCalled        func(event data.BlockEventsWithOrder)
+	RevertEventCalled        func(event data.RevertBlock)
+	FinalizedEventCalled     func(event data.FinalizedBlock)
+	TxsEventCalled           func(event data.BlockTxs)
+	ScrsEventCalled          func(event data.BlockScrs)
+	StateAccessesEventCalled func(event data.BlockStateAccesses)
 }
 
 // GetID -
@@ -64,5 +65,12 @@ func (d *DispatcherStub) TxsEvent(event data.BlockTxs) {
 func (d *DispatcherStub) ScrsEvent(event data.BlockScrs) {
 	if d.ScrsEventCalled != nil {
 		d.ScrsEventCalled(event)
+	}
+}
+
+// StateAccessesEvent -
+func (d *DispatcherStub) StateAccessesEvent(event data.BlockStateAccesses) {
+	if d.StateAccessesEventCalled != nil {
+		d.StateAccessesEventCalled(event)
 	}
 }
