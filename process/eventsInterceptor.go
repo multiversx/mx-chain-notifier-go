@@ -97,19 +97,15 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 
 	for txHash, txInfo := range transactionsPool.Transactions {
 		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-		log.Trace("tx with order before sort - normal", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
 		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-		log.Trace("tx with order before sort - scr", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
 		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-		log.Trace("tx with order before sort - rewards", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
 		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-		log.Trace("tx with order before sort - invalid tx", "txHash", txHash, "index", txInfo.ExecutionOrder)
 	}
 
 	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
@@ -123,10 +119,6 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 	sort.Slice(txsWithOrder, func(i, j int) bool {
 		return txsWithOrder[i].index < txsWithOrder[j].index
 	})
-
-	for i, txInfo := range txsWithOrder {
-		log.Trace("tx with order after sort", "txHash", txInfo.hash, "index", txInfo.index, "position in slice", i)
-	}
 
 	return txsWithOrder
 }
@@ -150,7 +142,6 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 
 	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	for _, txInfo := range txsWithOrder {
-		log.Trace("tx with order", "txHash", txInfo.hash, "index", txInfo.index)
 		txHash, err := hex.DecodeString(txInfo.hash)
 		if err != nil {
 			log.Error("failed to decode tx hash", "txHash", txInfo.hash)
@@ -184,10 +175,21 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 		}
 	}
 
-	log.Trace("getStateAccessesPerAccounts",
-		"num stateAccessesPerAccounts", len(stateAccessesPerAccounts),
+	logStateAccessesPerAccounts(stateAccessesPerAccounts)
+
+	return stateAccessesPerAccounts
+}
+
+func logStateAccessesPerAccounts(stateAccesses map[string]*stateChange.StateAccesses) {
+	if log.GetLevel() > logger.LogTrace {
+		return
+	}
+
+	log.Trace("state accesses per accounts",
+		"num stateAccessesPerAccounts", len(stateAccesses),
 	)
-	for accKey, sts := range stateAccessesPerAccounts {
+
+	for accKey, sts := range stateAccesses {
 		log.Trace("stateAccessesPerAccount",
 			"account", accKey,
 			"num stateAccesses", len(sts.StateAccess),
@@ -196,8 +198,6 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 			log.Trace("state access", "stateChange", stateAccessToString(st))
 		}
 	}
-
-	return stateAccessesPerAccounts
 }
 
 func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses) {
@@ -205,7 +205,7 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 		return
 	}
 
-	log.Trace("getStateAccessesPerAccounts",
+	log.Trace("state accesses per transaction",
 		"num stateAccessesPerTxs", len(stateAccesses),
 	)
 
