@@ -2,6 +2,7 @@ package process_test
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -181,9 +183,31 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 			},
 		}
 
+		stateAccesses := make(map[string]*stateChange.StateAccesses)
+		stateAccesses["txHash1"] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey1"),
+					MainTrieVal: []byte("mainTrieVal1"),
+				},
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
+		rootHash := []byte("rootHash1")
+		timeStamp := uint64(123)
+		timeStampMs := uint64(1234)
 		header := &block.HeaderV2{
 			Header: &block.Header{
-				ShardID: 2,
+				ShardID:   2,
+				TimeStamp: timeStamp,
+				RootHash:  rootHash,
 			},
 		}
 		blockData := data.ArgsSaveBlockData{
@@ -193,7 +217,9 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 				SmartContractResults: scrs,
 				Logs:                 logData,
 			},
-			Header: &block.HeaderV2{},
+			Header:            &block.HeaderV2{},
+			StateAccesses:     stateAccesses,
+			HeaderTimeStampMs: timeStampMs,
 		}
 
 		expTxs := map[string]*transaction.Transaction{
@@ -216,9 +242,11 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 			Scrs: expScrs,
 		}
 		expLogEvents := data.BlockEvents{
-			Hash:    blockHash,
-			Events:  logEvents,
-			ShardID: 2,
+			Hash:        blockHash,
+			TimeStamp:   timeStamp,
+			TimeStampMs: timeStampMs,
+			Events:      logEvents,
+			ShardID:     2,
 		}
 
 		expTxsWithOrder := map[string]*outport.TxInfo{
@@ -237,30 +265,61 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 			},
 		}
 		expTxsWithOrderData := data.BlockEventsWithOrder{
-			Hash:    blockHash,
-			ShardID: 2,
-			Txs:     expTxsWithOrder,
-			Scrs:    expScrsWithOrder,
-			Events:  logEvents,
+			Hash:        blockHash,
+			TimeStamp:   timeStamp,
+			TimeStampMs: timeStampMs,
+			ShardID:     2,
+			Txs:         expTxsWithOrder,
+			Scrs:        expScrsWithOrder,
+			Events:      logEvents,
+		}
+
+		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey1"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey1"),
+					MainTrieVal: []byte("mainTrieVal1"),
+				},
+			},
+		}
+		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
+			StateAccess: []*stateChange.StateAccess{
+				&stateChange.StateAccess{
+					Type:        stateChange.Write,
+					MainTrieKey: []byte("mainTrieKey2"),
+					MainTrieVal: []byte("mainTrieVal2"),
+				},
+			},
+		}
+		expStateAccesses := data.BlockStateAccesses{
+			Hash:                     blockHash,
+			ShardID:                  2,
+			TimeStampMs:              1234,
+			RootHash:                 rootHash,
+			StateAccessesPerAccounts: expStateAccessesPerAccounts,
 		}
 
 		pushWasCalled := false
 		txsWasCalled := false
 		scrsWasCalled := false
 		blockEventsWithOrderWasCalled := false
+		stateAccessesWasCalled := false
 
 		args := createMockEventsHandlerArgs()
 
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
 			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return &data.InterceptorBlockData{
-					Hash:          blockHash,
-					Header:        header,
-					Txs:           expTxs,
-					Scrs:          expScrs,
-					LogEvents:     logEvents,
-					TxsWithOrder:  expTxsWithOrder,
-					ScrsWithOrder: expScrsWithOrder,
+					Hash:                     blockHash,
+					Header:                   header,
+					Txs:                      expTxs,
+					Scrs:                     expScrs,
+					LogEvents:                logEvents,
+					TxsWithOrder:             expTxsWithOrder,
+					ScrsWithOrder:            expScrsWithOrder,
+					StateAccessesPerAccounts: expStateAccessesPerAccounts,
 				}, nil
 			},
 		}
@@ -282,6 +341,10 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 				blockEventsWithOrderWasCalled = true
 				assert.Equal(t, expTxsWithOrderData, event)
 			},
+			BroadcastStateAccessesCalled: func(event data.BlockStateAccesses) {
+				stateAccessesWasCalled = true
+				assert.Equal(t, expStateAccesses, event)
+			},
 		}
 
 		eventsHandler, err := process.NewEventsHandler(args)
@@ -294,6 +357,7 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		assert.True(t, txsWasCalled)
 		assert.True(t, scrsWasCalled)
 		assert.True(t, blockEventsWithOrderWasCalled)
+		assert.True(t, stateAccessesWasCalled)
 	})
 }
 
