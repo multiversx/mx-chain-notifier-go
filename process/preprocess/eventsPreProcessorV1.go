@@ -6,6 +6,9 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/stateChange"
+	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -68,12 +71,34 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		StateAccesses:          outportBlock.GetStateAccesses(),
 	}
 
+	logStateAccessesPerTxs(saveBlockData.StateAccesses)
+
 	err = d.facade.HandlePushEvents(*saveBlockData)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses) {
+	if log.GetLevel() > logger.LogTrace {
+		return
+	}
+
+	log.Trace("Preprocessing: state accesses per transaction",
+		"num stateAccessesPerTxs", len(stateAccesses),
+	)
+
+	for txHash, sts := range stateAccesses {
+		log.Trace("stateAccessesPerTx",
+			"txHash", txHash,
+		)
+
+		for _, st := range sts.StateAccess {
+			log.Trace("state access", "stateChange", common.StateAccessToString(st))
+		}
+	}
 }
 
 func checkBlockDataValid(block *outport.OutportBlock) error {

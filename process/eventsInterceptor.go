@@ -2,9 +2,7 @@ package process
 
 import (
 	"encoding/hex"
-	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -14,6 +12,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	logger "github.com/multiversx/mx-chain-logger-go"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -195,7 +194,7 @@ func logStateAccessesPerAccounts(stateAccesses map[string]*stateChange.StateAcce
 			"num stateAccesses", len(sts.StateAccess),
 		)
 		for _, st := range sts.StateAccess {
-			log.Trace("state access", "stateChange", stateAccessToString(st))
+			log.Trace("state access", "stateChange", common.StateAccessToString(st))
 		}
 	}
 }
@@ -215,25 +214,9 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 		)
 
 		for _, st := range sts.StateAccess {
-			log.Trace("state access", "stateChange", stateAccessToString(st))
+			log.Trace("state access", "stateChange", common.StateAccessToString(st))
 		}
 	}
-}
-
-func stateAccessToString(stateAccess *stateChange.StateAccess) string {
-	dataTrieChanges := make([]string, len(stateAccess.GetDataTrieChanges()))
-	for i, dataTrieChange := range stateAccess.GetDataTrieChanges() {
-		dataTrieChanges[i] = fmt.Sprintf("key: %v, val: %v, type: %v, operation %v, version %v", hex.EncodeToString(dataTrieChange.Key), hex.EncodeToString(dataTrieChange.Val), dataTrieChange.Type, dataTrieChange.Operation, dataTrieChange.Version)
-	}
-	return fmt.Sprintf("type: %v, operation: %v, mainTrieKey: %v, mainTrieVal: %v, index: %v, dataTrieChanges: %v, accountChanges %v",
-		stateAccess.GetType(),
-		stateAccess.GetOperation(),
-		hex.EncodeToString(stateAccess.GetMainTrieKey()),
-		hex.EncodeToString(stateAccess.GetMainTrieVal()),
-		stateAccess.GetIndex(),
-		strings.Join(dataTrieChanges, ", "),
-		stateAccess.GetAccountChanges(),
-	)
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
