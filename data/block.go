@@ -21,6 +21,12 @@ type SaveBlockData struct {
 	LogEvents []Event                                             `json:"events"`
 }
 
+type ExecInterceptorBlockData struct {
+	Hash            string
+	Header          nodeData.HeaderHandler
+	ExecResultsData []*InterceptorBlockData
+}
+
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
 	Hash                     string
@@ -47,6 +53,7 @@ type ArgsSaveBlockData struct {
 	NumberOfShards         uint32
 	HeaderTimeStampMs      uint64
 	StateAccesses          map[string]*stateChange.StateAccesses
+	Results                map[string]*outport.ExecutionResultsData
 }
 
 // OutportBlockDataOld holds the block data that will be received on push events

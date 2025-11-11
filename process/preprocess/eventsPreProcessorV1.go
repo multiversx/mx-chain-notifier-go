@@ -49,9 +49,17 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
-	header, err := d.getHeaderFromBytes(core.HeaderType(outportBlock.BlockData.HeaderType), outportBlock.BlockData.HeaderBytes)
+	headerType := core.HeaderType(outportBlock.BlockData.HeaderType)
+
+	header, err := d.getHeaderFromBytes(headerType, outportBlock.BlockData.HeaderBytes)
 	if err != nil {
 		return err
+	}
+
+	// executionResults := make(map[string]*outport.ExecutionResultsData)
+	var executionResults map[string]*outport.ExecutionResultsData
+	if isHeaderV3(headerType) {
+		executionResults = outportBlock.BlockData.Results
 	}
 
 	saveBlockData := &data.ArgsSaveBlockData{
@@ -66,6 +74,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		Header:                 header,
 		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
 		StateAccesses:          outportBlock.GetStateAccesses(),
+		Results:                executionResults,
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)
@@ -74,6 +83,15 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 	}
 
 	return nil
+}
+
+func isHeaderV3(headerType core.HeaderType) bool {
+	if headerType == core.ShardHeaderV3 ||
+		headerType == core.MetaHeaderV3 {
+		return true
+	}
+
+	return false
 }
 
 func checkBlockDataValid(block *outport.OutportBlock) error {
