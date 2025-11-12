@@ -45,3 +45,8 @@ func (ei *eventsInterceptor) GetLogEventsFromTransactionsPool(logs []*outport.Lo
 func (ei *eventsInterceptor) GetStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
 	return ei.getStateAccessesPerAccounts(eventsData)
 }
+
+// BaseNilEventsDataCheks -
+func BaseNilEventsDataCheks(eventsData *data.ArgsSaveBlockData) error {
+	return baseNilEventsDataChecks(eventsData)
+}

@@ -46,19 +46,28 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 	}, nil
 }
 
-// ProcessBlockEvents will process block events data
-func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+func baseNilEventsDataChecks(eventsData *data.ArgsSaveBlockData) error {
 	if eventsData == nil {
-		return nil, ErrNilBlockEvents
+		return ErrNilBlockEvents
 	}
 	if eventsData.TransactionsPool == nil {
-		return nil, ErrNilTransactionsPool
+		return ErrNilTransactionsPool
 	}
 	if eventsData.Body == nil {
-		return nil, ErrNilBlockBody
+		return ErrNilBlockBody
 	}
 	if eventsData.Header == nil {
-		return nil, ErrNilBlockHeader
+		return ErrNilBlockHeader
+	}
+
+	return nil
+}
+
+// ProcessBlockEvents will process block events data
+func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+	err := baseNilEventsDataChecks(eventsData)
+	if err != nil {
+		return nil, err
 	}
 
 	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
@@ -92,11 +101,9 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 // ProcessBlockEventsV3 will process block events data for async execution model
 func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
-	if eventsData == nil {
-		return nil, ErrNilBlockEvents
-	}
-	if eventsData.Header == nil {
-		return nil, ErrNilBlockHeader
+	err := baseNilEventsDataChecks(eventsData)
+	if err != nil {
+		return nil, err
 	}
 
 	if !eventsData.Header.IsHeaderV3() {

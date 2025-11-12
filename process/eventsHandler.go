@@ -86,6 +86,7 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 	if check.IfNil(allEvents.Header) {
 		return ErrNilBlockHeader
 	}
+
 	if allEvents.Header.IsHeaderV3() {
 		return eh.handleSaveBlockEventsV3(allEvents)
 	}
