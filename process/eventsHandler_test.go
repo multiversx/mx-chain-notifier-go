@@ -120,6 +120,36 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		require.Nil(t, err)
 	})
 
+	t.Run("nil events header, should fail", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockEventsHandlerArgs()
+		args.CheckDuplicates = true
+
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return true, nil
+			},
+		}
+
+		expectedErr := errors.New("expected err")
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				return nil, expectedErr
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		blockData := data.ArgsSaveBlockData{
+			Header: nil,
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
+		require.Equal(t, process.ErrNilBlockHeader, err)
+	})
+
 	t.Run("failed to pre-process events, should fail", func(t *testing.T) {
 		t.Parallel()
 
@@ -142,7 +172,11 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{})
+		blockData := data.ArgsSaveBlockData{
+			Header: &block.HeaderV2{},
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
 		require.Equal(t, expectedErr, err)
 	})
 

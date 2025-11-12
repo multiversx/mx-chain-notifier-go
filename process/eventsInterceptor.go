@@ -91,7 +91,6 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 }
 
 // ProcessBlockEventsV3 will process block events data for async execution model
-// TODO: update to have a wrapper struct with header info
 func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
 	if eventsData == nil {
 		return nil, ErrNilBlockEvents
@@ -101,8 +100,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 	}
 
 	if !eventsData.Header.IsHeaderV3() {
-		// return early, no need to handle execution results events
-		return make([]*data.InterceptorBlockData, 0), nil
+		return nil, coreData.ErrInvalidHeaderType
 	}
 
 	if eventsData.Results == nil {

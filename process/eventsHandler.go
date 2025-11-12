@@ -90,26 +90,51 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 		return eh.handleSaveBlockEventsV3(allEvents)
 	}
 
+	return eh.handleSaveBlockEventsLegacy(allEvents)
+}
+
+func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBlockData) error {
 	eventsData, err := eh.eventsInterceptor.ProcessBlockEvents(&allEvents)
 	if err != nil {
 		return err
 	}
 
+	headerTimeStamp := eventsData.Header.GetTimeStamp()
+	headerTimeStampMs := allEvents.HeaderTimeStampMs
+	shardID := eventsData.Header.GetShardID()
+	nonce := eventsData.Header.GetNonce()
+
+	return eh.handleSaveBlockEvents(
+		eventsData,
+		headerTimeStamp,
+		headerTimeStampMs,
+		shardID,
+		nonce,
+	)
+}
+
+func (eh *eventsHandler) handleSaveBlockEvents(
+	eventsData *data.InterceptorBlockData,
+	headerTimeStamp uint64,
+	headerTimeStampMs uint64,
+	shardID uint32,
+	nonce uint64,
+) error {
+	if eventsData == nil {
+		return ErrNilEventsInterceptor
+	}
 	if check.IfNil(eventsData.Header) {
 		return ErrNilBlockHeader
 	}
 
-	headerTimeStamp := eventsData.Header.GetTimeStamp()
-	headerTimeStampMs := allEvents.HeaderTimeStampMs
-
 	pushEvents := data.BlockEvents{
 		Hash:        eventsData.Hash,
-		ShardID:     eventsData.Header.GetShardID(),
+		ShardID:     shardID,
 		TimeStamp:   headerTimeStamp,
 		TimeStampMs: headerTimeStampMs,
 		Events:      eventsData.LogEvents,
 	}
-	err = eh.handlePushEvents(pushEvents)
+	err := eh.handlePushEvents(pushEvents)
 	if err != nil {
 		return err
 	}
@@ -128,7 +153,7 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 
 	txsWithOrder := data.BlockEventsWithOrder{
 		Hash:        eventsData.Hash,
-		ShardID:     eventsData.Header.GetShardID(),
+		ShardID:     shardID,
 		TimeStamp:   headerTimeStamp,
 		TimeStampMs: headerTimeStampMs,
 		Txs:         eventsData.TxsWithOrder,
@@ -139,9 +164,9 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 
 	stateAccesses := data.BlockStateAccesses{
 		Hash:                     eventsData.Hash,
-		ShardID:                  eventsData.Header.GetShardID(),
+		ShardID:                  shardID,
 		TimeStampMs:              headerTimeStampMs,
-		Nonce:                    eventsData.Header.GetNonce(),
+		Nonce:                    nonce,
 		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
 	}
 	eh.handleStateAccesses(stateAccesses)
@@ -155,71 +180,26 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 		return err
 	}
 
-	execEvents := eh.getExecutedEventsData(execEventsData.ExecResultsData)
-
-	headerTimeStamp := execEventsData.Header.GetTimeStamp()
+	// TODO: get timestamp from executed header, not from current proposed header
+	headerTimeStamp := allEvents.Header.GetTimeStamp()
 	headerTimeStampMs := allEvents.HeaderTimeStampMs
+	shardID := allEvents.Header.GetShardID()
+	nonce := allEvents.Header.GetNonce()
 
-	pushEvents := data.BlockEvents{
-		Hash:           execEventsData.Hash,
-		ShardID:        execEventsData.Header.GetShardID(),
-		TimeStamp:      headerTimeStamp,
-		TimeStampMs:    headerTimeStampMs,
-		ExecutedEvents: execEvents,
+	for _, execEv := range execEventsData {
+		err = eh.handleSaveBlockEvents(
+			execEv,
+			headerTimeStamp,
+			headerTimeStampMs,
+			shardID,
+			nonce,
+		)
+		if err != nil {
+			return err
+		}
 	}
-	err = eh.handlePushEvents(pushEvents)
-	if err != nil {
-		return err
-	}
-
-	// txs := data.BlockTxs{
-	// 	Hash: eventsData.Hash,
-	// 	Txs:  eventsData.Txs,
-	// }
-	// eh.handleBlockTxs(txs)
-
-	// scrs := data.BlockScrs{
-	// 	Hash: eventsData.Hash,
-	// 	Scrs: eventsData.Scrs,
-	// }
-	// eh.handleBlockScrs(scrs)
-
-	// txsWithOrder := data.BlockEventsWithOrder{
-	// 	Hash:        eventsData.Hash,
-	// 	ShardID:     eventsData.Header.GetShardID(),
-	// 	TimeStamp:   headerTimeStamp,
-	// 	TimeStampMs: headerTimeStampMs,
-	// 	Txs:         eventsData.TxsWithOrder,
-	// 	Scrs:        eventsData.ScrsWithOrder,
-	// 	Events:      eventsData.LogEvents,
-	// }
-	// eh.handleBlockEventsWithOrder(txsWithOrder)
-
-	// stateAccesses := data.BlockStateAccesses{
-	// 	Hash:                     eventsData.Hash,
-	// 	ShardID:                  eventsData.Header.GetShardID(),
-	// 	TimeStampMs:              headerTimeStampMs,
-	// 	Nonce:                    eventsData.Header.GetNonce(),
-	// 	StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
-	// }
-	// eh.handleStateAccesses(stateAccesses)
 
 	return nil
-}
-
-func (eh *eventsHandler) getExecutedEventsData(interceptedBlocksData []*data.InterceptorBlockData) []data.ExecutedEvents {
-	executedEvents := make([]data.ExecutedEvents, 0)
-
-	for _, interceptedBlockData := range interceptedBlocksData {
-		execEvents := data.ExecutedEvents{
-			ExecutedHash: interceptedBlockData.Hash,
-			Events:       interceptedBlockData.LogEvents,
-		}
-
-		executedEvents = append(executedEvents, execEvents)
-	}
-
-	return executedEvents
 }
 
 // HandlePushEvents will handle push events received from observer

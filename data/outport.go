@@ -28,19 +28,11 @@ type Event struct {
 
 // BlockEvents holds events data for a block
 type BlockEvents struct {
-	Hash           string           `json:"hash"`
-	ShardID        uint32           `json:"shardId"`
-	TimeStamp      uint64           `json:"timestamp"`
-	TimeStampMs    uint64           `json:"timestampMs"`
-	Events         []Event          `json:"events,omitempty"`
-	ExecutedEvents []ExecutedEvents `json:"executedEvents"`
-}
-
-// ExecutedEvents holds events data for the executed block events
-// With async execution, there can be multiple executed block results notarized on a block
-type ExecutedEvents struct {
-	ExecutedHash string  `json:"executedHash"`
-	Events       []Event `json:"events"`
+	Hash        string  `json:"hash"`
+	ShardID     uint32  `json:"shardId"`
+	TimeStamp   uint64  `json:"timestamp"`
+	TimeStampMs uint64  `json:"timestampMs"`
+	Events      []Event `json:"events,omitempty"`
 }
 
 // RevertBlock holds revert event data

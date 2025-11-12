@@ -21,12 +21,6 @@ type SaveBlockData struct {
 	LogEvents []Event                                             `json:"events"`
 }
 
-type ExecInterceptorBlockData struct {
-	Hash            string
-	Header          nodeData.HeaderHandler
-	ExecResultsData []*InterceptorBlockData
-}
-
 // InterceptorBlockData holds the block data needed for processing
 type InterceptorBlockData struct {
 	Hash                     string
