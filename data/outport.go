@@ -32,7 +32,7 @@ type BlockEvents struct {
 	ShardID     uint32  `json:"shardId"`
 	TimeStamp   uint64  `json:"timestamp"`
 	TimeStampMs uint64  `json:"timestampMs"`
-	Events      []Event `json:"events,omitempty"`
+	Events      []Event `json:"events"`
 }
 
 // RevertBlock holds revert event data

@@ -176,7 +176,7 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 }
 
 func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockData) error {
-	execEventsData, err := eh.eventsInterceptor.ProcessBlockEventsV3(&allEvents)
+	executionResultsData, err := eh.eventsInterceptor.ProcessBlockEventsV3(&allEvents)
 	if err != nil {
 		return err
 	}
@@ -187,9 +187,9 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 	shardID := allEvents.Header.GetShardID()
 	nonce := allEvents.Header.GetNonce()
 
-	for _, execEv := range execEventsData {
+	for _, executionResultData := range executionResultsData {
 		err = eh.handleSaveBlockEvents(
-			execEv,
+			executionResultData,
 			headerTimeStamp,
 			headerTimeStampMs,
 			shardID,
