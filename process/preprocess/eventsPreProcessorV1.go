@@ -49,9 +49,16 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
-	header, err := d.getHeaderFromBytes(core.HeaderType(outportBlock.BlockData.HeaderType), outportBlock.BlockData.HeaderBytes)
+	headerType := core.HeaderType(outportBlock.BlockData.HeaderType)
+
+	header, err := d.getHeaderFromBytes(headerType, outportBlock.BlockData.HeaderBytes)
 	if err != nil {
 		return err
+	}
+
+	var executionResults map[string]*outport.ExecutionResultsData
+	if header.IsHeaderV3() {
+		executionResults = outportBlock.BlockData.Results
 	}
 
 	saveBlockData := &data.ArgsSaveBlockData{
@@ -66,6 +73,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		Header:                 header,
 		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
 		StateAccesses:          outportBlock.GetStateAccesses(),
+		Results:                executionResults,
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)

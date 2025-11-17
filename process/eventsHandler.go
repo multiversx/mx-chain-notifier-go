@@ -83,26 +83,59 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 		return nil
 	}
 
+	if check.IfNil(allEvents.Header) {
+		return ErrNilBlockHeader
+	}
+
+	if allEvents.Header.IsHeaderV3() {
+		return eh.handleSaveBlockEventsV3(allEvents)
+	}
+
+	return eh.handleSaveBlockEventsLegacy(allEvents)
+}
+
+func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBlockData) error {
 	eventsData, err := eh.eventsInterceptor.ProcessBlockEvents(&allEvents)
 	if err != nil {
 		return err
 	}
 
+	headerTimeStamp := eventsData.Header.GetTimeStamp()
+	headerTimeStampMs := allEvents.HeaderTimeStampMs
+	shardID := eventsData.Header.GetShardID()
+	nonce := eventsData.Header.GetNonce()
+
+	return eh.handleSaveBlockEvents(
+		eventsData,
+		headerTimeStamp,
+		headerTimeStampMs,
+		shardID,
+		nonce,
+	)
+}
+
+func (eh *eventsHandler) handleSaveBlockEvents(
+	eventsData *data.InterceptorBlockData,
+	headerTimeStamp uint64,
+	headerTimeStampMs uint64,
+	shardID uint32,
+	nonce uint64,
+) error {
+	if eventsData == nil {
+		return ErrNilEventsInterceptor
+	}
 	if check.IfNil(eventsData.Header) {
 		return ErrNilBlockHeader
 	}
 
-	headerTimeStamp := eventsData.Header.GetTimeStamp()
-	headerTimeStampMs := allEvents.HeaderTimeStampMs
-
 	pushEvents := data.BlockEvents{
 		Hash:        eventsData.Hash,
-		ShardID:     eventsData.Header.GetShardID(),
+		ShardID:     shardID,
 		TimeStamp:   headerTimeStamp,
 		TimeStampMs: headerTimeStampMs,
 		Events:      eventsData.LogEvents,
 	}
-	err = eh.handlePushEvents(pushEvents)
+	err := eh.handlePushEvents(pushEvents)
 	if err != nil {
 		return err
 	}
@@ -121,7 +154,7 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 
 	txsWithOrder := data.BlockEventsWithOrder{
 		Hash:        eventsData.Hash,
-		ShardID:     eventsData.Header.GetShardID(),
+		ShardID:     shardID,
 		TimeStamp:   headerTimeStamp,
 		TimeStampMs: headerTimeStampMs,
 		Txs:         eventsData.TxsWithOrder,
@@ -132,12 +165,40 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 
 	stateAccesses := data.BlockStateAccesses{
 		Hash:                     eventsData.Hash,
-		ShardID:                  eventsData.Header.GetShardID(),
+		ShardID:                  shardID,
 		TimeStampMs:              headerTimeStampMs,
-		Nonce:                    eventsData.Header.GetNonce(),
+		Nonce:                    nonce,
 		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
 	}
 	eh.handleStateAccesses(stateAccesses)
+
+	return nil
+}
+
+func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockData) error {
+	executionResultsData, err := eh.eventsInterceptor.ProcessBlockEventsV3(&allEvents)
+	if err != nil {
+		return err
+	}
+
+	// TODO: get timestamp from executed header, not from current proposed header
+	headerTimeStamp := allEvents.Header.GetTimeStamp()
+	headerTimeStampMs := allEvents.HeaderTimeStampMs
+	shardID := allEvents.Header.GetShardID()
+	nonce := allEvents.Header.GetNonce()
+
+	for _, executionResultData := range executionResultsData {
+		err = eh.handleSaveBlockEvents(
+			executionResultData,
+			headerTimeStamp,
+			headerTimeStampMs,
+			shardID,
+			nonce,
+		)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
