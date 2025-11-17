@@ -70,19 +70,9 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		return nil, err
 	}
 
-	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
+	transactionsPool := eventsData.TransactionsPool
 
-	txs := make(map[string]*transaction.Transaction)
-	for hash, tx := range eventsData.TransactionsPool.Transactions {
-		txs[hash] = tx.Transaction
-	}
-	txsWithOrder := eventsData.TransactionsPool.Transactions
-
-	scrs := make(map[string]*smartContractResult.SmartContractResult)
-	for hash, scr := range eventsData.TransactionsPool.SmartContractResults {
-		scrs[hash] = scr.SmartContractResult
-	}
-	scrsWithOrder := eventsData.TransactionsPool.SmartContractResults
+	events := ei.getLogEventsFromTransactionsPool(transactionsPool.Logs)
 
 	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
 
@@ -90,10 +80,10 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		Hash:                     hex.EncodeToString(eventsData.HeaderHash),
 		Body:                     eventsData.Body,
 		Header:                   eventsData.Header,
-		Txs:                      txs,
-		TxsWithOrder:             txsWithOrder,
-		Scrs:                     scrs,
-		ScrsWithOrder:            scrsWithOrder,
+		Txs:                      getTxsFromPool(transactionsPool),
+		TxsWithOrder:             transactionsPool.GetTransactions(),
+		Scrs:                     getScrsFromPool(transactionsPool),
+		ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 		LogEvents:                events,
 		StateAccessesPerAccounts: stateAccessesPerAccounts,
 	}, nil
@@ -125,18 +115,6 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 
 		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())
 
-		txs := make(map[string]*transaction.Transaction)
-		for hash, tx := range transactionsPool.GetTransactions() {
-			txs[hash] = tx.Transaction
-		}
-		txsWithOrder := transactionsPool.GetTransactions()
-
-		scrs := make(map[string]*smartContractResult.SmartContractResult)
-		for hash, scr := range transactionsPool.GetSmartContractResults() {
-			scrs[hash] = scr.SmartContractResult
-		}
-		scrsWithOrder := transactionsPool.GetSmartContractResults()
-
 		// TODO: handle state accesses for header v3
 		stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
 
@@ -144,10 +122,10 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			Hash:                     headerHash,
 			Body:                     body,
 			Header:                   eventsData.Header, // this holds current proposed header, not executed header
-			Txs:                      txs,
-			TxsWithOrder:             txsWithOrder,
-			Scrs:                     scrs,
-			ScrsWithOrder:            scrsWithOrder,
+			Txs:                      getTxsFromPool(transactionsPool),
+			TxsWithOrder:             transactionsPool.GetTransactions(),
+			Scrs:                     getScrsFromPool(transactionsPool),
+			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
 		}
@@ -156,6 +134,26 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 	}
 
 	return execBlocksData, nil
+}
+
+func getScrsFromPool(transactionsPool *outport.TransactionPool) map[string]*smartContractResult.SmartContractResult {
+	scrs := make(map[string]*smartContractResult.SmartContractResult)
+
+	for hash, scr := range transactionsPool.GetSmartContractResults() {
+		scrs[hash] = scr.SmartContractResult
+	}
+
+	return scrs
+}
+
+func getTxsFromPool(transactionsPool *outport.TransactionPool) map[string]*transaction.Transaction {
+	txs := make(map[string]*transaction.Transaction)
+
+	for hash, tx := range transactionsPool.GetTransactions() {
+		txs[hash] = tx.Transaction
+	}
+
+	return txs
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {

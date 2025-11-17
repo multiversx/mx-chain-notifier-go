@@ -56,9 +56,8 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
-	// executionResults := make(map[string]*outport.ExecutionResultsData)
 	var executionResults map[string]*outport.ExecutionResultsData
-	if isHeaderV3(headerType) {
+	if header.IsHeaderV3() {
 		executionResults = outportBlock.BlockData.Results
 	}
 
@@ -83,15 +82,6 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 	}
 
 	return nil
-}
-
-func isHeaderV3(headerType core.HeaderType) bool {
-	if headerType == core.ShardHeaderV3 ||
-		headerType == core.MetaHeaderV3 {
-		return true
-	}
-
-	return false
 }
 
 func checkBlockDataValid(block *outport.OutportBlock) error {
