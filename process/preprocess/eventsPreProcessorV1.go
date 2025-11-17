@@ -88,9 +88,6 @@ func checkBlockDataValid(block *outport.OutportBlock) error {
 	if block.BlockData == nil {
 		return ErrNilBlockData
 	}
-	if block.TransactionPool == nil {
-		return ErrNilTransactionPool
-	}
 	if block.HeaderGasConsumption == nil {
 		return ErrNilHeaderGasConsumption
 	}

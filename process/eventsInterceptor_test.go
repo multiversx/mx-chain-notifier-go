@@ -55,17 +55,6 @@ func TestEventsInterceptor_baseNilChecks(t *testing.T) {
 		require.Equal(t, process.ErrNilBlockEvents, err)
 	})
 
-	t.Run("nil transactions pool", func(t *testing.T) {
-		t.Parallel()
-
-		eventsData := &data.ArgsSaveBlockData{
-			HeaderHash:       []byte("headerHash"),
-			TransactionsPool: nil,
-		}
-		err := process.BaseNilEventsDataCheks(eventsData)
-		require.Equal(t, process.ErrNilTransactionsPool, err)
-	})
-
 	t.Run("nil block body", func(t *testing.T) {
 		t.Parallel()
 
