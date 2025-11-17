@@ -198,6 +198,115 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 	}
 }
 
+// OutportBlockV2 -
+func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
+	header := &block.HeaderV3{
+		ShardID:     1,
+		TimestampMs: 1234,
+	}
+	headerBytes, _ := bd.marshaller.Marshal(header)
+
+	execBlockHash := []byte("execBlockHash1")
+
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey1"),
+				MainTrieVal:    []byte("mainTrieVal1"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 8,
+			},
+			&stateChange.StateAccess{
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey2"),
+				MainTrieVal:    []byte("mainTrieVal2"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 4,
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
+	blockBody := &block.Body{
+		MiniBlocks: []*block.MiniBlock{
+			{
+				TxHashes:        [][]byte{},
+				ReceiverShardID: 1,
+				SenderShardID:   1,
+			},
+		},
+	}
+
+	execResTxPool := &outport.TransactionPool{
+		Transactions: map[string]*outport.TxInfo{
+			hex.EncodeToString([]byte("txHash1")): {
+				Transaction: &transaction.Transaction{
+					Nonce:    1,
+					GasPrice: 1,
+					GasLimit: 1,
+				},
+				FeeInfo: &outport.FeeInfo{
+					GasUsed: 1,
+				},
+				ExecutionOrder: 2,
+			},
+		},
+		SmartContractResults: map[string]*outport.SCRInfo{
+			hex.EncodeToString([]byte("scrHash1")): {
+				SmartContractResult: &smartContractResult.SmartContractResult{
+					Nonce:    2,
+					GasLimit: 2,
+					GasPrice: 2,
+					CallType: 2,
+				},
+				FeeInfo: &outport.FeeInfo{
+					GasUsed: 2,
+				},
+				ExecutionOrder: 0,
+			},
+		},
+		Logs: []*outport.LogData{
+			{
+				Log: &transaction.Log{
+					Address: []byte("logaddr1"),
+					Events:  []*transaction.Event{},
+				},
+				TxHash: "logHash1",
+			},
+		},
+	}
+
+	execResults := map[string]*outport.ExecutionResultsData{
+		hex.EncodeToString(execBlockHash): {
+			Body:            blockBody,
+			TransactionPool: execResTxPool,
+		},
+	}
+
+	return &outport.OutportBlock{
+		BlockData: &outport.BlockData{
+			HeaderBytes: headerBytes,
+			HeaderType:  "Header",
+			HeaderHash:  []byte("headerHash1"),
+			Body: &block.Body{
+				MiniBlocks: []*block.MiniBlock{
+					{
+						TxHashes:        [][]byte{},
+						ReceiverShardID: 1,
+						SenderShardID:   1,
+					},
+				},
+			},
+			Results: execResults,
+		},
+		HeaderGasConsumption: &outport.HeaderGasConsumption{},
+		NumberOfShards:       2,
+		StateAccesses:        stateAccesses,
+	}
+}
+
 // RevertBlockV0 -
 func (bd *blockData) RevertBlockV0() *notifierData.RevertBlock {
 	return &notifierData.RevertBlock{
