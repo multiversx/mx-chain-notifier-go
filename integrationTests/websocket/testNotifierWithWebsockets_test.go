@@ -20,6 +20,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// TODO: adapt integration tests for v3
+
 func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
