@@ -121,7 +121,8 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())
 
 		// TODO: handle state accesses for header v3
-		stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
+		// stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
+		stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 
 		blockData := &data.InterceptorBlockData{
 			Hash:                     headerHash,

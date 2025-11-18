@@ -13,9 +13,11 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,6 +31,16 @@ func TestNotifierWithRabbitMQ(t *testing.T) {
 
 	t.Run("with ws observer connnector", func(t *testing.T) {
 		testNotifierWithRabbitMQ(t, common.WSObsConnectorType, common.PayloadV1)
+	})
+}
+
+func TestNotifierWithRabbitMQV3(t *testing.T) {
+	t.Run("with http observer connnector", func(t *testing.T) {
+		testNotifierWithRabbitMQV3(t, common.HTTPConnectorType, common.PayloadV1)
+	})
+
+	t.Run("with ws observer connnector", func(t *testing.T) {
+		testNotifierWithRabbitMQV3(t, common.WSObsConnectorType, common.PayloadV1)
 	})
 }
 
@@ -51,6 +63,38 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	wg.Add(5)
 
 	go pushEventsRequest(wg, client)
+	go pushRevertRequest(wg, client)
+	go pushFinalizedRequest(wg, client)
+
+	// send requests again
+	go pushEventsRequest(wg, client)
+	go pushRevertRequest(wg, client)
+
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
+
+	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, 7, len(notifier.RabbitMQClient.GetEntries()))
+}
+
+func testNotifierWithRabbitMQV3(t *testing.T, observerType string, payloadVersion uint32) {
+	cfg := integrationTests.GetDefaultConfigs()
+	cfg.MainConfig.General.CheckDuplicates = true
+	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
+	require.Nil(t, err)
+
+	client, err := integrationTests.CreateObserverConnector(notifier.Facade, observerType, common.MessageQueuePublisherType, payloadVersion)
+	require.Nil(t, err)
+
+	// wait for components to start
+	time.Sleep(time.Second * 5)
+
+	_ = notifier.Publisher.Run()
+	defer notifier.Publisher.Close()
+
+	wg := &sync.WaitGroup{}
+	wg.Add(5)
+
+	go pushEventsRequestV3(wg, client)
 	go pushRevertRequest(wg, client)
 	go pushFinalizedRequest(wg, client)
 
@@ -109,11 +153,11 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 	stateAccesses := make(map[string]*stateChange.StateAccesses)
 	stateAccesses["txHash1"] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
-			&stateChange.StateAccess{
+			{
 				MainTrieKey: []byte("mainTrieKey1"),
 				MainTrieVal: []byte("mainTrieVal1"),
 			},
-			&stateChange.StateAccess{
+			{
 				MainTrieKey: []byte("mainTrieKey2"),
 				MainTrieVal: []byte("mainTrieVal2"),
 			},
@@ -138,6 +182,24 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 	}
 
 	err := webServer.PushEventsRequest(saveBlockData)
+	log.LogIfError(err)
+
+	if err == nil {
+		wg.Done()
+	}
+}
+
+func pushEventsRequestV3(
+	wg *sync.WaitGroup,
+	webServer integrationTests.ObserverConnector,
+) {
+	marshaller := &marshal.JsonMarshalizer{}
+	blockData, err := testdata.NewBlockData(marshaller)
+	log.LogIfError(err)
+
+	saveBlockData := blockData.OutportBlockV2()
+
+	err = webServer.PushEventsRequest(saveBlockData)
 	log.LogIfError(err)
 
 	if err == nil {
