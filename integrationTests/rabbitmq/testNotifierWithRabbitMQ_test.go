@@ -22,6 +22,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	// number of expected redis events
+	// one event for each outport driver method: Save, Revert, Finalized
+	numExpRedisEvents = 3
+
+	// number of exected rabbitmq events
+	// 5 events (logs & events, txs, scrs, full blocks events, state accesses) for Save method
+	// + one event for each other outport driver method: Revert, Finalized
+	numExpRabbitMQEvents = 7
+)
+
 var log = logger.GetOrCreate("integrationTests/rabbitmq")
 
 func TestNotifierWithRabbitMQ(t *testing.T) {
@@ -72,8 +83,8 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 
 	integrationTests.WaitTimeout(t, wg, time.Second*2)
 
-	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 7, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, numExpRedisEvents, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, numExpRabbitMQEvents, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func testNotifierWithRabbitMQV3(t *testing.T, observerType string, payloadVersion uint32) {
@@ -95,17 +106,17 @@ func testNotifierWithRabbitMQV3(t *testing.T, observerType string, payloadVersio
 	wg.Add(5)
 
 	go pushEventsRequestV3(wg, client)
-	go pushRevertRequest(wg, client)
+	go pushRevertRequestV3(wg, client)
 	go pushFinalizedRequest(wg, client)
 
 	// send requests again
-	go pushEventsRequest(wg, client)
-	go pushRevertRequest(wg, client)
+	go pushEventsRequestV3(wg, client)
+	go pushRevertRequestV3(wg, client)
 
 	integrationTests.WaitTimeout(t, wg, time.Second*2)
 
-	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
-	assert.Equal(t, 7, len(notifier.RabbitMQClient.GetEntries()))
+	assert.Equal(t, numExpRedisEvents, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, numExpRabbitMQEvents, len(notifier.RabbitMQClient.GetEntries()))
 }
 
 func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
@@ -218,6 +229,24 @@ func pushRevertRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		HeaderBytes: headerBytes,
 		HeaderType:  string(core.ShardHeaderV2),
 		HeaderHash:  []byte("headerHash2"),
+	}
+	err := webServer.RevertEventsRequest(blockData)
+	log.LogIfError(err)
+
+	if err == nil {
+		wg.Done()
+	}
+}
+
+func pushRevertRequestV3(wg *sync.WaitGroup, webServer integrationTests.ObserverConnector) {
+	header := &block.HeaderV3{
+		Nonce: 1,
+	}
+	headerBytes, _ := json.Marshal(header)
+	blockData := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV3),
+		HeaderHash:  []byte("headerHash3"),
 	}
 	err := webServer.RevertEventsRequest(blockData)
 	log.LogIfError(err)

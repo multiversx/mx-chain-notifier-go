@@ -22,8 +22,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO: adapt integration tests for v3
-
 func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
 	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
@@ -323,6 +321,65 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	blockEvents := &outport.BlockData{
 		HeaderBytes: headerBytes,
 		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("hash1"),
+	}
+
+	expReply := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
+		Nonce: 1,
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveRevertBlock()
+		require.Nil(t, err)
+
+		require.Equal(t, expReply, reply)
+		wg.Done()
+	}()
+
+	time.Sleep(time.Second)
+
+	err = webServer.RevertEventsRequest(blockEvents)
+	require.Nil(t, err)
+
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
+}
+
+func TestNotifierWithWebsockets_RevertEventsV3(t *testing.T) {
+	cfg := integrationTests.GetDefaultConfigs()
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
+	require.Nil(t, err)
+
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
+
+	_ = notifier.Publisher.Run()
+	defer notifier.Publisher.Close()
+
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
+	require.Nil(t, err)
+	defer ws.Close()
+
+	subscribeEvent := &data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.RevertBlockEvents,
+			},
+		},
+	}
+
+	ws.SendSubscribeMessage(subscribeEvent)
+
+	header := &block.HeaderV3{
+		Nonce: 1,
+	}
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV3),
 		HeaderHash:  []byte("hash1"),
 	}
 
