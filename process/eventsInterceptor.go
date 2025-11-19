@@ -2,6 +2,7 @@ package process
 
 import (
 	"encoding/hex"
+	"fmt"
 	"sort"
 
 	"github.com/multiversx/mx-chain-core-go/core"
@@ -50,9 +51,6 @@ func baseNilEventsDataChecks(eventsData *data.ArgsSaveBlockData) error {
 	if eventsData == nil {
 		return ErrNilBlockEvents
 	}
-	if eventsData.TransactionsPool == nil {
-		return ErrNilTransactionsPool
-	}
 	if eventsData.Body == nil {
 		return ErrNilBlockBody
 	}
@@ -68,6 +66,9 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 	err := baseNilEventsDataChecks(eventsData)
 	if err != nil {
 		return nil, err
+	}
+	if eventsData.TransactionsPool == nil {
+		return nil, ErrNilTransactionsPool
 	}
 
 	transactionsPool := eventsData.TransactionsPool
@@ -111,6 +112,10 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 
 	for headerHash, execBlockData := range eventsData.Results {
 		transactionsPool := execBlockData.GetTransactionPool()
+		if transactionsPool == nil {
+			return nil, fmt.Errorf("%w: for execution results block data", ErrNilTransactionsPool)
+		}
+
 		body := execBlockData.Body
 
 		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())

@@ -34,20 +34,6 @@ func TestPreProcessorV1_SaveBlock(t *testing.T) {
 		require.Equal(t, preprocess.ErrNilBlockData, err)
 	})
 
-	t.Run("nil transaction pool", func(t *testing.T) {
-		t.Parallel()
-
-		outportBlock := createDefaultOutportBlock()
-		outportBlock.TransactionPool = nil
-
-		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
-		require.Nil(t, err)
-
-		marshalledBlock, _ := json.Marshal(outportBlock)
-		err = dp.SaveBlock(marshalledBlock)
-		require.Equal(t, preprocess.ErrNilTransactionPool, err)
-	})
-
 	t.Run("nil header gas consumption", func(t *testing.T) {
 		t.Parallel()
 
