@@ -170,7 +170,7 @@ func TestProcessBlockEvents_WithoutExecutionResults(t *testing.T) {
 				SmartContractResults: scrs,
 				Logs:                 logs,
 			},
-			StateAccesses: make(map[string]*stateChange.StateAccesses),
+			StateAccesses: make(map[string]*outport.StateAccessesForBlock),
 		}
 
 		expTxs := map[string]*transaction.Transaction{
@@ -265,7 +265,7 @@ func TestProcessBlockEvents_WithoutExecutionResults(t *testing.T) {
 			TransactionsPool: &outport.TransactionPool{
 				Logs: logs,
 			},
-			StateAccesses: make(map[string]*stateChange.StateAccesses),
+			StateAccesses: make(map[string]*outport.StateAccessesForBlock),
 		}
 
 		expEvents := &data.InterceptorBlockData{
@@ -354,7 +354,7 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 
 		blockHash := []byte("blockHash")
 
-		execResults := map[string]*outport.ExecutionResultsData{
+		execResults := map[string]*outport.ExecutionResultData{
 			hex.EncodeToString(blockHash): {
 				Body:            blockBody,
 				TransactionPool: execTxPool,
@@ -366,7 +366,7 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 			Body:             blockBody,
 			Header:           blockHeader,
 			TransactionsPool: proposedTxPool,
-			StateAccesses:    make(map[string]*stateChange.StateAccesses),
+			StateAccesses:    make(map[string]*outport.StateAccessesForBlock),
 			Results:          execResults,
 		}
 
@@ -464,7 +464,7 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 
 		blockHash := []byte("blockHash")
 
-		execResults := map[string]*outport.ExecutionResultsData{
+		execResults := map[string]*outport.ExecutionResultData{
 			hex.EncodeToString(blockHash): {
 				Body:            blockBody,
 				TransactionPool: execTxPool,
@@ -476,7 +476,7 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 			Body:             blockBody,
 			Header:           blockHeader,
 			TransactionsPool: proposedTxPool,
-			StateAccesses:    make(map[string]*stateChange.StateAccesses),
+			StateAccesses:    make(map[string]*outport.StateAccessesForBlock),
 			Results:          execResults,
 		}
 
@@ -636,7 +636,9 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 				SmartContractResults: scrs,
 				InvalidTxs:           invalidTxs,
 			},
-			StateAccesses: stateAccesses,
+			StateAccesses: map[string]*outport.StateAccessesForBlock{
+				hex.EncodeToString(blockHash): {stateAccesses},
+			},
 		}
 
 		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
@@ -719,7 +721,9 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 				SmartContractResults: scrs,
 				InvalidTxs:           invalidTxs,
 			},
-			StateAccesses: stateAccesses,
+			StateAccesses: map[string]*outport.StateAccessesForBlock{
+				hex.EncodeToString(blockHash): {stateAccesses},
+			},
 		}
 
 		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
@@ -770,7 +774,9 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 				SmartContractResults: scrs,
 				InvalidTxs:           invalidTxs,
 			},
-			StateAccesses: stateAccesses,
+			StateAccesses: map[string]*outport.StateAccessesForBlock{
+				hex.EncodeToString(blockHash): {stateAccesses},
+			},
 		}
 
 		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)

@@ -56,7 +56,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
-	var executionResults map[string]*outport.ExecutionResultsData
+	var executionResults map[string]*outport.ExecutionResultData
 	if header.IsHeaderV3() {
 		executionResults = outportBlock.BlockData.Results
 	}
@@ -72,7 +72,7 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
 		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
-		StateAccesses:          outportBlock.GetStateAccesses(),
+		StateAccesses:          outportBlock.GetStateAccessesForBlock(),
 		Results:                executionResults,
 	}
 

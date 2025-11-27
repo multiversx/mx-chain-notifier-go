@@ -58,7 +58,7 @@ func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion 
 	go pushEventsRequest(wg, client)
 	go pushRevertRequest(wg, client)
 
-	integrationTests.WaitTimeout(t, wg, time.Second*2)
+	integrationTests.WaitTimeout(t, wg, time.Second*5)
 
 	assert.Equal(t, 3, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, 7, len(notifier.RabbitMQClient.GetEntries()))
@@ -134,7 +134,11 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 		},
 		TransactionPool:      txPool,
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		StateAccesses:        stateAccesses,
+		StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+			hex.EncodeToString([]byte("headerHash1")): {
+				StateAccesses: stateAccesses,
+			},
+		},
 	}
 
 	err := webServer.PushEventsRequest(saveBlockData)
