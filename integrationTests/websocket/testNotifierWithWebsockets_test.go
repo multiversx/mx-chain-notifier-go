@@ -13,14 +13,14 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/integrationTests"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-// TODO: adapt integration tests for v3
 
 func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	cfg := integrationTests.GetDefaultConfigs()
@@ -68,11 +68,11 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 	stateAccesses := make(map[string]*stateChange.StateAccesses)
 	stateAccesses["txHash1"] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
-			&stateChange.StateAccess{
+			{
 				MainTrieKey: []byte("mainTrieKey1"),
 				MainTrieVal: []byte("mainTrieVal1"),
 			},
-			&stateChange.StateAccess{
+			{
 				MainTrieKey: []byte("mainTrieKey2"),
 				MainTrieVal: []byte("mainTrieVal2"),
 			},
@@ -110,6 +110,66 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 			},
 		},
 	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveEvents()
+		require.Nil(t, err)
+
+		require.Equal(t, events, reply)
+		wg.Done()
+	}()
+
+	time.Sleep(time.Second)
+
+	err = webServer.PushEventsRequest(saveBlockData)
+	require.Nil(t, err)
+
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
+}
+
+func TestNotifierWithWebsockets_PushEventsV3(t *testing.T) {
+	cfg := integrationTests.GetDefaultConfigs()
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
+	require.Nil(t, err)
+
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
+
+	_ = notifier.Publisher.Run()
+	defer notifier.Publisher.Close()
+
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
+	require.Nil(t, err)
+	defer ws.Close()
+
+	subscribeEvent := &data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.PushLogsAndEvents,
+			},
+		},
+	}
+
+	ws.SendSubscribeMessage(subscribeEvent)
+
+	addr := []byte("logaddr1")
+	events := []data.Event{
+		{
+			Address: hex.EncodeToString(addr),
+			TxHash:  "txHash1",
+			Data:    make([]byte, 0),
+			Topics:  make([][]byte, 0),
+		},
+	}
+
+	marshaller := &marshal.JsonMarshalizer{}
+	blockData, err := testdata.NewBlockData(marshaller)
+	require.Nil(t, err)
+
+	saveBlockData := blockData.OutportBlockV2()
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
@@ -269,6 +329,65 @@ func TestNotifierWithWebsockets_RevertEvents(t *testing.T) {
 	blockEvents := &outport.BlockData{
 		HeaderBytes: headerBytes,
 		HeaderType:  string(core.ShardHeaderV2),
+		HeaderHash:  []byte("hash1"),
+	}
+
+	expReply := &data.RevertBlock{
+		Hash:  hex.EncodeToString([]byte("hash1")),
+		Nonce: 1,
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go func() {
+		reply, err := ws.ReceiveRevertBlock()
+		require.Nil(t, err)
+
+		require.Equal(t, expReply, reply)
+		wg.Done()
+	}()
+
+	time.Sleep(time.Second)
+
+	err = webServer.RevertEventsRequest(blockEvents)
+	require.Nil(t, err)
+
+	integrationTests.WaitTimeout(t, wg, time.Second*2)
+}
+
+func TestNotifierWithWebsockets_RevertEventsV3(t *testing.T) {
+	cfg := integrationTests.GetDefaultConfigs()
+	notifier, err := integrationTests.NewTestNotifierWithWS(cfg.MainConfig)
+	require.Nil(t, err)
+
+	webServer, err := integrationTests.CreateObserverConnector(notifier.Facade, common.HTTPConnectorType, common.WSPublisherType, common.PayloadV1)
+	require.Nil(t, err)
+
+	_ = notifier.Publisher.Run()
+	defer notifier.Publisher.Close()
+
+	ws, err := integrationTests.NewWSClient(notifier.WSHandler)
+	require.Nil(t, err)
+	defer ws.Close()
+
+	subscribeEvent := &data.SubscribeEvent{
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{
+				EventType: common.RevertBlockEvents,
+			},
+		},
+	}
+
+	ws.SendSubscribeMessage(subscribeEvent)
+
+	header := &block.HeaderV3{
+		Nonce: 1,
+	}
+	headerBytes, _ := json.Marshal(header)
+	blockEvents := &outport.BlockData{
+		HeaderBytes: headerBytes,
+		HeaderType:  string(core.ShardHeaderV3),
 		HeaderHash:  []byte("hash1"),
 	}
 

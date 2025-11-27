@@ -258,9 +258,13 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 			{
 				Log: &transaction.Log{
 					Address: []byte("logaddr1"),
-					Events:  []*transaction.Event{},
+					Events: []*transaction.Event{
+						{
+							Address: []byte("logaddr1"),
+						},
+					},
 				},
-				TxHash: "logHash1",
+				TxHash: "txHash1",
 			},
 		},
 	}
@@ -275,7 +279,7 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 	return &outport.OutportBlock{
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
-			HeaderType:  "Header",
+			HeaderType:  "HeaderV3",
 			HeaderHash:  []byte("headerHash1"),
 			Body: &block.Body{
 				MiniBlocks: []*block.MiniBlock{
