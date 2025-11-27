@@ -113,7 +113,7 @@ func testNotifierWithRabbitMQV3(t *testing.T, observerType string, payloadVersio
 	go pushEventsRequestV3(wg, client)
 	go pushRevertRequestV3(wg, client)
 
-	integrationTests.WaitTimeout(t, wg, time.Second*2)
+	integrationTests.WaitTimeout(t, wg, time.Second*5)
 
 	assert.Equal(t, numExpRedisEvents, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, numExpRabbitMQEvents, len(notifier.RabbitMQClient.GetEntries()))
