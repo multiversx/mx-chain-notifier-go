@@ -98,6 +98,7 @@ func getPayloadVersion(c *gin.Context) uint32 {
 func (h *eventsGroup) pushEvents(c *gin.Context) {
 	pushEventsRawData, err := c.GetRawData()
 	if err != nil {
+		log.Error("pushEvents: failed to get raw data", "error", err)
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
@@ -106,6 +107,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 
 	err = h.payloadHandler.ProcessPayload(pushEventsRawData, outport.TopicSaveBlock, payloadVersion)
 	if err != nil {
+		log.Error("pushEvents: failed to process payload", "error", err)
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
@@ -116,6 +118,7 @@ func (h *eventsGroup) pushEvents(c *gin.Context) {
 func (h *eventsGroup) revertEvents(c *gin.Context) {
 	revertEventsRawData, err := c.GetRawData()
 	if err != nil {
+		log.Error("revertEvents: failed to get raw data", "error", err)
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
@@ -124,6 +127,7 @@ func (h *eventsGroup) revertEvents(c *gin.Context) {
 
 	err = h.payloadHandler.ProcessPayload(revertEventsRawData, outport.TopicRevertIndexedBlock, payloadVersion)
 	if err != nil {
+		log.Error("revertEvents: failed to process payload", "error", err)
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
@@ -134,6 +138,7 @@ func (h *eventsGroup) revertEvents(c *gin.Context) {
 func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 	finalizedRawData, err := c.GetRawData()
 	if err != nil {
+		log.Error("finalizedEvents: failed to get raw data", "error", err)
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
@@ -142,6 +147,7 @@ func (h *eventsGroup) finalizedEvents(c *gin.Context) {
 
 	err = h.payloadHandler.ProcessPayload(finalizedRawData, outport.TopicFinalizedBlock, payloadVersion)
 	if err != nil {
+		log.Error("finalizedEvents: failed to process payload", "error", err)
 		shared.JSONResponse(c, http.StatusBadRequest, nil, err.Error())
 		return
 	}
