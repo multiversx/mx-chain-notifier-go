@@ -307,7 +307,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 	expStateAccesses := data.BlockStateAccesses{
 		Hash:                     blockHash,
 		ShardID:                  2,
-		TimeStampMs:              1234,
 		RootHash:                 rootHash,
 		StateAccessesPerAccounts: expStateAccessesPerAccounts,
 	}
@@ -317,7 +316,8 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 
 		header := &block.HeaderV2{
 			Header: &block.Header{
-				ShardID: 2,
+				ShardID:  2,
+				RootHash: rootHash,
 			},
 		}
 
@@ -421,6 +421,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 						TxsWithOrder:             expTxsWithOrder,
 						ScrsWithOrder:            expScrsWithOrder,
 						StateAccessesPerAccounts: expStateAccessesPerAccounts,
+						RootHash:                 rootHash,
 					},
 				}, nil
 			},

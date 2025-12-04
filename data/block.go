@@ -32,6 +32,7 @@ type InterceptorBlockData struct {
 	ScrsWithOrder            map[string]*outport.SCRInfo
 	LogEvents                []Event
 	StateAccessesPerAccounts map[string]*stateChange.StateAccesses
+	RootHash                 []byte
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events

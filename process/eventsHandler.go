@@ -105,12 +105,19 @@ func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBloc
 	shardID := eventsData.Header.GetShardID()
 	nonce := eventsData.Header.GetNonce()
 
+	var scheduledRootHash []byte
+	if eventsData.Header.GetAdditionalData() != nil {
+		scheduledRootHash = allEvents.Header.GetAdditionalData().GetScheduledRootHash()
+	}
+
 	return eh.handleSaveBlockEvents(
 		eventsData,
 		headerTimeStamp,
 		headerTimeStampMs,
 		shardID,
 		nonce,
+		allEvents.Header.GetRootHash(),
+		scheduledRootHash,
 	)
 }
 
@@ -120,6 +127,8 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 	headerTimeStampMs uint64,
 	shardID uint32,
 	nonce uint64,
+	rootHash []byte,
+	scheduledRootHash []byte,
 ) error {
 	if eventsData == nil {
 		return ErrNilEventsInterceptor
@@ -163,17 +172,12 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 	}
 	eh.handleBlockEventsWithOrder(txsWithOrder)
 
-	var scheduledRootHash []byte
-	if eventsData.Header.GetAdditionalData() != nil {
-		scheduledRootHash = eventsData.Header.GetAdditionalData().GetScheduledRootHash()
-	}
-
 	stateAccesses := data.BlockStateAccesses{
 		Hash:                     eventsData.Hash,
 		ShardID:                  shardID,
 		TimeStampMs:              headerTimeStampMs,
 		Nonce:                    nonce,
-		RootHash:                 eventsData.Header.GetRootHash(),
+		RootHash:                 rootHash,
 		ScheduledRootHash:        scheduledRootHash,
 		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
 	}
@@ -201,6 +205,8 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 			headerTimeStampMs,
 			shardID,
 			nonce,
+			executionResultData.RootHash,
+			nil,
 		)
 		if err != nil {
 			return err

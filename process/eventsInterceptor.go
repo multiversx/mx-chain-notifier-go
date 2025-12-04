@@ -133,6 +133,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
+			RootHash:                 execBlockData.GetRootHash(),
 		}
 
 		execBlocksData = append(execBlocksData, blockData)
