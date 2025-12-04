@@ -221,12 +221,12 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 	stateAccesses := make(map[string]*stateChange.StateAccesses)
 	stateAccesses["txHash1"] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
-			&stateChange.StateAccess{
+			{
 				Type:        stateChange.Write,
 				MainTrieKey: []byte("mainTrieKey1"),
 				MainTrieVal: []byte("mainTrieVal1"),
 			},
-			&stateChange.StateAccess{
+			{
 				Type:        stateChange.Write,
 				MainTrieKey: []byte("mainTrieKey2"),
 				MainTrieVal: []byte("mainTrieVal2"),
@@ -288,7 +288,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 	expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey1"))] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
-			&stateChange.StateAccess{
+			{
 				Type:        stateChange.Write,
 				MainTrieKey: []byte("mainTrieKey1"),
 				MainTrieVal: []byte("mainTrieVal1"),
@@ -297,7 +297,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 	}
 	expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
-			&stateChange.StateAccess{
+			{
 				Type:        stateChange.Write,
 				MainTrieKey: []byte("mainTrieKey2"),
 				MainTrieVal: []byte("mainTrieVal2"),
@@ -387,6 +387,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		assert.True(t, txsWasCalled)
 		assert.True(t, scrsWasCalled)
 		assert.True(t, blockEventsWithOrderWasCalled)
+		assert.True(t, stateAccessesWasCalled)
 	})
 
 	t.Run("should work with header v3", func(t *testing.T) {
@@ -400,6 +401,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		txsWasCalled := false
 		scrsWasCalled := false
 		blockEventsWithOrderWasCalled := false
+		stateAccessesWasCalled := false
 
 		args := createMockEventsHandlerArgs()
 
@@ -411,13 +413,14 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 			ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
 				return []*data.InterceptorBlockData{
 					{
-						Hash:          blockHash,
-						Header:        header,
-						Txs:           expTxs,
-						Scrs:          expScrs,
-						LogEvents:     logEvents,
-						TxsWithOrder:  expTxsWithOrder,
-						ScrsWithOrder: expScrsWithOrder,
+						Hash:                     blockHash,
+						Header:                   header,
+						Txs:                      expTxs,
+						Scrs:                     expScrs,
+						LogEvents:                logEvents,
+						TxsWithOrder:             expTxsWithOrder,
+						ScrsWithOrder:            expScrsWithOrder,
+						StateAccessesPerAccounts: expStateAccessesPerAccounts,
 					},
 				}, nil
 			},
@@ -439,6 +442,10 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
 				blockEventsWithOrderWasCalled = true
 				assert.Equal(t, expTxsWithOrderData, event)
+			},
+			BroadcastStateAccessesCalled: func(event data.BlockStateAccesses) {
+				stateAccessesWasCalled = true
+				assert.Equal(t, expStateAccesses, event)
 			},
 		}
 
