@@ -8,7 +8,7 @@ import (
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
-	nodeData "github.com/multiversx/mx-chain-core-go/data"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
@@ -24,7 +24,7 @@ type txWithOrder struct {
 
 // logEvent defines a log event associated with corresponding tx hash
 type logEvent struct {
-	EventHandler nodeData.EventHandler
+	EventHandler coreData.EventHandler
 	TxHash       string
 }
 
@@ -48,48 +48,117 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 	}, nil
 }
 
+func baseNilEventsDataChecks(eventsData *data.ArgsSaveBlockData) error {
+	if eventsData == nil {
+		return ErrNilBlockEvents
+	}
+	if eventsData.Body == nil {
+		return ErrNilBlockBody
+	}
+	if eventsData.Header == nil {
+		return ErrNilBlockHeader
+	}
+
+	return nil
+}
+
 // ProcessBlockEvents will process block events data
 func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
-	if eventsData == nil {
-		return nil, ErrNilBlockEvents
+	err := baseNilEventsDataChecks(eventsData)
+	if err != nil {
+		return nil, err
 	}
 	if eventsData.TransactionsPool == nil {
 		return nil, ErrNilTransactionsPool
 	}
-	if eventsData.Body == nil {
-		return nil, ErrNilBlockBody
-	}
-	if eventsData.Header == nil {
-		return nil, ErrNilBlockHeader
-	}
 
-	events := ei.getLogEventsFromTransactionsPool(eventsData.TransactionsPool.Logs)
+	transactionsPool := eventsData.TransactionsPool
 
-	txs := make(map[string]*transaction.Transaction)
-	for hash, tx := range eventsData.TransactionsPool.Transactions {
-		txs[hash] = tx.Transaction
-	}
-	txsWithOrder := eventsData.TransactionsPool.Transactions
+	events := ei.getLogEventsFromTransactionsPool(transactionsPool.Logs)
 
-	scrs := make(map[string]*smartContractResult.SmartContractResult)
-	for hash, scr := range eventsData.TransactionsPool.SmartContractResults {
-		scrs[hash] = scr.SmartContractResult
-	}
-	scrsWithOrder := eventsData.TransactionsPool.SmartContractResults
-
-	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
+	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, hex.EncodeToString(eventsData.HeaderHash), transactionsPool)
 
 	return &data.InterceptorBlockData{
 		Hash:                     hex.EncodeToString(eventsData.HeaderHash),
 		Body:                     eventsData.Body,
 		Header:                   eventsData.Header,
-		Txs:                      txs,
-		TxsWithOrder:             txsWithOrder,
-		Scrs:                     scrs,
-		ScrsWithOrder:            scrsWithOrder,
+		Txs:                      getTxsFromPool(transactionsPool),
+		TxsWithOrder:             transactionsPool.GetTransactions(),
+		Scrs:                     getScrsFromPool(transactionsPool),
+		ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 		LogEvents:                events,
 		StateAccessesPerAccounts: stateAccessesPerAccounts,
 	}, nil
+}
+
+// ProcessBlockEventsV3 will process block events data for async execution model
+func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
+	err := baseNilEventsDataChecks(eventsData)
+	if err != nil {
+		return nil, err
+	}
+
+	if !eventsData.Header.IsHeaderV3() {
+		return nil, coreData.ErrInvalidHeaderType
+	}
+
+	if eventsData.Results == nil {
+		return nil, ErrNilExecutionResults
+	}
+
+	execBlocksData := make([]*data.InterceptorBlockData, 0)
+	if len(eventsData.Results) == 0 {
+		return execBlocksData, nil
+	}
+
+	for headerHash, execBlockData := range eventsData.Results {
+		transactionsPool := execBlockData.GetTransactionPool()
+		if transactionsPool == nil {
+			return nil, fmt.Errorf("%w: for execution results block data", ErrNilTransactionsPool)
+		}
+
+		body := execBlockData.Body
+
+		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())
+
+		stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, headerHash, transactionsPool)
+
+		blockData := &data.InterceptorBlockData{
+			Hash:                     headerHash,
+			Body:                     body,
+			Header:                   eventsData.Header, // this holds current proposed header, not executed header
+			Txs:                      getTxsFromPool(transactionsPool),
+			TxsWithOrder:             transactionsPool.GetTransactions(),
+			Scrs:                     getScrsFromPool(transactionsPool),
+			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
+			LogEvents:                events,
+			StateAccessesPerAccounts: stateAccessesPerAccounts,
+		}
+
+		execBlocksData = append(execBlocksData, blockData)
+	}
+
+	return execBlocksData, nil
+}
+
+func getScrsFromPool(transactionsPool *outport.TransactionPool) map[string]*smartContractResult.SmartContractResult {
+	scrs := make(map[string]*smartContractResult.SmartContractResult)
+
+	for hash, scr := range transactionsPool.GetSmartContractResults() {
+		scrs[hash] = scr.SmartContractResult
+	}
+
+	return scrs
+}
+
+func getTxsFromPool(transactionsPool *outport.TransactionPool) map[string]*transaction.Transaction {
+	txs := make(map[string]*transaction.Transaction)
+
+	for hash, tx := range transactionsPool.GetTransactions() {
+		txs[hash] = tx.Transaction
+	}
+
+	return txs
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
@@ -123,24 +192,35 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 	return txsWithOrder
 }
 
-func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
+func (ei *eventsInterceptor) getStateAccessesPerAccounts(
+	eventsData *data.ArgsSaveBlockData,
+	headerHash string,
+	transactionPool *outport.TransactionPool,
+) map[string]*stateChange.StateAccesses {
 	if eventsData.StateAccesses == nil {
 		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
-			"block hash", eventsData.HeaderHash,
+			"block hash", headerHash,
 			"error", ErrNilStateAccesses,
 		)
 
 		return make(map[string]*stateChange.StateAccesses)
 	}
 
-	stateAccessesPerTxs := eventsData.StateAccesses
+	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+	stateAccessesPerTxs, ok := eventsData.StateAccesses[headerHash]
+	if !ok {
+		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+			"block hash", headerHash,
+		)
+		return stateAccessesPerAccounts
+	}
 
-	logStateAccessesPerTxs(stateAccessesPerTxs)
+	stateAccesses := stateAccessesPerTxs.StateAccesses
+	logStateAccessesPerTxs(stateAccesses)
 
 	// txs hashes with order
-	txsWithOrder := getTxsWithOrder(eventsData.TransactionsPool)
+	txsWithOrder := getTxsWithOrder(transactionPool)
 
-	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	for _, txInfo := range txsWithOrder {
 		txHash, err := hex.DecodeString(txInfo.hash)
 		if err != nil {
@@ -148,7 +228,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 			continue
 		}
 
-		stateAccessesPerTx, ok := stateAccessesPerTxs[string(txHash)]
+		stateAccessesPerTx, ok := stateAccesses[string(txHash)]
 		if !ok {
 			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash)
 			continue

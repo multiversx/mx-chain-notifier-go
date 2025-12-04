@@ -93,7 +93,7 @@ func TestNewEventsHandler(t *testing.T) {
 	})
 }
 
-func TestHandleSaveBlockEvents(t *testing.T) {
+func TestHandleSaveBlockEvents_ShouldFail(t *testing.T) {
 	t.Parallel()
 
 	t.Run("duplicated events, should return early", func(t *testing.T) {
@@ -122,6 +122,36 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		require.Nil(t, err)
 	})
 
+	t.Run("nil events header, should fail", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockEventsHandlerArgs()
+		args.CheckDuplicates = true
+
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return true, nil
+			},
+		}
+
+		expectedErr := errors.New("expected err")
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				return nil, expectedErr
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		blockData := data.ArgsSaveBlockData{
+			Header: nil,
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
+		require.Equal(t, process.ErrNilBlockHeader, err)
+	})
+
 	t.Run("failed to pre-process events, should fail", func(t *testing.T) {
 		t.Parallel()
 
@@ -144,161 +174,151 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{})
+		blockData := data.ArgsSaveBlockData{
+			Header: &block.HeaderV2{},
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
 		require.Equal(t, expectedErr, err)
 	})
+}
 
-	t.Run("should work", func(t *testing.T) {
-		t.Parallel()
+func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
+	t.Parallel()
 
-		blockHash := "blockHash1"
-		txs := map[string]*outport.TxInfo{
-			"hash1": {
-				Transaction: &transaction.Transaction{
-					Nonce: 1,
-				},
-				ExecutionOrder: 1,
-			},
-		}
-		scrs := map[string]*outport.SCRInfo{
-			"hash2": {
-				SmartContractResult: &smartContractResult.SmartContractResult{
-					Nonce: 2,
-				},
-			},
-		}
-		logData := []*outport.LogData{
-			{
-				Log: &transaction.Log{
-					Address: []byte("logaddr1"),
-					Events:  []*transaction.Event{},
-				},
-				TxHash: "logHash1",
-			},
-		}
-
-		logEvents := []data.Event{
-			{
-				Address: "addr1",
-			},
-		}
-
-		stateAccesses := make(map[string]*stateChange.StateAccesses)
-		stateAccesses["txHash1"] = &stateChange.StateAccesses{
-			StateAccess: []*stateChange.StateAccess{
-				&stateChange.StateAccess{
-					Type:        stateChange.Write,
-					MainTrieKey: []byte("mainTrieKey1"),
-					MainTrieVal: []byte("mainTrieVal1"),
-				},
-				&stateChange.StateAccess{
-					Type:        stateChange.Write,
-					MainTrieKey: []byte("mainTrieKey2"),
-					MainTrieVal: []byte("mainTrieVal2"),
-				},
-			},
-		}
-		stateAccesses["txHash2"] = &stateChange.StateAccesses{}
-
-		rootHash := []byte("rootHash1")
-		timeStamp := uint64(123)
-		timeStampMs := uint64(1234)
-		header := &block.HeaderV2{
-			Header: &block.Header{
-				ShardID:   2,
-				TimeStamp: timeStamp,
-				RootHash:  rootHash,
-			},
-		}
-		blockData := data.ArgsSaveBlockData{
-			HeaderHash: []byte(blockHash),
-			TransactionsPool: &outport.TransactionPool{
-				Transactions:         txs,
-				SmartContractResults: scrs,
-				Logs:                 logData,
-			},
-			Header:            &block.HeaderV2{},
-			StateAccesses:     stateAccesses,
-			HeaderTimeStampMs: timeStampMs,
-		}
-
-		expTxs := map[string]*transaction.Transaction{
-			"hash1": {
+	blockHash := "blockHash1"
+	txs := map[string]*outport.TxInfo{
+		"hash1": {
+			Transaction: &transaction.Transaction{
 				Nonce: 1,
 			},
-		}
-		expScrs := map[string]*smartContractResult.SmartContractResult{
-			"hash2": {
+			ExecutionOrder: 1,
+		},
+	}
+	scrs := map[string]*outport.SCRInfo{
+		"hash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
 				Nonce: 2,
 			},
-		}
+		},
+	}
+	logData := []*outport.LogData{
+		{
+			Log: &transaction.Log{
+				Address: []byte("logaddr1"),
+				Events:  []*transaction.Event{},
+			},
+			TxHash: "logHash1",
+		},
+	}
 
-		expTxsData := data.BlockTxs{
-			Hash: blockHash,
-			Txs:  expTxs,
-		}
-		expScrsData := data.BlockScrs{
-			Hash: blockHash,
-			Scrs: expScrs,
-		}
-		expLogEvents := data.BlockEvents{
-			Hash:        blockHash,
-			TimeStamp:   timeStamp,
-			TimeStampMs: timeStampMs,
-			Events:      logEvents,
-			ShardID:     2,
-		}
+	logEvents := []data.Event{
+		{
+			Address: "addr1",
+		},
+	}
 
-		expTxsWithOrder := map[string]*outport.TxInfo{
-			"hash1": {
-				Transaction: &transaction.Transaction{
-					Nonce: 1,
-				},
-				ExecutionOrder: 1,
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				Type:        stateChange.Write,
+				MainTrieKey: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
 			},
-		}
-		expScrsWithOrder := map[string]*outport.SCRInfo{
-			"hash2": {
-				SmartContractResult: &smartContractResult.SmartContractResult{
-					Nonce: 2,
-				},
+			&stateChange.StateAccess{
+				Type:        stateChange.Write,
+				MainTrieKey: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
 			},
-		}
-		expTxsWithOrderData := data.BlockEventsWithOrder{
-			Hash:        blockHash,
-			TimeStamp:   timeStamp,
-			TimeStampMs: timeStampMs,
-			ShardID:     2,
-			Txs:         expTxsWithOrder,
-			Scrs:        expScrsWithOrder,
-			Events:      logEvents,
-		}
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
 
-		expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
-		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey1"))] = &stateChange.StateAccesses{
-			StateAccess: []*stateChange.StateAccess{
-				&stateChange.StateAccess{
-					Type:        stateChange.Write,
-					MainTrieKey: []byte("mainTrieKey1"),
-					MainTrieVal: []byte("mainTrieVal1"),
-				},
+	rootHash := []byte("rootHash1")
+
+	expTxs := map[string]*transaction.Transaction{
+		"hash1": {
+			Nonce: 1,
+		},
+	}
+	expScrs := map[string]*smartContractResult.SmartContractResult{
+		"hash2": {
+			Nonce: 2,
+		},
+	}
+
+	expTxsData := data.BlockTxs{
+		Hash: blockHash,
+		Txs:  expTxs,
+	}
+	expScrsData := data.BlockScrs{
+		Hash: blockHash,
+		Scrs: expScrs,
+	}
+	expLogEvents := data.BlockEvents{
+		Hash:    blockHash,
+		Events:  logEvents,
+		ShardID: 2,
+	}
+
+	expTxsWithOrder := map[string]*outport.TxInfo{
+		"hash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
 			},
-		}
-		expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
-			StateAccess: []*stateChange.StateAccess{
-				&stateChange.StateAccess{
-					Type:        stateChange.Write,
-					MainTrieKey: []byte("mainTrieKey2"),
-					MainTrieVal: []byte("mainTrieVal2"),
-				},
+			ExecutionOrder: 1,
+		},
+	}
+	expScrsWithOrder := map[string]*outport.SCRInfo{
+		"hash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
+				Nonce: 2,
 			},
-		}
-		expStateAccesses := data.BlockStateAccesses{
-			Hash:                     blockHash,
-			ShardID:                  2,
-			TimeStampMs:              1234,
-			RootHash:                 rootHash,
-			StateAccessesPerAccounts: expStateAccessesPerAccounts,
+		},
+	}
+	expTxsWithOrderData := data.BlockEventsWithOrder{
+		Hash:    blockHash,
+		ShardID: 2,
+		Txs:     expTxsWithOrder,
+		Scrs:    expScrsWithOrder,
+		Events:  logEvents,
+	}
+
+	expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+	expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey1"))] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				Type:        stateChange.Write,
+				MainTrieKey: []byte("mainTrieKey1"),
+				MainTrieVal: []byte("mainTrieVal1"),
+			},
+		},
+	}
+	expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				Type:        stateChange.Write,
+				MainTrieKey: []byte("mainTrieKey2"),
+				MainTrieVal: []byte("mainTrieVal2"),
+			},
+		},
+	}
+	expStateAccesses := data.BlockStateAccesses{
+		Hash:                     blockHash,
+		ShardID:                  2,
+		TimeStampMs:              1234,
+		RootHash:                 rootHash,
+		StateAccessesPerAccounts: expStateAccessesPerAccounts,
+	}
+
+	t.Run("should work before header v3", func(t *testing.T) {
+		t.Parallel()
+
+		header := &block.HeaderV2{
+			Header: &block.Header{
+				ShardID: 2,
+			},
 		}
 
 		pushWasCalled := false
@@ -349,6 +369,91 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
+
+		blockData := data.ArgsSaveBlockData{
+			HeaderHash: []byte(blockHash),
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				Logs:                 logData,
+			},
+			Header: header,
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
+		require.Nil(t, err)
+
+		assert.True(t, pushWasCalled)
+		assert.True(t, txsWasCalled)
+		assert.True(t, scrsWasCalled)
+		assert.True(t, blockEventsWithOrderWasCalled)
+	})
+
+	t.Run("should work with header v3", func(t *testing.T) {
+		t.Parallel()
+
+		header := &block.HeaderV3{
+			ShardID: 2,
+		}
+
+		pushWasCalled := false
+		txsWasCalled := false
+		scrsWasCalled := false
+		blockEventsWithOrderWasCalled := false
+
+		args := createMockEventsHandlerArgs()
+
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				assert.Fail(t, "should have not been called")
+				return &data.InterceptorBlockData{}, nil
+			},
+			ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
+				return []*data.InterceptorBlockData{
+					{
+						Hash:          blockHash,
+						Header:        header,
+						Txs:           expTxs,
+						Scrs:          expScrs,
+						LogEvents:     logEvents,
+						TxsWithOrder:  expTxsWithOrder,
+						ScrsWithOrder: expScrsWithOrder,
+					},
+				}, nil
+			},
+		}
+
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastCalled: func(events data.BlockEvents) {
+				pushWasCalled = true
+				assert.Equal(t, expLogEvents, events)
+			},
+			BroadcastTxsCalled: func(event data.BlockTxs) {
+				txsWasCalled = true
+				assert.Equal(t, expTxsData, event)
+			},
+			BroadcastScrsCalled: func(event data.BlockScrs) {
+				scrsWasCalled = true
+				assert.Equal(t, expScrsData, event)
+			},
+			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
+				blockEventsWithOrderWasCalled = true
+				assert.Equal(t, expTxsWithOrderData, event)
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		blockData := data.ArgsSaveBlockData{
+			HeaderHash: []byte(blockHash),
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				Logs:                 logData,
+			},
+			Header: header,
+		}
 
 		err = eventsHandler.HandleSaveBlockEvents(blockData)
 		require.Nil(t, err)
