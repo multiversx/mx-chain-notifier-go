@@ -112,6 +112,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 	}
 
 	for headerHash, execBlockData := range eventsData.Results {
+		log.Debug("eventsInterceptor: processing execution result for block", "blockHash", headerHash, "nonce", execBlockData.HeaderNonce)
 		transactionsPool := execBlockData.GetTransactionPool()
 		if transactionsPool == nil {
 			return nil, fmt.Errorf("%w: for execution results block data", ErrNilTransactionsPool)
@@ -120,7 +121,13 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 		body := execBlockData.Body
 
 		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())
-
+		log.Debug("prepareExecutionResultsData",
+			"headerNonce", execBlockData.HeaderNonce,
+			"numTxsInPool", len(transactionsPool.Transactions),
+			"numSCRsInPool", len(transactionsPool.SmartContractResults),
+			"numRewardsInPool", len(transactionsPool.Rewards),
+			"numInvalidTxsInPool", len(transactionsPool.InvalidTxs),
+		)
 		stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, headerHash, transactionsPool)
 
 		blockData := &data.InterceptorBlockData{
@@ -134,6 +141,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
 			RootHash:                 execBlockData.GetRootHash(),
+			Nonce:                    execBlockData.HeaderNonce,
 		}
 
 		execBlocksData = append(execBlocksData, blockData)
@@ -190,6 +198,11 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 		return txsWithOrder[i].index < txsWithOrder[j].index
 	})
 
+	log.Trace("txs with order", "numTxs", len(txsWithOrder))
+	for _, txInfo := range txsWithOrder {
+		log.Trace("tx with order", "txHash", txInfo.hash, "index", txInfo.index)
+	}
+
 	return txsWithOrder
 }
 
@@ -215,6 +228,13 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 		)
 		return stateAccessesPerAccounts
 	}
+	if stateAccessesPerTxs == nil {
+		log.Warn("stateAccessesPerTxs failed: will return empty state accesses per accounts",
+			"block hash", headerHash,
+			"num state accesses", len(eventsData.StateAccesses),
+		)
+		return stateAccessesPerAccounts
+	}
 
 	stateAccesses := stateAccessesPerTxs.StateAccesses
 	logStateAccessesPerTxs(stateAccesses)
@@ -234,6 +254,8 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash)
 			continue
 		}
+
+		log.Trace("processing state accesses for tx", "txHash", txInfo.hash, "numStateAccesses", len(stateAccessesPerTx.StateAccess))
 
 		for _, stateAccess := range stateAccessesPerTx.StateAccess {
 			if stateAccess.Type == stateChange.Read {

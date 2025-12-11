@@ -182,6 +182,14 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
 	}
 	eh.handleStateAccesses(stateAccesses)
+	log.Info("state accesses processed",
+		"block hash", stateAccesses.Hash,
+		"nonce", stateAccesses.Nonce,
+		"rootHash", stateAccesses.RootHash,
+		"scheduledRootHash", stateAccesses.ScheduledRootHash,
+		"stateAccesesPerAccounts num", len(stateAccesses.StateAccessesPerAccounts),
+		"shardID", shardID,
+	)
 
 	return nil
 }
@@ -196,7 +204,6 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 	headerTimeStamp := allEvents.Header.GetTimeStamp()
 	headerTimeStampMs := allEvents.HeaderTimeStampMs
 	shardID := allEvents.Header.GetShardID()
-	nonce := allEvents.Header.GetNonce()
 
 	for _, executionResultData := range executionResultsData {
 		err = eh.handleSaveBlockEvents(
@@ -204,7 +211,7 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 			headerTimeStamp,
 			headerTimeStampMs,
 			shardID,
-			nonce,
+			executionResultData.Nonce,
 			executionResultData.RootHash,
 			nil,
 		)
@@ -399,6 +406,8 @@ func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccess
 
 	log.Info("received state accesses",
 		"block hash", stateAccesses.Hash,
+		"nonce", stateAccesses.Nonce,
+		"rootHash", stateAccesses.RootHash,
 	)
 
 	t := time.Now()
