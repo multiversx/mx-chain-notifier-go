@@ -132,6 +132,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
+			Nonce:                    execBlockData.GetHeaderNonce(),
 		}
 
 		execBlocksData = append(execBlocksData, blockData)
@@ -210,6 +211,14 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 	if !ok {
 		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
+		)
+		return stateAccessesPerAccounts
+	}
+
+	if stateAccessesPerTxs == nil {
+		log.Warn("stateAccessesPerTxs failed: will return empty state accesses per accounts",
+			"block hash", headerHash,
+			"num state accesses", len(eventsData.StateAccesses),
 		)
 		return stateAccessesPerAccounts
 	}
