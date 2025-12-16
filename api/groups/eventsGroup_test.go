@@ -190,7 +190,7 @@ func TestEventsGroup_PushEvents(t *testing.T) {
 						ExecutionOrder: 1,
 					},
 				},
-				Logs: []*outport.LogData{
+				Logs: []*transaction.LogData{
 					{
 						Log: &transaction.Log{
 							Address: []byte("logaddr1"),

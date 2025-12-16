@@ -228,6 +228,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 		)
 		return stateAccessesPerAccounts
 	}
+
 	if stateAccessesPerTxs == nil {
 		log.Warn("stateAccessesPerTxs failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
@@ -339,7 +340,7 @@ func stateAccessToString(stateAccess *stateChange.StateAccess) string {
 	)
 }
 
-func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
+func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*transaction.LogData) []data.Event {
 	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {

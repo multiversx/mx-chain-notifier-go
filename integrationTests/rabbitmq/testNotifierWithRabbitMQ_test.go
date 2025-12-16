@@ -150,7 +150,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 				ExecutionOrder: 3,
 			},
 		},
-		Logs: []*outport.LogData{
+		Logs: []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: []byte("logaddr1"),

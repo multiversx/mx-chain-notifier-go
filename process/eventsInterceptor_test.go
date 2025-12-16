@@ -147,7 +147,7 @@ func TestProcessBlockEvents_WithoutExecutionResults(t *testing.T) {
 			},
 		}
 
-		logs := []*outport.LogData{
+		logs := []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: addr,
@@ -241,7 +241,7 @@ func TestProcessBlockEvents_WithoutExecutionResults(t *testing.T) {
 			},
 		}
 
-		logs := []*outport.LogData{
+		logs := []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: addr,
@@ -327,7 +327,7 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 			TimestampMs: 1234,
 		}
 
-		logs := []*outport.LogData{
+		logs := []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: addr,
@@ -438,7 +438,7 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 			TimestampMs: 1234,
 		}
 
-		logs := []*outport.LogData{
+		logs := []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: addr,
@@ -526,7 +526,7 @@ func TestGetLogEventsFromTransactionsPool(t *testing.T) {
 		},
 	}
 
-	logs := []*outport.LogData{
+	logs := []*transaction.LogData{
 		{
 			Log: &transaction.Log{
 				Events: []*transaction.Event{

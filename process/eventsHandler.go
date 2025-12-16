@@ -408,6 +408,7 @@ func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccess
 		"block hash", stateAccesses.Hash,
 		"nonce", stateAccesses.Nonce,
 		"rootHash", stateAccesses.RootHash,
+		"stateAccesesPerAccounts num", len(stateAccesses.StateAccessesPerAccounts),
 	)
 
 	t := time.Now()
