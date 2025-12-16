@@ -200,7 +200,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 			},
 		},
 	}
-	logData := []*outport.LogData{
+	logData := []*transaction.LogData{
 		{
 			Log: &transaction.Log{
 				Address: []byte("logaddr1"),

@@ -164,7 +164,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 					ExecutionOrder: 0,
 				},
 			},
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Address: []byte("logaddr1"),
@@ -254,7 +254,7 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 				ExecutionOrder: 0,
 			},
 		},
-		Logs: []*outport.LogData{
+		Logs: []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: []byte("logaddr1"),

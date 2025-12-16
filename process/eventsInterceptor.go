@@ -293,7 +293,7 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 	}
 }
 
-func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
+func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*transaction.LogData) []data.Event {
 	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {
