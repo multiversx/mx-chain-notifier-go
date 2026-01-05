@@ -117,33 +117,14 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 		TimeStamp: 1234,
 	}
 	headerBytes, _ := bd.marshaller.Marshal(header)
-
-	stateAccesses := make(map[string]*stateChange.StateAccesses)
-	stateAccesses["txHash1"] = &stateChange.StateAccesses{
-		StateAccess: []*stateChange.StateAccess{
-			&stateChange.StateAccess{
-				Type:           stateChange.Write,
-				MainTrieKey:    []byte("mainTrieKey1"),
-				MainTrieVal:    []byte("mainTrieVal1"),
-				TxHash:         []byte("txHash1"),
-				AccountChanges: 8,
-			},
-			&stateChange.StateAccess{
-				Type:           stateChange.Write,
-				MainTrieKey:    []byte("mainTrieKey2"),
-				MainTrieVal:    []byte("mainTrieVal2"),
-				TxHash:         []byte("txHash1"),
-				AccountChanges: 4,
-			},
-		},
-	}
-	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+	headerHash := []byte("headerHash1")
+	stateAccessesForBlock := getStateAccessesForBlock(headerHash)
 
 	return &outport.OutportBlock{
 		BlockData: &outport.BlockData{
 			HeaderBytes: headerBytes,
 			HeaderType:  "Header",
-			HeaderHash:  []byte("headerHash1"),
+			HeaderHash:  headerHash,
 			Body: &block.Body{
 				MiniBlocks: []*block.MiniBlock{
 					{
@@ -183,7 +164,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 					ExecutionOrder: 0,
 				},
 			},
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Address: []byte("logaddr1"),
@@ -193,21 +174,12 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 				},
 			},
 		},
-		StateAccesses:  stateAccesses,
-		NumberOfShards: 2,
+		StateAccessesForBlock: stateAccessesForBlock,
+		NumberOfShards:        2,
 	}
 }
 
-// OutportBlockV2 -
-func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
-	header := &block.HeaderV3{
-		ShardID:     1,
-		TimestampMs: 1234,
-	}
-	headerBytes, _ := bd.marshaller.Marshal(header)
-
-	execBlockHash := []byte("execBlockHash1")
-
+func getStateAccessesForBlock(headerHash []byte) map[string]*outport.StateAccessesForBlock {
 	stateAccesses := make(map[string]*stateChange.StateAccesses)
 	stateAccesses["txHash1"] = &stateChange.StateAccesses{
 		StateAccess: []*stateChange.StateAccess{
@@ -228,6 +200,21 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 		},
 	}
 	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+	stateAccessesForBlock := map[string]*outport.StateAccessesForBlock{}
+	stateAccessesForBlock[hex.EncodeToString(headerHash)] = &outport.StateAccessesForBlock{StateAccesses: stateAccesses}
+	return stateAccessesForBlock
+}
+
+// OutportBlockV2 -
+func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
+	header := &block.HeaderV3{
+		ShardID:     1,
+		TimestampMs: 1234,
+	}
+	headerBytes, _ := bd.marshaller.Marshal(header)
+
+	execBlockHash := []byte("execBlockHash1")
+	stateAccessesForBlock := getStateAccessesForBlock(execBlockHash)
 
 	blockBody := &block.Body{
 		MiniBlocks: []*block.MiniBlock{
@@ -267,7 +254,7 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 				ExecutionOrder: 0,
 			},
 		},
-		Logs: []*outport.LogData{
+		Logs: []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: []byte("logaddr1"),
@@ -282,7 +269,7 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 		},
 	}
 
-	execResults := map[string]*outport.ExecutionResultsData{
+	execResults := map[string]*outport.ExecutionResultData{
 		hex.EncodeToString(execBlockHash): {
 			Body:            blockBody,
 			TransactionPool: execResTxPool,
@@ -305,9 +292,9 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 			},
 			Results: execResults,
 		},
-		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		NumberOfShards:       2,
-		StateAccesses:        stateAccesses,
+		HeaderGasConsumption:  &outport.HeaderGasConsumption{},
+		NumberOfShards:        2,
+		StateAccessesForBlock: stateAccessesForBlock,
 	}
 }
 

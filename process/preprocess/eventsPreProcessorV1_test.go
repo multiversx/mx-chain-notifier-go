@@ -228,7 +228,7 @@ func createDefaultOutportBlock() *outport.OutportBlock {
 					ExecutionOrder: 2,
 				},
 			},
-			Logs: []*outport.LogData{},
+			Logs: []*transaction.LogData{},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{
 			GasProvided:    3,

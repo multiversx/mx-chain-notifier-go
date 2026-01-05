@@ -75,7 +75,7 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	events := ei.getLogEventsFromTransactionsPool(transactionsPool.Logs)
 
-	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
+	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, hex.EncodeToString(eventsData.HeaderHash), transactionsPool)
 
 	return &data.InterceptorBlockData{
 		Hash:                     hex.EncodeToString(eventsData.HeaderHash),
@@ -120,9 +120,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 
 		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())
 
-		// TODO: handle state accesses for header v3
-		// stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData)
-		stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+		stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, headerHash, transactionsPool)
 
 		blockData := &data.InterceptorBlockData{
 			Hash:                     headerHash,
@@ -134,6 +132,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
+			Nonce:                    execBlockData.GetHeaderNonce(),
 		}
 
 		execBlocksData = append(execBlocksData, blockData)
@@ -193,24 +192,43 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 	return txsWithOrder
 }
 
-func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
+func (ei *eventsInterceptor) getStateAccessesPerAccounts(
+	eventsData *data.ArgsSaveBlockData,
+	headerHash string,
+	transactionPool *outport.TransactionPool,
+) map[string]*stateChange.StateAccesses {
 	if eventsData.StateAccesses == nil {
 		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
-			"block hash", eventsData.HeaderHash,
+			"block hash", headerHash,
 			"error", ErrNilStateAccesses,
 		)
 
 		return make(map[string]*stateChange.StateAccesses)
 	}
 
-	stateAccessesPerTxs := eventsData.StateAccesses
+	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+	stateAccessesPerTxs, ok := eventsData.StateAccesses[headerHash]
+	if !ok {
+		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+			"block hash", headerHash,
+		)
+		return stateAccessesPerAccounts
+	}
 
-	logStateAccessesPerTxs(stateAccessesPerTxs)
+	if stateAccessesPerTxs == nil {
+		log.Warn("stateAccessesPerTxs failed: will return empty state accesses per accounts",
+			"block hash", headerHash,
+			"num state accesses", len(eventsData.StateAccesses),
+		)
+		return stateAccessesPerAccounts
+	}
+
+	stateAccesses := stateAccessesPerTxs.StateAccesses
+	logStateAccessesPerTxs(stateAccesses)
 
 	// txs hashes with order
-	txsWithOrder := getTxsWithOrder(eventsData.TransactionsPool)
+	txsWithOrder := getTxsWithOrder(transactionPool)
 
-	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	for _, txInfo := range txsWithOrder {
 		txHash, err := hex.DecodeString(txInfo.hash)
 		if err != nil {
@@ -218,7 +236,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(eventsData *data.ArgsSa
 			continue
 		}
 
-		stateAccessesPerTx, ok := stateAccessesPerTxs[string(txHash)]
+		stateAccessesPerTx, ok := stateAccesses[string(txHash)]
 		if !ok {
 			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash)
 			continue
@@ -275,7 +293,7 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 	}
 }
 
-func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
+func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*transaction.LogData) []data.Event {
 	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {

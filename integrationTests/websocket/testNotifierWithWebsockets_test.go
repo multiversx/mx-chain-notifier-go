@@ -82,7 +82,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Events: []*transaction.Event{
@@ -104,7 +104,11 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		StateAccesses:        stateAccesses,
+		StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+			hex.EncodeToString([]byte("headerHash")): {
+				StateAccesses: stateAccesses,
+			},
+		},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -242,7 +246,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Events: []*transaction.Event{
@@ -265,7 +269,11 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		StateAccesses:        stateAccesses,
+		StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+			hex.EncodeToString(headerHash): {
+				StateAccesses: stateAccesses,
+			},
+		},
 	}
 
 	wg := &sync.WaitGroup{}
@@ -516,7 +524,11 @@ func TestNotifierWithWebsockets_TxsEvents(t *testing.T) {
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		StateAccesses:        stateAccesses,
+		StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+			hex.EncodeToString(blockHash): {
+				StateAccesses: stateAccesses,
+			},
+		},
 	}
 
 	expTxs := map[string]*transaction.Transaction{
@@ -604,7 +616,11 @@ func TestNotifierWithWebsockets_ScrsEvents(t *testing.T) {
 			},
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		StateAccesses:        stateAccesses,
+		StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+			hex.EncodeToString(blockHash): {
+				StateAccesses: stateAccesses,
+			},
+		},
 	}
 
 	expScrs := map[string]*smartContractResult.SmartContractResult{
@@ -799,7 +815,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 		TransactionPool: &outport.TransactionPool{
 			Transactions:         txs,
 			SmartContractResults: scrs,
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Events: []*transaction.Event{
@@ -823,7 +839,11 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 			TimestampMs: 1234000,
 		},
 		HeaderGasConsumption: &outport.HeaderGasConsumption{},
-		StateAccesses:        stateAccesses,
+		StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+			hex.EncodeToString(blockHash): {
+				StateAccesses: stateAccesses,
+			},
+		},
 	}
 
 	numEvents := 6
