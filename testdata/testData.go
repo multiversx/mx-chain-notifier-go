@@ -1,7 +1,6 @@
 package testdata
 
 import (
-	"bytes"
 	"encoding/hex"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -261,7 +260,7 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 					Address: []byte("logaddr1"),
 					Events: []*transaction.Event{
 						{
-							Address: bytes.Repeat([]byte("0"), 32),
+							Address: []byte("logaddr1"),
 						},
 					},
 				},
@@ -270,14 +269,8 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 		},
 	}
 
-	execBlockHash2 := []byte("execBlockHash2")
-
 	execResults := map[string]*outport.ExecutionResultData{
 		hex.EncodeToString(execBlockHash): {
-			Body:            blockBody,
-			TransactionPool: execResTxPool,
-		},
-		hex.EncodeToString(execBlockHash2): {
 			Body:            blockBody,
 			TransactionPool: execResTxPool,
 		},
