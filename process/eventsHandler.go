@@ -181,16 +181,14 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 		return err
 	}
 
-	// TODO: get timestamp from executed header, not from current proposed header
-	headerTimeStamp := allEvents.Header.GetTimeStamp()
-	headerTimeStampMs := allEvents.HeaderTimeStampMs
 	shardID := allEvents.Header.GetShardID()
 
 	for _, executionResultData := range executionResultsData {
+		timeStampSec := common.ConvertTimeStampMsToSec(executionResultData.TimeStampMs) // this is used for backwards compatibility
 		err = eh.handleSaveBlockEvents(
 			executionResultData,
-			headerTimeStamp,
-			headerTimeStampMs,
+			timeStampSec,
+			executionResultData.TimeStampMs,
 			shardID,
 			executionResultData.Nonce,
 		)

@@ -133,6 +133,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
 			Nonce:                    execBlockData.GetHeaderNonce(),
+			TimeStampMs:              execBlockData.GetTimestampMs(),
 		}
 
 		execBlocksData = append(execBlocksData, blockData)
