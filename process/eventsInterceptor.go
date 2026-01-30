@@ -199,7 +199,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 	transactionPool *outport.TransactionPool,
 ) map[string]*stateChange.StateAccesses {
 	if eventsData.StateAccesses == nil {
-		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+		log.Debug("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
 			"error", ErrNilStateAccesses,
 		)
@@ -210,14 +210,14 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	stateAccessesPerTxs, ok := eventsData.StateAccesses[headerHash]
 	if !ok {
-		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+		log.Debug("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
 		)
 		return stateAccessesPerAccounts
 	}
 
 	if stateAccessesPerTxs == nil {
-		log.Warn("stateAccessesPerTxs failed: will return empty state accesses per accounts",
+		log.Debug("stateAccessesPerTxs failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
 			"num state accesses", len(eventsData.StateAccesses),
 		)
