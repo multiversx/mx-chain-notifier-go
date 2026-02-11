@@ -8,8 +8,13 @@ require (
 	github.com/go-redis/redis/v8 v8.11.3
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
+<<<<<<< HEAD
 	github.com/multiversx/mx-chain-communication-go v1.3.0
 	github.com/multiversx/mx-chain-core-go v1.4.2-0.20260119152911-59518132fb78
+=======
+	github.com/multiversx/mx-chain-communication-go v1.2.0
+	github.com/multiversx/mx-chain-core-go v1.4.1
+>>>>>>> main
 	github.com/multiversx/mx-chain-logger-go v1.1.0
 	github.com/pelletier/go-toml v1.9.3
 	github.com/prometheus/client_model v0.6.1
