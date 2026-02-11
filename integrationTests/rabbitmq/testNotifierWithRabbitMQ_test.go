@@ -58,6 +58,7 @@ func TestNotifierWithRabbitMQV3(t *testing.T) {
 func testNotifierWithRabbitMQ(t *testing.T, observerType string, payloadVersion uint32) {
 	cfg := integrationTests.GetDefaultConfigs()
 	cfg.MainConfig.General.CheckDuplicates = true
+	cfg.MainConfig.General.WithReadStateChanges = true
 	notifier, err := integrationTests.NewTestNotifierWithRabbitMq(cfg.MainConfig)
 	require.Nil(t, err)
 
@@ -150,7 +151,7 @@ func pushEventsRequest(wg *sync.WaitGroup, webServer integrationTests.ObserverCo
 				ExecutionOrder: 3,
 			},
 		},
-		Logs: []*outport.LogData{
+		Logs: []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: []byte("logaddr1"),

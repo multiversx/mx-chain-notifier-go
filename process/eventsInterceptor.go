@@ -30,11 +30,13 @@ type logEvent struct {
 
 // ArgsEventsInterceptor defines the arguments needed for creating an events interceptor instance
 type ArgsEventsInterceptor struct {
-	PubKeyConverter core.PubkeyConverter
+	PubKeyConverter      core.PubkeyConverter
+	WithReadStateChanges bool
 }
 
 type eventsInterceptor struct {
-	pubKeyConverter core.PubkeyConverter
+	pubKeyConverter      core.PubkeyConverter
+	withReadStateChanges bool
 }
 
 // NewEventsInterceptor creates a new eventsInterceptor instance
@@ -44,7 +46,8 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 	}
 
 	return &eventsInterceptor{
-		pubKeyConverter: args.PubKeyConverter,
+		pubKeyConverter:      args.PubKeyConverter,
+		withReadStateChanges: args.WithReadStateChanges,
 	}, nil
 }
 
@@ -135,6 +138,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
 			RootHash:                 execBlockData.GetRootHash(),
 			Nonce:                    execBlockData.GetHeaderNonce(),
+			TimeStampMs:              execBlockData.GetTimestampMs(),
 		}
 
 		execBlocksData = append(execBlocksData, blockData)
@@ -200,7 +204,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 	transactionPool *outport.TransactionPool,
 ) map[string]*stateChange.StateAccesses {
 	if eventsData.StateAccesses == nil {
-		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+		log.Debug("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
 			"error", ErrNilStateAccesses,
 		)
@@ -211,8 +215,16 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
 	stateAccessesPerTxs, ok := eventsData.StateAccesses[headerHash]
 	if !ok {
-		log.Warn("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+		log.Debug("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
+		)
+		return stateAccessesPerAccounts
+	}
+
+	if stateAccessesPerTxs == nil {
+		log.Debug("stateAccessesPerTxs failed: will return empty state accesses per accounts",
+			"block hash", headerHash,
+			"num state accesses", len(eventsData.StateAccesses),
 		)
 		return stateAccessesPerAccounts
 	}
@@ -245,13 +257,9 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 		}
 
 		for _, stateAccess := range stateAccessesPerTx.StateAccess {
-			if stateAccess.Type == stateChange.Read {
-				// TODO: add a flag here to allow read state accesses
+			if stateAccess.Type == stateChange.Read && !ei.withReadStateChanges {
 				continue
 			}
-
-			// TODO: make sure code update operations are handled properly
-			//	at the moment they are handled as a separate entry
 
 			accKey := hex.EncodeToString(stateAccess.MainTrieKey)
 			_, ok := stateAccessesPerAccounts[accKey]
@@ -326,7 +334,7 @@ func stateAccessToString(stateAccess *stateChange.StateAccess) string {
 	)
 }
 
-func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
+func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*transaction.LogData) []data.Event {
 	var logEvents []*logEvent
 	for _, logData := range logs {
 		if logData == nil {

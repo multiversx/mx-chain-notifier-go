@@ -164,7 +164,7 @@ func (bd *blockData) OutportBlockV1() *outport.OutportBlock {
 					ExecutionOrder: 0,
 				},
 			},
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Address: []byte("logaddr1"),
@@ -254,7 +254,7 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 				ExecutionOrder: 0,
 			},
 		},
-		Logs: []*outport.LogData{
+		Logs: []*transaction.LogData{
 			{
 				Log: &transaction.Log{
 					Address: []byte("logaddr1"),
@@ -269,8 +269,14 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 		},
 	}
 
+	execBlockHash2 := []byte("execBlockHash2")
+
 	execResults := map[string]*outport.ExecutionResultData{
 		hex.EncodeToString(execBlockHash): {
+			Body:            blockBody,
+			TransactionPool: execResTxPool,
+		},
+		hex.EncodeToString(execBlockHash2): {
 			Body:            blockBody,
 			TransactionPool: execResTxPool,
 		},

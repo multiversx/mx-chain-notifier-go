@@ -82,7 +82,7 @@ func TestNotifierWithWebsockets_PushEvents(t *testing.T) {
 
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Events: []*transaction.Event{
@@ -246,7 +246,7 @@ func TestNotifierWithWebsockets_BlockEvents(t *testing.T) {
 
 	saveBlockData := &outport.OutportBlock{
 		TransactionPool: &outport.TransactionPool{
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Events: []*transaction.Event{
@@ -815,7 +815,7 @@ func testNotifierWithWebsockets_AllEvents(t *testing.T, observerType string) {
 		TransactionPool: &outport.TransactionPool{
 			Transactions:         txs,
 			SmartContractResults: scrs,
-			Logs: []*outport.LogData{
+			Logs: []*transaction.LogData{
 				{
 					Log: &transaction.Log{
 						Events: []*transaction.Event{

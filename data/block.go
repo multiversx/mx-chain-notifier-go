@@ -34,6 +34,7 @@ type InterceptorBlockData struct {
 	StateAccessesPerAccounts map[string]*stateChange.StateAccesses
 	RootHash                 []byte
 	Nonce                    uint64
+	TimeStampMs              uint64
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events
