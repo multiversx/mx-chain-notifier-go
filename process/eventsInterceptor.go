@@ -29,11 +29,13 @@ type logEvent struct {
 
 // ArgsEventsInterceptor defines the arguments needed for creating an events interceptor instance
 type ArgsEventsInterceptor struct {
-	PubKeyConverter core.PubkeyConverter
+	PubKeyConverter      core.PubkeyConverter
+	WithReadStateChanges bool
 }
 
 type eventsInterceptor struct {
-	pubKeyConverter core.PubkeyConverter
+	pubKeyConverter      core.PubkeyConverter
+	withReadStateChanges bool
 }
 
 // NewEventsInterceptor creates a new eventsInterceptor instance
@@ -43,7 +45,8 @@ func NewEventsInterceptor(args ArgsEventsInterceptor) (*eventsInterceptor, error
 	}
 
 	return &eventsInterceptor{
-		pubKeyConverter: args.PubKeyConverter,
+		pubKeyConverter:      args.PubKeyConverter,
+		withReadStateChanges: args.WithReadStateChanges,
 	}, nil
 }
 
@@ -244,13 +247,9 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 		}
 
 		for _, stateAccess := range stateAccessesPerTx.StateAccess {
-			if stateAccess.Type == stateChange.Read {
-				// TODO: add a flag here to allow read state accesses
+			if stateAccess.Type == stateChange.Read && !ei.withReadStateChanges {
 				continue
 			}
-
-			// TODO: make sure code update operations are handled properly
-			//	at the moment they are handled as a separate entry
 
 			accKey := hex.EncodeToString(stateAccess.MainTrieKey)
 			_, ok := stateAccessesPerAccounts[accKey]

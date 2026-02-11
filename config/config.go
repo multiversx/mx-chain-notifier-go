@@ -20,9 +20,10 @@ type MainConfig struct {
 
 // GeneralConfig maps the general config section
 type GeneralConfig struct {
-	ExternalMarshaller MarshallerConfig
-	AddressConverter   AddressConverterConfig
-	CheckDuplicates    bool
+	ExternalMarshaller   MarshallerConfig
+	AddressConverter     AddressConverterConfig
+	CheckDuplicates      bool
+	WithReadStateChanges bool
 }
 
 // MarshallerConfig maps the marshaller configuration
