@@ -52,6 +52,27 @@ func (bd *blockData) OldSaveBlockData() *notifierData.SaveBlockData {
 
 // OutportBlockV0 -
 func (bd *blockData) OutportBlockV0() *notifierData.ArgsSaveBlock {
+	stateAccesses := make(map[string]*stateChange.StateAccesses)
+	stateAccesses["txHash1"] = &stateChange.StateAccesses{
+		StateAccess: []*stateChange.StateAccess{
+			&stateChange.StateAccess{
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey1"),
+				MainTrieVal:    []byte("mainTrieVal1"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 8,
+			},
+			&stateChange.StateAccess{
+				Type:           stateChange.Write,
+				MainTrieKey:    []byte("mainTrieKey2"),
+				MainTrieVal:    []byte("mainTrieVal2"),
+				TxHash:         []byte("txHash1"),
+				AccountChanges: 4,
+			},
+		},
+	}
+	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
+
 	saveBlockData := data.OutportBlockDataOld{
 		HeaderHash: []byte("headerHash3"),
 		Body: &block.Body{
@@ -102,6 +123,7 @@ func (bd *blockData) OutportBlockV0() *notifierData.ArgsSaveBlock {
 			},
 		},
 		NumberOfShards: 2,
+		StateAccesses:  stateAccesses,
 	}
 
 	return &data.ArgsSaveBlock{
