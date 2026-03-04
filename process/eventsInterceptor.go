@@ -232,7 +232,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccountsV3(
 	if stateAccessesPerBlock == nil {
 		log.Debug("stateAccessesPerBlock failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
-			"num state accesses", len(eventsData.StateAccesses),
+			"num state accesses for block", len(eventsData.StateAccessesForBlock),
 		)
 
 		return make(map[string]*stateChange.StateAccesses)

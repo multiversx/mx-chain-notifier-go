@@ -567,7 +567,7 @@ func TestGetLogEventsFromTransactionsPool(t *testing.T) {
 	require.Equal(t, txHash2, receivedEvents[2].TxHash)
 }
 
-func TestEventsInterceptor_GetStateAccessesPerAccountsV3(t *testing.T) {
+func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 	t.Parallel()
 
 	txs := map[string]*outport.TxInfo{

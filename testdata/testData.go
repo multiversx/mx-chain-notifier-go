@@ -11,7 +11,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-core-go/marshal"
 	"github.com/multiversx/mx-chain-notifier-go/common"
-	"github.com/multiversx/mx-chain-notifier-go/data"
 	notifierData "github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -73,7 +72,7 @@ func (bd *blockData) OutportBlockV0() *notifierData.ArgsSaveBlock {
 	}
 	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
 
-	saveBlockData := data.OutportBlockDataOld{
+	saveBlockData := notifierData.OutportBlockDataOld{
 		HeaderHash: []byte("headerHash3"),
 		Body: &block.Body{
 			MiniBlocks: []*block.MiniBlock{
@@ -126,7 +125,7 @@ func (bd *blockData) OutportBlockV0() *notifierData.ArgsSaveBlock {
 		StateAccesses:  stateAccesses,
 	}
 
-	return &data.ArgsSaveBlock{
+	return &notifierData.ArgsSaveBlock{
 		HeaderType:          "Header",
 		OutportBlockDataOld: saveBlockData,
 	}
