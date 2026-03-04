@@ -58,6 +58,7 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 		NumberOfShards:         blockData.NumberOfShards,
 		TransactionsPool:       txsPool,
 		Header:                 header,
+		StateAccesses:          blockData.StateAccesses,
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)
