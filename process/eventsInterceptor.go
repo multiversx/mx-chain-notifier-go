@@ -123,7 +123,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 
 		events := ei.getLogEventsFromTransactionsPool(transactionsPool.GetLogs())
 
-		stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, headerHash, transactionsPool)
+		stateAccessesPerAccounts := ei.getStateAccessesPerAccountsV3(eventsData, headerHash, transactionsPool)
 
 		blockData := &data.InterceptorBlockData{
 			Hash:                     headerHash,
@@ -210,24 +210,49 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 		return make(map[string]*stateChange.StateAccesses)
 	}
 
-	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
-	stateAccessesPerTxs, ok := eventsData.StateAccesses[headerHash]
+	stateAccesses := eventsData.StateAccesses
+
+	return ei.fetchStateAccessesPerAccounts(stateAccesses, transactionPool)
+}
+
+func (ei *eventsInterceptor) getStateAccessesPerAccountsV3(
+	eventsData *data.ArgsSaveBlockData,
+	headerHash string,
+	transactionPool *outport.TransactionPool,
+) map[string]*stateChange.StateAccesses {
+	stateAccessesPerBlock, ok := eventsData.StateAccessesForBlock[headerHash]
 	if !ok {
-		log.Debug("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+		log.Debug("stateAccessesPerBlock failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
 		)
-		return stateAccessesPerAccounts
+
+		return make(map[string]*stateChange.StateAccesses)
 	}
 
-	if stateAccessesPerTxs == nil {
-		log.Debug("stateAccessesPerTxs failed: will return empty state accesses per accounts",
+	if stateAccessesPerBlock == nil {
+		log.Debug("stateAccessesPerBlock failed: will return empty state accesses per accounts",
 			"block hash", headerHash,
 			"num state accesses", len(eventsData.StateAccesses),
 		)
-		return stateAccessesPerAccounts
+
+		return make(map[string]*stateChange.StateAccesses)
 	}
 
-	stateAccesses := stateAccessesPerTxs.StateAccesses
+	stateAccesses := stateAccessesPerBlock.StateAccesses
+
+	return ei.fetchStateAccessesPerAccounts(stateAccesses, transactionPool)
+}
+
+func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
+	stateAccesses map[string]*stateChange.StateAccesses,
+	transactionPool *outport.TransactionPool,
+) map[string]*stateChange.StateAccesses {
+	if stateAccesses == nil {
+		return make(map[string]*stateChange.StateAccesses)
+	}
+
+	stateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
+
 	logStateAccessesPerTxs(stateAccesses)
 
 	// txs hashes with order
