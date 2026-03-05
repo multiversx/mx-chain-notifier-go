@@ -72,7 +72,8 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		TransactionsPool:       outportBlock.TransactionPool,
 		Header:                 header,
 		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
-		StateAccesses:          outportBlock.GetStateAccessesForBlock(),
+		StateAccesses:          outportBlock.GetStateAccesses(),
+		StateAccessesForBlock:  outportBlock.GetStateAccessesForBlock(),
 		Results:                executionResults,
 	}
 

@@ -48,7 +48,8 @@ type ArgsSaveBlockData struct {
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	HeaderTimeStampMs      uint64
-	StateAccesses          map[string]*outport.StateAccessesForBlock
+	StateAccesses          map[string]*stateChange.StateAccesses
+	StateAccessesForBlock  map[string]*outport.StateAccessesForBlock
 	Results                map[string]*outport.ExecutionResultData
 }
 
@@ -65,6 +66,7 @@ type OutportBlockDataOld struct {
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
+	StateAccesses          map[string]*stateChange.StateAccesses
 }
 
 // ArgsSaveBlock holds block data with header type
