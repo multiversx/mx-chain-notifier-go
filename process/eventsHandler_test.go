@@ -340,6 +340,7 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 					TxsWithOrder:             expTxsWithOrder,
 					ScrsWithOrder:            expScrsWithOrder,
 					StateAccessesPerAccounts: expStateAccessesPerAccounts,
+					RootHash:                 rootHash,
 				}, nil
 			},
 		}

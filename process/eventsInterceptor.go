@@ -81,6 +81,11 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, hex.EncodeToString(eventsData.HeaderHash), transactionsPool)
 
+	rootHash := eventsData.Header.GetRootHash()
+	if eventsData.Header.GetAdditionalData() != nil {
+		rootHash = eventsData.Header.GetAdditionalData().GetScheduledRootHash()
+	}
+
 	return &data.InterceptorBlockData{
 		Hash:                     hex.EncodeToString(eventsData.HeaderHash),
 		Body:                     eventsData.Body,
@@ -91,6 +96,7 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 		LogEvents:                events,
 		StateAccessesPerAccounts: stateAccessesPerAccounts,
+		RootHash:                 rootHash,
 	}, nil
 }
 
