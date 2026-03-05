@@ -32,7 +32,6 @@ type InterceptorBlockData struct {
 	ScrsWithOrder            map[string]*outport.SCRInfo
 	LogEvents                []Event
 	StateAccessesPerAccounts map[string]*stateChange.StateAccesses
-	RootHash                 []byte
 	Nonce                    uint64
 	TimeStampMs              uint64
 }

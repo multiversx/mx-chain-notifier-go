@@ -2,7 +2,6 @@ package process_test
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"testing"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
-	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -218,25 +216,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		},
 	}
 
-	stateAccesses := make(map[string]*stateChange.StateAccesses)
-	stateAccesses["txHash1"] = &stateChange.StateAccesses{
-		StateAccess: []*stateChange.StateAccess{
-			{
-				Type:        stateChange.Write,
-				MainTrieKey: []byte("mainTrieKey1"),
-				MainTrieVal: []byte("mainTrieVal1"),
-			},
-			{
-				Type:        stateChange.Write,
-				MainTrieKey: []byte("mainTrieKey2"),
-				MainTrieVal: []byte("mainTrieVal2"),
-			},
-		},
-	}
-	stateAccesses["txHash2"] = &stateChange.StateAccesses{}
-
-	rootHash := []byte("rootHash1")
-
 	expTxs := map[string]*transaction.Transaction{
 		"hash1": {
 			Nonce: 1,
@@ -285,39 +264,12 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		Events:  logEvents,
 	}
 
-	expStateAccessesPerAccounts := make(map[string]*stateChange.StateAccesses)
-	expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey1"))] = &stateChange.StateAccesses{
-		StateAccess: []*stateChange.StateAccess{
-			{
-				Type:        stateChange.Write,
-				MainTrieKey: []byte("mainTrieKey1"),
-				MainTrieVal: []byte("mainTrieVal1"),
-			},
-		},
-	}
-	expStateAccessesPerAccounts[hex.EncodeToString([]byte("mainTrieKey2"))] = &stateChange.StateAccesses{
-		StateAccess: []*stateChange.StateAccess{
-			{
-				Type:        stateChange.Write,
-				MainTrieKey: []byte("mainTrieKey2"),
-				MainTrieVal: []byte("mainTrieVal2"),
-			},
-		},
-	}
-	expStateAccesses := data.BlockStateAccesses{
-		Hash:                     blockHash,
-		ShardID:                  2,
-		RootHash:                 rootHash,
-		StateAccessesPerAccounts: expStateAccessesPerAccounts,
-	}
-
 	t.Run("should work before header v3", func(t *testing.T) {
 		t.Parallel()
 
 		header := &block.HeaderV2{
 			Header: &block.Header{
-				ShardID:  2,
-				RootHash: rootHash,
+				ShardID: 2,
 			},
 		}
 
@@ -325,22 +277,19 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		txsWasCalled := false
 		scrsWasCalled := false
 		blockEventsWithOrderWasCalled := false
-		stateAccessesWasCalled := false
 
 		args := createMockEventsHandlerArgs()
 
 		args.EventsInterceptor = &mocks.EventsInterceptorStub{
 			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
 				return &data.InterceptorBlockData{
-					Hash:                     blockHash,
-					Header:                   header,
-					Txs:                      expTxs,
-					Scrs:                     expScrs,
-					LogEvents:                logEvents,
-					TxsWithOrder:             expTxsWithOrder,
-					ScrsWithOrder:            expScrsWithOrder,
-					StateAccessesPerAccounts: expStateAccessesPerAccounts,
-					RootHash:                 rootHash,
+					Hash:          blockHash,
+					Header:        header,
+					Txs:           expTxs,
+					Scrs:          expScrs,
+					LogEvents:     logEvents,
+					TxsWithOrder:  expTxsWithOrder,
+					ScrsWithOrder: expScrsWithOrder,
 				}, nil
 			},
 		}
@@ -361,10 +310,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
 				blockEventsWithOrderWasCalled = true
 				assert.Equal(t, expTxsWithOrderData, event)
-			},
-			BroadcastStateAccessesCalled: func(event data.BlockStateAccesses) {
-				stateAccessesWasCalled = true
-				assert.Equal(t, expStateAccesses, event)
 			},
 		}
 
@@ -388,7 +333,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		assert.True(t, txsWasCalled)
 		assert.True(t, scrsWasCalled)
 		assert.True(t, blockEventsWithOrderWasCalled)
-		assert.True(t, stateAccessesWasCalled)
 	})
 
 	t.Run("should work with header v3", func(t *testing.T) {
@@ -402,7 +346,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		txsWasCalled := false
 		scrsWasCalled := false
 		blockEventsWithOrderWasCalled := false
-		stateAccessesWasCalled := false
 
 		args := createMockEventsHandlerArgs()
 
@@ -414,15 +357,13 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 			ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
 				return []*data.InterceptorBlockData{
 					{
-						Hash:                     blockHash,
-						Header:                   header,
-						Txs:                      expTxs,
-						Scrs:                     expScrs,
-						LogEvents:                logEvents,
-						TxsWithOrder:             expTxsWithOrder,
-						ScrsWithOrder:            expScrsWithOrder,
-						StateAccessesPerAccounts: expStateAccessesPerAccounts,
-						RootHash:                 rootHash,
+						Hash:          blockHash,
+						Header:        header,
+						Txs:           expTxs,
+						Scrs:          expScrs,
+						LogEvents:     logEvents,
+						TxsWithOrder:  expTxsWithOrder,
+						ScrsWithOrder: expScrsWithOrder,
 					},
 				}, nil
 			},
@@ -445,10 +386,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 				blockEventsWithOrderWasCalled = true
 				assert.Equal(t, expTxsWithOrderData, event)
 			},
-			BroadcastStateAccessesCalled: func(event data.BlockStateAccesses) {
-				stateAccessesWasCalled = true
-				assert.Equal(t, expStateAccesses, event)
-			},
 		}
 
 		eventsHandler, err := process.NewEventsHandler(args)
@@ -471,7 +408,6 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		assert.True(t, txsWasCalled)
 		assert.True(t, scrsWasCalled)
 		assert.True(t, blockEventsWithOrderWasCalled)
-		assert.True(t, stateAccessesWasCalled)
 	})
 }
 
