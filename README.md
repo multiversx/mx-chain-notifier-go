@@ -2,7 +2,7 @@
 
 The notifier service is a component that receives block events synchronously
 from multiversx observer nodes, and it forwards them to a subscribing component
-(via message queuing service or websockets)
+(via message queuing service or websockets).
   
 ## Prerequisites
 
@@ -11,15 +11,12 @@ has to setup one or multiple observers. For running an observing squad,
 these [docs](https://docs.multiversx.com/integrators/observing-squad/) 
 cover the whole process. 
 
-The observer node can be connected using WebSocket integration. Please check observer
-node config for setting up the connector. Enable `HostDriversConfig` in order to use
-WebSocket integration.
+There are two ways the observer nodes can push data to the notifier service:
 
-The required configs for launching an observer/s with a driver attached,
-can be found [here](https://github.com/multiversx/mx-chain-go/blob/master/cmd/node/config/external.toml).
+1. **WebSocket Integration (Recommended)**: The observer node pushes events to the notifier over a persistent WebSocket connection. This is the newer, more efficient method. To use this, check the observer node config and enable `HostDriversConfig`. 
+   The required configs for launching an observer/s with a WS driver attached can be found [here](https://github.com/multiversx/mx-chain-go/blob/master/cmd/node/config/external.toml).
 
-The HTTP integration is still available for backwards compatibility, but it will be
-deprecated in the future.
+2. **HTTP POST Integration (Deprecated)**: The observer node makes separate HTTP POST requests to the notifier's API endpoints (`/events/push`, etc.) for every event. This integration is still available for backwards compatibility, but it will be deprecated in the future.
 
 ## How to run
 
@@ -131,15 +128,21 @@ make docker-new publisher_type=rabbitmq
 
 ### API Endpoints
 
-Notifier service will expose several events routes, the observer nodes will
-push events to these routes:
+Depending on the observer integration method chosen, the notifier service will expose the following routes.
+
+**For WebSocket Integration (Observer -> Notifier):**
+When using the WebSocket integration, the observer pushes all events through a single persistent WebSocket connection rather than relying on the HTTP routes above.
+
+**For HTTP POST Integration (Observer -> Notifier):**
+The observer nodes will push events to these routes via consecutive HTTP requests:
 - `/events/push` (POST) -> it will handle all events for each round
 - `/events/revert` (POST) -> if there is a reverted block, the event will be
   pushed on this route
 - `/events/finalized` (POST) -> when the block has been finalized, the events
   will be pushed on this route
 
-If the service will be in "notifier" mode, it will expose a additional route:
+**For Client Subscriptions (Notifier -> Consumer):**
+If the service will be in "notifier" mode (using the `ws` publisher), it will expose an additional route for end consumers to receive data:
 - `/hub/ws` (GET) - this route can be used to manage the websocket connection (check [websocket subscribing](#websockets) section for more details on this)
 
 ## Redis
