@@ -133,7 +133,7 @@ make docker-new publisher_type=rabbitmq
 Depending on the observer integration method chosen, the notifier service will expose the following routes.
 
 **For WebSocket Integration (Observer -> Notifier):**
-When using the WebSocket integration, the observer pushes all events through a single persistent WebSocket connection rather than relying on the HTTP routes above.
+When using the WebSocket integration, the observer pushes all events through a single persistent WebSocket connection rather than relying on the HTTP routes below.
 
 **For HTTP POST Integration (Observer -> Notifier):**
 The observer nodes will push events to these routes via consecutive HTTP requests:
@@ -145,7 +145,7 @@ The observer nodes will push events to these routes via consecutive HTTP request
 
 **For Client Subscriptions (Notifier -> Consumer):**
 If the service will be in "notifier" mode (using the `ws` publisher), it will expose an additional route for end consumers to receive data:
-- `/hub/ws` (GET) - this route can be used to manage the websocket connection (check [websocket subscribing](#websockets) section for more details on this)
+- `/hub/ws` (GET) - this route can be used to manage the WebSocket connection (check [websocket subscribing](#websockets) section for more details on this)
 
 ## Redis
 
@@ -185,8 +185,8 @@ Below is the list of available event types together with their associated JSON p
     {
       "address": "addr1",
       "identifier": "identifier",
-      "topics": ["topic1", "topic2"],
-      "data": "data",
+      "topics": ["<< base64 encoded topic1 >>", "<< base64 encoded topic2 >>"],
+      "data": "<< base64 encoded data >> ",
       ...
     }
   ]
@@ -266,10 +266,7 @@ Below is the list of available event types together with their associated JSON p
   "timestampMs": 12345678000,
   "nonce": 123,
   "stateAccessesPerAccounts": {
-    "erd1...": {
-      "reads": [...],
-      "writes": [...]
-    }
+       ...
   }
 }
 ```
