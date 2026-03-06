@@ -61,6 +61,8 @@ The supported config variables are:
   as the one specified in the `ProxyUrl` described above.
 - `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
 - `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
+- `CheckDuplicates`: signals if the events received from observers have already been pushed to clients. Requires a Redis instance/cluster.
+- `WithReadStateChanges`: signals if read state changes operations will be handled by the notifier. Note: this requires read state changes to also be enabled on the observer nodes.
 
 If observer connector is set to use BasicAuth with `UseAuthorization = true`, `Username` and `Password` has to be
 set here on events notifier, and `Auth` flag has to be enabled in
@@ -169,10 +171,113 @@ in code in `data/outport.go` file.
 Once the proxy is launched together with the observer/s, the driver's methods
 will be called. 
 
+### Event types
+
+There are multiple event types available, they can be found as constants in common package,
+[constants](https://github.com/multiversx/mx-chain-notifier-go/blob/main/common/constants.go).
+Below is the list of available event types together with their associated JSON payload structures.
+
+- `all_events`: Pushes all logs and events for a block.
+```json
+{
+  "hash": "blockHash1",
+  "events": [
+    {
+      "address": "addr1",
+      "identifier": "identifier",
+      "topics": ["topic1", "topic2"],
+      "data": "data",
+      ...
+    }
+  ]
+}
+```
+
+- `block_events`: Pushes block info alongside its logs and events.
+```json
+{
+  "hash": "blockHash1",
+  "shardId": 1,
+  "timestamp": 12345678,
+  "timestampMs": 12345678000,
+  "events": [
+    {
+      "address": "addr1",
+      "identifier": "identifier",
+      ...
+    }
+  ]
+}
+```
+
+- `revert_events`: Pushes information relating to a reverted block.
+```json
+{
+    "hash": "blockHash1",
+    "nonce": 11,
+    "round": 2,
+    "epoch": 1,
+    "shardId": 1,
+    "timestamp": 12345678,
+    "timestampMs": 12345678000
+}
+```
+
+- `finalized_events`: Pushes the hash of a finalized block.
+```json
+{
+    "hash": "blockHash"
+}
+```
+
+- `block_txs`: Pushes all transactions contained within a block.
+```json
+{
+  "hash": "blockHash1",
+  "txs": {
+    "txHash1": {      
+        "Nonce": 123,
+        "Round": 1,
+        "Epoch": 1,
+        ...
+    }
+  }
+}
+```
+
+- `block_scrs`: Pushes all smart contract results contained within a block.
+```json
+{
+  "hash": "blockHash1",
+  "scrs": {
+    "scrHash1": {      
+        "Nonce": 123,
+        ...
+    }
+  }
+}
+```
+
+- `block_state_accesses`: Pushes information regarding the state accesses (reads/writes) occurring within a block. *(Requires `WithReadStateChanges` config enabled)*
+```json
+{
+  "hash": "blockHash1",
+  "shardID": 1,
+  "timestampMs": 12345678000,
+  "nonce": 123,
+  "stateAccessesPerAccounts": {
+    "erd1...": {
+      "reads": [...],
+      "writes": [...]
+    }
+  }
+}
+```
+
 ### RabbitMQ
 
 When using a setup with `RabbitMQ` you have to subscribe to each exchange
-separately.
+separately. This can be handled via RabbitMQ Management UI platform.
 
 ### WebSockets
 
@@ -298,63 +403,3 @@ inner marshalled data like:
 }
 ```
 
-There are multiple event types available, they can be found as constants in common package,
-[constants](https://github.com/multiversx/mx-chain-notifier-go/blob/main/common/constants.go). Below there is the event type together with the associated marshalled data type.
-- `all_events`
-```json
-{
-  "hash": "blockHash1",
-  "events": [
-    {
-      "address": "addr1",
-      "identifier": "identifier",
-      ...
-    }
-  ]
-}
-```
-
-- `revert_events`
-```json
-{
-    "hash": "blockHash1",
-    "nonce": 11,
-    "round": 2,
-    "epoch": 1,
-}
-```
-
-- `finalized_events`
-```json
-{
-    "hash": "blockHash"
-}
-```
-
-- `block_txs`:
-```json
-{
-  "hash": "blockHash1",
-  "txs": {
-    "txHash1": {      
-        "Nonce": 123,
-        "Round": 1,
-        "Epoch": 1,
-        ...
-    }
-  }
-}
-```
-
-- `block_scrs`
-```json
-{
-  "hash": "blockHash1",
-  "scrs": {
-    "scrHash1": {      
-        "Nonce": 123,
-        ...
-    }
-  }
-}
-```
