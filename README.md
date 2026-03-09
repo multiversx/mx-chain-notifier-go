@@ -2,7 +2,7 @@
 
 The notifier service is a component that receives block events synchronously
 from multiversx observer nodes, and it forwards them to a subscribing component
-(via message queuing service or websockets)
+(via message queuing service or websockets).
   
 ## Prerequisites
 
@@ -11,15 +11,12 @@ has to setup one or multiple observers. For running an observing squad,
 these [docs](https://docs.multiversx.com/integrators/observing-squad/) 
 cover the whole process. 
 
-The observer node can be connected using WebSocket integration. Please check observer
-node config for setting up the connector. Enable `HostDriversConfig` in order to use
-WebSocket integration.
+There are two ways the observer nodes can push data to the notifier service:
 
-The required configs for launching an observer/s with a driver attached,
-can be found [here](https://github.com/multiversx/mx-chain-go/blob/master/cmd/node/config/external.toml).
+1. **WebSocket Integration (Recommended)**: The observer node pushes events to the notifier over a persistent WebSocket connection. This is the newer, more efficient method. To use this, check the observer node config and enable `HostDriversConfig`. 
+   The required configs for launching an observer/s with a WS driver attached can be found [here](https://github.com/multiversx/mx-chain-go/blob/master/cmd/node/config/external.toml).
 
-The HTTP integration is still available for backwards compatibility, but it will be
-deprecated in the future.
+2. **HTTP POST Integration (Deprecated)**: The observer node makes separate HTTP POST requests to the notifier's API endpoints (`/events/push`, etc.) for every event. This integration is still available for backwards compatibility, but it will be deprecated in the future.
 
 ## How to run
 
@@ -64,6 +61,8 @@ The supported config variables are:
   as the one specified in the `ProxyUrl` described above.
 - `Username`: the username used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
 - `Password`: the password used to authorize an observer. Can be left empty for `UseAuthorization = false` on observer connector.
+- `CheckDuplicates`: signals if the events received from observers have already been pushed to clients. Requires a Redis instance/cluster.
+- `WithReadStateChanges`: signals if read state changes operations will be handled by the notifier. Note: this requires read state changes to also be enabled on the observer nodes.
 
 If observer connector is set to use BasicAuth with `UseAuthorization = true`, `Username` and `Password` has to be
 set here on events notifier, and `Auth` flag has to be enabled in
@@ -131,16 +130,22 @@ make docker-new publisher_type=rabbitmq
 
 ### API Endpoints
 
-Notifier service will expose several events routes, the observer nodes will
-push events to these routes:
+Depending on the observer integration method chosen, the notifier service will expose the following routes.
+
+**For WebSocket Integration (Observer -> Notifier):**
+When using the WebSocket integration, the observer pushes all events through a single persistent WebSocket connection rather than relying on the HTTP routes below.
+
+**For HTTP POST Integration (Observer -> Notifier):**
+The observer nodes will push events to these routes via consecutive HTTP requests:
 - `/events/push` (POST) -> it will handle all events for each round
 - `/events/revert` (POST) -> if there is a reverted block, the event will be
   pushed on this route
 - `/events/finalized` (POST) -> when the block has been finalized, the events
   will be pushed on this route
 
-If the service will be in "notifier" mode, it will expose a additional route:
-- `/hub/ws` (GET) - this route can be used to manage the websocket connection (check [websocket subscribing](#websockets) section for more details on this)
+**For Client Subscriptions (Notifier -> Consumer):**
+If the service will be in "notifier" mode (using the `ws` publisher), it will expose an additional route for end consumers to receive data:
+- `/hub/ws` (GET) - this route can be used to manage the WebSocket connection (check [websocket subscribing](#websockets) section for more details on this)
 
 ## Redis
 
@@ -166,10 +171,110 @@ in code in `data/outport.go` file.
 Once the proxy is launched together with the observer/s, the driver's methods
 will be called. 
 
+### Event types
+
+There are multiple event types available, they can be found as constants in common package,
+[constants](https://github.com/multiversx/mx-chain-notifier-go/blob/main/common/constants.go).
+Below is the list of available event types together with their associated JSON payload structures.
+
+- `all_events`: Pushes all logs and events for a block.
+```json
+{
+  "hash": "blockHash1",
+  "events": [
+    {
+      "address": "addr1",
+      "identifier": "identifier",
+      "topics": ["<< base64 encoded topic1 >>", "<< base64 encoded topic2 >>"],
+      "data": "<< base64 encoded data >> ",
+      ...
+    }
+  ]
+}
+```
+
+- `block_events`: Pushes block info alongside its logs and events.
+```json
+{
+  "hash": "blockHash1",
+  "shardId": 1,
+  "timestamp": 12345678,
+  "timestampMs": 12345678000,
+  "events": [
+    {
+      "address": "addr1",
+      "identifier": "identifier",
+      ...
+    }
+  ]
+}
+```
+
+- `revert_events`: Pushes information relating to a reverted block.
+```json
+{
+    "hash": "blockHash1",
+    "nonce": 11,
+    "round": 2,
+    "epoch": 1,
+    "shardId": 1,
+    "timestamp": 12345678,
+    "timestampMs": 12345678000
+}
+```
+
+- `finalized_events`: Pushes the hash of a finalized block.
+```json
+{
+    "hash": "blockHash"
+}
+```
+
+- `block_txs`: Pushes all transactions contained within a block.
+```json
+{
+  "hash": "blockHash1",
+  "txs": {
+    "txHash1": {      
+        "Nonce": 123,
+        "Round": 1,
+        "Epoch": 1,
+        ...
+    }
+  }
+}
+```
+
+- `block_scrs`: Pushes all smart contract results contained within a block.
+```json
+{
+  "hash": "blockHash1",
+  "scrs": {
+    "scrHash1": {      
+        "Nonce": 123,
+        ...
+    }
+  }
+}
+```
+
+- `block_state_accesses`: Pushes information regarding the state accesses (reads/writes) occurring within a block. *(Requires `WithReadStateChanges` config enabled)*
+```json
+{
+  "hash": "blockHash1",
+  "shardID": 1,
+  "timestampMs": 12345678000,
+  "nonce": 123,
+  "stateAccessesPerAccounts": {
+       ...
+  }
+}
+```
+
 ### RabbitMQ
 
 When using a setup with `RabbitMQ` you have to subscribe to each exchange
-separately.
+separately. This can be handled via RabbitMQ Management UI platform.
 
 ### WebSockets
 
@@ -295,63 +400,3 @@ inner marshalled data like:
 }
 ```
 
-There are multiple event types available, they can be found as constants in common package,
-[constants](https://github.com/multiversx/mx-chain-notifier-go/blob/main/common/constants.go). Below there is the event type together with the associated marshalled data type.
-- `all_events`
-```json
-{
-  "hash": "blockHash1",
-  "events": [
-    {
-      "address": "addr1",
-      "identifier": "identifier",
-      ...
-    }
-  ]
-}
-```
-
-- `revert_events`
-```json
-{
-    "hash": "blockHash1",
-    "nonce": 11,
-    "round": 2,
-    "epoch": 1,
-}
-```
-
-- `finalized_events`
-```json
-{
-    "hash": "blockHash"
-}
-```
-
-- `block_txs`:
-```json
-{
-  "hash": "blockHash1",
-  "txs": {
-    "txHash1": {      
-        "Nonce": 123,
-        "Round": 1,
-        "Epoch": 1,
-        ...
-    }
-  }
-}
-```
-
-- `block_scrs`
-```json
-{
-  "hash": "blockHash1",
-  "scrs": {
-    "scrHash1": {      
-        "Nonce": 123,
-        ...
-    }
-  }
-}
-```
