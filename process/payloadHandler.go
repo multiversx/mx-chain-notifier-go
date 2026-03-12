@@ -2,6 +2,7 @@ package process
 
 import (
 	"errors"
+	"time"
 
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 )
@@ -65,6 +66,11 @@ func (ph *payloadHandler) saveBlock(marshalledData []byte, version uint32) error
 		return ErrInvalidPayloadType
 	}
 
+	t := time.Now()
+	defer func() {
+		log.Debug("saveBlock done", "duration", time.Since(t))
+	}()
+
 	return dataProcessor.SaveBlock(marshalledData)
 }
 
@@ -75,6 +81,11 @@ func (ph *payloadHandler) revertIndexedBlock(marshalledData []byte, version uint
 		return ErrInvalidPayloadType
 	}
 
+	t := time.Now()
+	defer func() {
+		log.Debug("revertIndexedBlock done", "duration", time.Since(t))
+	}()
+
 	return dataProcessor.RevertIndexedBlock(marshalledData)
 }
 
@@ -84,6 +95,11 @@ func (ph *payloadHandler) finalizedBlock(marshalledData []byte, version uint32) 
 		log.Warn("invalid provided version", "version", version)
 		return ErrInvalidPayloadType
 	}
+
+	t := time.Now()
+	defer func() {
+		log.Debug("finalizedBlock done", "duration", time.Since(t))
+	}()
 
 	return dataProcessor.FinalizedBlock(marshalledData)
 }

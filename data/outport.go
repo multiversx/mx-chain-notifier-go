@@ -80,8 +80,6 @@ type BlockStateAccesses struct {
 	ShardID                  uint32                                `json:"shardID"`
 	TimeStampMs              uint64                                `json:"timestampMs"`
 	Nonce                    uint64                                `json:"nonce"`
-	RootHash                 []byte                                `json:"rootHash"`
-	ScheduledRootHash        []byte                                `json:"scheduledRootHash"`
 	StateAccessesPerAccounts map[string]*stateChange.StateAccesses `json:"stateAccessesPerAccounts"`
 }
 

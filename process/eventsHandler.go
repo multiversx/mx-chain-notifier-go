@@ -200,16 +200,14 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 		return err
 	}
 
-	// TODO: get timestamp from executed header, not from current proposed header
-	headerTimeStamp := allEvents.Header.GetTimeStamp()
-	headerTimeStampMs := allEvents.HeaderTimeStampMs
 	shardID := allEvents.Header.GetShardID()
 
 	for _, executionResultData := range executionResultsData {
+		timeStampSec := common.ConvertTimeStampMsToSec(executionResultData.TimeStampMs) // this is used for backwards compatibility
 		err = eh.handleSaveBlockEvents(
 			executionResultData,
-			headerTimeStamp,
-			headerTimeStampMs,
+			timeStampSec,
+			executionResultData.TimeStampMs,
 			shardID,
 			executionResultData.Nonce,
 			executionResultData.RootHash,
@@ -233,7 +231,7 @@ func (eh *eventsHandler) handlePushEvents(events data.BlockEvents) error {
 	}
 
 	if len(events.Events) == 0 {
-		log.Warn("received empty events", "event", common.PushLogsAndEvents,
+		log.Debug("received empty events", "event", common.PushLogsAndEvents,
 			"block hash", events.Hash,
 		)
 		events.Events = make([]data.Event, 0)
@@ -340,7 +338,7 @@ func (eh *eventsHandler) handleBlockTxs(blockTxs data.BlockTxs) {
 	}
 
 	if len(blockTxs.Txs) == 0 {
-		log.Warn("received empty events", "event", common.BlockTxs,
+		log.Debug("received empty events", "event", common.BlockTxs,
 			"block hash", blockTxs.Hash,
 		)
 	} else {
@@ -364,7 +362,7 @@ func (eh *eventsHandler) handleBlockScrs(blockScrs data.BlockScrs) {
 	}
 
 	if len(blockScrs.Scrs) == 0 {
-		log.Warn("received empty events", "event", common.BlockScrs,
+		log.Debug("received empty events", "event", common.BlockScrs,
 			"block hash", blockScrs.Hash,
 		)
 	} else {

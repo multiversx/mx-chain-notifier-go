@@ -3,6 +3,10 @@
     # Requires a redis instance/cluster and should be used when multiple observers push from the same shard
     CheckDuplicates = false
 
+    # WithReadStateChanges signals if read state changes operation will be handled
+    # It depends also if read state changes are enabled from observer nodes
+    WithReadStateChanges = false
+
     # ExternalMarshaller is used for handling incoming/outcoming api requests 
     [General.ExternalMarshaller]
         Type = "json"
