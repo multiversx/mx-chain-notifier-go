@@ -294,12 +294,14 @@ func (bd *blockData) OutportBlockV2() *outport.OutportBlock {
 
 	execResults := map[string]*outport.ExecutionResultData{
 		hex.EncodeToString(execBlockHash): {
-			Body:            blockBody,
-			TransactionPool: execResTxPool,
+			Body:                 blockBody,
+			TransactionPool:      execResTxPool,
+			HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		},
 		hex.EncodeToString(execBlockHash2): {
-			Body:            blockBody,
-			TransactionPool: execResTxPool,
+			Body:                 blockBody,
+			TransactionPool:      execResTxPool,
+			HeaderGasConsumption: &outport.HeaderGasConsumption{},
 		},
 	}
 
