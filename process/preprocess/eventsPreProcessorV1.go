@@ -100,6 +100,9 @@ func checkHeaderGasConsumption(header coreData.HeaderHandler, block *outport.Out
 	}
 
 	for _, execRes := range block.BlockData.Results {
+		if execRes == nil {
+			continue
+		}
 		if execRes.HeaderGasConsumption == nil {
 			return ErrNilHeaderGasConsumption
 		}
