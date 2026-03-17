@@ -16,6 +16,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
+// TxType defines the type of transaction used for ordering state accesses
 type TxType int
 
 const (
