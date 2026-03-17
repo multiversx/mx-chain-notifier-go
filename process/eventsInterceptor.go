@@ -16,20 +16,19 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
-// TxType defines the type of transaction used for ordering state accesses
-type TxType int
+type txType int
 
 const (
-	Transaction TxType = iota
-	SCR
-	Reward
-	InvalidTx
+	normalTx txType = iota
+	scr
+	rewardTx
+	invalidTx
 )
 
 type txWithOrder struct {
 	hash   string
 	index  uint32
-	txType TxType
+	txType txType
 }
 
 // logEvent defines a log event associated with corresponding tx hash
@@ -184,28 +183,28 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
-			txType: Transaction,
+			txType: normalTx,
 		})
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
-			txType: SCR,
+			txType: scr,
 		})
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
-			txType: Reward,
+			txType: rewardTx,
 		})
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
-			txType: InvalidTx,
+			txType: invalidTx,
 		})
 	}
 
@@ -287,7 +286,7 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 
 		stateAccessesPerTx, ok := stateAccesses[string(txHash)]
 		if !ok {
-			if txInfo.txType == SCR {
+			if txInfo.txType == scr {
 				// there are cases when SCRs are generated but no state accesses are produced, so we will not log a warning in those cases
 				log.Trace("SCR with no state accesses", "txHash", txInfo.hash)
 				continue
