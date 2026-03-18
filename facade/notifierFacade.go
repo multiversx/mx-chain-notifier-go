@@ -60,7 +60,11 @@ func checkArgs(args ArgsNotifierFacade) error {
 // HandlePushEvents will handle push events received from observer
 // It splits block data and handles log, txs and srcs events separately
 func (nf *notifierFacade) HandlePushEvents(allEvents data.ArgsSaveBlockData) error {
-	return nf.eventsHandler.HandleSaveBlockEvents(allEvents)
+	err := nf.eventsHandler.HandleSaveBlockEvents(allEvents)
+	if err != nil {
+		log.Error("error handling push events", "error", err)
+	}
+	return err
 }
 
 // HandleRevertEvents will handle revents events received from observer
