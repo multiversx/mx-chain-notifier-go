@@ -17,9 +17,19 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
+type txType int
+
+const (
+	normalTx txType = iota
+	scr
+	rewardTx
+	invalidTx
+)
+
 type txWithOrder struct {
-	hash  string
-	index uint32
+	hash   string
+	index  uint32
+	txType txType
 }
 
 // logEvent defines a log event associated with corresponding tx hash
@@ -175,26 +185,35 @@ func getTxsFromPool(transactionsPool *outport.TransactionPool) map[string]*trans
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
-	txsWithOrderMap := make(map[string]uint32)
+	numTxs := len(transactionsPool.Transactions) + len(transactionsPool.SmartContractResults) + len(transactionsPool.Rewards) + len(transactionsPool.InvalidTxs)
+	txsWithOrder := make([]txWithOrder, 0, numTxs)
 
 	for txHash, txInfo := range transactionsPool.Transactions {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:   txHash,
+			index:  txInfo.ExecutionOrder,
+			txType: normalTx,
+		})
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:   txHash,
+			index:  txInfo.ExecutionOrder,
+			txType: scr,
+		})
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
+		txsWithOrder = append(txsWithOrder, txWithOrder{
+			hash:   txHash,
+			index:  txInfo.ExecutionOrder,
+			txType: rewardTx,
+		})
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
-		txsWithOrderMap[txHash] = txInfo.ExecutionOrder
-	}
-
-	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
-	for txHash, index := range txsWithOrderMap {
 		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:  txHash,
-			index: index,
+			hash:   txHash,
+			index:  txInfo.ExecutionOrder,
+			txType: invalidTx,
 		})
 	}
 
@@ -281,7 +300,13 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 
 		stateAccessesPerTx, ok := stateAccesses[string(txHash)]
 		if !ok {
-			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash)
+			if txInfo.txType == scr {
+				// there are cases when SCRs are generated but no state accesses are produced, so we will not log a warning in those cases
+				log.Trace("SCR with no state accesses", "txHash", txInfo.hash)
+				continue
+			}
+
+			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash, "txType", txInfo.txType)
 			continue
 		}
 
