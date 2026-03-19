@@ -176,36 +176,44 @@ func getTxsFromPool(transactionsPool *outport.TransactionPool) map[string]*trans
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
-	numTxs := len(transactionsPool.Transactions) + len(transactionsPool.SmartContractResults) + len(transactionsPool.Rewards) + len(transactionsPool.InvalidTxs)
-	txsWithOrder := make([]txWithOrder, 0, numTxs)
+	// This map is needed because of duplicated transactions.
+	// There can be a case when a transaction is included in the block, but also marked as invalid, so it will be present
+	// in both transactions and invalidTxs maps from transactions pool, with the same execution order. In that case,
+	// we want to make sure that we process that transaction only as invalid.
+	txsWithOrderMap := make(map[string]txWithOrder)
 
 	for txHash, txInfo := range transactionsPool.Transactions {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
+		txsWithOrderMap[txHash] = txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
 			txType: normalTx,
-		})
+		}
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
+		txsWithOrderMap[txHash] = txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
 			txType: scr,
-		})
+		}
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
+		txsWithOrderMap[txHash] = txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
 			txType: rewardTx,
-		})
+		}
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
+		txsWithOrderMap[txHash] = txWithOrder{
 			hash:   txHash,
 			index:  txInfo.ExecutionOrder,
 			txType: invalidTx,
-		})
+		}
+	}
+
+	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
+	for _, txWithData := range txsWithOrderMap {
+		txsWithOrder = append(txsWithOrder, txWithData)
 	}
 
 	sort.Slice(txsWithOrder, func(i, j int) bool {
