@@ -13,6 +13,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1243,4 +1244,37 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 
 		require.Equal(t, expStateAccessesPerAccounts, stateAccessesPerAccounts)
 	})
+}
+
+func TestEventsInterceptor_GetTxsWithOrder(t *testing.T) {
+	t.Parallel()
+
+	transactionPool := &outport.TransactionPool{
+		Transactions: map[string]*outport.TxInfo{
+			"hash1": {
+				ExecutionOrder: 0,
+			},
+			"hash2": {
+				ExecutionOrder: 1,
+			},
+		},
+		SmartContractResults: map[string]*outport.SCRInfo{
+			"hash3": {
+				ExecutionOrder: 2,
+			},
+		},
+		Rewards: map[string]*outport.RewardInfo{
+			"hash4": {
+				ExecutionOrder: 3,
+			},
+		},
+		InvalidTxs: map[string]*outport.TxInfo{
+			"hash1": {
+				ExecutionOrder: 0,
+			},
+		},
+	}
+
+	txsWithOrder := process.GetTxsWithOrder(transactionPool)
+	assert.Len(t, txsWithOrder, 4)
 }
