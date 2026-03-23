@@ -180,7 +180,11 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 	// There can be a case when a transaction is included in the block, but also marked as invalid, so it will be present
 	// in both transactions and invalidTxs maps from transactions pool, with the same execution order. In that case,
 	// we want to make sure that we process that transaction only as invalid.
-	txsWithOrderMap := make(map[string]txWithOrder)
+	numTxs := len(transactionsPool.Transactions) +
+		len(transactionsPool.SmartContractResults) +
+		len(transactionsPool.Rewards) +
+		len(transactionsPool.InvalidTxs)
+	txsWithOrderMap := make(map[string]txWithOrder, numTxs)
 
 	for txHash, txInfo := range transactionsPool.Transactions {
 		txsWithOrderMap[txHash] = txWithOrder{

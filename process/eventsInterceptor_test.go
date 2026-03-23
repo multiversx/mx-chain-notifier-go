@@ -13,7 +13,6 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1276,5 +1275,27 @@ func TestEventsInterceptor_GetTxsWithOrder(t *testing.T) {
 	}
 
 	txsWithOrder := process.GetTxsWithOrder(transactionPool)
-	assert.Len(t, txsWithOrder, 4)
+
+	// we expect one entry for each execution order 0..3,
+	// with the duplicate "hash1" treated as invalid
+	require.Len(t, txsWithOrder, 4)
+	var hashes []string
+	invalidCount := 0
+	for _, tx := range txsWithOrder {
+		hashes = append(hashes, tx.Hash)
+		if tx.TxType == 3 { //invalid tx
+			invalidCount++
+		}
+	}
+	// execution order should be preserved: 0,1,2,3 -> hash1,hash2,hash3,hash4
+	require.Equal(t, []string{"hash1", "hash2", "hash3", "hash4"}, hashes)
+	// "hash1" should appear exactly once and be marked invalid
+	hash1Count := 0
+	for _, h := range hashes {
+		if h == "hash1" {
+			hash1Count++
+		}
+	}
+	require.Equal(t, 1, hash1Count)
+	require.Equal(t, invalidCount, 1)
 }

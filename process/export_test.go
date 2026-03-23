@@ -59,7 +59,22 @@ func BaseNilEventsDataCheks(eventsData *data.ArgsSaveBlockData) error {
 	return baseNilEventsDataChecks(eventsData)
 }
 
+type txsWithOrderExportedFields struct {
+	Hash   string
+	Index  uint32
+	TxType txType
+}
+
 // GetTxsWithOrder exports internal method for testing
-func GetTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
-	return getTxsWithOrder(transactionsPool)
+func GetTxsWithOrder(transactionsPool *outport.TransactionPool) []txsWithOrderExportedFields {
+	txsWithOrder := getTxsWithOrder(transactionsPool)
+	txsWithExportedFields := make([]txsWithOrderExportedFields, len(txsWithOrder))
+	for i, tx := range txsWithOrder {
+		txsWithExportedFields[i] = txsWithOrderExportedFields{
+			Hash:   tx.hash,
+			Index:  tx.index,
+			TxType: tx.txType,
+		}
+	}
+	return txsWithExportedFields
 }
