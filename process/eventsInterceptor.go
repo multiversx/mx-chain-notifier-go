@@ -26,9 +26,9 @@ const (
 )
 
 type txWithOrder struct {
-	hash   string
-	index  uint32
-	txType txType
+	Hash   string
+	Index  uint32
+	TxType txType
 }
 
 // logEvent defines a log event associated with corresponding tx hash
@@ -176,40 +176,52 @@ func getTxsFromPool(transactionsPool *outport.TransactionPool) map[string]*trans
 }
 
 func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
-	numTxs := len(transactionsPool.Transactions) + len(transactionsPool.SmartContractResults) + len(transactionsPool.Rewards) + len(transactionsPool.InvalidTxs)
-	txsWithOrder := make([]txWithOrder, 0, numTxs)
+	// This map is needed because of duplicated transactions.
+	// There can be a case when a transaction is included in the block, but also marked as invalid, so it will be present
+	// in both transactions and invalidTxs maps from transactions pool, with the same execution order. In that case,
+	// we want to make sure that we process that transaction only as invalid.
+	numTxs := len(transactionsPool.Transactions) +
+		len(transactionsPool.SmartContractResults) +
+		len(transactionsPool.Rewards) +
+		len(transactionsPool.InvalidTxs)
+	txsWithOrderMap := make(map[string]txWithOrder, numTxs)
 
 	for txHash, txInfo := range transactionsPool.Transactions {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:   txHash,
-			index:  txInfo.ExecutionOrder,
-			txType: normalTx,
-		})
+		txsWithOrderMap[txHash] = txWithOrder{
+			Hash:   txHash,
+			Index:  txInfo.ExecutionOrder,
+			TxType: normalTx,
+		}
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:   txHash,
-			index:  txInfo.ExecutionOrder,
-			txType: scr,
-		})
+		txsWithOrderMap[txHash] = txWithOrder{
+			Hash:   txHash,
+			Index:  txInfo.ExecutionOrder,
+			TxType: scr,
+		}
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:   txHash,
-			index:  txInfo.ExecutionOrder,
-			txType: rewardTx,
-		})
+		txsWithOrderMap[txHash] = txWithOrder{
+			Hash:   txHash,
+			Index:  txInfo.ExecutionOrder,
+			TxType: rewardTx,
+		}
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
-		txsWithOrder = append(txsWithOrder, txWithOrder{
-			hash:   txHash,
-			index:  txInfo.ExecutionOrder,
-			txType: invalidTx,
-		})
+		txsWithOrderMap[txHash] = txWithOrder{
+			Hash:   txHash,
+			Index:  txInfo.ExecutionOrder,
+			TxType: invalidTx,
+		}
+	}
+
+	txsWithOrder := make([]txWithOrder, 0, len(txsWithOrderMap))
+	for _, txWithData := range txsWithOrderMap {
+		txsWithOrder = append(txsWithOrder, txWithData)
 	}
 
 	sort.Slice(txsWithOrder, func(i, j int) bool {
-		return txsWithOrder[i].index < txsWithOrder[j].index
+		return txsWithOrder[i].Index < txsWithOrder[j].Index
 	})
 
 	return txsWithOrder
@@ -278,21 +290,21 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 	txsWithOrder := getTxsWithOrder(transactionPool)
 
 	for _, txInfo := range txsWithOrder {
-		txHash, err := hex.DecodeString(txInfo.hash)
+		txHash, err := hex.DecodeString(txInfo.Hash)
 		if err != nil {
-			log.Error("failed to decode tx hash", "txHash", txInfo.hash)
+			log.Error("failed to decode tx hash", "txHash", txInfo.Hash)
 			continue
 		}
 
 		stateAccessesPerTx, ok := stateAccesses[string(txHash)]
 		if !ok {
-			if txInfo.txType == scr {
+			if txInfo.TxType == scr {
 				// there are cases when SCRs are generated but no state accesses are produced, so we will not log a warning in those cases
-				log.Trace("SCR with no state accesses", "txHash", txInfo.hash)
+				log.Trace("SCR with no state accesses", "txHash", txInfo.Hash)
 				continue
 			}
 
-			log.Warn("did not find state accesses for tx", "txHash", txInfo.hash, "txType", txInfo.txType)
+			log.Warn("did not find state accesses for tx", "txHash", txInfo.Hash, "txType", txInfo.TxType)
 			continue
 		}
 
