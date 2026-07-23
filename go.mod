@@ -8,7 +8,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/multiversx/mx-chain-communication-go v1.3.3-0.20260720093822-3c4b1bc46f62
+	github.com/multiversx/mx-chain-communication-go v1.3.3-0.20260722100624-0eac5358e816
 	github.com/multiversx/mx-chain-core-go v1.5.1-0.20260713100334-14d633236974
 	github.com/multiversx/mx-chain-logger-go v1.1.1-0.20260713100530-e85a16be3260
 	github.com/pelletier/go-toml v1.9.5
