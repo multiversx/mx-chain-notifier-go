@@ -199,17 +199,26 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			}
 
 			log.Debug("Publish: published message nack, will retry to publish message", "deliveryTag", deliveryTag)
-		case amqpErr := <-state.connErrCh:
-			log.Error("rabbitMQ connection failure", "err", amqpErr.Error())
+		case amqpErr, ok := <-state.connErrCh:
+			logAmqpFailure("rabbitMQ connection failure", amqpErr, ok)
 			rc.Reconnect()
-		case amqpErr := <-state.chanErr:
-			log.Error("rabbitMQ channel failure", "err", amqpErr.Error())
+		case amqpErr, ok := <-state.chanErr:
+			logAmqpFailure("rabbitMQ channel failure", amqpErr, ok)
 
 			// a connection failure is broadcast on the channel notification as well, so
 			// the recovery has to check what was actually lost
 			rc.recoverConnection()
 		}
 	}
+}
+
+func logAmqpFailure(message string, amqpErr *amqp.Error, okChanRead bool) {
+	if !okChanRead || amqpErr == nil {
+		log.Error(message, "err", "notification channel closed")
+		return
+	}
+
+	log.Error(message, "err", amqpErr.Error())
 }
 
 // ConnErrChan will return connection error channel
