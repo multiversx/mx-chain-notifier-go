@@ -145,12 +145,11 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			return ErrClientClosed
 		}
 
-		state := rc.currentState()
-		if state.ch == nil {
+		if rc.ch == nil {
 			return ErrClientClosed
 		}
 
-		err := state.ch.Publish(
+		err := rc.ch.Publish(
 			exchange,
 			key,
 			mandatory,
@@ -167,7 +166,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 		}
 
 		select {
-		case deliveryTag, ok := <-state.ackCh:
+		case deliveryTag, ok := <-rc.ackCh:
 			if !ok {
 				// the confirmations channel is closed together with the amqp channel,
 				// so this is a failed publish, not an acknowledgement
@@ -178,7 +177,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 
 			log.Debug("Publish: published message ack", "deliveryTag", deliveryTag)
 			return nil
-		case deliveryTag, ok := <-state.nackCh:
+		case deliveryTag, ok := <-rc.nackCh:
 			if !ok {
 				log.Debug("Publish: confirmations channel closed, will retry to publish message", "exchange", exchange)
 				rc.recoverConnection()
@@ -186,26 +185,17 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			}
 
 			log.Debug("Publish: published message nack, will retry to publish message", "deliveryTag", deliveryTag)
-		case amqpErr := <-state.connErrCh:
-			logAmqpFailure("rabbitMQ connection failure", amqpErr)
+		case amqpErr := <-rc.connErrCh:
+			log.Error("rabbitMQ connection failure", "err", amqpErr.Error())
 			rc.Reconnect()
-		case amqpErr := <-state.chanErr:
-			logAmqpFailure("rabbitMQ channel failure", amqpErr)
+		case amqpErr := <-rc.chanErr:
+			log.Error("rabbitMQ channel failure", "err", amqpErr.Error())
 
 			// a connection failure is broadcast on the channel notification as well, so
 			// the recovery has to check what was actually lost
 			rc.recoverConnection()
 		}
 	}
-}
-
-func logAmqpFailure(message string, amqpErr *amqp.Error) {
-	if amqpErr == nil {
-		log.Error(message, "err", "notification channel closed")
-		return
-	}
-
-	log.Error(message, "err", amqpErr.Error())
 }
 
 // ConnErrChan will return connection error channel
@@ -222,19 +212,6 @@ func (rc *rabbitMqClient) CloseErrChan() chan *amqp.Error {
 	defer rc.connMut.RUnlock()
 
 	return rc.chanErr
-}
-
-func (rc *rabbitMqClient) currentState() connState {
-	rc.connMut.RLock()
-	defer rc.connMut.RUnlock()
-
-	return connState{
-		ch:        rc.ch,
-		connErrCh: rc.connErrCh,
-		chanErr:   rc.chanErr,
-		ackCh:     rc.ackCh,
-		nackCh:    rc.nackCh,
-	}
 }
 
 // connect will create a new connection and a new channel, closing the previous ones if

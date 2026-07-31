@@ -396,15 +396,6 @@ func TestRabbitMqClient_ConcurrentOperations(t *testing.T) {
 	}
 }
 
-func TestRabbitMqClient_LogAmqpFailure(t *testing.T) {
-	t.Parallel()
-
-	require.NotPanics(t, func() {
-		logAmqpFailure("test", nil)
-		logAmqpFailure("test", &amqp.Error{Code: 501, Reason: "frame error"})
-	})
-}
-
 func TestRabbitMqClient_IsInterfaceNil(t *testing.T) {
 	t.Parallel()
 
