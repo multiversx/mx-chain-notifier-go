@@ -128,6 +128,19 @@ func (rc *rabbitMqClient) saveExchangeDeclaration(name, kind string) {
 	rc.exchanges = append(rc.exchanges, exchangeDeclaration{name: name, kind: kind})
 }
 
+func (rc *rabbitMqClient) currentState() connState {
+	rc.connMut.RLock()
+	defer rc.connMut.RUnlock()
+
+	return connState{
+		ch:        rc.ch,
+		connErrCh: rc.connErrCh,
+		chanErr:   rc.chanErr,
+		ackCh:     rc.ackCh,
+		nackCh:    rc.nackCh,
+	}
+}
+
 // Publish will publich an item on the rabbitMq channel
 func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
 	rc.pubMut.Lock()
@@ -145,11 +158,12 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			return ErrClientClosed
 		}
 
-		if rc.ch == nil {
+		state := rc.currentState()
+		if state.ch == nil {
 			return ErrClientClosed
 		}
 
-		err := rc.ch.Publish(
+		err := state.ch.Publish(
 			exchange,
 			key,
 			mandatory,
@@ -166,7 +180,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 		}
 
 		select {
-		case deliveryTag, ok := <-rc.ackCh:
+		case deliveryTag, ok := <-state.ackCh:
 			if !ok {
 				// the confirmations channel is closed together with the amqp channel,
 				// so this is a failed publish, not an acknowledgement
@@ -177,7 +191,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 
 			log.Debug("Publish: published message ack", "deliveryTag", deliveryTag)
 			return nil
-		case deliveryTag, ok := <-rc.nackCh:
+		case deliveryTag, ok := <-state.nackCh:
 			if !ok {
 				log.Debug("Publish: confirmations channel closed, will retry to publish message", "exchange", exchange)
 				rc.recoverConnection()
@@ -185,10 +199,10 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			}
 
 			log.Debug("Publish: published message nack, will retry to publish message", "deliveryTag", deliveryTag)
-		case amqpErr := <-rc.connErrCh:
+		case amqpErr := <-state.connErrCh:
 			log.Error("rabbitMQ connection failure", "err", amqpErr.Error())
 			rc.Reconnect()
-		case amqpErr := <-rc.chanErr:
+		case amqpErr := <-state.chanErr:
 			log.Error("rabbitMQ channel failure", "err", amqpErr.Error())
 
 			// a connection failure is broadcast on the channel notification as well, so
