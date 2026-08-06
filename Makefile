@@ -65,7 +65,7 @@ docker-build:
 		-f ${dockerfile} \
 		.
 
-docker-new: docker-rm docker-build
+docker-new: docker-build
 	docker run  \
 		--detach \
 		--network "host" \

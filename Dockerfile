@@ -1,4 +1,4 @@
-FROM golang:1.26 AS builder
+FROM golang:1.26.2 AS builder
 
 WORKDIR /multiversx
 COPY . .
@@ -16,4 +16,4 @@ EXPOSE 8080
 WORKDIR /multiversx
 
 ENTRYPOINT ["./notifier"]
-CMD ["--publisher-type", "rabbit-api"]
+CMD ["--publisher-type", "rabbitmq"]
