@@ -65,7 +65,7 @@ docker-build:
 		-f ${dockerfile} \
 		.
 
-docker-new: docker-build
+docker-new: docker-rm docker-build
 	docker run  \
 		--detach \
 		--network "host" \
@@ -94,16 +94,16 @@ docker-rm: docker-stop
 
 # Notifier with Redis sentinel and RabbitMQ
 compose-new:
-	docker-compose up -d
+	docker compose up -d
 
 compose-start:
-	docker-compose start
+	docker compose start
 
 compose-stop:
-	docker-compose stop
+	docker compose stop
 
 compose-rm:
-	docker-compose down
+	docker compose down
 
 
 # #########################
