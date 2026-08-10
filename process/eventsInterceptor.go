@@ -1,9 +1,12 @@
 package process
 
 import (
+	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -90,6 +93,11 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 
 	stateAccessesPerAccounts := ei.getStateAccessesPerAccounts(eventsData, hex.EncodeToString(eventsData.HeaderHash), transactionsPool)
 
+	rootHash := eventsData.Header.GetRootHash()
+	if eventsData.Header.GetAdditionalData() != nil {
+		rootHash = eventsData.Header.GetAdditionalData().GetScheduledRootHash()
+	}
+
 	return &data.InterceptorBlockData{
 		Hash:                     hex.EncodeToString(eventsData.HeaderHash),
 		Body:                     eventsData.Body,
@@ -100,6 +108,7 @@ func (ei *eventsInterceptor) ProcessBlockEvents(eventsData *data.ArgsSaveBlockDa
 		ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 		LogEvents:                events,
 		StateAccessesPerAccounts: stateAccessesPerAccounts,
+		RootHash:                 rootHash,
 	}, nil
 }
 
@@ -135,6 +144,11 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 
 		stateAccessesPerAccounts := ei.getStateAccessesPerAccountsV3(eventsData, headerHash, transactionsPool)
 
+		rootHash, err := getRootHashForExecResult(eventsData.Header, headerHash)
+		if err != nil {
+			return nil, err
+		}
+
 		blockData := &data.InterceptorBlockData{
 			Hash:                     headerHash,
 			Body:                     body,
@@ -145,6 +159,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
+			RootHash:                 rootHash,
 			Nonce:                    execBlockData.GetHeaderNonce(),
 			TimeStampMs:              execBlockData.GetTimestampMs(),
 		}
@@ -153,6 +168,24 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 	}
 
 	return execBlocksData, nil
+}
+
+func getRootHashForExecResult(
+	header coreData.HeaderHandler,
+	headerHash string,
+) ([]byte, error) {
+	for _, execRes := range header.GetExecutionResultsHandlers() {
+		currHeaderHashBytes, err := hex.DecodeString(headerHash)
+		if err != nil {
+			return nil, err
+		}
+
+		if bytes.Equal(execRes.GetHeaderHash(), currHeaderHashBytes) {
+			return execRes.GetRootHash(), nil
+		}
+	}
+
+	return []byte{}, errors.New("invalid exec results setup")
 }
 
 func getScrsFromPool(transactionsPool *outport.TransactionPool) map[string]*smartContractResult.SmartContractResult {
@@ -325,11 +358,29 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 		}
 	}
 
-	log.Trace("getStateAccessesPerAccounts",
-		"num stateAccessesPerAccounts", len(stateAccessesPerAccounts),
-	)
+	logStateAccessesPerAccounts(stateAccessesPerAccounts)
 
 	return stateAccessesPerAccounts
+}
+
+func logStateAccessesPerAccounts(stateAccesses map[string]*stateChange.StateAccesses) {
+	if log.GetLevel() > logger.LogTrace {
+		return
+	}
+
+	log.Trace("state accesses per accounts",
+		"num stateAccessesPerAccounts", len(stateAccesses),
+	)
+
+	for accKey, sts := range stateAccesses {
+		log.Trace("stateAccessesPerAccount",
+			"account", accKey,
+			"num stateAccesses", len(sts.StateAccess),
+		)
+		for _, st := range sts.StateAccess {
+			log.Trace("state access", "stateChange", stateAccessToString(st))
+		}
+	}
 }
 
 func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses) {
@@ -337,7 +388,7 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 		return
 	}
 
-	log.Trace("getStateAccessesPerAccounts",
+	log.Trace("state accesses per transaction",
 		"num stateAccessesPerTxs", len(stateAccesses),
 	)
 
@@ -347,12 +398,25 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 		)
 
 		for _, st := range sts.StateAccess {
-			log.Trace("st",
-				"actionType", st.GetType(),
-				"operation", st.GetOperation(),
-			)
+			log.Trace("state access", "stateChange", stateAccessToString(st))
 		}
 	}
+}
+
+func stateAccessToString(stateAccess *stateChange.StateAccess) string {
+	dataTrieChanges := make([]string, len(stateAccess.GetDataTrieChanges()))
+	for i, dataTrieChange := range stateAccess.GetDataTrieChanges() {
+		dataTrieChanges[i] = fmt.Sprintf("key: %v, val: %v, type: %v, operation %v, version %v", hex.EncodeToString(dataTrieChange.Key), hex.EncodeToString(dataTrieChange.Val), dataTrieChange.Type, dataTrieChange.Operation, dataTrieChange.Version)
+	}
+	return fmt.Sprintf("type: %v, operation: %v, mainTrieKey: %v, mainTrieVal: %v, index: %v, dataTrieChanges: %v, accountChanges %v",
+		stateAccess.GetType(),
+		stateAccess.GetOperation(),
+		hex.EncodeToString(stateAccess.GetMainTrieKey()),
+		hex.EncodeToString(stateAccess.GetMainTrieVal()),
+		stateAccess.GetIndex(),
+		strings.Join(dataTrieChanges, ", "),
+		stateAccess.GetAccountChanges(),
+	)
 }
 
 func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*transaction.LogData) []data.Event {

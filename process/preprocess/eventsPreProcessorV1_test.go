@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/multiversx/mx-chain-core-go/core/mock"
 	coreData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -14,6 +15,7 @@ import (
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process/preprocess"
+	"github.com/multiversx/mx-chain-notifier-go/testdata"
 	"github.com/stretchr/testify/require"
 )
 
@@ -95,6 +97,21 @@ func TestPreProcessorV1_SaveBlock(t *testing.T) {
 		marshalledBlock, _ := json.Marshal(outportBlock)
 		err = dp.SaveBlock(marshalledBlock)
 		require.Nil(t, err)
+	})
+
+	t.Run("should work for v3", func(t *testing.T) {
+		t.Parallel()
+
+		dp, err := preprocess.NewEventsPreProcessorV1(createMockEventsDataPreProcessorArgs())
+		require.Nil(t, err)
+
+		blockData, _ := testdata.NewBlockData(&mock.MarshalizerMock{})
+
+		outportBlock := blockData.OutportBlockV2()
+		marshalledBlock, _ := json.Marshal(outportBlock)
+		err = dp.SaveBlock(marshalledBlock)
+		require.Nil(t, err)
+
 	})
 }
 
