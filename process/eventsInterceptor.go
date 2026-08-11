@@ -235,7 +235,7 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 
 	log.Trace("txs with order", "numTxs", len(txsWithOrder))
 	for _, txInfo := range txsWithOrder {
-		log.Trace("tx with order", "txHash", txInfo.hash, "index", txInfo.index)
+		log.Trace("tx with order", "txHash", txInfo.Hash, "index", txInfo.Index)
 	}
 
 	return txsWithOrder
@@ -322,7 +322,7 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 			continue
 		}
 
-		log.Trace("processing state accesses for tx", "txHash", txInfo.hash, "numStateAccesses", len(stateAccessesPerTx.StateAccess))
+		log.Trace("processing state accesses for tx", "txHash", txInfo.Hash, "numStateAccesses", len(stateAccessesPerTx.StateAccess))
 
 		for _, stateAccess := range stateAccessesPerTx.StateAccess {
 			if stateAccess.Type == stateChange.Read && !ei.withReadStateChanges {
