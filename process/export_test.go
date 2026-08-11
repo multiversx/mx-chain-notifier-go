@@ -3,6 +3,7 @@ package process
 import (
 	"encoding/hex"
 
+	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
@@ -56,4 +57,9 @@ func (ei *eventsInterceptor) GetStateAccessesPerAccountsV3(eventsData *data.Args
 // BaseNilEventsDataCheks -
 func BaseNilEventsDataCheks(eventsData *data.ArgsSaveBlockData) error {
 	return baseNilEventsDataChecks(eventsData)
+}
+
+// GetTxsWithOrder exports internal method for testing
+func GetTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
+	return getTxsWithOrder(transactionsPool)
 }

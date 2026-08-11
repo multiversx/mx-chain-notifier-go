@@ -1244,3 +1244,58 @@ func TestEventsInterceptor_GetStateAccessesPerAccounts(t *testing.T) {
 		require.Equal(t, expStateAccessesPerAccounts, stateAccessesPerAccounts)
 	})
 }
+
+func TestEventsInterceptor_GetTxsWithOrder(t *testing.T) {
+	t.Parallel()
+
+	transactionPool := &outport.TransactionPool{
+		Transactions: map[string]*outport.TxInfo{
+			"hash1": {
+				ExecutionOrder: 0,
+			},
+			"hash2": {
+				ExecutionOrder: 1,
+			},
+		},
+		SmartContractResults: map[string]*outport.SCRInfo{
+			"hash3": {
+				ExecutionOrder: 2,
+			},
+		},
+		Rewards: map[string]*outport.RewardInfo{
+			"hash4": {
+				ExecutionOrder: 3,
+			},
+		},
+		InvalidTxs: map[string]*outport.TxInfo{
+			"hash1": {
+				ExecutionOrder: 0,
+			},
+		},
+	}
+
+	txsWithOrder := process.GetTxsWithOrder(transactionPool)
+
+	// we expect one entry for each execution order 0..3,
+	// with the duplicate "hash1" treated as invalid
+	require.Len(t, txsWithOrder, 4)
+	var hashes []string
+	invalidCount := 0
+	for _, tx := range txsWithOrder {
+		hashes = append(hashes, tx.Hash)
+		if tx.TxType == 3 { //invalid tx
+			invalidCount++
+		}
+	}
+	// execution order should be preserved: 0,1,2,3 -> hash1,hash2,hash3,hash4
+	require.Equal(t, []string{"hash1", "hash2", "hash3", "hash4"}, hashes)
+	// "hash1" should appear exactly once and be marked invalid
+	hash1Count := 0
+	for _, h := range hashes {
+		if h == "hash1" {
+			hash1Count++
+		}
+	}
+	require.Equal(t, 1, hash1Count)
+	require.Equal(t, invalidCount, 1)
+}

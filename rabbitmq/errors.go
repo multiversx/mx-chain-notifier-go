@@ -10,3 +10,6 @@ var ErrInvalidRabbitMqExchangeName = errors.New("invalid rabbitmq exchange name"
 
 // ErrInvalidRabbitMqExchangeType signals that an empty rabbitmq exchange type has been provided
 var ErrInvalidRabbitMqExchangeType = errors.New("invalid rabbitmq exchange type")
+
+// ErrClientClosed signals that the rabbitmq client has been closed
+var ErrClientClosed = errors.New("rabbitmq client is closed")
