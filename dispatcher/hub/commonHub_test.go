@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/dispatcher"
@@ -345,6 +346,82 @@ func TestCommonHub_HandleScrsBroadcast(t *testing.T) {
 	time.Sleep(time.Millisecond * 100)
 
 	assert.Equal(t, uint32(1), atomic.LoadUint32(&numCalls))
+}
+
+func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	stuckID := uuid.New()
+	healthyID := uuid.New()
+	newID := uuid.New()
+
+	stuckBlock := make(chan struct{})
+	defer close(stuckBlock)
+	stuckReached := make(chan struct{})
+
+	stuckDispatcher := &mocks.DispatcherStub{
+		GetIDCalled: func() uuid.UUID { return stuckID },
+		PushEventsCalled: func(events []data.Event) {
+			close(stuckReached)
+			<-stuckBlock // never returns during the test - models a wedged subscriber
+		},
+	}
+
+	var healthyCalls uint32
+	healthyDispatcher := &mocks.DispatcherStub{
+		GetIDCalled: func() uuid.UUID { return healthyID },
+		PushEventsCalled: func(events []data.Event) {
+			atomic.AddUint32(&healthyCalls, 1)
+		},
+	}
+
+	hub.registerDispatcher(stuckDispatcher)
+	hub.registerDispatcher(healthyDispatcher)
+
+	// subscribe the healthy dispatcher first so Publish's per-dispatcher
+	// delivery loop reaches it before it gets stuck on stuckDispatcher
+	hub.Subscribe(data.SubscribeEvent{
+		DispatcherID:        healthyID,
+		SubscriptionEntries: []data.SubscriptionEntry{},
+	})
+	hub.Subscribe(data.SubscribeEvent{
+		DispatcherID:        stuckID,
+		SubscriptionEntries: []data.SubscriptionEntry{},
+	})
+
+	go hub.Publish(getEvents())
+
+	select {
+	case <-stuckReached:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Publish never reached the stuck dispatcher")
+	}
+	require.Equal(t, uint32(1), atomic.LoadUint32(&healthyCalls))
+
+	newDispatcher := &mocks.DispatcherStub{
+		GetIDCalled: func() uuid.UUID { return newID },
+	}
+
+	done := make(chan struct{})
+	go func() {
+		hub.RegisterEvent(newDispatcher)
+		hub.UnregisterEvent(healthyDispatcher)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("register/unregister deadlocked behind a stuck subscriber")
+	}
+
+	require.True(t, hub.CheckDispatcherByID(newID, newDispatcher))
+	require.True(t, hub.CheckDispatcherByID(healthyID, nil))
+	require.Equal(t, uint32(1), atomic.LoadUint32(&healthyCalls))
 }
 
 func getEvents() data.BlockEvents {

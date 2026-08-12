@@ -17,7 +17,7 @@ type HTTPServerCloser interface {
 
 // GroupHandler defines the actions needed to be performed by an gin API group
 type GroupHandler interface {
-	RegisterRoutes(ws *gin.RouterGroup, apiConfig config.APIRoutesConfig)
+	RegisterRoutes(ws *gin.RouterGroup, apiConfig config.APIRoutesConfig) error
 	GetAdditionalMiddlewares() []gin.HandlerFunc
 	IsInterfaceNil() bool
 }
