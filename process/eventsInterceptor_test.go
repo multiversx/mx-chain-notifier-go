@@ -511,12 +511,6 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 	})
 }
 
-// TestProcessBlockEventsV3_DeterministicNonceOrder is a regression test for
-// H2: ProcessBlockEventsV3 iterates a map keyed by header hash, whose
-// iteration order Go deliberately randomizes. Without an explicit sort,
-// repeated calls with the identical payload can return execution blocks in
-// different nonce orders, so downstream consumers reconstructing state from
-// state_accesses/block_events can observe out-of-order nonces.
 func TestProcessBlockEventsV3_DeterministicNonceOrder(t *testing.T) {
 	t.Parallel()
 
