@@ -1,7 +1,9 @@
 package process
 
 import (
+	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -143,6 +145,11 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 		)
 		stateAccessesPerAccounts := ei.getStateAccessesPerAccountsV3(eventsData, headerHash, transactionsPool)
 
+		rootHash, err := getRootHashForExecResult(eventsData.Header, headerHash)
+		if err != nil {
+			return nil, err
+		}
+
 		blockData := &data.InterceptorBlockData{
 			Hash:                     headerHash,
 			Body:                     body,
@@ -153,7 +160,7 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 			ScrsWithOrder:            transactionsPool.GetSmartContractResults(),
 			LogEvents:                events,
 			StateAccessesPerAccounts: stateAccessesPerAccounts,
-			RootHash:                 execBlockData.GetRootHash(),
+			RootHash:                 rootHash,
 			Nonce:                    execBlockData.HeaderNonce,
 			TimeStampMs:              execBlockData.GetTimestampMs(),
 		}
@@ -162,6 +169,24 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 	}
 
 	return execBlocksData, nil
+}
+
+func getRootHashForExecResult(
+	header coreData.HeaderHandler,
+	headerHash string,
+) ([]byte, error) {
+	for _, execRes := range header.GetExecutionResultsHandlers() {
+		currHeaderHashBytes, err := hex.DecodeString(headerHash)
+		if err != nil {
+			return nil, err
+		}
+
+		if bytes.Equal(execRes.GetHeaderHash(), currHeaderHashBytes) {
+			return execRes.GetRootHash(), nil
+		}
+	}
+
+	return []byte{}, errors.New("invalid exec results setup")
 }
 
 func getScrsFromPool(transactionsPool *outport.TransactionPool) map[string]*smartContractResult.SmartContractResult {
