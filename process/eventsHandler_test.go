@@ -116,7 +116,9 @@ func TestHandleSaveBlockEvents_ShouldFail(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{})
+		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{
+			Header: &block.HeaderV2{},
+		})
 		require.Nil(t, err)
 	})
 
@@ -409,6 +411,85 @@ func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
 		assert.True(t, scrsWasCalled)
 		assert.True(t, blockEventsWithOrderWasCalled)
 	})
+}
+
+func TestHandleSaveBlockEventsV3_PartialFailure(t *testing.T) {
+	t.Parallel()
+
+	header := &block.HeaderV3{ShardID: 2}
+
+	// this entry has a nil Header, which makes handleSaveBlockEvents fail
+	// with ErrNilBlockHeader - simulating one execution block in the batch
+	// erroring out
+	failingBlock := &data.InterceptorBlockData{
+		Hash:  "execHash1",
+		Nonce: 1,
+	}
+
+	okLogEvents := []data.Event{
+		{Address: "addr1"},
+	}
+	okBlock := &data.InterceptorBlockData{
+		Hash:      "execHash2",
+		Header:    header,
+		LogEvents: okLogEvents,
+		Nonce:     2,
+	}
+
+	expOkPushEvents := data.BlockEvents{
+		Hash:    "execHash2",
+		ShardID: 2,
+		Events:  okLogEvents,
+	}
+
+	args := createMockEventsHandlerArgs()
+	args.CheckDuplicates = true
+
+	claimed := make(map[string]bool)
+	args.Locker = &mocks.LockerStub{
+		IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+			if claimed[blockHash] {
+				return false, nil
+			}
+			claimed[blockHash] = true
+			return true, nil
+		},
+		HasConnectionCalled: func(ctx context.Context) bool {
+			return true
+		},
+	}
+
+	args.EventsInterceptor = &mocks.EventsInterceptorStub{
+		ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
+			// failingBlock is listed first, so a bug that aborts the loop on
+			// the first error would never even attempt okBlock
+			return []*data.InterceptorBlockData{failingBlock, okBlock}, nil
+		},
+	}
+
+	pushCalls := 0
+	args.Publisher = &mocks.PublisherStub{
+		BroadcastCalled: func(events data.BlockEvents) {
+			pushCalls++
+			require.Equal(t, expOkPushEvents, events)
+		},
+	}
+
+	eventsHandler, err := process.NewEventsHandler(args)
+	require.Nil(t, err)
+
+	blockData := data.ArgsSaveBlockData{
+		HeaderHash: []byte("proposedHeaderHash"),
+		Header:     header,
+	}
+
+	err = eventsHandler.HandleSaveBlockEvents(blockData)
+	require.Equal(t, process.ErrNilBlockHeader, err)
+	require.Equal(t, 0, pushCalls)
+
+	err = eventsHandler.HandleSaveBlockEvents(blockData)
+	require.Nil(t, err)
+	require.Equal(t, 1, pushCalls)
 }
 
 func TestShouldProcessSaveBlockEvents(t *testing.T) {

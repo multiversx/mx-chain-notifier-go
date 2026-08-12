@@ -77,18 +77,20 @@ func checkArgs(args ArgsEventsHandler) error {
 
 // HandleSaveBlockEvents will handle save block events received from observer
 func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData) error {
-	blockHash := hex.EncodeToString(allEvents.HeaderHash)
-	shouldProcessPushEvents := eh.shouldProcessSaveBlockEvents(blockHash)
-	if !shouldProcessPushEvents {
-		return nil
-	}
-
 	if check.IfNil(allEvents.Header) {
 		return ErrNilBlockHeader
 	}
 
+	// V3 headers are handled by handleSaveBlockEventsV3, which dedupes per
+	// execution-block hash instead of the outer proposed-header hash
 	if allEvents.Header.IsHeaderV3() {
 		return eh.handleSaveBlockEventsV3(allEvents)
+	}
+
+	blockHash := hex.EncodeToString(allEvents.HeaderHash)
+	shouldProcessPushEvents := eh.shouldProcessSaveBlockEvents(blockHash)
+	if !shouldProcessPushEvents {
+		return nil
 	}
 
 	return eh.handleSaveBlockEventsLegacy(allEvents)
@@ -184,6 +186,11 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 	shardID := allEvents.Header.GetShardID()
 
 	for _, executionResultData := range executionResultsData {
+		shouldProcess := eh.shouldProcessSaveBlockEvents(executionResultData.Hash)
+		if !shouldProcess {
+			continue
+		}
+
 		timeStampSec := common.ConvertTimeStampMsToSec(executionResultData.TimeStampMs) // this is used for backwards compatibility
 		err = eh.handleSaveBlockEvents(
 			executionResultData,
