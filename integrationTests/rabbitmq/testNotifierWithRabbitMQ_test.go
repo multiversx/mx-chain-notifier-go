@@ -29,7 +29,7 @@ const (
 
 	// number of expected redis events for the V3 (async execution model) flow.
 	// Save is deduped per execution-block hash rather than once for the whole
-	// batch (see M3 in the security audit), and testdata.OutportBlockV2()
+	// batch, and testdata.OutportBlockV2()
 	// carries 2 execution results, so Save claims 2 keys here instead of 1
 	// + one event each for Revert, Finalized
 	numExpRedisEventsV3 = 4

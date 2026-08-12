@@ -211,7 +211,7 @@ func TestPushEvents_FullSendBufferDoesNotBlock(t *testing.T) {
 	}
 	require.Equal(t, int32(0), atomic.LoadInt32(&closeCalls))
 
-	// this call must not block now that the buffer is full - C1 fix
+	// this call must not block now that the buffer is full
 	done := make(chan struct{})
 	go func() {
 		wd.PushEvents(events)

@@ -367,7 +367,7 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 		GetIDCalled: func() uuid.UUID { return stuckID },
 		PushEventsCalled: func(events []data.Event) {
 			close(stuckReached)
-			<-stuckBlock // never returns during the test - models a wedged subscriber
+			<-stuckBlock
 		},
 	}
 
