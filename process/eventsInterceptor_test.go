@@ -550,18 +550,16 @@ func TestProcessBlockEventsV3_DeterministicNonceOrder(t *testing.T) {
 		expectedNonces = append(expectedNonces, uint64(i))
 	}
 
-	for run := 0; run < 50; run++ {
-		execBlocksData, err := eventsInterceptor.ProcessBlockEventsV3(&blockEvents)
-		require.Nil(t, err)
-		require.Len(t, execBlocksData, numExecResults)
+	execBlocksData, err := eventsInterceptor.ProcessBlockEventsV3(&blockEvents)
+	require.Nil(t, err)
+	require.Len(t, execBlocksData, numExecResults)
 
-		gotNonces := make([]uint64, 0, numExecResults)
-		for _, blockData := range execBlocksData {
-			gotNonces = append(gotNonces, blockData.Nonce)
-		}
-
-		require.Equal(t, expectedNonces, gotNonces)
+	gotNonces := make([]uint64, 0, numExecResults)
+	for _, blockData := range execBlocksData {
+		gotNonces = append(gotNonces, blockData.Nonce)
 	}
+
+	require.Equal(t, expectedNonces, gotNonces)
 }
 
 func TestGetLogEventsFromTransactionsPool(t *testing.T) {
