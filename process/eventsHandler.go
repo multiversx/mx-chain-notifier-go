@@ -183,7 +183,7 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 		lockKey := v3BatchLockPrefix + hex.EncodeToString(allEvents.HeaderHash)
 
 		// temporary lock with defer for the execution results batch
-		// this is needed to avoid concurrent triggers for partial processed batches
+		// this is needed to avoid concurrent triggers for partially processed batches
 		acquired := eh.tryLockV3BatchWithRetry(lockKey)
 		if !acquired {
 			log.Info("received duplicate v3 block events while already being processed, skipping",
@@ -446,10 +446,6 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	return setSuccessful
 }
 
-// tryLockV3BatchWithRetry mirrors tryCheckProcessedWithRetry's retry-on
-// connection-error behavior, but does not retry when the lock is simply held
-// by someone else (that is a normal "already being processed" outcome, not
-// an error).
 func (eh *eventsHandler) tryLockV3BatchWithRetry(key string) bool {
 	var err error
 	var acquired bool
