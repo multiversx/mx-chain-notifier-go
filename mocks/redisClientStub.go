@@ -8,6 +8,7 @@ import (
 // RedisClientStub -
 type RedisClientStub struct {
 	SetEntryCalled    func(key string, value bool, ttl time.Duration) (bool, error)
+	DeleteEntryCalled func(key string) error
 	PingCalled        func() (string, error)
 	IsConnectedCalled func() bool
 }
@@ -19,6 +20,15 @@ func (rc *RedisClientStub) SetEntry(_ context.Context, key string, value bool, t
 	}
 
 	return false, nil
+}
+
+// DeleteEntry -
+func (rc *RedisClientStub) DeleteEntry(_ context.Context, key string) error {
+	if rc.DeleteEntryCalled != nil {
+		return rc.DeleteEntryCalled(key)
+	}
+
+	return nil
 }
 
 // Ping -

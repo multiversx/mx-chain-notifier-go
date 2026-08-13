@@ -104,6 +104,68 @@ func TestRedlockWrapper_IsBlockProcessed(t *testing.T) {
 	})
 }
 
+func TestRedlockWrapper_TryLockAndUnlock(t *testing.T) {
+	t.Parallel()
+
+	t.Run("try lock delegates to SetEntry", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockRedlockWrapperArgs()
+		args.Client = &mocks.RedisClientStub{
+			SetEntryCalled: func(key string, value bool, ttl time.Duration) (bool, error) {
+				require.Equal(t, "lockKey", key)
+				return true, nil
+			},
+		}
+
+		redlock, err := redis.NewRedlockWrapper(args)
+		require.Nil(t, err)
+
+		acquired, err := redlock.TryLock(context.Background(), "lockKey")
+		require.Nil(t, err)
+		require.True(t, acquired)
+	})
+
+	t.Run("try lock fails for already-locked key", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockRedlockWrapperArgs()
+		args.Client = &mocks.RedisClientStub{
+			SetEntryCalled: func(key string, value bool, ttl time.Duration) (bool, error) {
+				return false, nil
+			},
+		}
+
+		redlock, err := redis.NewRedlockWrapper(args)
+		require.Nil(t, err)
+
+		acquired, err := redlock.TryLock(context.Background(), "lockKey")
+		require.Nil(t, err)
+		require.False(t, acquired)
+	})
+
+	t.Run("unlock delegates to DeleteEntry", func(t *testing.T) {
+		t.Parallel()
+
+		deleteCalled := false
+		args := createMockRedlockWrapperArgs()
+		args.Client = &mocks.RedisClientStub{
+			DeleteEntryCalled: func(key string) error {
+				require.Equal(t, "lockKey", key)
+				deleteCalled = true
+				return nil
+			},
+		}
+
+		redlock, err := redis.NewRedlockWrapper(args)
+		require.Nil(t, err)
+
+		err = redlock.Unlock(context.Background(), "lockKey")
+		require.Nil(t, err)
+		require.True(t, deleteCalled)
+	})
+}
+
 func TestRedlockWrapper_HasConnection(t *testing.T) {
 	t.Parallel()
 

@@ -152,6 +152,10 @@ func (ei *eventsInterceptor) ProcessBlockEventsV3(eventsData *data.ArgsSaveBlock
 		execBlocksData = append(execBlocksData, blockData)
 	}
 
+	sort.Slice(execBlocksData, func(i, j int) bool {
+		return execBlocksData[i].Nonce < execBlocksData[j].Nonce
+	})
+
 	return execBlocksData, nil
 }
 
