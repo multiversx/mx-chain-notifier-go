@@ -20,6 +20,7 @@ const (
 	minRetries             = 1
 	revertKeyPrefix        = "revert_"
 	finalizedKeyPrefix     = "finalized_"
+	v3BatchLockPrefix      = "v3batchlock_"
 
 	rabbitmqMetricPrefix = "RabbitMQ"
 	redisMetricPrefix    = "Redis"
@@ -178,6 +179,21 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 }
 
 func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockData) error {
+	if eh.checkDuplicates {
+		lockKey := v3BatchLockPrefix + hex.EncodeToString(allEvents.HeaderHash)
+
+		// temporary lock with defer for the execution results batch
+		// this is needed to avoid concurrent triggers for partial processed batches
+		acquired := eh.tryLockV3BatchWithRetry(lockKey)
+		if !acquired {
+			log.Info("received duplicate v3 block events while already being processed, skipping",
+				"lock key", lockKey,
+			)
+			return nil
+		}
+		defer eh.unlockV3Batch(lockKey)
+	}
+
 	executionResultsData, err := eh.eventsInterceptor.ProcessBlockEventsV3(&allEvents)
 	if err != nil {
 		return err
@@ -428,6 +444,40 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	log.Debug("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
 
 	return setSuccessful
+}
+
+// tryLockV3BatchWithRetry mirrors tryCheckProcessedWithRetry's retry-on
+// connection-error behavior, but does not retry when the lock is simply held
+// by someone else (that is a normal "already being processed" outcome, not
+// an error).
+func (eh *eventsHandler) tryLockV3BatchWithRetry(key string) bool {
+	var err error
+	var acquired bool
+
+	for {
+		acquired, err = eh.locker.TryLock(context.Background(), key)
+		if err == nil {
+			break
+		}
+
+		log.Error("failed to acquire v3 batch lock", "error", err.Error())
+		if !eh.locker.HasConnection(context.Background()) {
+			log.Error("failure connecting to locker service")
+
+			time.Sleep(reconnectRetryDuration)
+		} else {
+			time.Sleep(setRetryDuration)
+		}
+	}
+
+	return acquired
+}
+
+func (eh *eventsHandler) unlockV3Batch(key string) {
+	err := eh.locker.Unlock(context.Background(), key)
+	if err != nil {
+		log.Error("failed to release v3 batch lock", "error", err.Error(), "key", key)
+	}
 }
 
 func getPrefixLockerKey(id string) string {
