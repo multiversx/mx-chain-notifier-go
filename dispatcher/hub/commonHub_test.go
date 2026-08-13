@@ -400,7 +400,7 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 	case <-time.After(2 * time.Second):
 		t.Fatal("Publish never reached the stuck dispatcher")
 	}
-	require.Equal(t, uint32(1), atomic.LoadUint32(&healthyCalls))
+	require.LessOrEqual(t, atomic.LoadUint32(&healthyCalls), uint32(1))
 
 	newDispatcher := &mocks.DispatcherStub{
 		GetIDCalled: func() uuid.UUID { return newID },

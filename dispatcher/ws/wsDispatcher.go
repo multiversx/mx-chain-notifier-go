@@ -80,20 +80,30 @@ func (wd *websocketDispatcher) GetID() uuid.UUID {
 // enough, or at all - the connection is closed instead of blocking, so that
 // callers (the hub's publish path) never stall waiting on a stuck subscriber.
 func (wd *websocketDispatcher) trySend(payload []byte) {
+	isBufferFull := wd.sendPayload(payload)
+	if !isBufferFull {
+		return
+	}
+
+	log.Warn("dispatcher send buffer full, dropping subscriber", "dispatcherID", wd.id)
+	if err := wd.conn.Close(); err != nil {
+		log.Debug("failed to close socket after full send buffer", "err", err.Error())
+	}
+}
+
+func (wd *websocketDispatcher) sendPayload(payload []byte) bool {
 	wd.mutSend.RLock()
 	defer wd.mutSend.RUnlock()
 
 	if wd.sendClosed {
-		return
+		return false
 	}
 
 	select {
 	case wd.send <- payload:
+		return false
 	default:
-		log.Warn("dispatcher send buffer full, dropping subscriber", "dispatcherID", wd.id)
-		if err := wd.conn.Close(); err != nil {
-			log.Debug("failed to close socket after full send buffer", "err", err.Error())
-		}
+		return true
 	}
 }
 
