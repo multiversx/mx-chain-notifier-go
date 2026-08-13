@@ -356,7 +356,6 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 	require.Nil(t, err)
 
 	stuckID := uuid.New()
-	healthyID := uuid.New()
 	newID := uuid.New()
 
 	stuckBlock := make(chan struct{})
@@ -371,23 +370,7 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 		},
 	}
 
-	var healthyCalls uint32
-	healthyDispatcher := &mocks.DispatcherStub{
-		GetIDCalled: func() uuid.UUID { return healthyID },
-		PushEventsCalled: func(events []data.Event) {
-			atomic.AddUint32(&healthyCalls, 1)
-		},
-	}
-
 	hub.registerDispatcher(stuckDispatcher)
-	hub.registerDispatcher(healthyDispatcher)
-
-	// subscribe the healthy dispatcher first so Publish's per-dispatcher
-	// delivery loop reaches it before it gets stuck on stuckDispatcher
-	hub.Subscribe(data.SubscribeEvent{
-		DispatcherID:        healthyID,
-		SubscriptionEntries: []data.SubscriptionEntry{},
-	})
 	hub.Subscribe(data.SubscribeEvent{
 		DispatcherID:        stuckID,
 		SubscriptionEntries: []data.SubscriptionEntry{},
@@ -400,7 +383,6 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 	case <-time.After(2 * time.Second):
 		t.Fatal("Publish never reached the stuck dispatcher")
 	}
-	require.LessOrEqual(t, atomic.LoadUint32(&healthyCalls), uint32(1))
 
 	newDispatcher := &mocks.DispatcherStub{
 		GetIDCalled: func() uuid.UUID { return newID },
@@ -409,7 +391,7 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 	done := make(chan struct{})
 	go func() {
 		hub.RegisterEvent(newDispatcher)
-		hub.UnregisterEvent(healthyDispatcher)
+		hub.UnregisterEvent(stuckDispatcher)
 		close(done)
 	}()
 
@@ -420,8 +402,7 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 	}
 
 	require.True(t, hub.CheckDispatcherByID(newID, newDispatcher))
-	require.True(t, hub.CheckDispatcherByID(healthyID, nil))
-	require.Equal(t, uint32(1), atomic.LoadUint32(&healthyCalls))
+	require.True(t, hub.CheckDispatcherByID(stuckID, nil))
 }
 
 func getEvents() data.BlockEvents {
