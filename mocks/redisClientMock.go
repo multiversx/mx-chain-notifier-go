@@ -40,6 +40,16 @@ func (rc *RedisClientMock) SetEntry(_ context.Context, key string, value bool, t
 	return false, nil
 }
 
+// DeleteEntry -
+func (rc *RedisClientMock) DeleteEntry(_ context.Context, key string) error {
+	rc.mut.Lock()
+	defer rc.mut.Unlock()
+
+	delete(rc.entries, key)
+
+	return nil
+}
+
 // GetEntries -
 func (rc *RedisClientMock) GetEntries() map[string]bool {
 	rc.mut.Lock()

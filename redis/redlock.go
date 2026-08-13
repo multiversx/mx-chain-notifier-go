@@ -40,6 +40,20 @@ func (r *redlockWrapper) IsEventProcessed(ctx context.Context, blockHash string)
 	return r.client.SetEntry(ctx, blockHash, true, r.ttl)
 }
 
+// TryLock attempts to acquire a mutual-exclusion lock for the given key,
+// returning true if it was acquired. Unlike IsEventProcessed, a lock
+// acquired here is meant to be released with Unlock once the caller is done;
+// the TTL only bounds how long the lock can be held if the caller crashes
+// before releasing it.
+func (r *redlockWrapper) TryLock(ctx context.Context, key string) (bool, error) {
+	return r.client.SetEntry(ctx, key, true, r.ttl)
+}
+
+// Unlock releases a lock previously acquired with TryLock.
+func (r *redlockWrapper) Unlock(ctx context.Context, key string) error {
+	return r.client.DeleteEntry(ctx, key)
+}
+
 // HasConnection returns true if the redis client is connected
 func (r *redlockWrapper) HasConnection(ctx context.Context) bool {
 	return r.client.IsConnected(ctx)

@@ -27,6 +27,13 @@ const (
 	// one event for each outport driver method: Save, Revert, Finalized
 	numExpRedisEvents = 3
 
+	// number of expected redis events for the V3 (async execution model) flow.
+	// Save is deduped per execution-block hash rather than once for the whole
+	// batch, and testdata.OutportBlockV2()
+	// carries 2 execution results, so Save claims 2 keys here instead of 1
+	// + one event each for Revert, Finalized
+	numExpRedisEventsV3 = 4
+
 	// number of exected rabbitmq events
 	// 5 events (logs & events, txs, scrs, full blocks events, state accesses) for Save method
 	// + one event for each other outport driver method: Revert, Finalized
@@ -116,7 +123,7 @@ func testNotifierWithRabbitMQV3(t *testing.T, observerType string, payloadVersio
 
 	integrationTests.WaitTimeout(t, wg, time.Second*5)
 
-	assert.Equal(t, numExpRedisEvents, len(notifier.RedisClient.GetEntries()))
+	assert.Equal(t, numExpRedisEventsV3, len(notifier.RedisClient.GetEntries()))
 	assert.Equal(t, numExpRabbitMQEvents, len(notifier.RabbitMQClient.GetEntries()))
 }
 

@@ -20,6 +20,7 @@ const (
 	minRetries             = 1
 	revertKeyPrefix        = "revert_"
 	finalizedKeyPrefix     = "finalized_"
+	v3BatchLockPrefix      = "v3batchlock_"
 
 	rabbitmqMetricPrefix = "RabbitMQ"
 	redisMetricPrefix    = "Redis"
@@ -77,18 +78,20 @@ func checkArgs(args ArgsEventsHandler) error {
 
 // HandleSaveBlockEvents will handle save block events received from observer
 func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData) error {
-	blockHash := hex.EncodeToString(allEvents.HeaderHash)
-	shouldProcessPushEvents := eh.shouldProcessSaveBlockEvents(blockHash)
-	if !shouldProcessPushEvents {
-		return nil
-	}
-
 	if check.IfNil(allEvents.Header) {
 		return ErrNilBlockHeader
 	}
 
+	// V3 headers are handled by handleSaveBlockEventsV3, which dedupes per
+	// execution-block hash instead of the outer proposed-header hash
 	if allEvents.Header.IsHeaderV3() {
 		return eh.handleSaveBlockEventsV3(allEvents)
+	}
+
+	blockHash := hex.EncodeToString(allEvents.HeaderHash)
+	shouldProcessPushEvents := eh.shouldProcessSaveBlockEvents(blockHash)
+	if !shouldProcessPushEvents {
+		return nil
 	}
 
 	return eh.handleSaveBlockEventsLegacy(allEvents)
@@ -195,6 +198,21 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 }
 
 func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockData) error {
+	if eh.checkDuplicates {
+		lockKey := v3BatchLockPrefix + hex.EncodeToString(allEvents.HeaderHash)
+
+		// temporary lock with defer for the execution results batch
+		// this is needed to avoid concurrent triggers for partially processed batches
+		acquired := eh.tryLockV3BatchWithRetry(lockKey)
+		if !acquired {
+			log.Info("received duplicate v3 block events while already being processed, skipping",
+				"lock key", lockKey,
+			)
+			return nil
+		}
+		defer eh.unlockV3Batch(lockKey)
+	}
+
 	executionResultsData, err := eh.eventsInterceptor.ProcessBlockEventsV3(&allEvents)
 	if err != nil {
 		return err
@@ -203,6 +221,11 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 	shardID := allEvents.Header.GetShardID()
 
 	for _, executionResultData := range executionResultsData {
+		shouldProcess := eh.shouldProcessSaveBlockEvents(executionResultData.Hash)
+		if !shouldProcess {
+			continue
+		}
+
 		timeStampSec := common.ConvertTimeStampMsToSec(executionResultData.TimeStampMs) // this is used for backwards compatibility
 		err = eh.handleSaveBlockEvents(
 			executionResultData,
@@ -443,6 +466,36 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	log.Debug("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
 
 	return setSuccessful
+}
+
+func (eh *eventsHandler) tryLockV3BatchWithRetry(key string) bool {
+	var err error
+	var acquired bool
+
+	for {
+		acquired, err = eh.locker.TryLock(context.Background(), key)
+		if err == nil {
+			break
+		}
+
+		log.Error("failed to acquire v3 batch lock", "error", err.Error())
+		if !eh.locker.HasConnection(context.Background()) {
+			log.Error("failure connecting to locker service")
+
+			time.Sleep(reconnectRetryDuration)
+		} else {
+			time.Sleep(setRetryDuration)
+		}
+	}
+
+	return acquired
+}
+
+func (eh *eventsHandler) unlockV3Batch(key string) {
+	err := eh.locker.Unlock(context.Background(), key)
+	if err != nil {
+		log.Error("failed to release v3 batch lock", "error", err.Error(), "key", key)
+	}
 }
 
 func getPrefixLockerKey(id string) string {

@@ -2,6 +2,7 @@ package process_test
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -508,6 +509,57 @@ func TestProcessBlockEvents_WithExecutionResults(t *testing.T) {
 		require.Nil(t, err)
 		require.Equal(t, expEvents, events)
 	})
+}
+
+func TestProcessBlockEventsV3_DeterministicNonceOrder(t *testing.T) {
+	t.Parallel()
+
+	eventsInterceptor, err := process.NewEventsInterceptor(createMockEventsInterceptorArgs())
+	require.Nil(t, err)
+
+	blockHeader := &block.HeaderV3{
+		ShardID:     1,
+		TimestampMs: 1234,
+	}
+
+	const numExecResults = 8
+
+	execResults := make(map[string]*outport.ExecutionResultData, numExecResults)
+	for i := 1; i <= numExecResults; i++ {
+		execResults[fmt.Sprintf("hash%d", i)] = &outport.ExecutionResultData{
+			HeaderNonce: uint64(i),
+			Body:        &block.Body{},
+			TransactionPool: &outport.TransactionPool{
+				Logs: nil,
+			},
+		}
+	}
+
+	blockEvents := data.ArgsSaveBlockData{
+		HeaderHash:            []byte("blockHash"),
+		Body:                  &block.Body{},
+		Header:                blockHeader,
+		TransactionsPool:      &outport.TransactionPool{},
+		StateAccesses:         make(map[string]*stateChange.StateAccesses),
+		StateAccessesForBlock: make(map[string]*outport.StateAccessesForBlock),
+		Results:               execResults,
+	}
+
+	expectedNonces := make([]uint64, 0, numExecResults)
+	for i := 1; i <= numExecResults; i++ {
+		expectedNonces = append(expectedNonces, uint64(i))
+	}
+
+	execBlocksData, err := eventsInterceptor.ProcessBlockEventsV3(&blockEvents)
+	require.Nil(t, err)
+	require.Len(t, execBlocksData, numExecResults)
+
+	gotNonces := make([]uint64, 0, numExecResults)
+	for _, blockData := range execBlocksData {
+		gotNonces = append(gotNonces, blockData.Nonce)
+	}
+
+	require.Equal(t, expectedNonces, gotNonces)
 }
 
 func TestGetLogEventsFromTransactionsPool(t *testing.T) {

@@ -15,6 +15,16 @@ func (drw *disabledRedlockWrapper) IsEventProcessed(_ context.Context, _ string)
 	return true, nil
 }
 
+// TryLock returns true and nil
+func (drw *disabledRedlockWrapper) TryLock(_ context.Context, _ string) (bool, error) {
+	return true, nil
+}
+
+// Unlock returns nil
+func (drw *disabledRedlockWrapper) Unlock(_ context.Context, _ string) error {
+	return nil
+}
+
 // HasConnection returns true
 func (drw *disabledRedlockWrapper) HasConnection(_ context.Context) bool {
 	return true

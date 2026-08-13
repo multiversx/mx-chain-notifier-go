@@ -10,6 +10,8 @@ import (
 // It makes sure that a duplicated entry is not processed multiple times.
 type LockService interface {
 	IsEventProcessed(ctx context.Context, blockHash string) (bool, error)
+	TryLock(ctx context.Context, key string) (bool, error)
+	Unlock(ctx context.Context, key string) error
 	HasConnection(ctx context.Context) bool
 	IsInterfaceNil() bool
 }
