@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/mock"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -178,6 +181,88 @@ func TestPushEvents(t *testing.T) {
 	eventsData := wd.ReadSendChannel()
 
 	require.Equal(t, expectedEventBytes, eventsData)
+}
+
+func TestPushEvents_FullSendBufferDoesNotBlock(t *testing.T) {
+	t.Parallel()
+
+	var closeCalls int32
+	args := createMockWSDispatcherArgs()
+	args.Conn = &mocks.WSConnStub{
+		CloseCalled: func() error {
+			atomic.AddInt32(&closeCalls, 1)
+			return nil
+		},
+	}
+
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	events := []data.Event{
+		{
+			Address: "addr1",
+		},
+	}
+
+	// fill the send channel's buffer without anything draining it,
+	// simulating a subscriber that stopped reading
+	for i := 0; i < ws.SendChanCap; i++ {
+		wd.PushEvents(events)
+	}
+	require.Equal(t, int32(0), atomic.LoadInt32(&closeCalls))
+
+	// this call must not block now that the buffer is full
+	done := make(chan struct{})
+	go func() {
+		wd.PushEvents(events)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("PushEvents blocked on a full send buffer instead of dropping the subscriber")
+	}
+
+	require.Equal(t, int32(1), atomic.LoadInt32(&closeCalls))
+}
+
+func TestPushEvents_ConcurrentWithReadPumpClose_NoPanic(t *testing.T) {
+	t.Parallel()
+
+	args := createMockWSDispatcherArgs()
+	args.Conn = &mocks.WSConnStub{
+		ReadMessageCalled: func() (messageType int, p []byte, err error) {
+			return 0, nil, errors.New("connection closed")
+		},
+	}
+
+	wd, err := ws.NewTestWSDispatcher(args)
+	require.Nil(t, err)
+
+	events := []data.Event{
+		{
+			Address: "addr1",
+		},
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 1000; i++ {
+			wd.PushEvents(events)
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		// readPump exits immediately (ReadMessage errors) and closes the send channel
+		wd.ReadPump()
+	}()
+
+	wg.Wait()
 }
 
 func TestBlockEventsWithOrder(t *testing.T) {

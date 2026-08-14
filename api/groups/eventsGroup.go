@@ -162,7 +162,7 @@ func (h *eventsGroup) createMiddlewares() {
 		basicAuth := gin.BasicAuth(gin.Accounts{
 			user: pass,
 		})
-		h.authMiddleware = basicAuth
+		h.setAuthMiddleware(basicAuth)
 	}
 }
 

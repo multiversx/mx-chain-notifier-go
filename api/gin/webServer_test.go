@@ -1,12 +1,14 @@
 package gin_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/multiversx/mx-chain-communication-go/testscommon"
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	apiErrors "github.com/multiversx/mx-chain-notifier-go/api/errors"
 	"github.com/multiversx/mx-chain-notifier-go/api/gin"
+	"github.com/multiversx/mx-chain-notifier-go/api/groups"
 	"github.com/multiversx/mx-chain-notifier-go/common"
 	"github.com/multiversx/mx-chain-notifier-go/config"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
@@ -70,6 +72,60 @@ func TestNewWebServerHandler(t *testing.T) {
 		t.Parallel()
 
 		args := createMockArgsWebServerHandler()
+
+		ws, err := gin.NewWebServerHandler(args)
+		require.Nil(t, err)
+		require.NotNil(t, ws)
+
+		err = ws.Run()
+		require.Nil(t, err)
+
+		err = ws.Close()
+		require.Nil(t, err)
+	})
+
+	t.Run("route requires auth but no credentials configured, should fail to start", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsWebServerHandler()
+		args.Configs.MainConfig.ConnectorApi.Enabled = true
+		args.Configs.ApiRoutesConfig = config.APIRoutesConfig{
+			APIPackages: map[string]config.APIPackageConfig{
+				"events": {
+					Routes: []config.RouteConfig{
+						{Name: "/push", Open: true, Auth: true},
+					},
+				},
+			},
+		}
+
+		ws, err := gin.NewWebServerHandler(args)
+		require.Nil(t, err)
+		require.NotNil(t, ws)
+
+		err = ws.Run()
+		require.True(t, errors.Is(err, groups.ErrAuthEnabledWithoutMiddleware))
+	})
+
+	t.Run("route requires auth and credentials are configured, should work", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsWebServerHandler()
+		args.Configs.MainConfig.ConnectorApi.Enabled = true
+		args.Facade = &mocks.FacadeStub{
+			GetConnectorUserAndPassCalled: func() (string, string) {
+				return "user", "pass"
+			},
+		}
+		args.Configs.ApiRoutesConfig = config.APIRoutesConfig{
+			APIPackages: map[string]config.APIPackageConfig{
+				"events": {
+					Routes: []config.RouteConfig{
+						{Name: "/push", Open: true, Auth: true},
+					},
+				},
+			},
+		}
 
 		ws, err := gin.NewWebServerHandler(args)
 		require.Nil(t, err)

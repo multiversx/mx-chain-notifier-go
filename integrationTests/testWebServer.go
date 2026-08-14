@@ -52,7 +52,9 @@ func NewTestWebServer(facade shared.FacadeHandler, apiType string, payloadHandle
 	groupsMap := webServer.createGroups()
 	for groupName, groupHandler := range groupsMap {
 		ginGroup := ws.Group(groupName)
-		groupHandler.RegisterRoutes(ginGroup, getDefaultRoutesConfig())
+		if err := groupHandler.RegisterRoutes(ginGroup, getDefaultRoutesConfig()); err != nil {
+			panic(err)
+		}
 	}
 
 	webServer.ws = ws
