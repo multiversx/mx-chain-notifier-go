@@ -3,7 +3,10 @@ package process_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
 	"github.com/multiversx/mx-chain-core-go/data/block"
@@ -91,7 +94,7 @@ func TestNewEventsHandler(t *testing.T) {
 	})
 }
 
-func TestHandleSaveBlockEvents(t *testing.T) {
+func TestHandleSaveBlockEvents_ShouldFail(t *testing.T) {
 	t.Parallel()
 
 	t.Run("duplicated events, should return early", func(t *testing.T) {
@@ -116,8 +119,40 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{})
+		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{
+			Header: &block.HeaderV2{},
+		})
 		require.Nil(t, err)
+	})
+
+	t.Run("nil events header, should fail", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockEventsHandlerArgs()
+		args.CheckDuplicates = true
+
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return true, nil
+			},
+		}
+
+		expectedErr := errors.New("expected err")
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				return nil, expectedErr
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		blockData := data.ArgsSaveBlockData{
+			Header: nil,
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
+		require.Equal(t, process.ErrNilBlockHeader, err)
 	})
 
 	t.Run("failed to pre-process events, should fail", func(t *testing.T) {
@@ -142,106 +177,105 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
-		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{})
+		blockData := data.ArgsSaveBlockData{
+			Header: &block.HeaderV2{},
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
 		require.Equal(t, expectedErr, err)
 	})
+}
 
-	t.Run("should work", func(t *testing.T) {
+func TestHandleSaveBlockEvents_ShouldWork(t *testing.T) {
+	t.Parallel()
+
+	blockHash := "blockHash1"
+	txs := map[string]*outport.TxInfo{
+		"hash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
+			},
+			ExecutionOrder: 1,
+		},
+	}
+	scrs := map[string]*outport.SCRInfo{
+		"hash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
+				Nonce: 2,
+			},
+		},
+	}
+	logData := []*transaction.LogData{
+		{
+			Log: &transaction.Log{
+				Address: []byte("logaddr1"),
+				Events:  []*transaction.Event{},
+			},
+			TxHash: "logHash1",
+		},
+	}
+
+	logEvents := []data.Event{
+		{
+			Address: "addr1",
+		},
+	}
+
+	expTxs := map[string]*transaction.Transaction{
+		"hash1": {
+			Nonce: 1,
+		},
+	}
+	expScrs := map[string]*smartContractResult.SmartContractResult{
+		"hash2": {
+			Nonce: 2,
+		},
+	}
+
+	expTxsData := data.BlockTxs{
+		Hash: blockHash,
+		Txs:  expTxs,
+	}
+	expScrsData := data.BlockScrs{
+		Hash: blockHash,
+		Scrs: expScrs,
+	}
+	expLogEvents := data.BlockEvents{
+		Hash:    blockHash,
+		Events:  logEvents,
+		ShardID: 2,
+	}
+
+	expTxsWithOrder := map[string]*outport.TxInfo{
+		"hash1": {
+			Transaction: &transaction.Transaction{
+				Nonce: 1,
+			},
+			ExecutionOrder: 1,
+		},
+	}
+	expScrsWithOrder := map[string]*outport.SCRInfo{
+		"hash2": {
+			SmartContractResult: &smartContractResult.SmartContractResult{
+				Nonce: 2,
+			},
+		},
+	}
+	expTxsWithOrderData := data.BlockEventsWithOrder{
+		Hash:    blockHash,
+		ShardID: 2,
+		Txs:     expTxsWithOrder,
+		Scrs:    expScrsWithOrder,
+		Events:  logEvents,
+	}
+
+	t.Run("should work before header v3", func(t *testing.T) {
 		t.Parallel()
-
-		blockHash := "blockHash1"
-		txs := map[string]*outport.TxInfo{
-			"hash1": {
-				Transaction: &transaction.Transaction{
-					Nonce: 1,
-				},
-				ExecutionOrder: 1,
-			},
-		}
-		scrs := map[string]*outport.SCRInfo{
-			"hash2": {
-				SmartContractResult: &smartContractResult.SmartContractResult{
-					Nonce: 2,
-				},
-			},
-		}
-		logData := []*outport.LogData{
-			{
-				Log: &transaction.Log{
-					Address: []byte("logaddr1"),
-					Events:  []*transaction.Event{},
-				},
-				TxHash: "logHash1",
-			},
-		}
-
-		logEvents := []data.Event{
-			{
-				Address: "addr1",
-			},
-		}
 
 		header := &block.HeaderV2{
 			Header: &block.Header{
 				ShardID: 2,
 			},
-		}
-		blockData := data.ArgsSaveBlockData{
-			HeaderHash: []byte(blockHash),
-			TransactionsPool: &outport.TransactionPool{
-				Transactions:         txs,
-				SmartContractResults: scrs,
-				Logs:                 logData,
-			},
-			Header: &block.HeaderV2{},
-		}
-
-		expTxs := map[string]*transaction.Transaction{
-			"hash1": {
-				Nonce: 1,
-			},
-		}
-		expScrs := map[string]*smartContractResult.SmartContractResult{
-			"hash2": {
-				Nonce: 2,
-			},
-		}
-
-		expTxsData := data.BlockTxs{
-			Hash: blockHash,
-			Txs:  expTxs,
-		}
-		expScrsData := data.BlockScrs{
-			Hash: blockHash,
-			Scrs: expScrs,
-		}
-		expLogEvents := data.BlockEvents{
-			Hash:    blockHash,
-			Events:  logEvents,
-			ShardID: 2,
-		}
-
-		expTxsWithOrder := map[string]*outport.TxInfo{
-			"hash1": {
-				Transaction: &transaction.Transaction{
-					Nonce: 1,
-				},
-				ExecutionOrder: 1,
-			},
-		}
-		expScrsWithOrder := map[string]*outport.SCRInfo{
-			"hash2": {
-				SmartContractResult: &smartContractResult.SmartContractResult{
-					Nonce: 2,
-				},
-			},
-		}
-		expTxsWithOrderData := data.BlockEventsWithOrder{
-			Hash:    blockHash,
-			ShardID: 2,
-			Txs:     expTxsWithOrder,
-			Scrs:    expScrsWithOrder,
-			Events:  logEvents,
 		}
 
 		pushWasCalled := false
@@ -287,6 +321,16 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		eventsHandler, err := process.NewEventsHandler(args)
 		require.Nil(t, err)
 
+		blockData := data.ArgsSaveBlockData{
+			HeaderHash: []byte(blockHash),
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				Logs:                 logData,
+			},
+			Header: header,
+		}
+
 		err = eventsHandler.HandleSaveBlockEvents(blockData)
 		require.Nil(t, err)
 
@@ -295,6 +339,268 @@ func TestHandleSaveBlockEvents(t *testing.T) {
 		assert.True(t, scrsWasCalled)
 		assert.True(t, blockEventsWithOrderWasCalled)
 	})
+
+	t.Run("should work with header v3", func(t *testing.T) {
+		t.Parallel()
+
+		header := &block.HeaderV3{
+			ShardID: 2,
+		}
+
+		pushWasCalled := false
+		txsWasCalled := false
+		scrsWasCalled := false
+		blockEventsWithOrderWasCalled := false
+
+		args := createMockEventsHandlerArgs()
+
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				assert.Fail(t, "should have not been called")
+				return &data.InterceptorBlockData{}, nil
+			},
+			ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
+				return []*data.InterceptorBlockData{
+					{
+						Hash:          blockHash,
+						Header:        header,
+						Txs:           expTxs,
+						Scrs:          expScrs,
+						LogEvents:     logEvents,
+						TxsWithOrder:  expTxsWithOrder,
+						ScrsWithOrder: expScrsWithOrder,
+					},
+				}, nil
+			},
+		}
+
+		args.Publisher = &mocks.PublisherStub{
+			BroadcastCalled: func(events data.BlockEvents) {
+				pushWasCalled = true
+				assert.Equal(t, expLogEvents, events)
+			},
+			BroadcastTxsCalled: func(event data.BlockTxs) {
+				txsWasCalled = true
+				assert.Equal(t, expTxsData, event)
+			},
+			BroadcastScrsCalled: func(event data.BlockScrs) {
+				scrsWasCalled = true
+				assert.Equal(t, expScrsData, event)
+			},
+			BroadcastBlockEventsWithOrderCalled: func(event data.BlockEventsWithOrder) {
+				blockEventsWithOrderWasCalled = true
+				assert.Equal(t, expTxsWithOrderData, event)
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		blockData := data.ArgsSaveBlockData{
+			HeaderHash: []byte(blockHash),
+			TransactionsPool: &outport.TransactionPool{
+				Transactions:         txs,
+				SmartContractResults: scrs,
+				Logs:                 logData,
+			},
+			Header: header,
+		}
+
+		err = eventsHandler.HandleSaveBlockEvents(blockData)
+		require.Nil(t, err)
+
+		assert.True(t, pushWasCalled)
+		assert.True(t, txsWasCalled)
+		assert.True(t, scrsWasCalled)
+		assert.True(t, blockEventsWithOrderWasCalled)
+	})
+}
+
+func TestHandleSaveBlockEventsV3_PartialFailure(t *testing.T) {
+	t.Parallel()
+
+	header := &block.HeaderV3{ShardID: 2}
+
+	// this entry has a nil Header, which makes handleSaveBlockEvents fail
+	// with ErrNilBlockHeader - simulating one execution block in the batch
+	// erroring out
+	failingBlock := &data.InterceptorBlockData{
+		Hash:  "execHash1",
+		Nonce: 1,
+	}
+
+	okLogEvents := []data.Event{
+		{Address: "addr1"},
+	}
+	okBlock := &data.InterceptorBlockData{
+		Hash:      "execHash2",
+		Header:    header,
+		LogEvents: okLogEvents,
+		Nonce:     2,
+	}
+
+	expOkPushEvents := data.BlockEvents{
+		Hash:    "execHash2",
+		ShardID: 2,
+		Events:  okLogEvents,
+	}
+
+	args := createMockEventsHandlerArgs()
+	args.CheckDuplicates = true
+
+	claimed := make(map[string]bool)
+	args.Locker = &mocks.LockerStub{
+		IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+			if claimed[blockHash] {
+				return false, nil
+			}
+			claimed[blockHash] = true
+			return true, nil
+		},
+		HasConnectionCalled: func(ctx context.Context) bool {
+			return true
+		},
+	}
+
+	args.EventsInterceptor = &mocks.EventsInterceptorStub{
+		ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
+			// failingBlock is listed first, so a bug that aborts the loop on
+			// the first error would never even attempt okBlock
+			return []*data.InterceptorBlockData{failingBlock, okBlock}, nil
+		},
+	}
+
+	pushCalls := 0
+	args.Publisher = &mocks.PublisherStub{
+		BroadcastCalled: func(events data.BlockEvents) {
+			pushCalls++
+			require.Equal(t, expOkPushEvents, events)
+		},
+	}
+
+	eventsHandler, err := process.NewEventsHandler(args)
+	require.Nil(t, err)
+
+	blockData := data.ArgsSaveBlockData{
+		HeaderHash: []byte("proposedHeaderHash"),
+		Header:     header,
+	}
+
+	err = eventsHandler.HandleSaveBlockEvents(blockData)
+	require.Equal(t, process.ErrNilBlockHeader, err)
+	require.Equal(t, 0, pushCalls)
+
+	err = eventsHandler.HandleSaveBlockEvents(blockData)
+	require.Nil(t, err)
+	require.Equal(t, 1, pushCalls)
+}
+
+func TestHandleSaveBlockEventsV3_ConcurrentDuplicateDeliveries_NoInterleaving(t *testing.T) {
+	t.Parallel()
+
+	header := &block.HeaderV3{ShardID: 1}
+
+	const numExecResults = 5
+	execResults := make([]*data.InterceptorBlockData, 0, numExecResults)
+	for i := 1; i <= numExecResults; i++ {
+		execResults = append(execResults, &data.InterceptorBlockData{
+			Hash:      fmt.Sprintf("execHash%d", i),
+			Header:    header,
+			LogEvents: []data.Event{{Address: fmt.Sprintf("addr%d", i)}},
+			Nonce:     uint64(i),
+		})
+	}
+
+	args := createMockEventsHandlerArgs()
+	args.CheckDuplicates = true
+
+	var lockMu sync.Mutex
+	locked := false
+
+	var claimMu sync.Mutex
+	claimed := make(map[string]bool)
+
+	args.Locker = &mocks.LockerStub{
+		TryLockCalled: func(ctx context.Context, key string) (bool, error) {
+			lockMu.Lock()
+			defer lockMu.Unlock()
+
+			if locked {
+				return false, nil
+			}
+			locked = true
+			return true, nil
+		},
+		UnlockCalled: func(ctx context.Context, key string) error {
+			lockMu.Lock()
+			defer lockMu.Unlock()
+
+			locked = false
+			return nil
+		},
+		IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+			claimMu.Lock()
+			defer claimMu.Unlock()
+
+			if claimed[blockHash] {
+				return false, nil
+			}
+			claimed[blockHash] = true
+			return true, nil
+		},
+		HasConnectionCalled: func(ctx context.Context) bool {
+			return true
+		},
+	}
+
+	args.EventsInterceptor = &mocks.EventsInterceptorStub{
+		ProcessBlockEventsV3Called: func(eventsData *data.ArgsSaveBlockData) ([]*data.InterceptorBlockData, error) {
+			return execResults, nil
+		},
+	}
+
+	var publishMu sync.Mutex
+	var publishedNonces []uint64
+	args.Publisher = &mocks.PublisherStub{
+		BroadcastCalled: func(events data.BlockEvents) {
+			// give a racing goroutine that (incorrectly) skipped the lock a
+			// chance to interleave its own publishes here
+			time.Sleep(time.Millisecond)
+
+			publishMu.Lock()
+			defer publishMu.Unlock()
+
+			for _, execResult := range execResults {
+				if execResult.Hash == events.Hash {
+					publishedNonces = append(publishedNonces, execResult.Nonce)
+				}
+			}
+		},
+	}
+
+	eventsHandler, err := process.NewEventsHandler(args)
+	require.Nil(t, err)
+
+	blockData := data.ArgsSaveBlockData{
+		HeaderHash: []byte("proposedHeaderHash"),
+		Header:     header,
+	}
+
+	const numConcurrentDeliveries = 5
+	wg := &sync.WaitGroup{}
+	wg.Add(numConcurrentDeliveries)
+	for i := 0; i < numConcurrentDeliveries; i++ {
+		go func() {
+			defer wg.Done()
+			_ = eventsHandler.HandleSaveBlockEvents(blockData)
+		}()
+	}
+	wg.Wait()
+
+	require.Equal(t, numExecResults, len(publishedNonces))
+	for i, nonce := range publishedNonces {
+		require.Equal(t, uint64(i+1), nonce)
+	}
 }
 
 func TestShouldProcessSaveBlockEvents(t *testing.T) {

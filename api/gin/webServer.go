@@ -112,7 +112,10 @@ func (w *webServer) Run() error {
 		return err
 	}
 
-	w.registerRoutes(engine)
+	err = w.registerRoutes(engine)
+	if err != nil {
+		return err
+	}
 
 	addr := w.getWSAddr()
 
@@ -168,14 +171,19 @@ func (w *webServer) createGroups() error {
 	return nil
 }
 
-func (w *webServer) registerRoutes(ginEngine *gin.Engine) {
+func (w *webServer) registerRoutes(ginEngine *gin.Engine) error {
 	for groupName, groupHandler := range w.groups {
 		log.Info("registering API group", "group name", groupName)
 
 		ginGroup := ginEngine.Group(fmt.Sprintf("/%s", groupName))
 
-		groupHandler.RegisterRoutes(ginGroup, w.configs.ApiRoutesConfig)
+		err := groupHandler.RegisterRoutes(ginGroup, w.configs.ApiRoutesConfig)
+		if err != nil {
+			return fmt.Errorf("%w for group %s", err, groupName)
+		}
 	}
+
+	return nil
 }
 
 // Close will handle the closing of inner components

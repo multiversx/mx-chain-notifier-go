@@ -28,6 +28,11 @@ func (rc *redisClientWrapper) SetEntry(ctx context.Context, key string, value bo
 	return rc.redis.SetNX(ctx, key, value, ttl).Result()
 }
 
+// DeleteEntry will delete a key entry from redis database
+func (rc *redisClientWrapper) DeleteEntry(ctx context.Context, key string) error {
+	return rc.redis.Del(ctx, key).Err()
+}
+
 // Ping will check if Redis instance is reponding
 func (rc *redisClientWrapper) Ping(ctx context.Context) (string, error) {
 	return rc.redis.Ping(ctx).Result()

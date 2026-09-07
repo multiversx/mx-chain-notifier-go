@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/multiversx/mx-chain-core-go/core"
+	coreData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
@@ -44,14 +45,25 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		return err
 	}
 
-	err = checkBlockDataValid(outportBlock)
+	if outportBlock.BlockData == nil {
+		return ErrNilBlockData
+	}
+
+	headerType := core.HeaderType(outportBlock.BlockData.HeaderType)
+
+	header, err := d.getHeaderFromBytes(headerType, outportBlock.BlockData.HeaderBytes)
 	if err != nil {
 		return err
 	}
 
-	header, err := d.getHeaderFromBytes(core.HeaderType(outportBlock.BlockData.HeaderType), outportBlock.BlockData.HeaderBytes)
+	err = checkHeaderGasConsumption(header, outportBlock)
 	if err != nil {
 		return err
+	}
+
+	var executionResults map[string]*outport.ExecutionResultData
+	if header.IsHeaderV3() {
+		executionResults = outportBlock.BlockData.Results
 	}
 
 	saveBlockData := &data.ArgsSaveBlockData{
@@ -66,6 +78,8 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 		Header:                 header,
 		HeaderTimeStampMs:      outportBlock.BlockData.GetTimestampMs(),
 		StateAccesses:          outportBlock.GetStateAccesses(),
+		StateAccessesForBlock:  outportBlock.GetStateAccessesForBlock(),
+		Results:                executionResults,
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)
@@ -76,15 +90,22 @@ func (d *eventsPreProcessorV1) SaveBlock(marshalledData []byte) error {
 	return nil
 }
 
-func checkBlockDataValid(block *outport.OutportBlock) error {
-	if block.BlockData == nil {
-		return ErrNilBlockData
+func checkHeaderGasConsumption(header coreData.HeaderHandler, block *outport.OutportBlock) error {
+	if !header.IsHeaderV3() {
+		if block.HeaderGasConsumption == nil {
+			return ErrNilHeaderGasConsumption
+		}
+
+		return nil
 	}
-	if block.TransactionPool == nil {
-		return ErrNilTransactionPool
-	}
-	if block.HeaderGasConsumption == nil {
-		return ErrNilHeaderGasConsumption
+
+	for _, execRes := range block.BlockData.Results {
+		if execRes == nil {
+			continue
+		}
+		if execRes.HeaderGasConsumption == nil {
+			return ErrNilHeaderGasConsumption
+		}
 	}
 
 	return nil

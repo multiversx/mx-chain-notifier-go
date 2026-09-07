@@ -43,9 +43,9 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 		URL:                     "localhost:" + fmt.Sprintf("%d", port),
 		WithAcknowledge:         true,
 		Mode:                    "server",
-		RetryDurationInSec:      5,
+		RetryDurationInSec:      1,
 		BlockingAckOnError:      false,
-		AcknowledgeTimeoutInSec: 60,
+		AcknowledgeTimeoutInSec: 1,
 		DataMarshallerType:      "json",
 	}
 
@@ -55,7 +55,7 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 	}
 
 	// wait for ws server to start
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	clientURL := "ws://" + conf.URL
 	wsClient, err := newWSObsClient(marshaller, clientURL)
@@ -64,7 +64,7 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 	}
 
 	// wait for ws client to start
-	time.Sleep(10 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	return wsClient, nil
 }
@@ -105,9 +105,9 @@ func newWSObsClient(marshaller marshal.Marshalizer, url string) (*wsObsClient, e
 			URL:                     url,
 			WithAcknowledge:         true,
 			Mode:                    "client",
-			RetryDurationInSec:      5,
+			RetryDurationInSec:      1,
 			BlockingAckOnError:      false,
-			AcknowledgeTimeoutInSec: 60,
+			AcknowledgeTimeoutInSec: 1,
 			Version:                 1,
 		},
 		Marshaller: marshaller,

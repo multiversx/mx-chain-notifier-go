@@ -32,6 +32,8 @@ type InterceptorBlockData struct {
 	ScrsWithOrder            map[string]*outport.SCRInfo
 	LogEvents                []Event
 	StateAccessesPerAccounts map[string]*stateChange.StateAccesses
+	Nonce                    uint64
+	TimeStampMs              uint64
 }
 
 // ArgsSaveBlockData holds the block data that will be received on push events
@@ -47,6 +49,8 @@ type ArgsSaveBlockData struct {
 	NumberOfShards         uint32
 	HeaderTimeStampMs      uint64
 	StateAccesses          map[string]*stateChange.StateAccesses
+	StateAccessesForBlock  map[string]*outport.StateAccessesForBlock
+	Results                map[string]*outport.ExecutionResultData
 }
 
 // OutportBlockDataOld holds the block data that will be received on push events
@@ -62,6 +66,7 @@ type OutportBlockDataOld struct {
 	AlteredAccounts        map[string]*alteredAccount.AlteredAccount
 	NumberOfShards         uint32
 	IsImportDB             bool
+	StateAccesses          map[string]*stateChange.StateAccesses
 }
 
 // ArgsSaveBlock holds block data with header type

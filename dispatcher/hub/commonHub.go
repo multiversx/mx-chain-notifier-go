@@ -70,164 +70,108 @@ func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
 
 // Publish will publish logs and events to dispatcher
 func (ch *commonHub) Publish(blockEvents data.BlockEvents) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-
-	for _, sub := range subscriptions[common.PushLogsAndEvents] {
-		ch.handlePushBlockEvents(blockEvents, sub)
-	}
-}
-
-func (ch *commonHub) handlePushBlockEvents(blockEvents data.BlockEvents, subscription data.Subscription) {
-	events := make([]data.Event, 0)
-	for _, event := range blockEvents.Events {
-		if ch.filter.MatchEvent(subscription, event) {
-			events = append(events, event)
-		}
-	}
-
-	ch.mutDispatchers.RLock()
-	d, ok := ch.dispatchers[subscription.DispatcherID]
-	if ok {
-		d.PushEvents(events)
-	}
-	ch.mutDispatchers.RUnlock()
-}
-
-// PublishRevert will publish revert event to dispatcher
-func (ch *commonHub) PublishRevert(revertBlock data.RevertBlock) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-	_, ok := subscriptions[common.RevertBlockEvents]
-	if !ok {
+	subscriptions := ch.subscriptionMapper.Subscriptions()[common.PushLogsAndEvents]
+	if len(subscriptions) == 0 {
 		return
 	}
 
-	dispatchersMap := make(map[uuid.UUID]data.RevertBlock)
+	type target struct {
+		d      dispatcher.EventDispatcher
+		events []data.Event
+	}
 
-	for _, sub := range subscriptions[common.RevertBlockEvents] {
-		dispatchersMap[sub.DispatcherID] = revertBlock
+	ch.mutDispatchers.RLock()
+	targets := make([]target, 0, len(subscriptions))
+	for _, sub := range subscriptions {
+		d, ok := ch.dispatchers[sub.DispatcherID]
+		if !ok {
+			continue
+		}
+
+		events := make([]data.Event, 0)
+		for _, event := range blockEvents.Events {
+			if ch.filter.MatchEvent(sub, event) {
+				events = append(events, event)
+			}
+		}
+		targets = append(targets, target{d: d, events: events})
+	}
+	ch.mutDispatchers.RUnlock()
+
+	// delivery happens outside the lock so a slow or stuck subscriber can
+	// never block registration/unregistration of other dispatchers
+	for _, t := range targets {
+		t.d.PushEvents(t.events)
+	}
+}
+
+// targetDispatchers returns the (deduplicated) live dispatchers currently
+// subscribed to eventType. The hub lock is held only while reading the
+// dispatchers map, never while delivering events to them.
+func (ch *commonHub) targetDispatchers(eventType string) []dispatcher.EventDispatcher {
+	subs := ch.subscriptionMapper.Subscriptions()[eventType]
+	if len(subs) == 0 {
+		return nil
 	}
 
 	ch.mutDispatchers.RLock()
 	defer ch.mutDispatchers.RUnlock()
-	for id, event := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.RevertEvent(event)
+
+	seen := make(map[uuid.UUID]struct{}, len(subs))
+	targets := make([]dispatcher.EventDispatcher, 0, len(subs))
+	for _, sub := range subs {
+		if _, duplicate := seen[sub.DispatcherID]; duplicate {
+			continue
 		}
+		seen[sub.DispatcherID] = struct{}{}
+
+		if d, ok := ch.dispatchers[sub.DispatcherID]; ok {
+			targets = append(targets, d)
+		}
+	}
+
+	return targets
+}
+
+// PublishRevert will publish revert event to dispatcher
+func (ch *commonHub) PublishRevert(revertBlock data.RevertBlock) {
+	for _, d := range ch.targetDispatchers(common.RevertBlockEvents) {
+		d.RevertEvent(revertBlock)
 	}
 }
 
 // PublishFinalized will publish finalized event to dispatcher
 func (ch *commonHub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-	_, ok := subscriptions[common.FinalizedBlockEvents]
-	if !ok {
-		return
-	}
-
-	dispatchersMap := make(map[uuid.UUID]data.FinalizedBlock)
-
-	for _, subscription := range subscriptions[common.FinalizedBlockEvents] {
-		dispatchersMap[subscription.DispatcherID] = finalizedBlock
-	}
-
-	ch.mutDispatchers.RLock()
-	defer ch.mutDispatchers.RUnlock()
-	for id, event := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.FinalizedEvent(event)
-		}
+	for _, d := range ch.targetDispatchers(common.FinalizedBlockEvents) {
+		d.FinalizedEvent(finalizedBlock)
 	}
 }
 
 // PublishTxs will publish txs event to dispatcher
 func (ch *commonHub) PublishTxs(blockTxs data.BlockTxs) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-	_, ok := subscriptions[common.BlockTxs]
-	if !ok {
-		return
-	}
-
-	dispatchersMap := make(map[uuid.UUID]data.BlockTxs)
-
-	for _, subscription := range subscriptions[common.BlockTxs] {
-		dispatchersMap[subscription.DispatcherID] = blockTxs
-	}
-
-	ch.mutDispatchers.RLock()
-	defer ch.mutDispatchers.RUnlock()
-	for id, event := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.TxsEvent(event)
-		}
+	for _, d := range ch.targetDispatchers(common.BlockTxs) {
+		d.TxsEvent(blockTxs)
 	}
 }
 
 // PublishBlockEventsWithOrder will publish block events with order to dispatcher
 func (ch *commonHub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-	_, ok := subscriptions[common.BlockEvents]
-	if !ok {
-		return
-	}
-
-	dispatchersMap := make(map[uuid.UUID]data.BlockEventsWithOrder)
-
-	for _, subscription := range subscriptions[common.BlockEvents] {
-		dispatchersMap[subscription.DispatcherID] = blockTxs
-	}
-
-	ch.mutDispatchers.RLock()
-	defer ch.mutDispatchers.RUnlock()
-	for id, event := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.BlockEvents(event)
-		}
+	for _, d := range ch.targetDispatchers(common.BlockEvents) {
+		d.BlockEvents(blockTxs)
 	}
 }
 
 // PublishScrs will publish scrs events to dispatcher
 func (ch *commonHub) PublishScrs(blockScrs data.BlockScrs) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-	_, ok := subscriptions[common.BlockScrs]
-	if !ok {
-		return
-	}
-
-	dispatchersMap := make(map[uuid.UUID]data.BlockScrs)
-
-	for _, subscription := range subscriptions[common.BlockScrs] {
-		dispatchersMap[subscription.DispatcherID] = blockScrs
-	}
-
-	ch.mutDispatchers.RLock()
-	defer ch.mutDispatchers.RUnlock()
-	for id, event := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.ScrsEvent(event)
-		}
+	for _, d := range ch.targetDispatchers(common.BlockScrs) {
+		d.ScrsEvent(blockScrs)
 	}
 }
 
 // PublishStateAccesses will publish state accesses to dispatcher
 func (ch *commonHub) PublishStateAccesses(stateAccesses data.BlockStateAccesses) {
-	subscriptions := ch.subscriptionMapper.Subscriptions()
-	_, ok := subscriptions[common.BlockStateAccesses]
-	if !ok {
-		return
-	}
-
-	dispatchersMap := make(map[uuid.UUID]data.BlockStateAccesses)
-
-	for _, subscription := range subscriptions[common.BlockStateAccesses] {
-		dispatchersMap[subscription.DispatcherID] = stateAccesses
-	}
-
-	ch.mutDispatchers.RLock()
-	defer ch.mutDispatchers.RUnlock()
-	for id, event := range dispatchersMap {
-		if d, ok := ch.dispatchers[id]; ok {
-			d.StateAccessesEvent(event)
-		}
+	for _, d := range ch.targetDispatchers(common.BlockStateAccesses) {
+		d.StateAccessesEvent(stateAccesses)
 	}
 }
 

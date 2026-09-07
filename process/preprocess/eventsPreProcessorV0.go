@@ -8,6 +8,7 @@ import (
 	nodeData "github.com/multiversx/mx-chain-core-go/data"
 	"github.com/multiversx/mx-chain-core-go/data/block"
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/process"
 )
@@ -57,6 +58,7 @@ func (d *eventsPreProcessorV0) SaveBlock(marshalledData []byte) error {
 		NumberOfShards:         blockData.NumberOfShards,
 		TransactionsPool:       txsPool,
 		Header:                 header,
+		StateAccesses:          blockData.StateAccesses,
 	}
 
 	err = d.facade.HandlePushEvents(*saveBlockData)
@@ -113,14 +115,14 @@ func (d *eventsPreProcessorV0) parseScrs(scrs map[string]*data.NodeSmartContract
 	return newScrs
 }
 
-func (d *eventsPreProcessorV0) parseLogs(logs []*data.LogData) []*outport.LogData {
-	newLogs := make([]*outport.LogData, len(logs))
+func (d *eventsPreProcessorV0) parseLogs(logs []*data.LogData) []*transaction.LogData {
+	newLogs := make([]*transaction.LogData, len(logs))
 	for _, logHandler := range logs {
 		if logHandler == nil {
 			continue
 		}
 
-		newLogs = append(newLogs, &outport.LogData{
+		newLogs = append(newLogs, &transaction.LogData{
 			TxHash: logHandler.TxHash,
 			Log:    logHandler.LogHandler,
 		})

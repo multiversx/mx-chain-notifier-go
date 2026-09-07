@@ -34,3 +34,6 @@ var ErrNilEventsInterceptor = errors.New("nil events interceptor")
 
 // ErrNilStateAccesses signals that a nil state accesses has been provided
 var ErrNilStateAccesses = errors.New("nil state accesses provided")
+
+// ErrNilExecutionResults signals that a nil execution results map has been provided
+var ErrNilExecutionResults = errors.New("nil execution results provided")

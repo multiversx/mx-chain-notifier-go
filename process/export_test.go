@@ -1,8 +1,11 @@
 package process
 
 import (
+	"encoding/hex"
+
 	"github.com/multiversx/mx-chain-core-go/data/outport"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
+	"github.com/multiversx/mx-chain-core-go/data/transaction"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 )
 
@@ -37,11 +40,26 @@ func (eh *eventsHandler) ShouldProcessSaveBlockEvents(blockHash string) bool {
 }
 
 // GetLogEventsFromTransactionsPool exports internal method for testing
-func (ei *eventsInterceptor) GetLogEventsFromTransactionsPool(logs []*outport.LogData) []data.Event {
+func (ei *eventsInterceptor) GetLogEventsFromTransactionsPool(logs []*transaction.LogData) []data.Event {
 	return ei.getLogEventsFromTransactionsPool(logs)
 }
 
 // GetStateAccessesPerAccounts -
 func (ei *eventsInterceptor) GetStateAccessesPerAccounts(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
-	return ei.getStateAccessesPerAccounts(eventsData)
+	return ei.getStateAccessesPerAccounts(eventsData, hex.EncodeToString(eventsData.HeaderHash), eventsData.TransactionsPool)
+}
+
+// GetStateAccessesPerAccountsV3 -
+func (ei *eventsInterceptor) GetStateAccessesPerAccountsV3(eventsData *data.ArgsSaveBlockData) map[string]*stateChange.StateAccesses {
+	return ei.getStateAccessesPerAccountsV3(eventsData, hex.EncodeToString(eventsData.HeaderHash), eventsData.TransactionsPool)
+}
+
+// BaseNilEventsDataCheks -
+func BaseNilEventsDataCheks(eventsData *data.ArgsSaveBlockData) error {
+	return baseNilEventsDataChecks(eventsData)
+}
+
+// GetTxsWithOrder exports internal method for testing
+func GetTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
+	return getTxsWithOrder(transactionsPool)
 }
