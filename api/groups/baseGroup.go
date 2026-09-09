@@ -1,6 +1,7 @@
 package groups
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -15,20 +16,34 @@ type baseGroup struct {
 	endpoints             []*shared.EndpointHandlerData
 	additionalMiddlewares []gin.HandlerFunc
 	authMiddleware        gin.HandlerFunc
+	hasAuthMiddleware     bool
 }
 
 func newBaseGroup() *baseGroup {
 	return &baseGroup{
 		additionalMiddlewares: make([]gin.HandlerFunc, 0),
 		authMiddleware:        func(ctx *gin.Context) {},
+		hasAuthMiddleware:     false,
 	}
 }
 
-// RegisterRoutes will register all the endpoints to the given web server
+// setAuthMiddleware installs a real auth middleware, marking the group as
+// having one so RegisterRoutes can detect (and refuse) an Auth = true route
+// that would otherwise fall back to the no-op default middleware.
+func (bg *baseGroup) setAuthMiddleware(middleware gin.HandlerFunc) {
+	bg.authMiddleware = middleware
+	bg.hasAuthMiddleware = true
+}
+
+// RegisterRoutes will register all the endpoints to the given web server.
+// It fails instead of registering a route whose config requires
+// authentication if no real auth middleware was ever configured for the
+// group - otherwise the route would silently be served with the no-op
+// default middleware, i.e. with no authentication at all.
 func (bg *baseGroup) RegisterRoutes(
 	ws *gin.RouterGroup,
 	apiConfig config.APIRoutesConfig,
-) {
+) error {
 	for _, handlerData := range bg.endpoints {
 		isOpen, isAuthEnabled := getEndpointStatus(ws, handlerData.Path, apiConfig)
 		if !isOpen {
@@ -39,6 +54,9 @@ func (bg *baseGroup) RegisterRoutes(
 		handlers := make([]gin.HandlerFunc, 0)
 
 		if isAuthEnabled {
+			if !bg.hasAuthMiddleware {
+				return fmt.Errorf("%w: path %s", ErrAuthEnabledWithoutMiddleware, handlerData.Path)
+			}
 			handlers = append(handlers, bg.GetAuthMiddleware())
 		}
 
@@ -47,6 +65,8 @@ func (bg *baseGroup) RegisterRoutes(
 
 		ws.Handle(handlerData.Method, handlerData.Path, handlers...)
 	}
+
+	return nil
 }
 
 // GetAdditionalMiddlewares returns additional middlewares

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/multiversx/mx-chain-communication-go/testscommon"
 	"github.com/multiversx/mx-chain-core-go/core"
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -70,6 +71,65 @@ func TestNewEventsGroup(t *testing.T) {
 		require.Nil(t, err)
 
 		require.NotNil(t, eg.GetAuthMiddleware())
+	})
+}
+
+func TestEventsGroup_RegisterRoutes_AuthValidation(t *testing.T) {
+	t.Parallel()
+
+	authRoutesConfig := config.APIRoutesConfig{
+		APIPackages: map[string]config.APIPackageConfig{
+			"events": {
+				Routes: []config.RouteConfig{
+					{Name: "/push", Open: true, Auth: true},
+				},
+			},
+		},
+	}
+
+	t.Run("auth enabled without credentials, should fail", func(t *testing.T) {
+		t.Parallel()
+
+		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
+		require.Nil(t, err)
+
+		ws := gin.New()
+		routes := ws.Group(eventsPath)
+
+		err = eg.RegisterRoutes(routes, authRoutesConfig)
+		require.True(t, errors.Is(err, groups.ErrAuthEnabledWithoutMiddleware))
+	})
+
+	t.Run("auth enabled with credentials, should work", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockEventsGroupArgs()
+		args.Facade = &mocks.FacadeStub{
+			GetConnectorUserAndPassCalled: func() (string, string) {
+				return "user", "pass"
+			},
+		}
+		eg, err := groups.NewEventsGroup(args)
+		require.Nil(t, err)
+
+		ws := gin.New()
+		routes := ws.Group(eventsPath)
+
+		err = eg.RegisterRoutes(routes, authRoutesConfig)
+		require.Nil(t, err)
+	})
+
+	t.Run("auth disabled without credentials, should work", func(t *testing.T) {
+		t.Parallel()
+
+		eg, err := groups.NewEventsGroup(createMockEventsGroupArgs())
+		require.Nil(t, err)
+
+		ws := gin.New()
+		routes := ws.Group(eventsPath)
+
+		err = eg.RegisterRoutes(routes, getEventsRoutesConfig())
+		require.Nil(t, err)
 	})
 }
 

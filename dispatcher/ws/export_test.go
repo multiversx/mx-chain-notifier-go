@@ -31,3 +31,6 @@ func (wd *websocketDispatcher) ReadSendChannel() []byte {
 	d := <-wd.send
 	return d
 }
+
+// SendChanCap is the capacity of the internal send buffer, exposed for tests
+const SendChanCap = sendChanBuffSize
