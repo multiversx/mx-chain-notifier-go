@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/multiversx/mx-chain-communication-go v1.4.0
-	github.com/multiversx/mx-chain-core-go v1.5.1
+	github.com/multiversx/mx-chain-core-go v1.5.2-0.20260909084840-8e2ab3b73ad2
 	github.com/multiversx/mx-chain-logger-go v1.2.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_model v0.6.2
