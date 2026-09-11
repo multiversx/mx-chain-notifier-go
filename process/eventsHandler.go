@@ -131,6 +131,8 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 		return ErrNilBlockHeader
 	}
 
+	t := time.Now()
+
 	pushEvents := data.BlockEvents{
 		Hash:        eventsData.Hash,
 		ShardID:     shardID,
@@ -175,6 +177,17 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 	}
 	eh.handleStateAccesses(stateAccesses)
 
+	log.Info("processed block events",
+		"block hash", eventsData.Hash,
+		"shard", shardID,
+		"nonce", nonce,
+		"num events", len(eventsData.LogEvents),
+		"num txs", len(eventsData.Txs),
+		"num scrs", len(eventsData.Scrs),
+		"num state accesses accounts", len(eventsData.StateAccessesPerAccounts),
+		"duration", time.Since(t),
+	)
+
 	return nil
 }
 
@@ -186,7 +199,7 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 		// this is needed to avoid concurrent triggers for partially processed batches
 		acquired := eh.tryLockV3BatchWithRetry(lockKey)
 		if !acquired {
-			log.Info("received duplicate v3 block events while already being processed, skipping",
+			log.Debug("received duplicate v3 block events while already being processed, skipping",
 				"lock key", lockKey,
 			)
 			return nil
@@ -233,15 +246,13 @@ func (eh *eventsHandler) handlePushEvents(events data.BlockEvents) error {
 	}
 
 	if len(events.Events) == 0 {
-		log.Debug("received empty events", "event", common.PushLogsAndEvents,
-			"block hash", events.Hash,
-		)
 		events.Events = make([]data.Event, 0)
-	} else {
-		log.Info("received", "event", common.PushLogsAndEvents,
-			"block hash", events.Hash,
-		)
 	}
+
+	log.Debug("received", "event", common.PushLogsAndEvents,
+		"block hash", events.Hash,
+		"num events", len(events.Events),
+	)
 
 	t := time.Now()
 	eh.publisher.Broadcast(events)
@@ -256,9 +267,8 @@ func (eh *eventsHandler) shouldProcessSaveBlockEvents(blockHash string) bool {
 	}
 
 	if !shouldProcessEvents {
-		log.Info("received duplicated push events",
+		log.Debug("received duplicated push events, skipping",
 			"block hash", blockHash,
-			"will process", false,
 		)
 
 		return false
@@ -282,16 +292,16 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	}
 
 	if !shouldProcessRevert {
-		log.Info("received duplicated events", "event", common.RevertBlockEvents,
+		log.Debug("received duplicated events, skipping", "event", common.RevertBlockEvents,
 			"block hash", revertBlock.Hash,
-			"will process", false,
 		)
 		return
 	}
 
 	log.Info("received", "event", common.RevertBlockEvents,
 		"block hash", revertBlock.Hash,
-		"will process", shouldProcessRevert,
+		"shard", revertBlock.ShardID,
+		"nonce", revertBlock.Nonce,
 	)
 
 	t := time.Now()
@@ -313,16 +323,14 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 	}
 
 	if !shouldProcessFinalized {
-		log.Info("received duplicated events", "event", common.FinalizedBlockEvents,
+		log.Debug("received duplicated events, skipping", "event", common.FinalizedBlockEvents,
 			"block hash", finalizedBlock.Hash,
-			"will process", false,
 		)
 		return
 	}
 
-	log.Info("received", "event", common.FinalizedBlockEvents,
+	log.Debug("received", "event", common.FinalizedBlockEvents,
 		"block hash", finalizedBlock.Hash,
-		"will process", shouldProcessFinalized,
 	)
 
 	t := time.Now()
@@ -332,22 +340,10 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 
 // handleBlockTxs will handle txs events received from observer
 func (eh *eventsHandler) handleBlockTxs(blockTxs data.BlockTxs) {
-	if blockTxs.Hash == "" {
-		log.Warn("received empty hash", "event", common.BlockTxs,
-			"will process", false,
-		)
-		return
-	}
-
-	if len(blockTxs.Txs) == 0 {
-		log.Debug("received empty events", "event", common.BlockTxs,
-			"block hash", blockTxs.Hash,
-		)
-	} else {
-		log.Info("received", "event", common.BlockTxs,
-			"block hash", blockTxs.Hash,
-		)
-	}
+	log.Debug("received", "event", common.BlockTxs,
+		"block hash", blockTxs.Hash,
+		"num txs", len(blockTxs.Txs),
+	)
 
 	t := time.Now()
 	eh.publisher.BroadcastTxs(blockTxs)
@@ -356,22 +352,10 @@ func (eh *eventsHandler) handleBlockTxs(blockTxs data.BlockTxs) {
 
 // handleBlockScrs will handle scrs events received from observer
 func (eh *eventsHandler) handleBlockScrs(blockScrs data.BlockScrs) {
-	if blockScrs.Hash == "" {
-		log.Warn("received empty hash", "event", common.BlockScrs,
-			"will process", false,
-		)
-		return
-	}
-
-	if len(blockScrs.Scrs) == 0 {
-		log.Debug("received empty events", "event", common.BlockScrs,
-			"block hash", blockScrs.Hash,
-		)
-	} else {
-		log.Info("received", "event", common.BlockScrs,
-			"block hash", blockScrs.Hash,
-		)
-	}
+	log.Debug("received", "event", common.BlockScrs,
+		"block hash", blockScrs.Hash,
+		"num scrs", len(blockScrs.Scrs),
+	)
 
 	t := time.Now()
 	eh.publisher.BroadcastScrs(blockScrs)
@@ -380,14 +364,7 @@ func (eh *eventsHandler) handleBlockScrs(blockScrs data.BlockScrs) {
 
 // handleBlockEventsWithOrder will handle full block events received from observer
 func (eh *eventsHandler) handleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
-	if blockTxs.Hash == "" {
-		log.Warn("received empty hash", "event", common.BlockEvents,
-			"will process", false,
-		)
-		return
-	}
-
-	log.Info("received", "event", common.BlockEvents,
+	log.Debug("received", "event", common.BlockEvents,
 		"block hash", blockTxs.Hash,
 	)
 
@@ -397,14 +374,7 @@ func (eh *eventsHandler) handleBlockEventsWithOrder(blockTxs data.BlockEventsWit
 }
 
 func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccesses) {
-	if stateAccesses.Hash == "" {
-		log.Warn("received empty state accesses",
-			"will process", false,
-		)
-		return
-	}
-
-	log.Info("received state accesses",
+	log.Debug("received state accesses",
 		"block hash", stateAccesses.Hash,
 		"nonce", stateAccesses.Nonce,
 		"stateAccesesPerAccounts num", len(stateAccesses.StateAccessesPerAccounts),
@@ -431,17 +401,16 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 			break
 		}
 
-		log.Error("failed to check event in locker", "error", err.Error())
-		if !eh.locker.HasConnection(context.Background()) {
-			log.Error("failure connecting to locker service")
-
+		hasConnection := eh.locker.HasConnection(context.Background())
+		log.Error("failed to check event in locker", "error", err.Error(), "has connection", hasConnection)
+		if !hasConnection {
 			time.Sleep(reconnectRetryDuration)
 		} else {
 			time.Sleep(setRetryDuration)
 		}
 	}
 
-	log.Debug("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
+	log.Trace("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
 
 	return setSuccessful
 }
@@ -456,10 +425,9 @@ func (eh *eventsHandler) tryLockV3BatchWithRetry(key string) bool {
 			break
 		}
 
-		log.Error("failed to acquire v3 batch lock", "error", err.Error())
-		if !eh.locker.HasConnection(context.Background()) {
-			log.Error("failure connecting to locker service")
-
+		hasConnection := eh.locker.HasConnection(context.Background())
+		log.Error("failed to acquire v3 batch lock", "error", err.Error(), "has connection", hasConnection)
+		if !hasConnection {
 			time.Sleep(reconnectRetryDuration)
 		} else {
 			time.Sleep(setRetryDuration)

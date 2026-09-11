@@ -189,7 +189,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 				continue
 			}
 
-			log.Debug("Publish: published message ack", "deliveryTag", deliveryTag)
+			log.Trace("Publish: published message ack", "deliveryTag", deliveryTag)
 			return nil
 		case deliveryTag, ok := <-state.nackCh:
 			if !ok {
@@ -198,7 +198,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 				continue
 			}
 
-			log.Debug("Publish: published message nack, will retry to publish message", "deliveryTag", deliveryTag)
+			log.Warn("Publish: published message nack, will retry to publish message", "exchange", exchange, "deliveryTag", deliveryTag)
 		case amqpErr, ok := <-state.connErrCh:
 			logAmqpFailure("rabbitMQ connection failure", amqpErr, ok)
 			rc.Reconnect()

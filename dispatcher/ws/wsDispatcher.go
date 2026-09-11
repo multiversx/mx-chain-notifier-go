@@ -2,6 +2,7 @@ package ws
 
 import (
 	"bytes"
+	"errors"
 	"net"
 	"sync"
 	"time"
@@ -266,14 +267,7 @@ func (wd *websocketDispatcher) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 	defer func() {
 		ticker.Stop()
-		if err := wd.conn.Close(); err != nil {
-			if _, ok := err.(*net.OpError); ok {
-				log.Debug("close attempt on closed connection", "err", err.Error())
-				return
-			}
-
-			log.Error("failed to close socket", "err", err.Error())
-		}
+		wd.closeConn("failed to close socket")
 	}()
 
 	nextWriterWrap := func(msgType int, data []byte) error {
@@ -299,12 +293,12 @@ func (wd *websocketDispatcher) writePump() {
 			if !ok {
 				if err := wd.conn.WriteMessage(websocket.CloseMessage, []byte{}); err != nil {
 					log.Debug("failed to write close message", "err", err.Error())
-					return
 				}
+				return
 			}
 
 			if err := nextWriterWrap(websocket.TextMessage, message); err != nil {
-				log.Error("failed to write text message", "err", err.Error())
+				log.Debug("failed to write text message", "dispatcherID", wd.id, "err", err.Error())
 				return
 			}
 		case <-ticker.C:
@@ -312,7 +306,7 @@ func (wd *websocketDispatcher) writePump() {
 				log.Error("ticker: failed to set socket write limits", "err", err.Error())
 			}
 			if err := wd.conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
-				log.Error("ticker: failed to write ping message", "err", err.Error())
+				log.Debug("ticker: failed to write ping message", "dispatcherID", wd.id, "err", err.Error())
 				return
 			}
 		}
@@ -323,9 +317,7 @@ func (wd *websocketDispatcher) writePump() {
 func (wd *websocketDispatcher) readPump() {
 	defer func() {
 		wd.dispatcher.UnregisterEvent(wd)
-		if err := wd.conn.Close(); err != nil {
-			log.Error("failed to close socket on defer", "err", err.Error())
-		}
+		wd.closeConn("failed to close socket on defer")
 		wd.closeSend()
 	}()
 
@@ -336,15 +328,15 @@ func (wd *websocketDispatcher) readPump() {
 	for {
 		_, msg, innerErr := wd.conn.ReadMessage()
 		if innerErr != nil {
-			log.Debug("failed reading socket", "err", innerErr.Error())
-
-			if websocket.IsUnexpectedCloseError(
-				innerErr,
-				websocket.CloseGoingAway,
-				websocket.CloseAbnormalClosure,
-			) {
-				log.Debug("received unexpected socket close", "err", innerErr.Error())
-			}
+			log.Debug("failed reading socket",
+				"dispatcherID", wd.id,
+				"err", innerErr.Error(),
+				"unexpected close", websocket.IsUnexpectedCloseError(
+					innerErr,
+					websocket.CloseGoingAway,
+					websocket.CloseAbnormalClosure,
+				),
+			)
 			break
 		}
 
@@ -357,11 +349,29 @@ func (wd *websocketDispatcher) trySendSubscribeEvent(eventBytes []byte) {
 	var subscribeEvent data.SubscribeEvent
 	err := wd.marshaller.Unmarshal(&subscribeEvent, eventBytes)
 	if err != nil {
-		log.Error("failure unmarshalling subscribe event", "err", err.Error())
+		log.Debug("failure unmarshalling subscribe event", "dispatcherID", wd.id, "err", err.Error())
 		return
 	}
 	subscribeEvent.DispatcherID = wd.id
 	wd.dispatcher.Subscribe(subscribeEvent)
+}
+
+// closeConn closes the underlying connection. Closing an already closed
+// connection is expected when the other pump (or a full send buffer) closed
+// it first, so that case is not treated as an error.
+func (wd *websocketDispatcher) closeConn(errMessage string) {
+	err := wd.conn.Close()
+	if err == nil {
+		return
+	}
+
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		log.Debug("close attempt on closed connection", "err", err.Error())
+		return
+	}
+
+	log.Error(errMessage, "err", err.Error())
 }
 
 func (wd *websocketDispatcher) setSocketWriteLimits() error {
