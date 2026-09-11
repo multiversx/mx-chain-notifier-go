@@ -54,7 +54,7 @@ func checkArgs(args ArgsWebSocketProcessor) error {
 func (wh *websocketProcessor) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := wh.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Error("failed upgrading connection", "err", err.Error())
+		log.Debug("failed upgrading connection", "remote address", r.RemoteAddr, "err", err.Error())
 		return
 	}
 
