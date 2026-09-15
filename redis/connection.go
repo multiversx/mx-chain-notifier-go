@@ -18,7 +18,7 @@ func CreateSimpleClient(cfg config.RedisConfig) (RedLockClient, error) {
 	}
 	client := redis.NewClient(opt)
 
-	log.Debug("created redis instance connection type", "connection url", cfg.Url)
+	log.Debug("created redis instance connection type", "address", opt.Addr, "db", opt.DB)
 
 	rc := NewRedisClientWrapper(client)
 	ok := rc.IsConnected(context.Background())

@@ -237,9 +237,8 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 	transactionPool *outport.TransactionPool,
 ) map[string]*stateChange.StateAccesses {
 	if eventsData.StateAccesses == nil {
-		log.Debug("getStateAccessesPerAccounts failed: will return empty state accesses per accounts",
+		log.Trace("no state accesses provided for block, will return empty state accesses per accounts",
 			"block hash", headerHash,
-			"error", ErrNilStateAccesses,
 		)
 
 		return make(map[string]*stateChange.StateAccesses)
@@ -247,7 +246,7 @@ func (ei *eventsInterceptor) getStateAccessesPerAccounts(
 
 	stateAccesses := eventsData.StateAccesses
 
-	return ei.fetchStateAccessesPerAccounts(stateAccesses, transactionPool)
+	return ei.fetchStateAccessesPerAccounts(headerHash, stateAccesses, transactionPool)
 }
 
 func (ei *eventsInterceptor) getStateAccessesPerAccountsV3(
@@ -256,16 +255,8 @@ func (ei *eventsInterceptor) getStateAccessesPerAccountsV3(
 	transactionPool *outport.TransactionPool,
 ) map[string]*stateChange.StateAccesses {
 	stateAccessesPerBlock, ok := eventsData.StateAccessesForBlock[headerHash]
-	if !ok {
-		log.Debug("stateAccessesPerBlock failed: will return empty state accesses per accounts",
-			"block hash", headerHash,
-		)
-
-		return make(map[string]*stateChange.StateAccesses)
-	}
-
-	if stateAccessesPerBlock == nil {
-		log.Debug("stateAccessesPerBlock failed: will return empty state accesses per accounts",
+	if !ok || stateAccessesPerBlock == nil {
+		log.Trace("no state accesses provided for block, will return empty state accesses per accounts",
 			"block hash", headerHash,
 			"num state accesses for block", len(eventsData.StateAccessesForBlock),
 		)
@@ -275,10 +266,11 @@ func (ei *eventsInterceptor) getStateAccessesPerAccountsV3(
 
 	stateAccesses := stateAccessesPerBlock.StateAccesses
 
-	return ei.fetchStateAccessesPerAccounts(stateAccesses, transactionPool)
+	return ei.fetchStateAccessesPerAccounts(headerHash, stateAccesses, transactionPool)
 }
 
 func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
+	headerHash string,
 	stateAccesses map[string]*stateChange.StateAccesses,
 	transactionPool *outport.TransactionPool,
 ) map[string]*stateChange.StateAccesses {
@@ -293,10 +285,11 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 	// txs hashes with order
 	txsWithOrder := getTxsWithOrder(transactionPool)
 
+	numTxsWithoutStateAccesses := 0
 	for _, txInfo := range txsWithOrder {
 		txHash, err := hex.DecodeString(txInfo.Hash)
 		if err != nil {
-			log.Error("failed to decode tx hash", "txHash", txInfo.Hash)
+			log.Error("failed to decode tx hash", "txHash", txInfo.Hash, "error", err)
 			continue
 		}
 
@@ -308,7 +301,8 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 				continue
 			}
 
-			log.Warn("did not find state accesses for tx", "txHash", txInfo.Hash, "txType", txInfo.TxType)
+			log.Debug("did not find state accesses for tx", "txHash", txInfo.Hash, "txType", txInfo.TxType)
+			numTxsWithoutStateAccesses++
 			continue
 		}
 
@@ -329,6 +323,13 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 		}
 	}
 
+	if numTxsWithoutStateAccesses > 0 {
+		log.Warn("did not find state accesses for some txs",
+			"block hash", headerHash,
+			"num txs without state accesses", numTxsWithoutStateAccesses,
+		)
+	}
+
 	log.Trace("getStateAccessesPerAccounts",
 		"num stateAccessesPerAccounts", len(stateAccessesPerAccounts),
 	)
@@ -347,11 +348,11 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 
 	for txHash, sts := range stateAccesses {
 		log.Trace("stateAccessesPerTx",
-			"txHash", txHash,
+			"txHash", hex.EncodeToString([]byte(txHash)),
 		)
 
 		for _, st := range sts.StateAccess {
-			log.Trace("st",
+			log.Trace("stateAccess",
 				"actionType", st.GetType(),
 				"operation", st.GetOperation(),
 			)
@@ -397,7 +398,7 @@ func (ei *eventsInterceptor) getLogEventsFromTransactionsPool(logs []*transactio
 		}
 		eventIdentifier := string(event.EventHandler.GetIdentifier())
 
-		log.Debug("eventsInterceptor: received event from address",
+		log.Trace("eventsInterceptor: received event from address",
 			"address", bech32Address,
 			"identifier", eventIdentifier,
 		)

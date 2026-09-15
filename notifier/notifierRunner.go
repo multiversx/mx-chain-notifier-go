@@ -115,7 +115,7 @@ func (nr *notifierRunner) Start() error {
 	if err != nil {
 		return err
 	}
-	log.Debug("closing eventNotifier proxy...")
+	log.Info("closing eventNotifier proxy...")
 
 	return nil
 }

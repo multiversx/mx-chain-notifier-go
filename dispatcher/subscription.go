@@ -76,13 +76,17 @@ func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
 		}
 		sm.appendSubscription(subscription)
 
-		log.Info("added new subscription for dispatcher",
+		log.Debug("added new subscription for dispatcher",
 			"dispatcherID", event.DispatcherID,
+			"event type", eventType,
 			"match level", matchLevel,
 		)
 	}
 
-	log.Info("subscribed dispatcher", "dispatcherID", event.DispatcherID)
+	log.Info("subscribed dispatcher",
+		"dispatcherID", event.DispatcherID,
+		"num subscriptions", len(event.SubscriptionEntries),
+	)
 }
 
 // RemoveSubscriptions removes all subscriptions registered by a dispatcher
@@ -94,7 +98,7 @@ func (sm *SubscriptionMapper) RemoveSubscriptions(dispatcherID uuid.UUID) {
 		delete(sm.subscriptions, dispatcherID)
 	}
 
-	log.Info("unsubscribed dispatcher", "dispatcherID", dispatcherID)
+	log.Debug("unsubscribed dispatcher", "dispatcherID", dispatcherID)
 }
 
 // Subscriptions returns a slice reflecting the subscriptions present in the map

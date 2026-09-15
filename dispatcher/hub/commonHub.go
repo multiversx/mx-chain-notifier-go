@@ -196,7 +196,7 @@ func (ch *commonHub) unregisterDispatcher(d dispatcher.EventDispatcher) {
 		delete(ch.dispatchers, d.GetID())
 	}
 
-	log.Info("unregistered dispatcher", "dispatcherID", d.GetID(), "unsubscribing", true)
+	log.Info("unregistered dispatcher", "dispatcherID", d.GetID())
 
 	ch.subscriptionMapper.RemoveSubscriptions(d.GetID())
 }
