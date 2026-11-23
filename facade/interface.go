@@ -9,8 +9,8 @@ import (
 // This will handle push events from observer node.
 type EventsHandler interface {
 	HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData) error
-	HandleRevertEvents(revertBlock data.RevertBlock)
-	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	HandleRevertEvents(revertBlock data.RevertBlock) error
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) error
 	IsInterfaceNil() bool
 }
 

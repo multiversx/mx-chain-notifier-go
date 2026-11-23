@@ -37,3 +37,6 @@ var ErrWrongTypeAssertion = errors.New("wrong type assertion")
 
 // ErrLoopAlreadyStarted signals that a loop has already been started
 var ErrLoopAlreadyStarted = errors.New("loop already started")
+
+// ErrPayloadTooLarge signals that a payload is larger than the configured max payload size
+var ErrPayloadTooLarge = errors.New("payload too large")

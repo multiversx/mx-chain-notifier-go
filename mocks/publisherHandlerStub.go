@@ -15,52 +15,66 @@ type PublisherHandlerStub struct {
 }
 
 // Publish -
-func (p *PublisherHandlerStub) Publish(events data.BlockEvents) {
+func (p *PublisherHandlerStub) Publish(events data.BlockEvents) error {
 	if p.PublishCalled != nil {
 		p.PublishCalled(events)
 	}
+
+	return nil
 }
 
 // PublishRevert -
-func (p *PublisherHandlerStub) PublishRevert(revertBlock data.RevertBlock) {
+func (p *PublisherHandlerStub) PublishRevert(revertBlock data.RevertBlock) error {
 	if p.PublishRevertCalled != nil {
 		p.PublishRevertCalled(revertBlock)
 	}
+
+	return nil
 }
 
 // PublishFinalized -
-func (p *PublisherHandlerStub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
+func (p *PublisherHandlerStub) PublishFinalized(finalizedBlock data.FinalizedBlock) error {
 	if p.PublishFinalizedCalled != nil {
 		p.PublishFinalizedCalled(finalizedBlock)
 	}
+
+	return nil
 }
 
 // PublishTxs -
-func (p *PublisherHandlerStub) PublishTxs(blockTxs data.BlockTxs) {
+func (p *PublisherHandlerStub) PublishTxs(blockTxs data.BlockTxs) error {
 	if p.PublishTxsCalled != nil {
 		p.PublishTxsCalled(blockTxs)
 	}
+
+	return nil
 }
 
 // PublishScrs -
-func (p *PublisherHandlerStub) PublishScrs(blockScrs data.BlockScrs) {
+func (p *PublisherHandlerStub) PublishScrs(blockScrs data.BlockScrs) error {
 	if p.PublishScrsCalled != nil {
 		p.PublishScrsCalled(blockScrs)
 	}
+
+	return nil
 }
 
 // PublishBlockEventsWithOrder -
-func (p *PublisherHandlerStub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+func (p *PublisherHandlerStub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) error {
 	if p.PublishBlockEventsWithOrderCalled != nil {
 		p.PublishBlockEventsWithOrderCalled(blockTxs)
 	}
+
+	return nil
 }
 
 // PublishStateAccesses -
-func (p *PublisherHandlerStub) PublishStateAccesses(stateAccesses data.BlockStateAccesses) {
+func (p *PublisherHandlerStub) PublishStateAccesses(stateAccesses data.BlockStateAccesses) error {
 	if p.PublishBlockStateAccessesCalled != nil {
 		p.PublishBlockStateAccessesCalled(stateAccesses)
 	}
+
+	return nil
 }
 
 // Close -

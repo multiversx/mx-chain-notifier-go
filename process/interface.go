@@ -20,13 +20,13 @@ type LockService interface {
 // able to publish received events and broadcast them to channels
 type Publisher interface {
 	Run() error
-	Broadcast(events data.BlockEvents)
-	BroadcastRevert(event data.RevertBlock)
-	BroadcastFinalized(event data.FinalizedBlock)
-	BroadcastTxs(event data.BlockTxs)
-	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
-	BroadcastScrs(event data.BlockScrs)
-	BroadcastStateAccesses(events data.BlockStateAccesses)
+	Broadcast(events data.BlockEvents) error
+	BroadcastRevert(event data.RevertBlock) error
+	BroadcastFinalized(event data.FinalizedBlock) error
+	BroadcastTxs(event data.BlockTxs) error
+	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) error
+	BroadcastScrs(event data.BlockScrs) error
+	BroadcastStateAccesses(events data.BlockStateAccesses) error
 	Close() error
 	IsInterfaceNil() bool
 }
@@ -34,8 +34,8 @@ type Publisher interface {
 // EventsHandler defines the behaviour of an events handler component
 type EventsHandler interface {
 	HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData) error
-	HandleRevertEvents(revertBlock data.RevertBlock)
-	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	HandleRevertEvents(revertBlock data.RevertBlock) error
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) error
 	IsInterfaceNil() bool
 }
 
@@ -62,20 +62,20 @@ type DataProcessor interface {
 // EventsFacadeHandler defines the behavior of a facade handler needed for events group
 type EventsFacadeHandler interface {
 	HandlePushEvents(events data.ArgsSaveBlockData) error
-	HandleRevertEvents(revertBlock data.RevertBlock)
-	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	HandleRevertEvents(revertBlock data.RevertBlock) error
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) error
 	IsInterfaceNil() bool
 }
 
 // PublisherHandler defines the behavior of a publisher component
 type PublisherHandler interface {
-	Publish(events data.BlockEvents)
-	PublishRevert(revertBlock data.RevertBlock)
-	PublishFinalized(finalizedBlock data.FinalizedBlock)
-	PublishTxs(blockTxs data.BlockTxs)
-	PublishScrs(blockScrs data.BlockScrs)
-	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder)
-	PublishStateAccesses(stateAccesses data.BlockStateAccesses)
+	Publish(events data.BlockEvents) error
+	PublishRevert(revertBlock data.RevertBlock) error
+	PublishFinalized(finalizedBlock data.FinalizedBlock) error
+	PublishTxs(blockTxs data.BlockTxs) error
+	PublishScrs(blockScrs data.BlockScrs) error
+	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) error
+	PublishStateAccesses(stateAccesses data.BlockStateAccesses) error
 	Close() error
 	IsInterfaceNil() bool
 }

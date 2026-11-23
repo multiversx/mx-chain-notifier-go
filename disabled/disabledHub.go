@@ -10,31 +10,38 @@ type Hub struct {
 }
 
 // Publish does nothing
-func (h *Hub) Publish(events data.BlockEvents) {
+func (h *Hub) Publish(events data.BlockEvents) error {
+	return nil
 }
 
 // PublishRevert does nothing
-func (h *Hub) PublishRevert(revertBlock data.RevertBlock) {
+func (h *Hub) PublishRevert(revertBlock data.RevertBlock) error {
+	return nil
 }
 
 // PublishFinalized does nothing
-func (h *Hub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
+func (h *Hub) PublishFinalized(finalizedBlock data.FinalizedBlock) error {
+	return nil
 }
 
 // PublishTxs does nothing
-func (h *Hub) PublishTxs(blockTxs data.BlockTxs) {
+func (h *Hub) PublishTxs(blockTxs data.BlockTxs) error {
+	return nil
 }
 
 // PublishScrs does nothing
-func (h *Hub) PublishScrs(blockScrs data.BlockScrs) {
+func (h *Hub) PublishScrs(blockScrs data.BlockScrs) error {
+	return nil
 }
 
 // PublishBlockEventsWithOrder does nothing
-func (h *Hub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+func (h *Hub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) error {
+	return nil
 }
 
 // PublishStateAccesses does nothing
-func (h *Hub) PublishStateAccesses(blockTxs data.BlockStateAccesses) {
+func (h *Hub) PublishStateAccesses(blockTxs data.BlockStateAccesses) error {
+	return nil
 }
 
 // RegisterEvent does nothing

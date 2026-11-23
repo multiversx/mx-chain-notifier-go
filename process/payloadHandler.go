@@ -2,9 +2,11 @@ package process
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/data/outport"
+	"github.com/multiversx/mx-chain-notifier-go/common"
 )
 
 // ErrNilDataProcessor signals that a nil data processor has been provided
@@ -19,16 +21,19 @@ var ErrInvalidPayloadVersion = errors.New("invalid payload version")
 type payloadHandler struct {
 	dataProcessors map[uint32]DataProcessor
 	actions        map[string]func(marshalledData []byte, version uint32) error
+	maxPayloadSize uint64
 }
 
-// NewPayloadHandler will create a new instance of events indexer
-func NewPayloadHandler(dataProcessors map[uint32]DataProcessor) (*payloadHandler, error) {
+// NewPayloadHandler will create a new instance of events indexer. A zero max payload size means
+// the default one.
+func NewPayloadHandler(dataProcessors map[uint32]DataProcessor, maxPayloadSize uint64) (*payloadHandler, error) {
 	if len(dataProcessors) == 0 {
 		return nil, ErrNilDataProcessor
 	}
 
 	payloadIndexer := &payloadHandler{
 		dataProcessors: dataProcessors,
+		maxPayloadSize: common.GetMaxPayloadSize(maxPayloadSize),
 	}
 	payloadIndexer.initActionsMap()
 
@@ -50,6 +55,11 @@ func (ph *payloadHandler) initActionsMap() {
 
 // ProcessPayload will proces the provided payload based on the topic
 func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version uint32) error {
+	if uint64(len(payload)) > ph.maxPayloadSize {
+		log.Warn("payload rejected, too large", "topic", topic, "size", len(payload), "max size", ph.maxPayloadSize)
+		return fmt.Errorf("%w: size %d, max size %d", common.ErrPayloadTooLarge, len(payload), ph.maxPayloadSize)
+	}
+
 	payloadTypeAction, ok := ph.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)

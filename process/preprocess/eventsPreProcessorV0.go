@@ -166,9 +166,7 @@ func (d *eventsPreProcessorV0) RevertIndexedBlock(marshalledData []byte) error {
 		return err
 	}
 
-	d.facade.HandleRevertEvents(*revertBlock)
-
-	return nil
+	return d.facade.HandleRevertEvents(*revertBlock)
 }
 
 // FinalizedBlock will handle the finalized block event
@@ -179,9 +177,7 @@ func (d *eventsPreProcessorV0) FinalizedBlock(marshalledData []byte) error {
 		return err
 	}
 
-	d.facade.HandleFinalizedEvents(*finalizedBlock)
-
-	return nil
+	return d.facade.HandleFinalizedEvents(*finalizedBlock)
 }
 
 // IsInterfaceNil returns true if there is no value under the interface

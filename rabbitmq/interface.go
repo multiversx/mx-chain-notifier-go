@@ -21,13 +21,13 @@ type RabbitMqClient interface {
 // able to publish received events and broadcast them to channels
 type PublisherService interface {
 	Run() error
-	Broadcast(events data.BlockEvents)
-	BroadcastRevert(event data.RevertBlock)
-	BroadcastFinalized(event data.FinalizedBlock)
-	BroadcastTxs(event data.BlockTxs)
-	BroadcastScrs(event data.BlockScrs)
-	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder)
-	BroadcastStateAccesses(events data.BlockStateAccesses)
+	Broadcast(events data.BlockEvents) error
+	BroadcastRevert(event data.RevertBlock) error
+	BroadcastFinalized(event data.FinalizedBlock) error
+	BroadcastTxs(event data.BlockTxs) error
+	BroadcastScrs(event data.BlockScrs) error
+	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) error
+	BroadcastStateAccesses(events data.BlockStateAccesses) error
 	Close() error
 	IsInterfaceNil() bool
 }

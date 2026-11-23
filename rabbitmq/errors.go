@@ -13,3 +13,6 @@ var ErrInvalidRabbitMqExchangeType = errors.New("invalid rabbitmq exchange type"
 
 // ErrClientClosed signals that the rabbitmq client has been closed
 var ErrClientClosed = errors.New("rabbitmq client is closed")
+
+// ErrMessageRejected signals that a message was repeatedly rejected on a healthy connection and was abandoned
+var ErrMessageRejected = errors.New("rabbitmq message repeatedly rejected")

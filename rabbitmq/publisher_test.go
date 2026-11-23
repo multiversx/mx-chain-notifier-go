@@ -375,3 +375,45 @@ func TestClose(t *testing.T) {
 	rabbitmq.Close()
 	require.True(t, wasCalled)
 }
+
+func TestPublish_ErrorsAndMaxMessageSize(t *testing.T) {
+	t.Parallel()
+
+	t.Run("message over max size should not be published", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockArgsRabbitMqPublisher()
+		args.MaxMessageSizeInBytes = 10
+		args.Client = &mocks.RabbitClientStub{
+			PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+				wasCalled = true
+				return nil
+			},
+		}
+
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		err = publisher.Publish(data.BlockEvents{Hash: "a hash which is long enough"})
+		require.True(t, errors.Is(err, common.ErrPayloadTooLarge))
+		require.False(t, wasCalled)
+	})
+
+	t.Run("client error should be returned", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Client = &mocks.RabbitClientStub{
+			PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+				return rabbitmq.ErrMessageRejected
+			},
+		}
+
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		err = publisher.PublishTxs(data.BlockTxs{})
+		require.Equal(t, rabbitmq.ErrMessageRejected, err)
+	})
+}

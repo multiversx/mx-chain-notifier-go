@@ -11,8 +11,8 @@ import (
 // EventsFacadeHandler defines the behavior of a facade handler needed for events group
 type EventsFacadeHandler interface {
 	HandlePushEvents(events data.ArgsSaveBlockData) error
-	HandleRevertEvents(revertBlock data.RevertBlock)
-	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock)
+	HandleRevertEvents(revertBlock data.RevertBlock) error
+	HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) error
 	GetConnectorUserAndPass() (string, string)
 	IsInterfaceNil() bool
 }

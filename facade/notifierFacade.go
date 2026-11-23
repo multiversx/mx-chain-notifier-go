@@ -61,13 +61,13 @@ func (nf *notifierFacade) HandlePushEvents(allEvents data.ArgsSaveBlockData) err
 }
 
 // HandleRevertEvents will handle revents events received from observer
-func (nf *notifierFacade) HandleRevertEvents(events data.RevertBlock) {
-	nf.eventsHandler.HandleRevertEvents(events)
+func (nf *notifierFacade) HandleRevertEvents(events data.RevertBlock) error {
+	return nf.eventsHandler.HandleRevertEvents(events)
 }
 
 // HandleFinalizedEvents will handle finalized events received from observer
-func (nf *notifierFacade) HandleFinalizedEvents(events data.FinalizedBlock) {
-	nf.eventsHandler.HandleFinalizedEvents(events)
+func (nf *notifierFacade) HandleFinalizedEvents(events data.FinalizedBlock) error {
+	return nf.eventsHandler.HandleFinalizedEvents(events)
 }
 
 // ServeHTTP will handle a websocket request

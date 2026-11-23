@@ -27,17 +27,21 @@ func (fs *FacadeStub) HandlePushEvents(events data.ArgsSaveBlockData) error {
 }
 
 // HandleRevertEvents -
-func (fs *FacadeStub) HandleRevertEvents(events data.RevertBlock) {
+func (fs *FacadeStub) HandleRevertEvents(events data.RevertBlock) error {
 	if fs.HandleRevertEventsCalled != nil {
 		fs.HandleRevertEventsCalled(events)
 	}
+
+	return nil
 }
 
 // HandleFinalizedEvents -
-func (fs *FacadeStub) HandleFinalizedEvents(events data.FinalizedBlock) {
+func (fs *FacadeStub) HandleFinalizedEvents(events data.FinalizedBlock) error {
 	if fs.HandleFinalizedEventsCalled != nil {
 		fs.HandleFinalizedEventsCalled(events)
 	}
+
+	return nil
 }
 
 // ServeHTTP -

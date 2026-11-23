@@ -19,17 +19,21 @@ func (e *EventsHandlerStub) HandleSaveBlockEvents(events data.ArgsSaveBlockData)
 }
 
 // HandleRevertEvents -
-func (e *EventsHandlerStub) HandleRevertEvents(revertBlock data.RevertBlock) {
+func (e *EventsHandlerStub) HandleRevertEvents(revertBlock data.RevertBlock) error {
 	if e.HandleRevertEventsCalled != nil {
 		e.HandleRevertEventsCalled(revertBlock)
 	}
+
+	return nil
 }
 
 // HandleFinalizedEvents -
-func (e *EventsHandlerStub) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
+func (e *EventsHandlerStub) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) error {
 	if e.HandleFinalizedEventsCalled != nil {
 		e.HandleFinalizedEventsCalled(finalizedBlock)
 	}
+
+	return nil
 }
 
 // IsInterfaceNil -

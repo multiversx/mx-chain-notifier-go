@@ -2,6 +2,7 @@ package process_test
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/multiversx/mx-chain-communication-go/testscommon"
@@ -38,7 +39,7 @@ func TestNewPayloadHandler(t *testing.T) {
 	t.Run("nil data processor", func(t *testing.T) {
 		t.Parallel()
 
-		ei, err := process.NewPayloadHandler(nil)
+		ei, err := process.NewPayloadHandler(nil, 0)
 		require.Nil(t, ei)
 		require.Equal(t, process.ErrNilDataProcessor, err)
 	})
@@ -46,7 +47,7 @@ func TestNewPayloadHandler(t *testing.T) {
 	t.Run("should work", func(t *testing.T) {
 		t.Parallel()
 
-		ei, err := process.NewPayloadHandler(createDefaultDataProcessors())
+		ei, err := process.NewPayloadHandler(createDefaultDataProcessors(), 0)
 		require.Nil(t, err)
 		require.NotNil(t, ei)
 		require.False(t, ei.IsInterfaceNil())
@@ -61,7 +62,7 @@ func TestProcessPayload(t *testing.T) {
 	t.Run("invalid topic, should return nil", func(t *testing.T) {
 		t.Parallel()
 
-		ei, err := process.NewPayloadHandler(createDefaultDataProcessors())
+		ei, err := process.NewPayloadHandler(createDefaultDataProcessors(), 0)
 		err = ei.ProcessPayload([]byte("payload"), "invalid topic", 1)
 		require.Nil(t, err)
 	})
@@ -80,7 +81,7 @@ func TestProcessPayload(t *testing.T) {
 		}
 		eventsProcessors[common.PayloadV1] = dp
 
-		ei, err := process.NewPayloadHandler(eventsProcessors)
+		ei, err := process.NewPayloadHandler(eventsProcessors, 0)
 		require.Nil(t, err)
 
 		err = ei.ProcessPayload([]byte("payload"), outport.TopicSaveBlock, common.PayloadV0)
@@ -109,7 +110,7 @@ func TestProcessPayload(t *testing.T) {
 		}
 		eventsProcessors[common.PayloadV1] = dp
 
-		ei, err := process.NewPayloadHandler(eventsProcessors)
+		ei, err := process.NewPayloadHandler(eventsProcessors, 0)
 		require.Nil(t, err)
 
 		err = ei.ProcessPayload([]byte("payload"), outport.TopicRevertIndexedBlock, common.PayloadV0)
@@ -145,7 +146,7 @@ func TestProcessPayload(t *testing.T) {
 		}
 		eventsProcessors[common.PayloadV1] = dp
 
-		ei, err := process.NewPayloadHandler(eventsProcessors)
+		ei, err := process.NewPayloadHandler(eventsProcessors, 0)
 		require.Nil(t, err)
 
 		err = ei.ProcessPayload([]byte("payload"), outport.TopicFinalizedBlock, common.PayloadV0)
@@ -161,4 +162,29 @@ func TestProcessPayload(t *testing.T) {
 		require.Nil(t, err)
 		require.True(t, wasCalled)
 	})
+}
+
+func TestProcessPayload_PayloadTooLarge(t *testing.T) {
+	t.Parallel()
+
+	wasCalled := false
+	eventsProcessors := map[uint32]process.DataProcessor{
+		common.PayloadV1: &mocks.EventsDataProcessorStub{
+			SaveBlockCalled: func(marshalledData []byte) error {
+				wasCalled = true
+				return nil
+			},
+		},
+	}
+
+	ph, err := process.NewPayloadHandler(eventsProcessors, 4)
+	require.Nil(t, err)
+
+	err = ph.ProcessPayload([]byte("12345"), outport.TopicSaveBlock, common.PayloadV1)
+	require.True(t, errors.Is(err, common.ErrPayloadTooLarge))
+	require.False(t, wasCalled)
+
+	err = ph.ProcessPayload([]byte("1234"), outport.TopicSaveBlock, common.PayloadV1)
+	require.Nil(t, err)
+	require.True(t, wasCalled)
 }

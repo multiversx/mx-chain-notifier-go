@@ -2,6 +2,7 @@ package process_test
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
@@ -976,5 +977,86 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 
 		ok := eventsHandler.TryCheckProcessedWithRetry(prefix, hash)
 		require.True(t, ok)
+	})
+}
+
+type publisherStubWithError struct {
+	mocks.PublisherStub
+	err error
+}
+
+func (ps *publisherStubWithError) BroadcastTxs(_ data.BlockTxs) error {
+	return ps.err
+}
+
+func (ps *publisherStubWithError) BroadcastRevert(_ data.RevertBlock) error {
+	return ps.err
+}
+
+func TestHandleEvents_PublishFailureShouldReleaseProcessedMarker(t *testing.T) {
+	t.Parallel()
+
+	expectedErr := errors.New("publish failed")
+
+	t.Run("save block events", func(t *testing.T) {
+		t.Parallel()
+
+		headerHash := []byte("headerHash")
+		releasedKey := ""
+		args := createMockEventsHandlerArgs()
+		args.CheckDuplicates = true
+		args.Publisher = &publisherStubWithError{err: expectedErr}
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return true, nil
+			},
+			UnlockCalled: func(ctx context.Context, key string) error {
+				releasedKey = key
+				return nil
+			},
+		}
+		args.EventsInterceptor = &mocks.EventsInterceptorStub{
+			ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+				return &data.InterceptorBlockData{
+					Hash:   "hash",
+					Header: &block.HeaderV2{Header: &block.Header{}},
+				}, nil
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{
+			HeaderHash: headerHash,
+			Header:     &block.HeaderV2{Header: &block.Header{}},
+		})
+		require.Equal(t, expectedErr, err)
+		require.Equal(t, hex.EncodeToString(headerHash), releasedKey)
+	})
+
+	t.Run("revert events", func(t *testing.T) {
+		t.Parallel()
+
+		releasedKey := ""
+		args := createMockEventsHandlerArgs()
+		args.CheckDuplicates = true
+		args.Publisher = &publisherStubWithError{err: expectedErr}
+		args.Locker = &mocks.LockerStub{
+			IsEventProcessedCalled: func(ctx context.Context, blockHash string) (bool, error) {
+				return true, nil
+			},
+			UnlockCalled: func(ctx context.Context, key string) error {
+				releasedKey = key
+				return nil
+			},
+		}
+
+		eventsHandler, err := process.NewEventsHandler(args)
+		require.Nil(t, err)
+
+		err = eventsHandler.HandleRevertEvents(data.RevertBlock{Hash: "hash1"})
+		require.Equal(t, expectedErr, err)
+		require.Equal(t, "revert_hash1", releasedKey)
 	})
 }

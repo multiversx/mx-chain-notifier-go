@@ -25,52 +25,66 @@ func (ps *PublisherStub) Run() error {
 }
 
 // Broadcast -
-func (ps *PublisherStub) Broadcast(events data.BlockEvents) {
+func (ps *PublisherStub) Broadcast(events data.BlockEvents) error {
 	if ps.BroadcastCalled != nil {
 		ps.BroadcastCalled(events)
 	}
+
+	return nil
 }
 
 // BroadcastRevert -
-func (ps *PublisherStub) BroadcastRevert(event data.RevertBlock) {
+func (ps *PublisherStub) BroadcastRevert(event data.RevertBlock) error {
 	if ps.BroadcastRevertCalled != nil {
 		ps.BroadcastRevertCalled(event)
 	}
+
+	return nil
 }
 
 // BroadcastFinalized -
-func (ps *PublisherStub) BroadcastFinalized(event data.FinalizedBlock) {
+func (ps *PublisherStub) BroadcastFinalized(event data.FinalizedBlock) error {
 	if ps.BroadcastFinalizedCalled != nil {
 		ps.BroadcastFinalizedCalled(event)
 	}
+
+	return nil
 }
 
 // BroadcastTxs -
-func (ps *PublisherStub) BroadcastTxs(event data.BlockTxs) {
+func (ps *PublisherStub) BroadcastTxs(event data.BlockTxs) error {
 	if ps.BroadcastTxsCalled != nil {
 		ps.BroadcastTxsCalled(event)
 	}
+
+	return nil
 }
 
 // BroadcastScrs -
-func (ps *PublisherStub) BroadcastScrs(event data.BlockScrs) {
+func (ps *PublisherStub) BroadcastScrs(event data.BlockScrs) error {
 	if ps.BroadcastScrsCalled != nil {
 		ps.BroadcastScrsCalled(event)
 	}
+
+	return nil
 }
 
 // BroadcastBlockEventsWithOrder -
-func (ps *PublisherStub) BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) {
+func (ps *PublisherStub) BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) error {
 	if ps.BroadcastBlockEventsWithOrderCalled != nil {
 		ps.BroadcastBlockEventsWithOrderCalled(event)
 	}
+
+	return nil
 }
 
 // BroadcastStateAccesses -
-func (ps *PublisherStub) BroadcastStateAccesses(event data.BlockStateAccesses) {
+func (ps *PublisherStub) BroadcastStateAccesses(event data.BlockStateAccesses) error {
 	if ps.BroadcastStateAccessesCalled != nil {
 		ps.BroadcastStateAccessesCalled(event)
 	}
+
+	return nil
 }
 
 // Close -

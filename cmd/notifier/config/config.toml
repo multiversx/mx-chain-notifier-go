@@ -7,6 +7,11 @@
     # It depends also if read state changes are enabled from observer nodes
     WithReadStateChanges = false
 
+    # MaxPayloadSizeInBytes is the max size of a payload received from observers and of a message
+    # published to rabbitMQ. Larger payloads are rejected. It has to be at most the rabbitMQ
+    # max_message_size.
+    MaxPayloadSizeInBytes = 16777216
+
     # ExternalMarshaller is used for handling incoming/outcoming api requests 
     [General.ExternalMarshaller]
         Type = "json"
