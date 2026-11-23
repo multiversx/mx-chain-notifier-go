@@ -26,7 +26,7 @@ func TestSubscriptionMap_Subscriptions(t *testing.T) {
 
 	subs := subMap.Subscriptions()
 
-	require.True(t, len(subs[common.PushLogsAndEvents]) >= len(subEvents))
+	require.NotEmpty(t, subs[common.PushLogsAndEvents])
 }
 
 func TestSubscriptionsMap_ShouldMatchAllForEmptySubscriptionEntry(t *testing.T) {
@@ -51,8 +51,11 @@ func TestSubscriptionMapper_MatchSubscribeEventResultsInCorrectSet(t *testing.T)
 	}
 
 	var subsFromEntries []data.Subscription
+	matchAllAdded := make(map[uuid.UUID]bool)
 	for _, subEvent := range subEvents {
-		if len(subEvent.SubscriptionEntries) == 0 {
+		if len(subEvent.SubscriptionEntries) == 0 && !matchAllAdded[subEvent.DispatcherID] {
+			// identical subscriptions of the same dispatcher are stored only once
+			matchAllAdded[subEvent.DispatcherID] = true
 			subsFromEntries = append(subsFromEntries, data.Subscription{
 				DispatcherID: subEvent.DispatcherID,
 				MatchLevel:   MatchAll,
@@ -162,6 +165,69 @@ func TestSubscriptionMapper_RemoveSubscriptions(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestSubscriptionMapper_IdenticalSubscriptionsAreStoredOnce(t *testing.T) {
+	t.Parallel()
+
+	dispatcherID := uuid.New()
+	entry := data.SubscriptionEntry{Address: "erd1", Identifier: "id", Topics: []string{"t"}}
+	subMap := NewSubscriptionMapper()
+
+	subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID})
+	subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID})
+	subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID, SubscriptionEntries: []data.SubscriptionEntry{entry, entry, {}}})
+	subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID, SubscriptionEntries: []data.SubscriptionEntry{entry}})
+
+	// the empty entry is the same match-all subscription as the empty subscribe event
+	require.Len(t, subMap.Subscriptions()[common.PushLogsAndEvents], 2)
+}
+
+func TestSubscriptionMapper_SubscriptionsPerDispatcherAreBounded(t *testing.T) {
+	t.Parallel()
+
+	newEntries := func(start, num int) []data.SubscriptionEntry {
+		entries := make([]data.SubscriptionEntry, 0, num)
+		for i := start; i < start+num; i++ {
+			entries = append(entries, data.SubscriptionEntry{Identifier: fmt.Sprintf("id%d", i)})
+		}
+		return entries
+	}
+
+	t.Run("oversized subscribe event is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		subMap := NewSubscriptionMapper()
+		subMap.MatchSubscribeEvent(data.SubscribeEvent{
+			DispatcherID:        uuid.New(),
+			SubscriptionEntries: newEntries(0, MaxSubscriptionsPerDispatcher+1),
+		})
+		require.Empty(t, subMap.Subscriptions())
+	})
+
+	t.Run("limit is enforced across subscribe events", func(t *testing.T) {
+		t.Parallel()
+
+		dispatcherID := uuid.New()
+		otherDispatcherID := uuid.New()
+		subMap := NewSubscriptionMapper()
+
+		subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID, SubscriptionEntries: newEntries(0, MaxSubscriptionsPerDispatcher-1)})
+		require.Len(t, subMap.Subscriptions()[common.PushLogsAndEvents], MaxSubscriptionsPerDispatcher-1)
+
+		// would exceed the limit: nothing from this event is stored
+		subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID, SubscriptionEntries: newEntries(1000, 2)})
+		require.Len(t, subMap.Subscriptions()[common.PushLogsAndEvents], MaxSubscriptionsPerDispatcher-1)
+
+		for i := 0; i < 10; i++ {
+			subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: dispatcherID, SubscriptionEntries: newEntries(2000+i, 1)})
+		}
+		require.Len(t, subMap.Subscriptions()[common.PushLogsAndEvents], MaxSubscriptionsPerDispatcher)
+
+		// the limit is per dispatcher
+		subMap.MatchSubscribeEvent(data.SubscribeEvent{DispatcherID: otherDispatcherID})
+		require.Len(t, subMap.Subscriptions()[common.PushLogsAndEvents], MaxSubscriptionsPerDispatcher+1)
+	})
 }
 
 func generateSubscribeEvents(num int) []data.SubscribeEvent {

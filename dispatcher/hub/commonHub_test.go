@@ -405,6 +405,43 @@ func TestCommonHub_PublishDoesNotBlockRegistrationWhenSubscriberIsStuck(t *testi
 	require.True(t, hub.CheckDispatcherByID(stuckID, nil))
 }
 
+func TestCommonHub_PublishPushesOncePerDispatcher(t *testing.T) {
+	t.Parallel()
+
+	args := createMockCommonHubArgs()
+	hub, err := NewCommonHub(args)
+	require.Nil(t, err)
+
+	dispatcherID := uuid.New()
+	var pushed [][]data.Event
+	hub.registerDispatcher(&mocks.DispatcherStub{
+		GetIDCalled: func() uuid.UUID {
+			return dispatcherID
+		},
+		PushEventsCalled: func(events []data.Event) {
+			pushed = append(pushed, events)
+		},
+	})
+
+	// overlapping subscriptions: both "erd1" entries and the identifier entry match the first event
+	hub.Subscribe(data.SubscribeEvent{
+		DispatcherID: dispatcherID,
+		SubscriptionEntries: []data.SubscriptionEntry{
+			{Address: "erd1"},
+			{Address: "erd1", Identifier: "swap"},
+			{Identifier: "swap"},
+			{Address: "erd3"},
+			{Address: "erd99"},
+		},
+	})
+
+	blockEvents := getEvents()
+	hub.Publish(blockEvents)
+
+	require.Len(t, pushed, 1)
+	require.Equal(t, []data.Event{blockEvents.Events[0], blockEvents.Events[2]}, pushed[0])
+}
+
 func getEvents() data.BlockEvents {
 	return data.BlockEvents{
 		Hash: "374d75573060d840257045add9cd104b70180065f2406808ebabe02a1a3cb5f8",

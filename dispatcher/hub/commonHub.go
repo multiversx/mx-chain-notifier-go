@@ -75,22 +75,29 @@ func (ch *commonHub) Publish(blockEvents data.BlockEvents) {
 		return
 	}
 
+	// group subscriptions by dispatcher so that each dispatcher gets a single
+	// push per block, regardless of how many subscriptions it registered
+	subsByDispatcher := make(map[uuid.UUID][]data.Subscription)
+	for _, sub := range subscriptions {
+		subsByDispatcher[sub.DispatcherID] = append(subsByDispatcher[sub.DispatcherID], sub)
+	}
+
 	type target struct {
 		d      dispatcher.EventDispatcher
 		events []data.Event
 	}
 
 	ch.mutDispatchers.RLock()
-	targets := make([]target, 0, len(subscriptions))
-	for _, sub := range subscriptions {
-		d, ok := ch.dispatchers[sub.DispatcherID]
+	targets := make([]target, 0, len(subsByDispatcher))
+	for dispatcherID, subs := range subsByDispatcher {
+		d, ok := ch.dispatchers[dispatcherID]
 		if !ok {
 			continue
 		}
 
 		events := make([]data.Event, 0)
 		for _, event := range blockEvents.Events {
-			if ch.filter.MatchEvent(sub, event) {
+			if ch.matchAnySubscription(subs, event) {
 				events = append(events, event)
 			}
 		}
@@ -103,6 +110,16 @@ func (ch *commonHub) Publish(blockEvents data.BlockEvents) {
 	for _, t := range targets {
 		t.d.PushEvents(t.events)
 	}
+}
+
+func (ch *commonHub) matchAnySubscription(subs []data.Subscription, event data.Event) bool {
+	for _, sub := range subs {
+		if ch.filter.MatchEvent(sub, event) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // targetDispatchers returns the (deduplicated) live dispatchers currently
