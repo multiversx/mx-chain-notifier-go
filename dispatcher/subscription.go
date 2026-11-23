@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"slices"
 	"strings"
 	"sync"
 
@@ -31,6 +32,9 @@ const (
 
 const (
 	erdTag = "erd"
+
+	// MaxSubscriptionsPerDispatcher is the maximum number of distinct subscriptions a single dispatcher can hold
+	MaxSubscriptionsPerDispatcher = 100
 )
 
 // SubscriptionMapper defines a subscriptions manager component
@@ -49,44 +53,79 @@ func NewSubscriptionMapper() *SubscriptionMapper {
 
 // MatchSubscribeEvent creates a subscription entry in the subscriptions map
 // It assigns each SubscribeEvent a match level from the input provided
+// Identical subscriptions are stored only once and a subscribe event that would make the
+// dispatcher exceed MaxSubscriptionsPerDispatcher is rejected entirely
 func (sm *SubscriptionMapper) MatchSubscribeEvent(event data.SubscribeEvent) {
-	if event.SubscriptionEntries == nil || len(event.SubscriptionEntries) == 0 {
-		sm.appendSubscription(data.Subscription{
-			DispatcherID: event.DispatcherID,
-			MatchLevel:   MatchAll,
-			EventType:    common.PushLogsAndEvents,
-		})
-		log.Info("subscribed dispatcher",
+	if len(event.SubscriptionEntries) > MaxSubscriptionsPerDispatcher {
+		log.Warn("rejected subscribe event: too many subscription entries",
 			"dispatcherID", event.DispatcherID,
-			"match level", MatchAll,
+			"num entries", len(event.SubscriptionEntries),
+			"max", MaxSubscriptionsPerDispatcher,
 		)
 		return
 	}
 
+	newSubscriptions := make([]data.Subscription, 0, len(event.SubscriptionEntries))
+	if len(event.SubscriptionEntries) == 0 {
+		newSubscriptions = append(newSubscriptions, data.Subscription{
+			DispatcherID: event.DispatcherID,
+			MatchLevel:   MatchAll,
+			EventType:    common.PushLogsAndEvents,
+		})
+	}
+
 	for _, subEntry := range event.SubscriptionEntries {
-		matchLevel := sm.matchLevelFromInput(subEntry)
-		eventType := getEventType(subEntry)
-		subscription := data.Subscription{
+		newSubscriptions = append(newSubscriptions, data.Subscription{
 			Address:      subEntry.Address,
 			Identifier:   subEntry.Identifier,
 			Topics:       subEntry.Topics,
 			DispatcherID: event.DispatcherID,
-			MatchLevel:   matchLevel,
-			EventType:    eventType,
-		}
-		sm.appendSubscription(subscription)
-
-		log.Debug("added new subscription for dispatcher",
-			"dispatcherID", event.DispatcherID,
-			"event type", eventType,
-			"match level", matchLevel,
-		)
+			MatchLevel:   sm.matchLevelFromInput(subEntry),
+			EventType:    getEventType(subEntry),
+		})
 	}
+
+	sm.rwMut.Lock()
+	defer sm.rwMut.Unlock()
+
+	existing := sm.subscriptions[event.DispatcherID]
+	toAdd := make([]data.Subscription, 0, len(newSubscriptions))
+	for _, sub := range newSubscriptions {
+		if containsSubscription(existing, sub) || containsSubscription(toAdd, sub) {
+			continue
+		}
+		toAdd = append(toAdd, sub)
+	}
+
+	if len(existing)+len(toAdd) > MaxSubscriptionsPerDispatcher {
+		log.Warn("rejected subscribe event: too many subscriptions for dispatcher",
+			"dispatcherID", event.DispatcherID,
+			"num subscriptions", len(existing)+len(toAdd),
+			"max", MaxSubscriptionsPerDispatcher,
+		)
+		return
+	}
+
+	sm.subscriptions[event.DispatcherID] = append(existing, toAdd...)
 
 	log.Info("subscribed dispatcher",
 		"dispatcherID", event.DispatcherID,
-		"num subscriptions", len(event.SubscriptionEntries),
+		"num subscriptions", len(existing)+len(toAdd),
 	)
+}
+
+func containsSubscription(subscriptions []data.Subscription, sub data.Subscription) bool {
+	for _, s := range subscriptions {
+		if s.EventType == sub.EventType &&
+			s.MatchLevel == sub.MatchLevel &&
+			s.Address == sub.Address &&
+			s.Identifier == sub.Identifier &&
+			slices.Equal(s.Topics, sub.Topics) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // RemoveSubscriptions removes all subscriptions registered by a dispatcher
@@ -135,13 +174,6 @@ func (sm *SubscriptionMapper) matchLevelFromInput(subEntry data.SubscriptionEntr
 	}
 
 	return MatchAll
-}
-
-func (sm *SubscriptionMapper) appendSubscription(sub data.Subscription) {
-	sm.rwMut.Lock()
-	defer sm.rwMut.Unlock()
-
-	sm.subscriptions[sub.DispatcherID] = append(sm.subscriptions[sub.DispatcherID], sub)
 }
 
 func getEventType(subEntry data.SubscriptionEntry) string {
