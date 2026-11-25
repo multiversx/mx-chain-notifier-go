@@ -162,3 +162,26 @@ func TestProcessPayload(t *testing.T) {
 		require.True(t, wasCalled)
 	})
 }
+
+func TestProcessPayload_PanicShouldBeRecoveredAsError(t *testing.T) {
+	t.Parallel()
+
+	eventsProcessors := map[uint32]process.DataProcessor{
+		common.PayloadV1: &mocks.EventsDataProcessorStub{
+			SaveBlockCalled: func(marshalledData []byte) error {
+				var txInfo *outport.TxInfo
+				_ = txInfo.Transaction // nil pointer dereference
+
+				return nil
+			},
+		},
+	}
+
+	ph, err := process.NewPayloadHandler(eventsProcessors)
+	require.Nil(t, err)
+
+	require.NotPanics(t, func() {
+		err = ph.ProcessPayload([]byte("payload"), outport.TopicSaveBlock, common.PayloadV1)
+	})
+	require.ErrorIs(t, err, process.ErrPayloadProcessingPanic)
+}

@@ -2,6 +2,7 @@ package process_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/multiversx/mx-chain-core-go/data/smartContractResult"
 	"github.com/multiversx/mx-chain-core-go/data/stateChange"
 	"github.com/multiversx/mx-chain-core-go/data/transaction"
+	logger "github.com/multiversx/mx-chain-logger-go"
 	"github.com/multiversx/mx-chain-notifier-go/data"
 	"github.com/multiversx/mx-chain-notifier-go/mocks"
 	"github.com/multiversx/mx-chain-notifier-go/process"
@@ -1350,4 +1352,91 @@ func TestEventsInterceptor_GetTxsWithOrder(t *testing.T) {
 	}
 	require.Equal(t, 1, hash1Count)
 	require.Equal(t, invalidCount, 1)
+}
+
+func createTransactionPoolWithNilEntries(t *testing.T) *outport.TransactionPool {
+	// gogo protobuf decodes a map entry carrying only a key into a nil value
+	pool := &outport.TransactionPool{}
+	err := pool.Unmarshal([]byte{0x0a, 0x04, 0x0a, 0x02, 'a', 'a'})
+	require.Nil(t, err)
+	require.Contains(t, pool.Transactions, "aa")
+	require.Nil(t, pool.Transactions["aa"])
+
+	// JSON decodes null map values into nil values
+	err = json.Unmarshal([]byte(`{"smartContractResults":{"bb":null},"rewards":{"cc":null},"invalidTxs":{"dd":null}}`), pool)
+	require.Nil(t, err)
+
+	return pool
+}
+
+func createStateAccessesWithNilEntries(t *testing.T) map[string]*stateChange.StateAccesses {
+	decoded := make(map[string]*stateChange.StateAccesses)
+	err := json.Unmarshal([]byte(`{"nilEntry":null,"nilElement":{"stateAccess":[null]}}`), &decoded)
+	require.Nil(t, err)
+	require.Contains(t, decoded, "nilEntry")
+	require.Nil(t, decoded["nilEntry"])
+	require.Equal(t, []*stateChange.StateAccess{nil}, decoded["nilElement"].StateAccess)
+
+	// state accesses are keyed by the raw tx hash, matching the hex hashes from the transactions pool
+	return map[string]*stateChange.StateAccesses{
+		string([]byte{0xaa}): decoded["nilEntry"],
+		string([]byte{0xbb}): decoded["nilElement"],
+		string([]byte{0xdd}): decoded["nilElement"],
+	}
+}
+
+func TestEventsInterceptor_NilPoolAndStateAccessEntriesShouldNotPanic(t *testing.T) {
+	// not parallel: changes the log level to also cover the trace logging of state accesses
+	logLevelPattern := logger.GetLogLevelPattern()
+	_ = logger.SetLogLevel("process:TRACE")
+	defer func() {
+		_ = logger.SetLogLevel(logLevelPattern)
+	}()
+
+	args := createMockEventsInterceptorArgs()
+	args.WithReadStateChanges = true
+	eventsInterceptor, err := process.NewEventsInterceptor(args)
+	require.Nil(t, err)
+
+	t.Run("legacy header", func(t *testing.T) {
+		blockEvents := data.ArgsSaveBlockData{
+			HeaderHash:       []byte("blockHash"),
+			Body:             &block.Body{},
+			Header:           &block.HeaderV2{},
+			TransactionsPool: createTransactionPoolWithNilEntries(t),
+			StateAccesses:    createStateAccessesWithNilEntries(t),
+		}
+
+		var blockData *data.InterceptorBlockData
+		require.NotPanics(t, func() {
+			blockData, err = eventsInterceptor.ProcessBlockEvents(&blockEvents)
+		})
+		require.Nil(t, err)
+		require.Empty(t, blockData.StateAccessesPerAccounts)
+	})
+
+	t.Run("header v3", func(t *testing.T) {
+		blockEvents := data.ArgsSaveBlockData{
+			HeaderHash: []byte("blockHash"),
+			Body:       &block.Body{},
+			Header:     &block.HeaderV3{},
+			StateAccessesForBlock: map[string]*outport.StateAccessesForBlock{
+				"execHash": {StateAccesses: createStateAccessesWithNilEntries(t)},
+			},
+			Results: map[string]*outport.ExecutionResultData{
+				"execHash": {
+					Body:            &block.Body{},
+					TransactionPool: createTransactionPoolWithNilEntries(t),
+				},
+			},
+		}
+
+		var execBlocksData []*data.InterceptorBlockData
+		require.NotPanics(t, func() {
+			execBlocksData, err = eventsInterceptor.ProcessBlockEventsV3(&blockEvents)
+		})
+		require.Nil(t, err)
+		require.Len(t, execBlocksData, 1)
+		require.Empty(t, execBlocksData[0].StateAccessesPerAccounts)
+	})
 }

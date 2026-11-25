@@ -978,3 +978,55 @@ func TestTryCheckProcessedWithRetry(t *testing.T) {
 		require.True(t, ok)
 	})
 }
+
+func TestHandleSaveBlockEvents_InterceptorPanicShouldReleaseDuplicatesMarker(t *testing.T) {
+	t.Parallel()
+
+	blockHash := []byte("blockHash")
+	markers := make(map[string]struct{})
+	markersMut := sync.Mutex{}
+
+	args := createMockEventsHandlerArgs()
+	args.CheckDuplicates = true
+	args.Locker = &mocks.LockerStub{
+		IsEventProcessedCalled: func(ctx context.Context, key string) (bool, error) {
+			markersMut.Lock()
+			defer markersMut.Unlock()
+
+			_, exists := markers[key]
+			markers[key] = struct{}{}
+			return !exists, nil
+		},
+		UnlockCalled: func(ctx context.Context, key string) error {
+			markersMut.Lock()
+			defer markersMut.Unlock()
+
+			delete(markers, key)
+			return nil
+		},
+	}
+	args.EventsInterceptor = &mocks.EventsInterceptorStub{
+		ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+			panic("interceptor panic")
+		},
+	}
+	args.Publisher = &mocks.PublisherStub{
+		BroadcastCalled: func(events data.BlockEvents) {
+			require.Fail(t, "should have not published")
+		},
+	}
+
+	eventsHandler, err := process.NewEventsHandler(args)
+	require.Nil(t, err)
+
+	require.PanicsWithValue(t, "interceptor panic", func() {
+		_ = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{
+			HeaderHash: blockHash,
+			Header:     &block.HeaderV2{},
+		})
+	})
+
+	markersMut.Lock()
+	defer markersMut.Unlock()
+	require.Empty(t, markers)
+}

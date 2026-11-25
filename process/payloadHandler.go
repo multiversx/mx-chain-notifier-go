@@ -2,6 +2,8 @@ package process
 
 import (
 	"errors"
+	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/multiversx/mx-chain-core-go/data/outport"
@@ -15,6 +17,9 @@ var ErrInvalidPayloadType = errors.New("invalid payload type")
 
 // ErrInvalidPayloadVersion signals that an invalid payload version has been provided
 var ErrInvalidPayloadVersion = errors.New("invalid payload version")
+
+// ErrPayloadProcessingPanic signals that a panic occurred while processing a payload
+var ErrPayloadProcessingPanic = errors.New("panic while processing payload")
 
 type payloadHandler struct {
 	dataProcessors map[uint32]DataProcessor
@@ -49,7 +54,16 @@ func (ph *payloadHandler) initActionsMap() {
 }
 
 // ProcessPayload will proces the provided payload based on the topic
-func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version uint32) error {
+func (ph *payloadHandler) ProcessPayload(payload []byte, topic string, version uint32) (err error) {
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Error("recovered from panic while processing payload",
+				"topic", topic, "version", version, "panic", r, "stack", string(debug.Stack()))
+			err = fmt.Errorf("%w: %v", ErrPayloadProcessingPanic, r)
+		}
+	}()
+
 	payloadTypeAction, ok := ph.actions[topic]
 	if !ok {
 		log.Warn("invalid payload type", "topic", topic)

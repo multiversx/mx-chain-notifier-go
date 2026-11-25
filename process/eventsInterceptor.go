@@ -163,7 +163,7 @@ func getScrsFromPool(transactionsPool *outport.TransactionPool) map[string]*smar
 	scrs := make(map[string]*smartContractResult.SmartContractResult)
 
 	for hash, scr := range transactionsPool.GetSmartContractResults() {
-		scrs[hash] = scr.SmartContractResult
+		scrs[hash] = scr.GetSmartContractResult()
 	}
 
 	return scrs
@@ -173,7 +173,7 @@ func getTxsFromPool(transactionsPool *outport.TransactionPool) map[string]*trans
 	txs := make(map[string]*transaction.Transaction)
 
 	for hash, tx := range transactionsPool.GetTransactions() {
-		txs[hash] = tx.Transaction
+		txs[hash] = tx.GetTransaction()
 	}
 
 	return txs
@@ -193,28 +193,28 @@ func getTxsWithOrder(transactionsPool *outport.TransactionPool) []txWithOrder {
 	for txHash, txInfo := range transactionsPool.Transactions {
 		txsWithOrderMap[txHash] = txWithOrder{
 			Hash:   txHash,
-			Index:  txInfo.ExecutionOrder,
+			Index:  txInfo.GetExecutionOrder(),
 			TxType: normalTx,
 		}
 	}
 	for txHash, txInfo := range transactionsPool.SmartContractResults {
 		txsWithOrderMap[txHash] = txWithOrder{
 			Hash:   txHash,
-			Index:  txInfo.ExecutionOrder,
+			Index:  txInfo.GetExecutionOrder(),
 			TxType: scr,
 		}
 	}
 	for txHash, txInfo := range transactionsPool.Rewards {
 		txsWithOrderMap[txHash] = txWithOrder{
 			Hash:   txHash,
-			Index:  txInfo.ExecutionOrder,
+			Index:  txInfo.GetExecutionOrder(),
 			TxType: rewardTx,
 		}
 	}
 	for txHash, txInfo := range transactionsPool.InvalidTxs {
 		txsWithOrderMap[txHash] = txWithOrder{
 			Hash:   txHash,
-			Index:  txInfo.ExecutionOrder,
+			Index:  txInfo.GetExecutionOrder(),
 			TxType: invalidTx,
 		}
 	}
@@ -306,7 +306,10 @@ func (ei *eventsInterceptor) fetchStateAccessesPerAccounts(
 			continue
 		}
 
-		for _, stateAccess := range stateAccessesPerTx.StateAccess {
+		for _, stateAccess := range stateAccessesPerTx.GetStateAccess() {
+			if stateAccess == nil {
+				continue
+			}
 			if stateAccess.Type == stateChange.Read && !ei.withReadStateChanges {
 				continue
 			}
@@ -351,7 +354,7 @@ func logStateAccessesPerTxs(stateAccesses map[string]*stateChange.StateAccesses)
 			"txHash", hex.EncodeToString([]byte(txHash)),
 		)
 
-		for _, st := range sts.StateAccess {
+		for _, st := range sts.GetStateAccess() {
 			log.Trace("stateAccess",
 				"actionType", st.GetType(),
 				"operation", st.GetOperation(),
