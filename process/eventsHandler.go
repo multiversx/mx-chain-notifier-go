@@ -94,11 +94,11 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 		return nil
 	}
 
-	return eh.handleSaveBlockEventsLegacy(allEvents)
+	return eh.handleSaveBlockEventsLegacy(allEvents, blockHash)
 }
 
-func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBlockData) error {
-	eventsData, err := eh.eventsInterceptor.ProcessBlockEvents(&allEvents)
+func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBlockData, blockHash string) error {
+	eventsData, err := eh.processBlockEventsLegacy(&allEvents, blockHash)
 	if err != nil {
 		return err
 	}
@@ -115,6 +115,25 @@ func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBloc
 		shardID,
 		nonce,
 	)
+}
+
+// processBlockEventsLegacy releases the duplicates marker if the interceptor panics, since nothing was published
+func (eh *eventsHandler) processBlockEventsLegacy(allEvents *data.ArgsSaveBlockData, blockHash string) (*data.InterceptorBlockData, error) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			return
+		}
+		if eh.checkDuplicates {
+			errUnlock := eh.locker.Unlock(context.Background(), getPrefixLockerKey(common.PushLogsAndEvents)+blockHash)
+			if errUnlock != nil {
+				log.Error("failed to release duplicates marker", "error", errUnlock.Error(), "block hash", blockHash)
+			}
+		}
+		panic(r)
+	}()
+
+	return eh.eventsInterceptor.ProcessBlockEvents(allEvents)
 }
 
 func (eh *eventsHandler) handleSaveBlockEvents(
