@@ -41,7 +41,7 @@ func getPubKeyConverter(cfg config.GeneralConfig) (core.PubkeyConverter, error) 
 }
 
 // CreatePayloadHandler will create a new instance of payload handler
-func CreatePayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler) (websocket.PayloadHandler, error) {
+func CreatePayloadHandler(marshaller marshal.Marshalizer, facade process.EventsFacadeHandler, maxPayloadSize uint64) (websocket.PayloadHandler, error) {
 	dataPreProcessorArgs := preprocess.ArgsEventsPreProcessor{
 		Marshaller: marshaller,
 		Facade:     facade,
@@ -51,7 +51,7 @@ func CreatePayloadHandler(marshaller marshal.Marshalizer, facade process.EventsF
 		return nil, err
 	}
 
-	payloadHandler, err := process.NewPayloadHandler(dataPreProcessors)
+	payloadHandler, err := process.NewPayloadHandler(dataPreProcessors, maxPayloadSize)
 	if err != nil {
 		return nil, err
 	}

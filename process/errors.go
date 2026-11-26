@@ -37,3 +37,6 @@ var ErrNilStateAccesses = errors.New("nil state accesses provided")
 
 // ErrNilExecutionResults signals that a nil execution results map has been provided
 var ErrNilExecutionResults = errors.New("nil execution results provided")
+
+// ErrPublisherClosed signals that the publisher has been closed before the item was published
+var ErrPublisherClosed = errors.New("publisher closed")

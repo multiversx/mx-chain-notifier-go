@@ -14,7 +14,7 @@ func CreateWebServerHandler(facade shared.FacadeHandler, configs config.Configs)
 		return nil, err
 	}
 
-	payloadHandler, err := CreatePayloadHandler(marshaller, facade)
+	payloadHandler, err := CreatePayloadHandler(marshaller, facade, configs.MainConfig.General.MaxPayloadSizeInBytes)
 	if err != nil {
 		return nil, err
 	}

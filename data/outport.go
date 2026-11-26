@@ -83,6 +83,15 @@ type BlockStateAccesses struct {
 	StateAccessesPerAccounts map[string]*stateChange.StateAccesses `json:"stateAccessesPerAccounts"`
 }
 
+// SaveBlockMessages holds all the messages that are published for a saved block
+type SaveBlockMessages struct {
+	Events          BlockEvents
+	Txs             BlockTxs
+	Scrs            BlockScrs
+	EventsWithOrder BlockEventsWithOrder
+	StateAccesses   BlockStateAccesses
+}
+
 // NotifierTransaction defines a wrapper over transaction
 type NotifierTransaction struct {
 	*transaction.Transaction

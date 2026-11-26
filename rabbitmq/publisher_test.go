@@ -2,6 +2,7 @@ package rabbitmq_test
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/multiversx/mx-chain-core-go/core/check"
@@ -374,4 +375,106 @@ func TestClose(t *testing.T) {
 
 	rabbitmq.Close()
 	require.True(t, wasCalled)
+}
+
+func TestPublish_ErrorsAndMaxMessageSize(t *testing.T) {
+	t.Parallel()
+
+	t.Run("message over max size should not be published", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockArgsRabbitMqPublisher()
+		args.MaxMessageSizeInBytes = 10
+		args.Client = &mocks.RabbitClientStub{
+			PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+				wasCalled = true
+				return nil
+			},
+		}
+
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		err = publisher.Publish(data.BlockEvents{Hash: "a hash which is long enough"})
+		require.True(t, errors.Is(err, common.ErrPayloadTooLarge))
+		require.False(t, wasCalled)
+	})
+
+	t.Run("client error should be returned", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		args.Client = &mocks.RabbitClientStub{
+			PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+				return rabbitmq.ErrMessageRejected
+			},
+		}
+
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		err = publisher.PublishTxs(data.BlockTxs{})
+		require.Equal(t, rabbitmq.ErrMessageRejected, err)
+	})
+}
+
+func TestCheckSaveBlockMessages(t *testing.T) {
+	t.Parallel()
+
+	t.Run("all messages within max size should pass", func(t *testing.T) {
+		t.Parallel()
+
+		args := createMockArgsRabbitMqPublisher()
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		err = publisher.CheckSaveBlockMessages(data.SaveBlockMessages{})
+		require.Nil(t, err)
+	})
+
+	t.Run("one message over max size should fail without publishing", func(t *testing.T) {
+		t.Parallel()
+
+		wasCalled := false
+		args := createMockArgsRabbitMqPublisher()
+		args.MaxMessageSizeInBytes = 200
+		args.Client = &mocks.RabbitClientStub{
+			PublishCalled: func(exchange, key string, mandatory, immediate bool, msg amqp.Publishing) error {
+				wasCalled = true
+				return nil
+			},
+		}
+
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		// only the events with order message exceeds the limit
+		err = publisher.CheckSaveBlockMessages(data.SaveBlockMessages{
+			EventsWithOrder: data.BlockEventsWithOrder{
+				Hash: strings.Repeat("a", 300),
+			},
+		})
+		require.True(t, errors.Is(err, common.ErrPayloadTooLarge))
+		require.Contains(t, err.Error(), args.Config.BlockEventsExchange.Name)
+		require.False(t, wasCalled)
+	})
+
+	t.Run("marshal error should be returned", func(t *testing.T) {
+		t.Parallel()
+
+		expectedErr := errors.New("marshal error")
+		args := createMockArgsRabbitMqPublisher()
+		args.Marshaller = &mock.MarshalizerStub{
+			MarshalCalled: func(obj interface{}) ([]byte, error) {
+				return nil, expectedErr
+			},
+		}
+
+		publisher, err := rabbitmq.NewRabbitMqPublisher(args)
+		require.Nil(t, err)
+
+		err = publisher.CheckSaveBlockMessages(data.SaveBlockMessages{})
+		require.Equal(t, expectedErr, err)
+	})
 }

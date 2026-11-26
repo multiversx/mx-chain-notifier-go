@@ -48,9 +48,10 @@ func createWSHandler(wsDispatcher dispatcher.Dispatcher, marshaller marshal.Mars
 func CreateWSObserverConnector(
 	config config.WebSocketConfig,
 	facade process.EventsFacadeHandler,
+	maxPayloadSize uint64,
 ) (process.WSClient, error) {
 	if config.Enabled {
-		return createWsObsConnector(config, facade)
+		return createWsObsConnector(config, facade, maxPayloadSize)
 	}
 
 	return &disabled.WSHandler{}, nil
@@ -59,6 +60,7 @@ func CreateWSObserverConnector(
 func createWsObsConnector(
 	config config.WebSocketConfig,
 	facade process.EventsFacadeHandler,
+	maxPayloadSize uint64,
 ) (process.WSClient, error) {
 	marshaller, err := marshalFactory.NewMarshalizer(config.DataMarshallerType)
 	if err != nil {
@@ -70,7 +72,7 @@ func createWsObsConnector(
 		return nil, err
 	}
 
-	payloadHandler, err := CreatePayloadHandler(marshaller, facade)
+	payloadHandler, err := CreatePayloadHandler(marshaller, facade, maxPayloadSize)
 	if err != nil {
 		return nil, err
 	}

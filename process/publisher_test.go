@@ -1,6 +1,7 @@
 package process_test
 
 import (
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -242,4 +243,48 @@ func TestClose(t *testing.T) {
 
 		require.Equal(t, uint32(0), atomic.LoadUint32(&numCalls))
 	})
+}
+
+func TestBroadcast_ReturnsPublishResult(t *testing.T) {
+	t.Parallel()
+
+	t.Run("handler error should be returned", func(t *testing.T) {
+		t.Parallel()
+
+		expectedErr := errors.New("expected error")
+		p, err := process.NewPublisher(&publisherHandlerWithError{err: expectedErr})
+		require.Nil(t, err)
+
+		_ = p.Run()
+		defer p.Close()
+
+		require.Equal(t, expectedErr, p.Broadcast(data.BlockEvents{}))
+		require.Equal(t, expectedErr, p.BroadcastRevert(data.RevertBlock{}))
+		require.Nil(t, p.BroadcastTxs(data.BlockTxs{}))
+	})
+
+	t.Run("closed publisher should return error", func(t *testing.T) {
+		t.Parallel()
+
+		p, err := process.NewPublisher(&mocks.PublisherHandlerStub{})
+		require.Nil(t, err)
+
+		_ = p.Run()
+		_ = p.Close()
+
+		require.Equal(t, process.ErrPublisherClosed, p.BroadcastFinalized(data.FinalizedBlock{}))
+	})
+}
+
+type publisherHandlerWithError struct {
+	mocks.PublisherHandlerStub
+	err error
+}
+
+func (ph *publisherHandlerWithError) Publish(_ data.BlockEvents) error {
+	return ph.err
+}
+
+func (ph *publisherHandlerWithError) PublishRevert(_ data.RevertBlock) error {
+	return ph.err
 }

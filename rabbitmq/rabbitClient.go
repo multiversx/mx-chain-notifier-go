@@ -1,6 +1,7 @@
 package rabbitmq
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -9,6 +10,13 @@ import (
 
 const (
 	reconnectRetryMs = 500
+
+	// maxChannelFailuresPerMessage bounds how many times the same message is re-published after
+	// channel-level failures (publish error, nack or channel close) that happen while the
+	// connection is up. Such failures are usually caused by the message itself (for example a
+	// body over the broker's max message size), so retrying it forever would block all the
+	// following messages. Failures caused by a lost connection are retried without limit.
+	maxChannelFailuresPerMessage = 5
 
 	// notifyChanBufferSize is the buffer size used for the amqp notification channels.
 	// It has to be at least 1: on connection/channel shutdown the amqp library sends the
@@ -153,6 +161,7 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 	// closing gracefully (port disabled from firewall), it may happen that the
 	// main loop will not catch the conn err event, and it will still try to
 	// publish the message.
+	channelFailures := 0
 	for {
 		if rc.isClosed() {
 			return ErrClientClosed
@@ -175,7 +184,9 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 			// connection/channel has to be restored before trying again, otherwise
 			// this would spin without ever making progress
 			log.Error("failed to publish message", "exchange", exchange, "error", err.Error())
-			rc.recoverConnection()
+			if rc.recoverAfterFailure(&channelFailures) {
+				return rc.abandonMessage(exchange, len(msg.Body))
+			}
 			continue
 		}
 
@@ -185,7 +196,9 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 				// the confirmations channel is closed together with the amqp channel,
 				// so this is a failed publish, not an acknowledgement
 				log.Debug("Publish: confirmations channel closed, will retry to publish message", "exchange", exchange)
-				rc.recoverConnection()
+				if rc.recoverAfterFailure(&channelFailures) {
+					return rc.abandonMessage(exchange, len(msg.Body))
+				}
 				continue
 			}
 
@@ -194,11 +207,12 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 		case deliveryTag, ok := <-state.nackCh:
 			if !ok {
 				log.Debug("Publish: confirmations channel closed, will retry to publish message", "exchange", exchange)
-				rc.recoverConnection()
-				continue
+			} else {
+				log.Warn("Publish: published message nack, will retry to publish message", "exchange", exchange, "deliveryTag", deliveryTag)
 			}
-
-			log.Warn("Publish: published message nack, will retry to publish message", "exchange", exchange, "deliveryTag", deliveryTag)
+			if rc.recoverAfterFailure(&channelFailures) {
+				return rc.abandonMessage(exchange, len(msg.Body))
+			}
 		case amqpErr, ok := <-state.connErrCh:
 			logAmqpFailure("rabbitMQ connection failure", amqpErr, ok)
 			rc.Reconnect()
@@ -207,9 +221,44 @@ func (rc *rabbitMqClient) Publish(exchange, key string, mandatory, immediate boo
 
 			// a connection failure is broadcast on the channel notification as well, so
 			// the recovery has to check what was actually lost
-			rc.recoverConnection()
+			if rc.recoverAfterFailure(&channelFailures) {
+				return rc.abandonMessage(exchange, len(msg.Body))
+			}
 		}
 	}
+}
+
+// recoverAfterFailure restores whatever was lost after a failed publish attempt and returns
+// true if the message has to be abandoned. A failure while the connection is down is retried
+// without limit, while a failure while the connection is up is channel-level (most likely a
+// deterministic rejection of this message by the broker) and is counted, so that a message
+// which is always rejected does not block the publisher forever.
+func (rc *rabbitMqClient) recoverAfterFailure(channelFailures *int) bool {
+	connectionLost := rc.connectionIsDown()
+
+	// recover even if the message is abandoned, so that the next message is published
+	// on a usable channel
+	rc.recoverConnection()
+	if connectionLost {
+		return false
+	}
+
+	*channelFailures++
+	return *channelFailures >= maxChannelFailuresPerMessage
+}
+
+func (rc *rabbitMqClient) abandonMessage(exchange string, bodySize int) error {
+	if rc.isClosed() {
+		return ErrClientClosed
+	}
+
+	log.Error("rabbitMQ publish abandoned, message repeatedly rejected",
+		"exchange", exchange,
+		"body size", bodySize,
+		"attempts", maxChannelFailuresPerMessage,
+	)
+
+	return fmt.Errorf("%w: exchange %s, %d attempts", ErrMessageRejected, exchange, maxChannelFailuresPerMessage)
 }
 
 func logAmqpFailure(message string, amqpErr *amqp.Error, okChanRead bool) {

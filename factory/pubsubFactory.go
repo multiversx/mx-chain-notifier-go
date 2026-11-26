@@ -18,7 +18,7 @@ func CreatePublisher(
 ) (process.Publisher, error) {
 	switch apiType {
 	case common.MessageQueuePublisherType:
-		return createRabbitMqPublisher(config.RabbitMQ, marshaller)
+		return createRabbitMqPublisher(config.RabbitMQ, config.General.MaxPayloadSizeInBytes, marshaller)
 	case common.WSPublisherType:
 		return createWSPublisher(commonHub)
 	default:
@@ -26,16 +26,17 @@ func CreatePublisher(
 	}
 }
 
-func createRabbitMqPublisher(config config.RabbitMQConfig, marshaller marshal.Marshalizer) (rabbitmq.PublisherService, error) {
+func createRabbitMqPublisher(config config.RabbitMQConfig, maxMessageSize uint64, marshaller marshal.Marshalizer) (rabbitmq.PublisherService, error) {
 	rabbitClient, err := rabbitmq.NewRabbitMQClient(config.Url)
 	if err != nil {
 		return nil, err
 	}
 
 	rabbitMqPublisherArgs := rabbitmq.ArgsRabbitMqPublisher{
-		Client:     rabbitClient,
-		Config:     config,
-		Marshaller: marshaller,
+		Client:                rabbitClient,
+		Config:                config,
+		Marshaller:            marshaller,
+		MaxMessageSizeInBytes: maxMessageSize,
 	}
 	rabbitPublisher, err := rabbitmq.NewRabbitMqPublisher(rabbitMqPublisherArgs)
 	if err != nil {

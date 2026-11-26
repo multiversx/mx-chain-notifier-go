@@ -96,7 +96,7 @@ func (nr *notifierRunner) Start() error {
 		return err
 	}
 
-	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.MainConfig.WebSocketConnector, facade)
+	wsConnector, err := factory.CreateWSObserverConnector(nr.configs.MainConfig.WebSocketConnector, facade, nr.configs.MainConfig.General.MaxPayloadSizeInBytes)
 	if err != nil {
 		return err
 	}

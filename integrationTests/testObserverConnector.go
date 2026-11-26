@@ -20,7 +20,7 @@ import (
 // CreateObserverConnector will create observer connector component
 func CreateObserverConnector(facade shared.FacadeHandler, connType string, apiType string, payloadVersion uint32) (ObserverConnector, error) {
 	marshaller := &marshal.JsonMarshalizer{}
-	payloadHandler, err := factory.CreatePayloadHandler(marshaller, facade)
+	payloadHandler, err := factory.CreatePayloadHandler(marshaller, facade, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func newTestWSServer(facade shared.FacadeHandler, marshaller marshal.Marshalizer
 		DataMarshallerType:      "json",
 	}
 
-	_, err := factory.CreateWSObserverConnector(conf, facade)
+	_, err := factory.CreateWSObserverConnector(conf, facade, 0)
 	if err != nil {
 		return nil, err
 	}

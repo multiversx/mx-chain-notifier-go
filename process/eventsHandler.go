@@ -94,7 +94,12 @@ func (eh *eventsHandler) HandleSaveBlockEvents(allEvents data.ArgsSaveBlockData)
 		return nil
 	}
 
-	return eh.handleSaveBlockEventsLegacy(allEvents)
+	err := eh.handleSaveBlockEventsLegacy(allEvents)
+	if err != nil {
+		eh.releaseProcessedMarker(common.PushLogsAndEvents, blockHash)
+	}
+
+	return err
 }
 
 func (eh *eventsHandler) handleSaveBlockEventsLegacy(allEvents data.ArgsSaveBlockData) error {
@@ -133,49 +138,71 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 
 	t := time.Now()
 
-	pushEvents := data.BlockEvents{
-		Hash:        eventsData.Hash,
-		ShardID:     shardID,
-		TimeStamp:   headerTimeStamp,
-		TimeStampMs: headerTimeStampMs,
-		Events:      eventsData.LogEvents,
+	messages := data.SaveBlockMessages{
+		Events: data.BlockEvents{
+			Hash:        eventsData.Hash,
+			ShardID:     shardID,
+			TimeStamp:   headerTimeStamp,
+			TimeStampMs: headerTimeStampMs,
+			Events:      eventsData.LogEvents,
+		},
+		Txs: data.BlockTxs{
+			Hash: eventsData.Hash,
+			Txs:  eventsData.Txs,
+		},
+		Scrs: data.BlockScrs{
+			Hash: eventsData.Hash,
+			Scrs: eventsData.Scrs,
+		},
+		EventsWithOrder: data.BlockEventsWithOrder{
+			Hash:        eventsData.Hash,
+			ShardID:     shardID,
+			TimeStamp:   headerTimeStamp,
+			TimeStampMs: headerTimeStampMs,
+			Txs:         eventsData.TxsWithOrder,
+			Scrs:        eventsData.ScrsWithOrder,
+			Events:      eventsData.LogEvents,
+		},
+		StateAccesses: data.BlockStateAccesses{
+			Hash:                     eventsData.Hash,
+			ShardID:                  shardID,
+			TimeStampMs:              headerTimeStampMs,
+			Nonce:                    nonce,
+			StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
+		},
 	}
-	err := eh.handlePushEvents(pushEvents)
+
+	// check all the messages before publishing any of them, so that a message which cannot be
+	// published (for example, one that is too large) does not leave the block partially published
+	err := eh.publisher.CheckSaveBlockMessages(messages)
 	if err != nil {
 		return err
 	}
 
-	txs := data.BlockTxs{
-		Hash: eventsData.Hash,
-		Txs:  eventsData.Txs,
+	err = eh.handlePushEvents(messages.Events)
+	if err != nil {
+		return err
 	}
-	eh.handleBlockTxs(txs)
 
-	scrs := data.BlockScrs{
-		Hash: eventsData.Hash,
-		Scrs: eventsData.Scrs,
+	err = eh.handleBlockTxs(messages.Txs)
+	if err != nil {
+		return err
 	}
-	eh.handleBlockScrs(scrs)
 
-	txsWithOrder := data.BlockEventsWithOrder{
-		Hash:        eventsData.Hash,
-		ShardID:     shardID,
-		TimeStamp:   headerTimeStamp,
-		TimeStampMs: headerTimeStampMs,
-		Txs:         eventsData.TxsWithOrder,
-		Scrs:        eventsData.ScrsWithOrder,
-		Events:      eventsData.LogEvents,
+	err = eh.handleBlockScrs(messages.Scrs)
+	if err != nil {
+		return err
 	}
-	eh.handleBlockEventsWithOrder(txsWithOrder)
 
-	stateAccesses := data.BlockStateAccesses{
-		Hash:                     eventsData.Hash,
-		ShardID:                  shardID,
-		TimeStampMs:              headerTimeStampMs,
-		Nonce:                    nonce,
-		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
+	err = eh.handleBlockEventsWithOrder(messages.EventsWithOrder)
+	if err != nil {
+		return err
 	}
-	eh.handleStateAccesses(stateAccesses)
+
+	err = eh.handleStateAccesses(messages.StateAccesses)
+	if err != nil {
+		return err
+	}
 
 	log.Info("processed block events",
 		"block hash", eventsData.Hash,
@@ -229,6 +256,7 @@ func (eh *eventsHandler) handleSaveBlockEventsV3(allEvents data.ArgsSaveBlockDat
 			executionResultData.Nonce,
 		)
 		if err != nil {
+			eh.releaseProcessedMarker(common.PushLogsAndEvents, executionResultData.Hash)
 			return err
 		}
 	}
@@ -255,9 +283,9 @@ func (eh *eventsHandler) handlePushEvents(events data.BlockEvents) error {
 	)
 
 	t := time.Now()
-	eh.publisher.Broadcast(events)
+	err := eh.publisher.Broadcast(events)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.PushLogsAndEvents), time.Since(t))
-	return nil
+	return err
 }
 
 func (eh *eventsHandler) shouldProcessSaveBlockEvents(blockHash string) bool {
@@ -278,12 +306,12 @@ func (eh *eventsHandler) shouldProcessSaveBlockEvents(blockHash string) bool {
 }
 
 // HandleRevertEvents will handle revents events received from observer
-func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
+func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) error {
 	if revertBlock.Hash == "" {
 		log.Warn("received empty hash", "event", common.RevertBlockEvents,
 			"will process", false,
 		)
-		return
+		return nil
 	}
 
 	shouldProcessRevert := true
@@ -295,7 +323,7 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 		log.Debug("received duplicated events, skipping", "event", common.RevertBlockEvents,
 			"block hash", revertBlock.Hash,
 		)
-		return
+		return nil
 	}
 
 	log.Info("received", "event", common.RevertBlockEvents,
@@ -305,17 +333,22 @@ func (eh *eventsHandler) HandleRevertEvents(revertBlock data.RevertBlock) {
 	)
 
 	t := time.Now()
-	eh.publisher.BroadcastRevert(revertBlock)
+	err := eh.publisher.BroadcastRevert(revertBlock)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.RevertBlockEvents), time.Since(t))
+	if err != nil {
+		eh.releaseProcessedMarker(common.RevertBlockEvents, revertBlock.Hash)
+	}
+
+	return err
 }
 
 // HandleFinalizedEvents will handle finalized events received from observer
-func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) {
+func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBlock) error {
 	if finalizedBlock.Hash == "" {
 		log.Warn("received empty hash", "event", common.FinalizedBlockEvents,
 			"will process", false,
 		)
-		return
+		return nil
 	}
 	shouldProcessFinalized := true
 	if eh.checkDuplicates {
@@ -326,7 +359,7 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 		log.Debug("received duplicated events, skipping", "event", common.FinalizedBlockEvents,
 			"block hash", finalizedBlock.Hash,
 		)
-		return
+		return nil
 	}
 
 	log.Debug("received", "event", common.FinalizedBlockEvents,
@@ -334,46 +367,54 @@ func (eh *eventsHandler) HandleFinalizedEvents(finalizedBlock data.FinalizedBloc
 	)
 
 	t := time.Now()
-	eh.publisher.BroadcastFinalized(finalizedBlock)
+	err := eh.publisher.BroadcastFinalized(finalizedBlock)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.FinalizedBlockEvents), time.Since(t))
+	if err != nil {
+		eh.releaseProcessedMarker(common.FinalizedBlockEvents, finalizedBlock.Hash)
+	}
+
+	return err
 }
 
 // handleBlockTxs will handle txs events received from observer
-func (eh *eventsHandler) handleBlockTxs(blockTxs data.BlockTxs) {
+func (eh *eventsHandler) handleBlockTxs(blockTxs data.BlockTxs) error {
 	log.Debug("received", "event", common.BlockTxs,
 		"block hash", blockTxs.Hash,
 		"num txs", len(blockTxs.Txs),
 	)
 
 	t := time.Now()
-	eh.publisher.BroadcastTxs(blockTxs)
+	err := eh.publisher.BroadcastTxs(blockTxs)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockTxs), time.Since(t))
+	return err
 }
 
 // handleBlockScrs will handle scrs events received from observer
-func (eh *eventsHandler) handleBlockScrs(blockScrs data.BlockScrs) {
+func (eh *eventsHandler) handleBlockScrs(blockScrs data.BlockScrs) error {
 	log.Debug("received", "event", common.BlockScrs,
 		"block hash", blockScrs.Hash,
 		"num scrs", len(blockScrs.Scrs),
 	)
 
 	t := time.Now()
-	eh.publisher.BroadcastScrs(blockScrs)
+	err := eh.publisher.BroadcastScrs(blockScrs)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockScrs), time.Since(t))
+	return err
 }
 
 // handleBlockEventsWithOrder will handle full block events received from observer
-func (eh *eventsHandler) handleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+func (eh *eventsHandler) handleBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) error {
 	log.Debug("received", "event", common.BlockEvents,
 		"block hash", blockTxs.Hash,
 	)
 
 	t := time.Now()
-	eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
+	err := eh.publisher.BroadcastBlockEventsWithOrder(blockTxs)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockEvents), time.Since(t))
+	return err
 }
 
-func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccesses) {
+func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccesses) error {
 	log.Debug("received state accesses",
 		"block hash", stateAccesses.Hash,
 		"nonce", stateAccesses.Nonce,
@@ -381,8 +422,9 @@ func (eh *eventsHandler) handleStateAccesses(stateAccesses data.BlockStateAccess
 	)
 
 	t := time.Now()
-	eh.publisher.BroadcastStateAccesses(stateAccesses)
+	err := eh.publisher.BroadcastStateAccesses(stateAccesses)
 	eh.metricsHandler.AddRequest(getRabbitOpID(common.BlockStateAccesses), time.Since(t))
+	return err
 }
 
 func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
@@ -413,6 +455,20 @@ func (eh *eventsHandler) tryCheckProcessedWithRetry(id, blockHash string) bool {
 	log.Trace("locker", "event", id, "block hash", blockHash, "succeeded", setSuccessful)
 
 	return setSuccessful
+}
+
+// releaseProcessedMarker removes the duplicates check marker of a block that could not be published,
+// so that the block is published, and not skipped as a duplicate, when it is received again
+func (eh *eventsHandler) releaseProcessedMarker(id, blockHash string) {
+	if !eh.checkDuplicates {
+		return
+	}
+
+	key := getPrefixLockerKey(id) + blockHash
+	err := eh.locker.Unlock(context.Background(), key)
+	if err != nil {
+		log.Error("failed to release processed marker", "event", id, "block hash", blockHash, "error", err.Error())
+	}
 }
 
 func (eh *eventsHandler) tryLockV3BatchWithRetry(key string) bool {

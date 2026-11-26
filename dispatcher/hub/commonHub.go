@@ -69,10 +69,10 @@ func (ch *commonHub) UnregisterEvent(event dispatcher.EventDispatcher) {
 }
 
 // Publish will publish logs and events to dispatcher
-func (ch *commonHub) Publish(blockEvents data.BlockEvents) {
+func (ch *commonHub) Publish(blockEvents data.BlockEvents) error {
 	subscriptions := ch.subscriptionMapper.Subscriptions()[common.PushLogsAndEvents]
 	if len(subscriptions) == 0 {
-		return
+		return nil
 	}
 
 	type target struct {
@@ -103,6 +103,8 @@ func (ch *commonHub) Publish(blockEvents data.BlockEvents) {
 	for _, t := range targets {
 		t.d.PushEvents(t.events)
 	}
+
+	return nil
 }
 
 // targetDispatchers returns the (deduplicated) live dispatchers currently
@@ -134,45 +136,62 @@ func (ch *commonHub) targetDispatchers(eventType string) []dispatcher.EventDispa
 }
 
 // PublishRevert will publish revert event to dispatcher
-func (ch *commonHub) PublishRevert(revertBlock data.RevertBlock) {
+func (ch *commonHub) PublishRevert(revertBlock data.RevertBlock) error {
 	for _, d := range ch.targetDispatchers(common.RevertBlockEvents) {
 		d.RevertEvent(revertBlock)
 	}
+
+	return nil
 }
 
 // PublishFinalized will publish finalized event to dispatcher
-func (ch *commonHub) PublishFinalized(finalizedBlock data.FinalizedBlock) {
+func (ch *commonHub) PublishFinalized(finalizedBlock data.FinalizedBlock) error {
 	for _, d := range ch.targetDispatchers(common.FinalizedBlockEvents) {
 		d.FinalizedEvent(finalizedBlock)
 	}
+
+	return nil
 }
 
 // PublishTxs will publish txs event to dispatcher
-func (ch *commonHub) PublishTxs(blockTxs data.BlockTxs) {
+func (ch *commonHub) PublishTxs(blockTxs data.BlockTxs) error {
 	for _, d := range ch.targetDispatchers(common.BlockTxs) {
 		d.TxsEvent(blockTxs)
 	}
+
+	return nil
 }
 
 // PublishBlockEventsWithOrder will publish block events with order to dispatcher
-func (ch *commonHub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) {
+func (ch *commonHub) PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) error {
 	for _, d := range ch.targetDispatchers(common.BlockEvents) {
 		d.BlockEvents(blockTxs)
 	}
+
+	return nil
 }
 
 // PublishScrs will publish scrs events to dispatcher
-func (ch *commonHub) PublishScrs(blockScrs data.BlockScrs) {
+func (ch *commonHub) PublishScrs(blockScrs data.BlockScrs) error {
 	for _, d := range ch.targetDispatchers(common.BlockScrs) {
 		d.ScrsEvent(blockScrs)
 	}
+
+	return nil
 }
 
 // PublishStateAccesses will publish state accesses to dispatcher
-func (ch *commonHub) PublishStateAccesses(stateAccesses data.BlockStateAccesses) {
+func (ch *commonHub) PublishStateAccesses(stateAccesses data.BlockStateAccesses) error {
 	for _, d := range ch.targetDispatchers(common.BlockStateAccesses) {
 		d.StateAccessesEvent(stateAccesses)
 	}
+
+	return nil
+}
+
+// CheckSaveBlockMessages does nothing, the dispatchers do not limit the message size
+func (ch *commonHub) CheckSaveBlockMessages(_ data.SaveBlockMessages) error {
+	return nil
 }
 
 func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
