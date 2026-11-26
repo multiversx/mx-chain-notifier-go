@@ -189,6 +189,11 @@ func (ch *commonHub) PublishStateAccesses(stateAccesses data.BlockStateAccesses)
 	return nil
 }
 
+// CheckSaveBlockMessages does nothing, the dispatchers do not limit the message size
+func (ch *commonHub) CheckSaveBlockMessages(_ data.SaveBlockMessages) error {
+	return nil
+}
+
 func (ch *commonHub) registerDispatcher(d dispatcher.EventDispatcher) {
 	ch.mutDispatchers.Lock()
 	defer ch.mutDispatchers.Unlock()

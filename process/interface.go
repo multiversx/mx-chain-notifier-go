@@ -27,6 +27,7 @@ type Publisher interface {
 	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) error
 	BroadcastScrs(event data.BlockScrs) error
 	BroadcastStateAccesses(events data.BlockStateAccesses) error
+	CheckSaveBlockMessages(messages data.SaveBlockMessages) error
 	Close() error
 	IsInterfaceNil() bool
 }
@@ -76,6 +77,7 @@ type PublisherHandler interface {
 	PublishScrs(blockScrs data.BlockScrs) error
 	PublishBlockEventsWithOrder(blockTxs data.BlockEventsWithOrder) error
 	PublishStateAccesses(stateAccesses data.BlockStateAccesses) error
+	CheckSaveBlockMessages(messages data.SaveBlockMessages) error
 	Close() error
 	IsInterfaceNil() bool
 }

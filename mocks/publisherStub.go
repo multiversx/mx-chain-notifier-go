@@ -12,6 +12,7 @@ type PublisherStub struct {
 	BroadcastScrsCalled                 func(event data.BlockScrs)
 	BroadcastBlockEventsWithOrderCalled func(event data.BlockEventsWithOrder)
 	BroadcastStateAccessesCalled        func(event data.BlockStateAccesses)
+	CheckSaveBlockMessagesCalled        func(messages data.SaveBlockMessages) error
 	CloseCalled                         func() error
 }
 
@@ -82,6 +83,15 @@ func (ps *PublisherStub) BroadcastBlockEventsWithOrder(event data.BlockEventsWit
 func (ps *PublisherStub) BroadcastStateAccesses(event data.BlockStateAccesses) error {
 	if ps.BroadcastStateAccessesCalled != nil {
 		ps.BroadcastStateAccessesCalled(event)
+	}
+
+	return nil
+}
+
+// CheckSaveBlockMessages -
+func (ps *PublisherStub) CheckSaveBlockMessages(messages data.SaveBlockMessages) error {
+	if ps.CheckSaveBlockMessagesCalled != nil {
+		return ps.CheckSaveBlockMessagesCalled(messages)
 	}
 
 	return nil

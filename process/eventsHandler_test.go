@@ -1060,3 +1060,45 @@ func TestHandleEvents_PublishFailureShouldReleaseProcessedMarker(t *testing.T) {
 		require.Equal(t, "revert_hash1", releasedKey)
 	})
 }
+
+func TestHandleSaveBlockEvents_CheckFailureShouldNotPublishAnything(t *testing.T) {
+	t.Parallel()
+
+	numPublished := 0
+	countPublish := func() { numPublished++ }
+	var checkedMessages data.SaveBlockMessages
+
+	args := createMockEventsHandlerArgs()
+	args.Publisher = &mocks.PublisherStub{
+		CheckSaveBlockMessagesCalled: func(messages data.SaveBlockMessages) error {
+			checkedMessages = messages
+			return common.ErrPayloadTooLarge
+		},
+		BroadcastCalled:                     func(_ data.BlockEvents) { countPublish() },
+		BroadcastTxsCalled:                  func(_ data.BlockTxs) { countPublish() },
+		BroadcastScrsCalled:                 func(_ data.BlockScrs) { countPublish() },
+		BroadcastBlockEventsWithOrderCalled: func(_ data.BlockEventsWithOrder) { countPublish() },
+		BroadcastStateAccessesCalled:        func(_ data.BlockStateAccesses) { countPublish() },
+	}
+	args.EventsInterceptor = &mocks.EventsInterceptorStub{
+		ProcessBlockEventsCalled: func(eventsData *data.ArgsSaveBlockData) (*data.InterceptorBlockData, error) {
+			return &data.InterceptorBlockData{
+				Hash:   "hash",
+				Header: &block.HeaderV2{Header: &block.Header{Nonce: 7}},
+			}, nil
+		},
+	}
+
+	eventsHandler, err := process.NewEventsHandler(args)
+	require.Nil(t, err)
+
+	err = eventsHandler.HandleSaveBlockEvents(data.ArgsSaveBlockData{
+		HeaderHash: []byte("headerHash"),
+		Header:     &block.HeaderV2{Header: &block.Header{}},
+	})
+	require.Equal(t, common.ErrPayloadTooLarge, err)
+	require.Equal(t, 0, numPublished)
+	require.Equal(t, "hash", checkedMessages.Events.Hash)
+	require.Equal(t, "hash", checkedMessages.EventsWithOrder.Hash)
+	require.Equal(t, uint64(7), checkedMessages.StateAccesses.Nonce)
+}

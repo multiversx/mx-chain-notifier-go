@@ -147,6 +147,13 @@ func (p *publisher) BroadcastStateAccesses(events data.BlockStateAccesses) error
 	})
 }
 
+// CheckSaveBlockMessages checks that all the messages of a saved block can be published, so that
+// a block is not published partially. It does not go through the publishing goroutine, since it
+// does not publish anything.
+func (p *publisher) CheckSaveBlockMessages(messages data.SaveBlockMessages) error {
+	return p.handler.CheckSaveBlockMessages(messages)
+}
+
 // Close will close the channels
 func (p *publisher) Close() error {
 	p.mutState.RLock()

@@ -44,6 +44,11 @@ func (h *Hub) PublishStateAccesses(blockTxs data.BlockStateAccesses) error {
 	return nil
 }
 
+// CheckSaveBlockMessages does nothing
+func (h *Hub) CheckSaveBlockMessages(_ data.SaveBlockMessages) error {
+	return nil
+}
+
 // RegisterEvent does nothing
 func (h *Hub) RegisterEvent(_ dispatcher.EventDispatcher) {
 }

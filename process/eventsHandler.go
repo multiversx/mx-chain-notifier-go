@@ -138,58 +138,68 @@ func (eh *eventsHandler) handleSaveBlockEvents(
 
 	t := time.Now()
 
-	pushEvents := data.BlockEvents{
-		Hash:        eventsData.Hash,
-		ShardID:     shardID,
-		TimeStamp:   headerTimeStamp,
-		TimeStampMs: headerTimeStampMs,
-		Events:      eventsData.LogEvents,
+	messages := data.SaveBlockMessages{
+		Events: data.BlockEvents{
+			Hash:        eventsData.Hash,
+			ShardID:     shardID,
+			TimeStamp:   headerTimeStamp,
+			TimeStampMs: headerTimeStampMs,
+			Events:      eventsData.LogEvents,
+		},
+		Txs: data.BlockTxs{
+			Hash: eventsData.Hash,
+			Txs:  eventsData.Txs,
+		},
+		Scrs: data.BlockScrs{
+			Hash: eventsData.Hash,
+			Scrs: eventsData.Scrs,
+		},
+		EventsWithOrder: data.BlockEventsWithOrder{
+			Hash:        eventsData.Hash,
+			ShardID:     shardID,
+			TimeStamp:   headerTimeStamp,
+			TimeStampMs: headerTimeStampMs,
+			Txs:         eventsData.TxsWithOrder,
+			Scrs:        eventsData.ScrsWithOrder,
+			Events:      eventsData.LogEvents,
+		},
+		StateAccesses: data.BlockStateAccesses{
+			Hash:                     eventsData.Hash,
+			ShardID:                  shardID,
+			TimeStampMs:              headerTimeStampMs,
+			Nonce:                    nonce,
+			StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
+		},
 	}
-	err := eh.handlePushEvents(pushEvents)
+
+	// check all the messages before publishing any of them, so that a message which cannot be
+	// published (for example, one that is too large) does not leave the block partially published
+	err := eh.publisher.CheckSaveBlockMessages(messages)
 	if err != nil {
 		return err
 	}
 
-	txs := data.BlockTxs{
-		Hash: eventsData.Hash,
-		Txs:  eventsData.Txs,
-	}
-	err = eh.handleBlockTxs(txs)
+	err = eh.handlePushEvents(messages.Events)
 	if err != nil {
 		return err
 	}
 
-	scrs := data.BlockScrs{
-		Hash: eventsData.Hash,
-		Scrs: eventsData.Scrs,
-	}
-	err = eh.handleBlockScrs(scrs)
+	err = eh.handleBlockTxs(messages.Txs)
 	if err != nil {
 		return err
 	}
 
-	txsWithOrder := data.BlockEventsWithOrder{
-		Hash:        eventsData.Hash,
-		ShardID:     shardID,
-		TimeStamp:   headerTimeStamp,
-		TimeStampMs: headerTimeStampMs,
-		Txs:         eventsData.TxsWithOrder,
-		Scrs:        eventsData.ScrsWithOrder,
-		Events:      eventsData.LogEvents,
-	}
-	err = eh.handleBlockEventsWithOrder(txsWithOrder)
+	err = eh.handleBlockScrs(messages.Scrs)
 	if err != nil {
 		return err
 	}
 
-	stateAccesses := data.BlockStateAccesses{
-		Hash:                     eventsData.Hash,
-		ShardID:                  shardID,
-		TimeStampMs:              headerTimeStampMs,
-		Nonce:                    nonce,
-		StateAccessesPerAccounts: eventsData.StateAccessesPerAccounts,
+	err = eh.handleBlockEventsWithOrder(messages.EventsWithOrder)
+	if err != nil {
+		return err
 	}
-	err = eh.handleStateAccesses(stateAccesses)
+
+	err = eh.handleStateAccesses(messages.StateAccesses)
 	if err != nil {
 		return err
 	}

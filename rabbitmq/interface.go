@@ -28,6 +28,7 @@ type PublisherService interface {
 	BroadcastScrs(event data.BlockScrs) error
 	BroadcastBlockEventsWithOrder(event data.BlockEventsWithOrder) error
 	BroadcastStateAccesses(events data.BlockStateAccesses) error
+	CheckSaveBlockMessages(messages data.SaveBlockMessages) error
 	Close() error
 	IsInterfaceNil() bool
 }

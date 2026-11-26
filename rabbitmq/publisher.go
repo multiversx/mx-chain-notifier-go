@@ -267,9 +267,48 @@ func (rp *rabbitMqPublisher) PublishStateAccesses(stateAccesses data.BlockStateA
 	return err
 }
 
-func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) error {
+// CheckSaveBlockMessages checks that every message of a saved block fits in the max message size,
+// so that the block is rejected before any of its messages is published
+func (rp *rabbitMqPublisher) CheckSaveBlockMessages(messages data.SaveBlockMessages) error {
+	messagesToCheck := []struct {
+		exchange string
+		message  interface{}
+	}{
+		{exchange: rp.cfg.EventsExchange.Name, message: messages.Events},
+		{exchange: rp.cfg.BlockTxsExchange.Name, message: messages.Txs},
+		{exchange: rp.cfg.BlockScrsExchange.Name, message: messages.Scrs},
+		{exchange: rp.cfg.BlockEventsExchange.Name, message: messages.EventsWithOrder},
+		{exchange: rp.cfg.StateAccessesExchange.Name, message: messages.StateAccesses},
+	}
+
+	for _, m := range messagesToCheck {
+		payload, err := rp.marshaller.Marshal(m.message)
+		if err != nil {
+			return err
+		}
+
+		err = rp.checkMessageSize(m.exchange, payload)
+		if err != nil {
+			log.Error("block messages rejected, message too large", "err", err.Error())
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (rp *rabbitMqPublisher) checkMessageSize(exchangeName string, payload []byte) error {
 	if uint64(len(payload)) > rp.maxMessageSize {
 		return fmt.Errorf("%w: exchange %s, size %d, max size %d", common.ErrPayloadTooLarge, exchangeName, len(payload), rp.maxMessageSize)
+	}
+
+	return nil
+}
+
+func (rp *rabbitMqPublisher) publishFanout(exchangeName string, payload []byte) error {
+	err := rp.checkMessageSize(exchangeName, payload)
+	if err != nil {
+		return err
 	}
 
 	return rp.client.Publish(
